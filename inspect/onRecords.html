@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>onRecords</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  </head>
+  <body>
+    <pre id="readout">Waiting for data...</pre>
+    <script>
+      grist.ready();
+      grist.onRecords(function(record) {
+        document.getElementById('readout').innerHTML = JSON.stringify(record, null, 2);
+      });
+    </script>
+  </body>
+</html>
