@@ -1,0 +1,52 @@
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  overlay: hidden;
+}
+
+body {
+  background-image: url('exoplanet.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  overflow: crop;
+}
+
+#greeting {
+  margin: 10px;
+  margin-right: 50%;
+  position: absolute;
+  z-index: 1000;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  font-size: 15pt;
+  text-shadow: 0px 0px 7px #000000;
+}
+
+.cake {
+  transform: scale(0.25);
+  display: none;
+}
+
+@keyframes swish {
+  from {
+    transform: translate(-40vw,-40vh) scale(0.01);
+    animation-timing-function: ease-in;
+  }
+
+  50% {
+    transform: translate(0,40vh) scale(1.0);
+    animation-timing-function: ease-out;
+  }
+
+  to {
+    transform: translate(40vw,-50vh) scale(0.01);
+  }
+}
+
+.cake {
+  animation-duration: 12s;
+  animation-name: swish;
+  animation-iteration-count: infinite;
+}
