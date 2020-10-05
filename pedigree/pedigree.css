@@ -1,0 +1,123 @@
+body {
+  font-family: Sans-Serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 5px;
+}
+
+.pedigree {
+  display: flex;
+  align-items: center;
+}
+
+.card {
+  flex: none;
+  border: 1px solid grey;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin: 8px 0;
+  width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empty-card {
+  flex: none;
+  padding: 8px 16px;
+  margin: 8px 0;
+  width: 120px;
+}
+
+.name {
+  color: black;
+  line-height: 1.5;
+}
+
+.birth-date, .gender {
+  color: #a0a0a0;
+  font-size: smaller;
+}
+
+.field {
+  flex: 1;
+  font-weight: bold;
+  color: grey;
+  padding-right: 1rem;
+  text-align: right;
+}
+
+.value {
+  flex: 2;
+}
+
+.connector-middle {
+  height: 0px;
+  width: 16px;
+  flex: none;
+  border-top: 1px solid grey;
+}
+
+.connector-bracket {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  width: 16px;
+  flex: none;
+}
+
+.connector-space {
+  flex: auto;
+}
+
+.connector-bracket-top {
+  flex: auto;
+  border-top: 1px solid grey;
+  border-left: 1px solid grey;
+}
+
+.connector-bracket-bottom {
+  flex: auto;
+  border-bottom: 1px solid grey;
+  border-left: 1px solid grey;
+}
+
+.parents {
+  display: flex;
+  flex-direction: column;
+}
+
+.parent {
+}
+
+.done {
+  text-decoration: line-through;
+}
+
+@media print {
+  div.print {
+    display: none;
+  }
+}
+
+div.print {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+}
+
+div.print a {
+  background: #C83200;
+  display: block;
+  font-size: 200%;
+  color: white;
+  text-decoration: none;
+  padding: 0.25em;
+  padding-top: 0.5em;
+  padding-right: 0.5em;
+  border-top-right-radius: 0.5em;
+  text-transform: uppercase;
+}
+
+div.print a:hover {
+  background: #4682B4;
+}
