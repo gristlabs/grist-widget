@@ -89,6 +89,10 @@ body {
 .parent {
 }
 
+.done {
+  text-decoration: line-through;
+}
+
 @media print {
   div.print {
     display: none;

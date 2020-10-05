@@ -11,12 +11,18 @@
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 
     <script src="pedigree.js?ver=1"></script>
-    <script src="exampleData.js"></script>
-
     <link rel="stylesheet" href="pedigree.css?ver=1">
   </head>
   <body>
     <div id="app">
+      <div class="status" v-if="status">
+        <template v-if="status === 'waiting'">
+          <p>Waiting for data...</p>
+        </template>
+        <template v-else>
+          {{ status }}
+        </template>
+      </div>
       <template v-if="animal">
         <pedigreelevel :animal="animal"></pedigreelevel>
 
@@ -42,15 +48,15 @@
           <div class="card">
             <div class="name">{{animal.Name}}</div>
             <div class="birth-date">{{animal.DOB|asDate}}</div>
-            <div class="gender">({{animal.Gender}})</div>
+            <div class="gender">({{animal.Sex}})</div>
           </div>
-          <div class="connector-middle" v-if="(animal.Father && animal.Father.id) || (animal.Mother && animal.Mother.id)"></div>
-          <div class="parents" v-if="(animal.Father && animal.Father.id) || (animal.Mother && animal.Mother.id)">
+          <div class="connector-middle" v-if="(animal.Sire && animal.Sire.id) || (animal.Dam && animal.Dam.id)"></div>
+          <div class="parents" v-if="(animal.Sire && animal.Sire.id) || (animal.Dam && animal.Dam.id)">
             <div class="parent">
-              <pedigreeLevel :animal="animal.Father" bracket="top">
+              <pedigreeLevel :animal="animal.Sire" bracket="top">
             </div>
             <div class="parent">
-              <pedigreeLevel :animal="animal.Mother" bracket="bottom">
+              <pedigreeLevel :animal="animal.Dam" bracket="bottom">
             </div>
           </div>
         </template>

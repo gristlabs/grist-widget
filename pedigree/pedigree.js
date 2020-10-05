@@ -4,11 +4,12 @@ Vue.component('pedigreelevel', {
 });
 
 Vue.filter('asDate', function(value) {
+  if (!value) { return ''; }
   if (typeof(value) === 'number') {
     value = new Date(value * 1000);
   }
   const date = moment.utc(value)
-  return date.isValid() ? date.format('DD/MM/YYYY') : value;
+  return date.isValid() ? date.format('MM/DD/YYYY') : value;
 });
 
 function ready(fn) {
@@ -37,10 +38,15 @@ function updateRecord(row) {
   try {
     data.status = '';
     if (row === null) {
-      throw new Error("(No data - please add or select a row)");
+      throw new Error("No data. Please add or select a row");
     }
-    data.animal = {...row.References};
-    console.log("GOT ROW", row, "DATA IS", data);
+    if (!row.PedigreeData) {
+      throw new Error('Need a column named "PedigreeData", with a formula like "RECORD(rec, expand_refs=5)"');
+    }
+    if (!('Dam' in row.PedigreeData && 'Sire' in row.PedigreeData)) {
+      throw new Error(`Need columns for parents named "Dam" and "Sire"`);
+    }
+    data.animal = {...row.PedigreeData};
   } catch (err) {
     handleError(err);
   }
