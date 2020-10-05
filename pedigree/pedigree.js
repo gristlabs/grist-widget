@@ -53,7 +53,7 @@ function updateRecord(row) {
 }
 
 ready(function() {
-  // Update the invoice anytime the document data changes.
+  // Update the widget anytime the document data changes.
   grist.ready();
   grist.onRecord(updateRecord);
 
