@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Grist Pedigree</title>
+
+    <!-- A template for showing an invoice in a Custom Widget in Grist. -->
+    <!-- Uses Vue.js, moment, and the Grist Plugin API -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.3/vue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+    <script src="pedigree.js?ver=1"></script>
+    <script src="exampleData.js"></script>
+
+    <link rel="stylesheet" href="pedigree.css?ver=1">
+  </head>
+  <body>
+    <div id="app">
+      <template v-if="animal">
+        <pedigreelevel :animal="animal"></pedigreelevel>
+
+        <div class="print">
+          <a href="javascript:window.print()">Print</a>
+        </div>
+      </template>
+    </div>
+
+    <template id="pedigree-level">
+      <div class="pedigree">
+        <div class="connector-bracket">
+          <template v-if="bracket == 'top'">
+            <div class="connector-space"></div>
+            <div class="connector-bracket-top"></div>
+          </template>
+          <template v-if="bracket == 'bottom'">
+            <div class="connector-bracket-bottom"></div>
+            <div class="connector-space"></div>
+          </template>
+        </div>
+        <template v-if="animal && animal.id">
+          <div class="card">
+            <div class="name">{{animal.Name}}</div>
+            <div class="birth-date">{{animal.DOB|asDate}}</div>
+            <div class="gender">({{animal.Gender}})</div>
+          </div>
+          <div class="connector-middle" v-if="(animal.Father && animal.Father.id) || (animal.Mother && animal.Mother.id)"></div>
+          <div class="parents" v-if="(animal.Father && animal.Father.id) || (animal.Mother && animal.Mother.id)">
+            <div class="parent">
+              <pedigreeLevel :animal="animal.Father" bracket="top">
+            </div>
+            <div class="parent">
+              <pedigreeLevel :animal="animal.Mother" bracket="bottom">
+            </div>
+          </div>
+        </template>
+        <template v-else>
+          <div class="empty-card"></div>
+        </template>
+      </div>
+    </template>
+  </body>
+</html>
