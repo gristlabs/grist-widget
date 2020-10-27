@@ -88,7 +88,6 @@ function updateRecords(rows) {
       }
     }
     data.labels = labels;
-    setTimeout(updateSize, 0);
   } catch (err) {
     handleError(err);
   }
@@ -105,6 +104,8 @@ function updateSize() {
   }
   let content = document.querySelector('#content');
   content.style.setProperty('--page-scaling', window.innerWidth / pageWidth);
+  let contentWrap = document.querySelector('#content-wrap');
+  contentWrap.style.height = content.getBoundingClientRect().height + 'px';
 }
 
 ready(function() {
@@ -122,6 +123,7 @@ ready(function() {
       template: function() {
         localStorage.setItem('printlabel-template', this.template.id);
       }
-    }
+    },
+    updated: () => setTimeout(updateSize, 0),
   });
 });

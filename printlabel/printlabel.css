@@ -120,15 +120,20 @@ body {
     transform-origin: top left;
     transform: scale(var(--page-scaling, 1));
   }
+  #content-wrap {
+    overflow: hidden;
+  }
 }
 
 @media print {
-  html, body, #app, .page-outer, .content {
+  body {
+    --label-outline: none;
+  }
+  html, body, #app, .page-outer, #content, #content-wrap {
     height: 100%;
     width: 100%;
     margin: 0 !important;
     padding: 0;
-    --label-outline: none;
   }
   @page {
     margin: 0 !important;
