@@ -25,21 +25,7 @@ body {
   height: 11in;
 }
 
-/*
- * Firefox includes unknown fixed margins; to work around it, we center content in the page, and
- * set it in @media print to 100%, which may be less than the page due to these margins.
- */
-
-.page-labels30 {
-  /* these are dimensions without the margins */
-  width: 8.125in;
-  height: 10in;
-}
-
-.label-labels30 {
-  width: 2.625in;
-  height: 1in;
-  margin-right: 0.125in;
+.label {
   padding: 0.08in;
   border-radius: 0.06in;
   background-color: white;
@@ -47,13 +33,67 @@ body {
   align-items: center;
   justify-content: center;
   vertical-align: bottom;
-  break-before: avoid;
   box-shadow: var(--label-outline);
 }
 
-.label-labels30:nth-child(3n) {
-  margin-right: 0;
+.labelpage {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  align-content: space-between;
 }
+
+/*
+ * Firefox includes unknown fixed margins; to work around it, we center content in the page, and
+ * set it in @media print to 100%, which may be less than the page due to these margins.
+ */
+
+.page-labels30 {
+  height: calc(11in - 2 * 0.5in);
+  width: calc(8.5in - 2 * 0.1875in);
+}
+.label-labels30 {
+  height: 1in;
+  width: 2.625in;
+}
+
+.page-labels10 {
+  height: calc(11in - 2 * 0.5in);
+  width: calc(8.5in - 2 * 0.156in);
+}
+.label-labels10 {
+  height: 2in;
+  width: 4in;
+}
+
+.page-labels60 {
+  height: calc(11in - 2 * 0.875in);
+  width: calc(8.5in - 2 * 0.5in);
+}
+.label-labels60 {
+  height: 0.5in;
+  width: 1.75in;
+}
+
+.page-labels80 {
+  height: calc(11in - 2 * 0.5in);
+  width: calc(8.5in - 2 * 0.3in);
+}
+.label-labels80 {
+  height: 0.5in;
+  width: 1.75in;
+}
+
+#labeltype {
+  font-size: 11pt;
+  padding: 4px;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  color: #666;
+}
+
 
 @media print {
   html, body, #app, .page-outer {
@@ -65,5 +105,8 @@ body {
   }
   @page {
     margin: 0 !important;
+  }
+  #labeltype {
+    display: none;
   }
 }

@@ -22,10 +22,15 @@
           {{ status }}
         </template>
       </div>
-      <div class="page-outer" v-for="page in labelPages">
-        <div class="printlabels" :class="'page-' + template.id">
+      <select id="labeltype" v-model="template">
+        <option v-for="tmpl in templates" :value="tmpl">
+        {{ tmpl.name }}
+        </option>
+      </select>
+      <div class="page-outer" v-for="page in arrangeLabels(labels, template)">
+        <div class="labelpage" :class="'page-' + template.id">
           <template v-for="label in page">
-            <div v-if="label" class="label" :class="'label-' + template.id">
+            <div class="label" :class="'label-' + template.id">
               <div class="label-content">{{label}}</div>
             </div>
           </template>

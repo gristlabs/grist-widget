@@ -6,11 +6,22 @@ function ready(fn) {
   }
 }
 
-const templates = [{
+let templates = [{
   id: 'labels30',
   name: '30 per sheet (1" x 2-5/8")',
-  details: 'Compatible with Avery® 5160®, 5260™, 5520™, 5660®, 5810™, 5960™, 5970™, 5971™ , 5972™, 5979™, 5980™, 8160™, 8460™, 8660™, 8810™',
   perPage: 30,
+}, {
+  id: 'labels10',
+  name: '10 per sheet (2" x 4")',
+  perPage: 10,
+}, {
+  id: 'labels60',
+  name: '60 per sheet (1/2" x 1-3/4")',
+  perPage: 60,
+}, {
+  id: 'labels80',
+  name: '80 per sheet (1/2" x 1-3/4")',
+  perPage: 80,
 }];
 
 let useListFromRow = false;
@@ -18,27 +29,33 @@ let useListFromRow = false;
 let app = undefined;
 let data = {
   status: 'waiting',
-  labelPages: null,
+  labels: null,
   template: templates[0],
 };
 
 function arrangeLabels(labels, template) {
-  const pages = [[]];
+  let pages = [];
+  let page = [];
   for (let i = 0; i < labels.length; i++) {
-    let page = pages[pages.length - 1];
     if (page.length >= template.perPage) {
-      pages.push([]);
-      page = pages[pages.length - 1];
+      pages.push(page);
+      page = [];
     }
-    page.push(labels[i]);
+    if (labels[i]) {
+      page.push(labels[i]);
+    }
   }
+  while (page.length < template.perPage) {
+    page.push("");
+  }
+  pages.push(page);
   return pages;
 }
 
 function handleError(err) {
   console.error(err);
-  const target = app || data;
-  target.labelPages = null;
+  let target = app || data;
+  target.labels = null;
   target.status = String(err).replace(/^Error: /, '');
   console.log(data);
 }
@@ -51,7 +68,7 @@ function updateRecord(row) {
         throw new Error("No data. Please add some rows");
       }
       data.status = '';
-      data.labelPages = arrangeLabels(row.LabelText, data.template);
+      data.labels = row.LabelText;
     } else {
       useListFromRow = false;
     }
@@ -72,7 +89,7 @@ function updateRecords(rows) {
     if (!rows[0].LabelText) {
       throw new Error('Need a visible column named "LabelText"');
     }
-    data.labelPages = arrangeLabels(rows.map(r => r.LabelText), data.template);
+    data.labels = rows.map(r => r.LabelText);
   } catch (err) {
     handleError(err);
   }
@@ -88,5 +105,6 @@ ready(function() {
   app = new Vue({
     el: '#app',
     data: data,
+    methods: {arrangeLabels: arrangeLabels},
   });
 });
