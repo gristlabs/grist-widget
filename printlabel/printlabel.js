@@ -32,8 +32,14 @@ let templates = [{
   perPage: 80,
 }];
 
-let startTemplateId = localStorage.getItem('printlabel-template');
-let startTemplate = templates.find(t => t.id === startTemplateId) || templates[1];
+let startTemplate =
+  findTemplate(document.location.hash.slice(1)) ||
+  findTemplate(localStorage.getItem('printlabel-template')) ||
+  findTemplate('labels30');
+
+function findTemplate(id) {
+  return templates.find(t => t.id === id);
+}
 
 let app = undefined;
 let data = {
