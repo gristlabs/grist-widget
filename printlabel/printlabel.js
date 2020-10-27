@@ -7,13 +7,13 @@ function ready(fn) {
 }
 
 let templates = [{
-  id: 'labels30',
-  name: '30 per sheet (1" x 2-5/8")',
-  perPage: 30,
-}, {
   id: 'labels10',
   name: '10 per sheet (2" x 4")',
   perPage: 10,
+}, {
+  id: 'labels30',
+  name: '30 per sheet (1" x 2-5/8")',
+  perPage: 30,
 }, {
   id: 'labels60',
   name: '60 per sheet (1/2" x 1-3/4")',
@@ -24,13 +24,16 @@ let templates = [{
   perPage: 80,
 }];
 
+let startTemplateId = localStorage.getItem('printlabel-template');
+let startTemplate = templates.find(t => t.id === startTemplateId) || templates[1];
+
 let useListFromRow = false;
 
 let app = undefined;
 let data = {
   status: 'waiting',
   labels: null,
-  template: templates[0],
+  template: startTemplate,
 };
 
 function arrangeLabels(labels, template) {
@@ -106,5 +109,10 @@ ready(function() {
     el: '#app',
     data: data,
     methods: {arrangeLabels: arrangeLabels},
+    watch: {
+      template: function() {
+        localStorage.setItem('printlabel-template', this.template.id);
+      }
+    }
   });
 });
