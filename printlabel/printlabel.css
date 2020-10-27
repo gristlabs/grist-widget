@@ -49,13 +49,13 @@ body {
  * set it in @media print to 100%, which may be less than the page due to these margins.
  */
 
-.page-labels30 {
-  height: calc(11in - 2 * 0.5in);
-  width: calc(8.5in - 2 * 0.1875in);
+.page-labels8 {
+  height: calc(11in - 2 * 0.5833in);
+  width: calc(8.5in - 2 * 0.6875in);
 }
-.label-labels30 {
-  height: 1in;
-  width: 2.625in;
+.label-labels8 {
+  height: 2.3333in;
+  width: 3.375in;
 }
 
 .page-labels10 {
@@ -65,6 +65,23 @@ body {
 .label-labels10 {
   height: 2in;
   width: 4in;
+}
+
+.page-labels20 {
+  height: calc(11in - 2 * 0.5in);
+  width: calc(8.5in - 2 * 0.167in);
+}
+.label-labels20 {
+  height: 1in;
+  width: 4in;
+}
+.page-labels30 {
+  height: calc(11in - 2 * 0.5in);
+  width: calc(8.5in - 2 * 0.1875in);
+}
+.label-labels30 {
+  height: 1in;
+  width: 2.625in;
 }
 
 .page-labels60 {
