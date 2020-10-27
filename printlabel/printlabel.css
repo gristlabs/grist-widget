@@ -1,0 +1,74 @@
+body {
+  font-family: Sans-Serif;
+  padding: 0;
+  margin: 0;
+}
+
+@media not print {
+  body {
+    padding: 0 0.1875in;
+    width: max-content;
+  }
+}
+
+*, *:before, *:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.label-content {
+  white-space: pre-wrap;
+  text-align: left;
+  font-size: 11pt;
+}
+
+.page-labels30 {
+  width: 8.125in;   /* 8.5in - content */
+  margin: 0 auto;
+}
+
+.label-labels30 {
+  width: 2.625in;
+  height: 1in;
+  margin-right: 0.125in;
+  padding: 0.08in;
+  border-radius: 0.06in;
+  background-color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: bottom;
+  break-before: avoid;
+}
+
+.label-labels30:nth-child(3n) {
+  margin-right: 0;
+}
+
+.label-labels30:nth-child(30n+1) {
+  margin-top: 0.5in;
+}
+
+.label-labels30:nth-child(30n+31) {
+  break-before: page;
+}
+
+  .label-labels30 {
+    box-shadow: 0 0 0 1px #aaa;
+  }
+@media not print {
+  .label-labels30 {
+    box-shadow: 0 0 0 1px #aaa;
+  }
+}
+
+@media print {
+  /* None of this really helps on Firefox :( */
+  body {
+    margin:0 !important;
+  }
+  @page {
+    margin: 0 !important;
+  }
+}

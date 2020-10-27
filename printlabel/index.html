@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Grist Print Labels</title>
+
+    <!-- A template for showing printing labels in a Custom Widget in Grist. -->
+    <!-- Uses Vue.js, and the Grist Plugin API -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.3/vue.min.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+    <script src="printlabel.js?ver=1"></script>
+    <link rel="stylesheet" href="printlabel.css?ver=1">
+  </head>
+  <body>
+    <div id="app">
+      <div class="status" v-if="status">
+        <template v-if="status === 'waiting'">
+          <p>Waiting for data...</p>
+        </template>
+        <template v-else>
+          {{ status }}
+        </template>
+      </div>
+      <div class="printlabels" :class="'page-' + template.id">
+        <template v-for="label in labels">
+          <div v-if="label" class="label" :class="'label-' + template.id">
+            <div class="label-content">{{label}}</div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </body>
+</html>
