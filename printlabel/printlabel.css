@@ -111,15 +111,19 @@ body {
 #labeltype {
   font-size: 11pt;
   padding: 4px;
-  position: absolute;
-  top: 8px;
-  left: 8px;
+  margin: 8px;
   color: #666;
 }
 
+@media not print {
+  #content {
+    transform-origin: top left;
+    transform: scale(var(--page-scaling, 1));
+  }
+}
 
 @media print {
-  html, body, #app, .page-outer {
+  html, body, #app, .page-outer, .content {
     height: 100%;
     width: 100%;
     margin: 0 !important;
