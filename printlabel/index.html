@@ -22,12 +22,14 @@
           {{ status }}
         </template>
       </div>
-      <div class="printlabels" :class="'page-' + template.id">
-        <template v-for="label in labels">
-          <div v-if="label" class="label" :class="'label-' + template.id">
-            <div class="label-content">{{label}}</div>
-          </div>
-        </template>
+      <div class="page-outer" v-for="page in labelPages">
+        <div class="printlabels" :class="'page-' + template.id">
+          <template v-for="label in page">
+            <div v-if="label" class="label" :class="'label-' + template.id">
+              <div class="label-content">{{label}}</div>
+            </div>
+          </template>
+        </div>
       </div>
     </div>
   </body>

@@ -2,13 +2,7 @@ body {
   font-family: Sans-Serif;
   padding: 0;
   margin: 0;
-}
-
-@media not print {
-  body {
-    padding: 0 0.1875in;
-    width: max-content;
-  }
+  --label-outline: 0 0 0 1px #aaa;
 }
 
 *, *:before, *:after {
@@ -23,9 +17,23 @@ body {
   font-size: 11pt;
 }
 
+.page-outer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 8.5in;
+  height: 11in;
+}
+
+/*
+ * Firefox includes unknown fixed margins; to work around it, we center content in the page, and
+ * set it in @media print to 100%, which may be less than the page due to these margins.
+ */
+
 .page-labels30 {
-  width: 8.125in;   /* 8.5in - content */
-  margin: 0 auto;
+  /* these are dimensions without the margins */
+  width: 8.125in;
+  height: 10in;
 }
 
 .label-labels30 {
@@ -40,33 +48,20 @@ body {
   justify-content: center;
   vertical-align: bottom;
   break-before: avoid;
+  box-shadow: var(--label-outline);
 }
 
 .label-labels30:nth-child(3n) {
   margin-right: 0;
 }
 
-.label-labels30:nth-child(30n+1) {
-  margin-top: 0.5in;
-}
-
-.label-labels30:nth-child(30n+31) {
-  break-before: page;
-}
-
-  .label-labels30 {
-    box-shadow: 0 0 0 1px #aaa;
-  }
-@media not print {
-  .label-labels30 {
-    box-shadow: 0 0 0 1px #aaa;
-  }
-}
-
 @media print {
-  /* None of this really helps on Firefox :( */
-  body {
-    margin:0 !important;
+  html, body, #app, .page-outer {
+    height: 100%;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0;
+    --label-outline: none;
   }
   @page {
     margin: 0 !important;
