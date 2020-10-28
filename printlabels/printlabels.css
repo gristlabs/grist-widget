@@ -1,0 +1,149 @@
+body {
+  font-family: Sans-Serif;
+  padding: 0;
+  margin: 0;
+  --label-outline: 0 0 0 1px #aaa;
+}
+
+*, *:before, *:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.status {
+  padding: 8px;
+  margin-top: 40px;
+  color: blue;
+}
+
+.label-content {
+  white-space: pre-wrap;
+  text-align: left;
+  font-size: 11pt;
+}
+
+.page-outer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 8.5in;
+  height: 11in;
+}
+
+@media not print {
+  .page-outer {
+    overflow: hidden;
+    width: calc(8.5in * var(--page-scaling, 1));
+    height: calc(11in * var(--page-scaling, 1));
+  }
+  .labelpage {
+    transform: scale(var(--page-scaling, 1));
+  }
+}
+
+.label {
+  padding: 0.08in;
+  border-radius: 0.06in;
+  background-color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: bottom;
+  box-shadow: var(--label-outline);
+}
+
+.labelpage {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  align-content: space-between;
+  height: calc(11in - 2 * var(--vmargin, 0));
+  width: calc(8.5in - 2 * var(--hmargin, 0));
+  min-height: calc(11in - 2 * var(--vmargin, 0));
+  min-width: calc(8.5in - 2 * var(--hmargin, 0));
+}
+
+/*
+ * Firefox includes unknown fixed margins; to work around it, we center content in the page, and
+ * set it in @media print to 100%, which may be less than the page due to these margins.
+ */
+
+.page-labels8 {
+  --vmargin: 0.5833in;
+  --hmargin: 0.6875in;
+}
+.label-labels8 {
+  height: 2.3333in;
+  width: 3.375in;
+}
+
+.page-labels10 {
+  --vmargin: 0.5in;
+  --hmargin: 0.156in;
+}
+.label-labels10 {
+  height: 2in;
+  width: 4in;
+}
+
+.page-labels20 {
+  --vmargin: 0.5in;
+  --hmargin: 0.167in;
+}
+.label-labels20 {
+  height: 1in;
+  width: 4in;
+}
+.page-labels30 {
+  --vmargin: 0.5in;
+  --hmargin: 0.1875in;
+}
+.label-labels30 {
+  height: 1in;
+  width: 2.625in;
+}
+
+.page-labels60 {
+  --vmargin: 0.875in;
+  --hmargin: 0.5in;
+}
+.label-labels60 {
+  height: 0.5in;
+  width: 1.75in;
+}
+
+.page-labels80 {
+  --vmargin: 0.5in;
+  --hmargin: 0.3in;
+}
+.label-labels80 {
+  height: 0.5in;
+  width: 1.75in;
+}
+
+#labeltype {
+  font-size: 11pt;
+  padding: 4px;
+  margin: 8px;
+  color: #666;
+}
+
+@media print {
+  body {
+    --label-outline: none;
+  }
+  html, body, #app, .page-outer, #content, #content-wrap {
+    height: 100%;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0;
+  }
+  @page {
+    margin: 0 !important;
+  }
+  #labeltype {
+    display: none;
+  }
+}
