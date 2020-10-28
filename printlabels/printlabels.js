@@ -6,7 +6,7 @@ function ready(fn) {
   }
 }
 
-let templates = [{
+const templates = [{
   id: 'labels8',
   name: '8 per sheet (2-1/3" x 3-3/8")',
   perPage: 8,
@@ -32,7 +32,7 @@ let templates = [{
   perPage: 80,
 }];
 
-let startTemplate =
+const startTemplate =
   findTemplate(document.location.hash.slice(1)) ||
   findTemplate(localStorage.getItem('printlabels-template')) ||
   findTemplate('labels30');
@@ -49,7 +49,7 @@ let data = {
 };
 
 function arrangeLabels(labels, template) {
-  let pages = [];
+  const pages = [];
   let page = [];
   for (let i = 0; i < labels.length; i++) {
     if (page.length >= template.perPage) {
@@ -68,11 +68,10 @@ function arrangeLabels(labels, template) {
 }
 
 function handleError(err) {
-  console.error(err);
-  let target = app || data;
+  console.error('ERROR', err);
+  const target = app || data;
   target.labels = null;
   target.status = String(err).replace(/^Error: /, '');
-  console.log(data);
 }
 
 function updateRecords(rows) {
@@ -84,8 +83,8 @@ function updateRecords(rows) {
     if (!rows[0].hasOwnProperty('LabelText')) {
       throw new Error('Need a visible column named "LabelText"');
     }
-    let haveCounts = rows[0].hasOwnProperty('LabelCount');
-    let labels = [];
+    const haveCounts = rows[0].hasOwnProperty('LabelCount');
+    const labels = [];
     for (let r of rows) {
       // parseFloat to be generous about the type of LabelCount. Text will be accepted.
       let count = haveCounts ? parseFloat(r.LabelCount) : 1;
@@ -103,7 +102,7 @@ function updateRecords(rows) {
 let pageWidth = null;
 
 function updateSize() {
-  let page = document.querySelector('.page-outer');
+  const page = document.querySelector('.page-outer');
   if (!page) { return; }
   if (!pageWidth) {
     pageWidth = page.getBoundingClientRect().width;
@@ -121,7 +120,7 @@ ready(function() {
   app = new Vue({
     el: '#app',
     data: data,
-    methods: {arrangeLabels: arrangeLabels},
+    methods: {arrangeLabels},
     watch: {
       template: function() {
         localStorage.setItem('printlabels-template', this.template.id);
