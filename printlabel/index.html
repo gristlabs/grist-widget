@@ -27,21 +27,17 @@
         {{ tmpl.name }}
         </option>
       </select>
-      <div id="content-wrap">
-        <div id="content">
-          <template v-if="labels">
-            <div class="page-outer" v-for="page in arrangeLabels(labels, template)">
-              <div class="labelpage" :class="'page-' + template.id">
-                <template v-for="label in page">
-                  <div class="label" :class="'label-' + template.id">
-                    <div class="label-content">{{label}}</div>
-                  </div>
-                </template>
+      <template v-if="labels">
+        <div class="page-outer" v-for="page in arrangeLabels(labels, template)">
+          <div class="labelpage" :class="'page-' + template.id">
+            <template v-for="label in page">
+              <div class="label" :class="'label-' + template.id">
+                <div class="label-content">{{label}}</div>
               </div>
-            </div>
-          </template>
+            </template>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
   </body>
 </html>

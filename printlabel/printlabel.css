@@ -31,6 +31,17 @@ body {
   height: 11in;
 }
 
+@media not print {
+  .page-outer {
+    overflow: hidden;
+    width: calc(8.5in * var(--page-scaling, 1));
+    height: calc(11in * var(--page-scaling, 1));
+  }
+  .labelpage {
+    transform: scale(var(--page-scaling, 1));
+  }
+}
+
 .label {
   padding: 0.08in;
   border-radius: 0.06in;
@@ -48,6 +59,10 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   align-content: space-between;
+  height: calc(11in - 2 * var(--vmargin, 0));
+  width: calc(8.5in - 2 * var(--hmargin, 0));
+  min-height: calc(11in - 2 * var(--vmargin, 0));
+  min-width: calc(8.5in - 2 * var(--hmargin, 0));
 }
 
 /*
@@ -56,8 +71,8 @@ body {
  */
 
 .page-labels8 {
-  height: calc(11in - 2 * 0.5833in);
-  width: calc(8.5in - 2 * 0.6875in);
+  --vmargin: 0.5833in;
+  --hmargin: 0.6875in;
 }
 .label-labels8 {
   height: 2.3333in;
@@ -65,8 +80,8 @@ body {
 }
 
 .page-labels10 {
-  height: calc(11in - 2 * 0.5in);
-  width: calc(8.5in - 2 * 0.156in);
+  --vmargin: 0.5in;
+  --hmargin: 0.156in;
 }
 .label-labels10 {
   height: 2in;
@@ -74,16 +89,16 @@ body {
 }
 
 .page-labels20 {
-  height: calc(11in - 2 * 0.5in);
-  width: calc(8.5in - 2 * 0.167in);
+  --vmargin: 0.5in;
+  --hmargin: 0.167in;
 }
 .label-labels20 {
   height: 1in;
   width: 4in;
 }
 .page-labels30 {
-  height: calc(11in - 2 * 0.5in);
-  width: calc(8.5in - 2 * 0.1875in);
+  --vmargin: 0.5in;
+  --hmargin: 0.1875in;
 }
 .label-labels30 {
   height: 1in;
@@ -91,8 +106,8 @@ body {
 }
 
 .page-labels60 {
-  height: calc(11in - 2 * 0.875in);
-  width: calc(8.5in - 2 * 0.5in);
+  --vmargin: 0.875in;
+  --hmargin: 0.5in;
 }
 .label-labels60 {
   height: 0.5in;
@@ -100,8 +115,8 @@ body {
 }
 
 .page-labels80 {
-  height: calc(11in - 2 * 0.5in);
-  width: calc(8.5in - 2 * 0.3in);
+  --vmargin: 0.5in;
+  --hmargin: 0.3in;
 }
 .label-labels80 {
   height: 0.5in;
@@ -113,16 +128,6 @@ body {
   padding: 4px;
   margin: 8px;
   color: #666;
-}
-
-@media not print {
-  #content {
-    transform-origin: top left;
-    transform: scale(var(--page-scaling, 1));
-  }
-  #content-wrap {
-    overflow: hidden;
-  }
 }
 
 @media print {

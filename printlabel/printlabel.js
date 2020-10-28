@@ -108,10 +108,7 @@ function updateSize() {
   if (!pageWidth) {
     pageWidth = page.getBoundingClientRect().width;
   }
-  let content = document.querySelector('#content');
-  content.style.setProperty('--page-scaling', window.innerWidth / pageWidth);
-  let contentWrap = document.querySelector('#content-wrap');
-  contentWrap.style.height = content.getBoundingClientRect().height + 'px';
+  document.body.style.setProperty('--page-scaling', window.innerWidth / pageWidth);
 }
 
 ready(function() {
