@@ -34,7 +34,7 @@ const templates = [{
 
 const startTemplate =
   findTemplate(document.location.hash.slice(1)) ||
-  findTemplate(localStorage.getItem('printlabels-template')) ||
+  findTemplate(store.get('printlabels-template')) ||
   findTemplate('labels30');
 
 function findTemplate(id) {
@@ -123,7 +123,7 @@ ready(function() {
     methods: {arrangeLabels},
     watch: {
       template: function() {
-        localStorage.setItem('printlabels-template', this.template.id);
+        store.set('printlabels-template', this.template.id);
       }
     },
     updated: () => setTimeout(updateSize, 0),
