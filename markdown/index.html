@@ -80,7 +80,7 @@
           showError("");
           data = record[keys[0]];
           if (nextRowId !== rowId || cachedData !== data) {
-            txt.value(data);
+            txt.value("" + data);
           }
           cachedData = data;
           rowId = nextRowId;
