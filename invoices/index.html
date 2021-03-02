@@ -60,7 +60,7 @@
                   </template>
                   {{ business.City }} {{ business.State }} {{ business.Zip }}<br />
                   <template v-if="business.Country">
-                    { business.Country }}<br />
+                    {{ business.Country }}<br />
                   </template>
                 </div>
                 <template v-if="business.Email">
