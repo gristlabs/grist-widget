@@ -23,13 +23,21 @@
           {{ status }}
         </template>
       </div>
-      <select v-else id="labeltype" v-model="template">
-        <option v-for="tmpl in templates" :value="tmpl">
-        {{ tmpl.name }}
-        </option>
-      </select>
+      <div class="header" v-else>
+        <select id="labeltype" v-model="template">
+          <option v-for="tmpl in templates" :value="tmpl">
+          {{ tmpl.name }}
+          </option>
+        </select>
+        <div id="options-btn" v-on:click="showOptions = true">⚙</div>
+      </div>
+      <div v-show="showOptions" id="options-container" v-on:click="showOptions = false">
+        <div id="options-popup" v-on:click.stop>
+          <div>Leave initial blanks <input type="number" id="blanks" v-model="blanks"></div>
+        </div>
+      </div>
       <template v-if="labels">
-        <div class="page-outer" v-for="page in arrangeLabels(labels, template)">
+        <div class="page-outer" v-for="page in arrangeLabels(labels, template, blanks)">
           <div class="labelpage" :class="'page-' + template.id">
             <template v-for="label in page">
               <div class="label" :class="'label-' + template.id">

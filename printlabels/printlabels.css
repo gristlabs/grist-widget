@@ -123,11 +123,48 @@ body {
   width: 1.75in;
 }
 
+.header {
+  margin: 8px;
+  font-size: 11pt;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 #labeltype {
   font-size: 11pt;
   padding: 4px;
-  margin: 8px;
   color: #666;
+}
+#options-btn {
+  font-size: 30px;
+  line-height: 30px;
+  cursor: pointer;
+  margin: 0 8px;
+}
+#options-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+}
+#options-popup {
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 20px 0 rgba(80,80,80,0.6);
+  background-color: white;
+  max-width: max-content;
+  position: absolute;
+  right: 8px;
+  top: 40px;
+  padding: 16px;
+  color: #666;
+}
+#blanks {
+  font-size: 11pt;
+  width: 4em;
+  margin-left: 1em;
 }
 
 @media print {
@@ -143,7 +180,7 @@ body {
   @page {
     margin: 0 !important;
   }
-  #labeltype {
+  .header, #labeltype, #options-container {
     display: none;
   }
 }

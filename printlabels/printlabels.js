@@ -46,18 +46,28 @@ let data = {
   status: 'waiting',
   labels: null,
   template: startTemplate,
+  showOptions: false,
+  // Blanks, if positive, tells to leave this number of labels blank before starting to populate
+  // them with data.
+  blanks: 0
 };
 
-function arrangeLabels(labels, template) {
+function arrangeLabels(labels, template, blanks) {
   const pages = [];
   let page = [];
-  for (let i = 0; i < labels.length; i++) {
+  blanks = blanks || 0;
+  for (let i = 0; i < blanks + labels.length; i++) {
     if (page.length >= template.perPage) {
       pages.push(page);
       page = [];
     }
-    if (labels[i]) {
-      page.push(labels[i]);
+    if (i < blanks) {
+      page.push("");
+    } else {
+      const label = labels[i - blanks];
+      if (label) {
+        page.push(label);
+      }
     }
   }
   while (page.length < template.perPage) {
