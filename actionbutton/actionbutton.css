@@ -1,0 +1,41 @@
+body {
+  font-family: Sans-Serif;
+  padding: 0;
+  margin: 0;
+}
+
+*, *:before, *:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.status {
+  padding: 8px;
+  margin-top: 40px;
+  color: blue;
+}
+
+
+#app {
+  margin: 32px 16px;
+}
+
+.description, .result, .button {
+  margin: 16px 0;
+}
+
+.message {
+  color: orange;
+}
+
+.button {
+  border: none;
+  border-radius: 6px;
+  background-color: #1486ff;
+  padding: 8px 16px;
+  color: white;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+}

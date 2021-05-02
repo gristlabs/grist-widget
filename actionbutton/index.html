@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Grist Action Button</title>
+
+    <!-- Uses Vue.js, store.js, and the Grist Plugin API -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.3/vue.min.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+    <script src="actionbutton.js?ver=1"></script>
+    <link rel="stylesheet" href="actionbutton.css?ver=1">
+  </head>
+  <body>
+    <div id="app">
+      <div class="status" v-if="status">
+        <template v-if="status === 'waiting'">
+          <p>Waiting for data...</p>
+        </template>
+        <template v-else>
+          {{ status }}
+        </template>
+      </div>
+      <template v-else>
+        <div class="description">{{ input.description }}</div>
+        <button class="button" v-on:click="applyActions">{{ input.button }}</button>
+        <div class="result" v-if="result">{{ input.result }}</div>
+      </template>
+    </div>
+  </body>
+</html>
