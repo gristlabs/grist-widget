@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Copy To Clipboard</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <style>
+      #error {
+          display: none;
+          background: red;
+          color: white;
+          padding: 20px;
+          text-align: center;
+      }
+      textarea {
+          display: block;
+          width: 100%;
+          height: 40px;
+      }
+      button {
+          margin-top: 10px;
+          background-color: #4CAF50;
+          border: none;
+          color: white;
+          padding: 15px 32px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          border-radius: 8px;
+      }
+      button:hover {
+          background-color: #40A000;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea value="" id="text"></textarea>
+    <button id="copy" onclick="copyText()">Copy Text</button>
+    <div id="error"></div>
+    <script>
+      function copyText() {
+        var copyText = document.getElementById("text");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        document.getElementById('copy').innerHTML = "Copied";
+      }
+      function showError(msg) {
+        var el = document.getElementById('error')
+        if (!msg) {
+          el.style.display = 'none';
+        } else {
+          el.innerHTML = msg;
+          el.style.display = 'block';
+        }
+      }
+      grist.ready();
+      grist.on('message', (e) => {
+        if (e.tableId) { tableId = e.tableId; }
+      });
+      grist.onRecord(function(record) {
+        delete record.id;
+        var keys = Object.keys(record);
+        if (keys.length > 1) {
+          showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
+        } else {
+          showError("");
+          data = record[keys[0]];
+          document.getElementById('text').value = data;
+          document.getElementById('copy').innerHTML = "Copy Text";
+        }
+      });
+    </script>
+  </body>
+</html>
