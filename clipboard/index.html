@@ -5,6 +5,10 @@
     <title>Copy To Clipboard</title>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <style>
+      html, body {
+          padding: 0px;
+          margin: 0px;
+      }
       #error {
           display: none;
           background: red;
@@ -13,12 +17,10 @@
           text-align: center;
       }
       textarea {
-          display: block;
-          width: 100%;
-          height: 40px;
+          flex: 1;
+          box-sizing: border-box;
       }
       button {
-          margin-top: 10px;
           background-color: #4CAF50;
           border: none;
           color: white;
@@ -32,11 +34,21 @@
       button:hover {
           background-color: #40A000;
       }
+      .content {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          padding: 20px;
+      }
+      .content div, .content button, .content textarea {
+          margin: 20px;
+      }
     </style>
   </head>
   <body>
-    <textarea value="" id="text"></textarea>
+    <div class="content">
     <button id="copy" onclick="copyText()">Copy Text</button>
+    <textarea value="" id="text"></textarea>
     <div id="error"></div>
     <script>
       function copyText() {
@@ -72,5 +84,6 @@
         }
       });
     </script>
+    </div>
   </body>
 </html>
