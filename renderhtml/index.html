@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Render sanitized HTML from a cell</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.2.9/dist/purify.min.js"></script>
+    <style>
+      html, body, textarea {
+          width: 100%;
+          height: 100vh;
+          padding: 0;
+          margin: 0;
+      }
+      #error {
+          display: none;
+          background: red;
+          color: white;
+          padding: 20px;
+          text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="error"></div>
+    <div id="rendered"></div>
+    <script>
+      var tableId = null;
+      var rowId = null;
+      var colId = null;
+      var cachedData = null;
+      function render(elemId, content) {
+        var el = document.getElementById(elemId);
+        if (!content) {
+          el.style.display = 'none';
+        } else {
+          el.innerHTML = DOMPurify.sanitize(content);
+          el.style.display = 'block';
+        }
+      }
+      grist.ready();
+      grist.on('message', (e) => {
+        if (e.tableId) { tableId = e.tableId; }
+      });
+      grist.onRecord(function(record) {
+        var nextRowId = record.id;
+        delete record.id;
+        var keys = Object.keys(record);
+        if (keys.length > 1) {
+          rowId = null;
+          colId = null;
+          render("error", "Please hide all but one of these columns from this widget: " + keys.join(", "));
+        } else {
+          render("error", null);
+          data = record[keys[0]];
+          if (nextRowId !== rowId || cachedData !== data) {
+            render("rendered", "" + data);
+          }
+          cachedData = data;
+          rowId = nextRowId;
+          colId = keys[0];
+        }
+      });
+    </script>
+  </body>
+</html>
