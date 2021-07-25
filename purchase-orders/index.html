@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Grist Purchase Order</title>
+
+    <!-- A template for showing a Purchase Order in a Custom Widget in Grist. -->
+    <!-- Uses Vue.js, moment, and the Grist Plugin API -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.3/vue.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+    <script src="purchase_order.js?ver=11"></script>
+    <script src="exampleData.js"></script>
+
+    <link rel="stylesheet" href="purchase_order.css?ver=17">
+  </head>
+  <body>
+    <div id="app">
+      <div class="status" v-if="status">
+        <template v-if="status === 'waiting'">
+          <p>Waiting for data...</p>
+          <ul>
+            <li v-bind:class="[tableConnected ? 'done' : '']">I need <b>read table</b> access.</li>
+            <li v-bind:class="[haveRows ? 'done' : '']">I need at least one row of data.</li>
+            <li v-bind:class="[rowConnected ? 'done' : '']">I need <b>Select By</b> set.</li>
+          </ul>
+          <p>Examples:</p>
+          <ul>
+            <li><a class="button" href="index.html?demo=1">A filled out purchase order</a></li>
+            <li><a class="button" href="index.html?labels=1">A labelled purchase order</a></li>
+          </ul>
+        </template>
+        <template v-else>
+          {{ status }}
+        </template>
+      </div>
+      <template v-if="order">
+        <div class="top">
+          <div class="block">
+            <div class="header">
+              <div class="meta title">Purchase Order</div>
+            </div>
+            <div class="info"><span class="meta">PO Number</span> #{{ order.PONumber }}</div>
+            <div class="info" v-if="order.PODate"><div class="meta date-tag">PO Date</div> {{ order.PODate | asDate }}</div>
+          </div>
+
+          <div class="purchaser">
+            <div v-for="business in (order.Purchaser ? [order.Purchaser] : [])">
+              <template v-if="typeof(business) === 'string'">
+                <div class="address newlined">{{ business }}</div>
+              </template>
+              <template v-else>
+                <div class="address">
+                  <span class="name">{{ business.Name }}</span><br />
+                  {{ business.Street1 }}<br />
+                  <template v-if="business.Street2">
+                    {{ business.Street2 }}<br />
+                  </template>
+                  {{ business.City }} {{ business.State }} {{ business.Zip }}<br />
+                  <template v-if="business.Country">
+                    {{ business.Country }}<br />
+                  </template>
+                </div>
+                <template v-if="business.Email">
+                  <div class="email">{{ business.Email }}</div>
+                </template>
+                <template v-if="business.Phone">
+                  <div class="phone">{{ business.Phone }}</div>
+                </template>
+                <template v-if="business.Website">
+                  <div class="website"><a v-bind:href="business.Url">{{ business.Website }}</a></div>
+                </template>
+              </template>
+            </div>
+          </div>
+        </div>
+ 
+        <div class="vendor" v-for="business in (order.Vendor ? [order.Vendor] : [])">
+          <div class="title">Vendor</div>
+          <div class="details">
+            <template v-if="typeof(business) === 'string'">
+              <div class="newlined">{{ business }}</div>
+            </template>
+            <template v-else>
+              <div>{{ business.Name }}</div>
+              <template v-if="business.Street1">
+                {{ business.Street1 }},
+              </template>
+              <template v-if="business.Street2">
+                {{ business.Street2 }},
+              </template>
+              {{ business.City }} {{ business.State }} {{ business.Zip }}
+              <template v-if="business.Country">
+                <br />{{ business.Country }}
+              </template>
+              <template v-if="business.Email">
+                <div class="email">{{ business.Email }}</div>
+              </template>
+              <template v-if="business.Phone">
+                <div class="phone">{{ business.Phone }}</div>
+              </template>
+              <template v-if="business.Website">
+                <div class="website"><a v-bind:href="business.Url">{{ business.Website }}</a></div>
+              </template>
+            </template>
+          </div>
+        </div>
+
+        <table class="items">
+          <template v-if="!Array.isArray(order.Items)">
+            <tr>
+              <th>Description</th>
+              <th class="money">Total</th>
+            </tr>
+            <tr>
+              <td>{{ order.Items }}</td>
+              <td class="money">{{ order.Total | currency }}</td>
+            </tr>
+          </template>
+          <template v-else>
+            <tr>
+              <th>Code</th>
+              <th>Description</th>
+              <th class="money">Unit Price</th>
+              <th class="number">Quantity</th>
+              <th class="money">Total</th>
+            </tr>
+            <tr v-for="item in order.Items">
+              <td>{{ item.Code }}</td>
+              <td>{{ item.Description }}</td>
+              <td class="money">{{ item.Price | currency }}</td>
+              <td class="number">{{ item.Quantity }}</td>
+              <td class="money">{{ item.Total | currency }}</td>
+            </tr>
+          </template>
+        </table>
+
+        <table class="summary">
+          <tr class="part" v-for="item in order.Summary">
+            <td class="title">{{ item[0] }}</td>
+            <td class="details">{{ item[1] | currency }}</td>
+          </tr>
+          <tr class="total">
+            <td class="title">TOTAL</td>
+            <td class="details">{{ order.Total | currency }}</td>
+          </tr>
+        </table>
+
+        <template v-if="order.Note">
+          <p class="note">{{ order.Note }}</p>
+        </template>
+
+        <template v-for="help in (order.Help ? [order.Help] : [])">
+          <div class="help">
+            <div class="help-close">
+              Add <span class="column-name">Due</span> or <span class="column-name">Issued</span> date to hide this help.
+            </div>
+            <div class="title">Column information</div>
+            <div class="details">
+              <table>
+                <tr v-for="group in ['recognized', 'expected', 'ignored']">
+                  <td class="key">{{ group }}</td>
+                  <td>
+                    <template v-if="group in help">
+                      <div v-bind:class="['column-name', 'column-' + group]" v-for="col in help[group]">{{col}}</div>
+                    </template>
+                    <template v-else>
+                      &mdash;
+                    </template>
+                  </td>
+                </tr>
+              </table>
+              <template v-if="order.SuggestReferencesColumn">
+                <div>For structured address and item information, add a <span class="column-name">References</span> column with this formula:</div>
+                <div>
+                  <pre>RECORD(rec, expand_refs=1)</pre>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <div class="footer">
+        </div>
+      </template>
+    </div>
+  </body>
+</html>
