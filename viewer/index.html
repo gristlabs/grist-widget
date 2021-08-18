@@ -54,8 +54,14 @@
         } else {
           showError("");
           var data = record[keys[0]];
-          viewer.src = data;
-          viewer.style.display = 'block';
+          if (!data) {
+            viewer.style.display = 'none';
+          } else {
+            var parts = data.split(' ');
+            var url = parts[parts.length - 1];
+            viewer.src = url;
+            viewer.style.display = 'block';
+          }
         }
       });
     </script>
