@@ -1,0 +1,12 @@
+{
+  "name": "@gristlabs/widget-printlabels",
+  "description": "printlabels",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Print labels",
+    "url": "https://berhalak.github.io/grist-widget/printlabels",
+    "widgetId": "@gristlabs/widget-printlabels",
+    "published": true
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@gristlabs/widget-actionbutton",
+  "description": "actionbutton",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Action button",
+    "url": "https://berhalak.github.io/grist-widget/actionbutton",
+    "widgetId": "@gristlabs/widget-actionbutton",
+    "published": true
+  }
+}

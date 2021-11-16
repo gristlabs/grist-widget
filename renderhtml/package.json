@@ -1,0 +1,12 @@
+{
+  "name": "@gristlabs/widget-renderhtml",
+  "description": "renderhtml",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "HTML viewer",
+    "url": "https://berhalak.github.io/grist-widget/renderhtml",
+    "widgetId": "@gristlabs/widget-renderhtml",
+    "published": true
+  }
+}

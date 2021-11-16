@@ -1,0 +1,12 @@
+{
+  "name": "@gristlabs/widget-inspect",
+  "description": "inspect",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Inspect",
+    "url": "https://berhalak.github.io/grist-widget/inspect",
+    "widgetId": "@gristlabs/widget-inspect",
+    "published": true
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@gristlabs/widget-clipboard",
+  "description": "clipboard",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Copy to clipboard",
+    "url": "https://berhalak.github.io/grist-widget/clipboard",
+    "widgetId": "@gristlabs/widget-clipboard",
+    "published": true
+  }
+}

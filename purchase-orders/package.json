@@ -1,0 +1,12 @@
+{
+  "name": "@gristlabs/widget-purchase-orders",
+  "description": "purchase-orders",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "purchase-orders",
+    "url": "https://berhalak.github.io/grist-widget/purchase-orders",
+    "widgetId": "@gristlabs/widget-purchase-orders",
+    "published": false
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@gristlabs/widget-exoplanet",
+  "description": "exoplanet",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Exoplanet",
+    "url": "https://berhalak.github.io/grist-widget/exoplanet",
+    "widgetId": "@gristlabs/widget-exoplanet",
+    "published": true
+  }
+}
