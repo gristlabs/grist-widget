@@ -1,11 +1,11 @@
 {
   "name": "@gristlabs/widget-map",
-  "description": "map",
+  "description": "Widget for showing geolocated data on a map.",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
   "grist": {
     "name": "Map",
-    "url": "https://berhalak.github.io/grist-widget/map",
+    "url": "https://gristlabs.github.io/grist-widget/map",
     "widgetId": "@gristlabs/widget-map",
     "published": true
   }

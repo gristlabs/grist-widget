@@ -1,11 +1,11 @@
 {
   "name": "@gristlabs/widget-inspect",
-  "description": "inspect",
+  "description": "Simple widget that can be used to inspect messages sent from Grist.",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
   "grist": {
     "name": "Inspect",
-    "url": "https://berhalak.github.io/grist-widget/inspect",
+    "url": "https://gristlabs.github.io/grist-widget/inspect",
     "widgetId": "@gristlabs/widget-inspect",
     "published": true
   }

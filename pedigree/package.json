@@ -1,11 +1,11 @@
 {
   "name": "@gristlabs/widget-pedigree",
-  "description": "pedigree",
+  "description": "A widget to show animal pedigrees.",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
   "grist": {
-    "name": "pedigree",
-    "url": "https://berhalak.github.io/grist-widget/pedigree",
+    "name": "Pedigree",
+    "url": "https://gristlabs.github.io/grist-widget/pedigree",
     "widgetId": "@gristlabs/widget-pedigree",
     "published": false
   }

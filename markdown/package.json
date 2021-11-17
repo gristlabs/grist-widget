@@ -1,11 +1,11 @@
 {
   "name": "@gristlabs/widget-markdown",
-  "description": "markdown",
+  "description": "Markdown preview.",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
   "grist": {
     "name": "Markdown",
-    "url": "https://berhalak.github.io/grist-widget/markdown",
+    "url": "https://gristlabs.github.io/grist-widget/markdown",
     "widgetId": "@gristlabs/widget-markdown",
     "published": true
   }

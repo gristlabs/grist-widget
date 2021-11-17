@@ -1,11 +1,11 @@
 {
   "name": "@gristlabs/widget-purchase-orders",
-  "description": "purchase-orders",
+  "description": "A template for showing a Purchase Order in a Custom Widget in Grist.",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
   "grist": {
-    "name": "purchase-orders",
-    "url": "https://berhalak.github.io/grist-widget/purchase-orders",
+    "name": "Purchase orders",
+    "url": "https://gristlabs.github.io/grist-widget/purchase-orders",
     "widgetId": "@gristlabs/widget-purchase-orders",
     "published": false
   }
