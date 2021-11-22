@@ -1,0 +1,12 @@
+{
+  "name": "@gristlabs/widget-exoplanet",
+  "description": "Example widget that can be used to calculate age on different planets.",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Exoplanet",
+    "url": "https://gristlabs.github.io/grist-widget/exoplanet",
+    "widgetId": "@gristlabs/widget-exoplanet",
+    "published": true
+  }
+}

@@ -1,0 +1,23 @@
+name: Automatic release
+on:
+  # Action is triggered on every commit to the master branch.
+  push:
+    branches:
+    - master
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build manifest
+      run: ./_build/publish.js
+      # Create new release tagged as latest, and overwrite last one.
+      # https://github.com/marvinpinto/actions/tree/master/packages/automatic-releases
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest"
+        prerelease: false
+        title: "Automatic release"
+        files: manifest.json

@@ -1,0 +1,12 @@
+{
+  "name": "@gristlabs/widget-actionbutton",
+  "description": "A configurable button that can send user actions to the data engine.",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Action button",
+    "url": "https://gristlabs.github.io/grist-widget/actionbutton",
+    "widgetId": "@gristlabs/widget-actionbutton",
+    "published": true
+  }
+}
