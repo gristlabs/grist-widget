@@ -1,0 +1,13 @@
+{
+  "name": "@gristlabs/widget-inspect-table",
+  "description": "Inspects onRecords events, when a table is changed.",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Inspect Table",
+    "url": "https://gristlabs.github.io/grist-widget/inspect-table",
+    "widgetId": "@gristlabs/widget-inspect-table",
+    "published": true,
+    "accessLevel": "read table"
+  }
+}
