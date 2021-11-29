@@ -25,15 +25,31 @@ for (const folder of folders) {
   }
   const packageFile = path.join(rootDir, folder, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageFile));
-  const config = packageJson.grist;
-  if (!config || !config.widgetId || !config.name || !config.url) {
-    console.debug("Package folder " + folder);
-    console.debug("Configuration " + JSON.stringify(config));
-    throw new Error(`Package in ${folder} is not configured correctly.`);
+  let configs = packageJson.grist;
+  if (!configs) {
+    console.warn(`Package in ${folder} is missing grist configuration section.`);
+    continue;
   }
-  if (config.published) {
-    console.log('Publishing ' + config.widgetId);
-    widgets.push(config);
+  // Config can be either an object or a list of objects. List of objects defines
+  // multiple widget in a single widget package.
+  configs = Array.isArray(configs) ? configs : [configs];
+  for (const config of configs) {
+    if (!config || !config.widgetId || !config.name || !config.url) {
+      console.debug(`${folder} config:`, config);
+      throw new Error(`Package in ${folder} is misconfigured.`);
+    }
+    if (config.published) {
+      console.log('Publishing ' + config.widgetId);
+      // If we have custom server url as a first argument for local testing,
+      // replace widget url.
+      if (process.argv[2] && config.url) {
+        config.url = config.url.replace(
+          'https://gristlabs.github.io/grist-widget',
+          process.argv[2]
+        );
+      }
+      widgets.push(config);
+    }
   }
 }
 

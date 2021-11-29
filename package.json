@@ -1,0 +1,16 @@
+{
+  "name": "grist-widget",
+  "version": "0.0.1",
+  "description": "A repository of grist custom widgets that have no back-end requirements.",
+  "scripts": {
+    "build": "node ./_build/publish.js",
+    "build:dev": "node ./_build/publish.js http://localhost:8585",
+    "serve": "live-server --port=8585 --no-browser -q",
+    "watch": "nodemon --ignore manifest.json -e js,json --exec 'npm run build:dev'",
+    "dev": "echo 'Starting local server and watching for changes.\nStart Grist with a environmental variable GRIST_WIDGET_LIST_URL=http://localhost:8585/manifest.json' && npm run watch 1> /dev/null & npm run serve 1> /dev/null"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.1",
+    "nodemon": "^2.0.15"
+  }
+}

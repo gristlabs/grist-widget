@@ -3,11 +3,20 @@
   "description": "Simple widget that can be used to inspect messages sent from Grist.",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
-  "grist": {
-    "name": "Inspect",
-    "url": "https://gristlabs.github.io/grist-widget/inspect",
-    "widgetId": "@gristlabs/widget-inspect",
-    "published": true,
-    "accessLevel": "read table"
-  }
+  "grist": [
+    {
+      "name": "Inspect Record",
+      "url": "https://gristlabs.github.io/grist-widget/inspect/onRecord.html",
+      "widgetId": "@gristlabs/widget-inspect#onRecord",
+      "published": true,
+      "accessLevel": "read table"
+    },
+    {
+      "name": "Inspect Table",
+      "url": "https://gristlabs.github.io/grist-widget/inspect/onRecords.html",
+      "widgetId": "@gristlabs/widget-inspect#onRecords",
+      "published": true,
+      "accessLevel": "read table"
+    }
+  ]
 }
