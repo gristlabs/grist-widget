@@ -7,6 +7,7 @@
     "name": "Copy to clipboard",
     "url": "https://gristlabs.github.io/grist-widget/clipboard",
     "widgetId": "@gristlabs/widget-clipboard",
-    "published": true
+    "published": true,
+    "accessLevel": "read table"
   }
 }

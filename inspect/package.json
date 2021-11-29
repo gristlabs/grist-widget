@@ -7,6 +7,7 @@
     "name": "Inspect",
     "url": "https://gristlabs.github.io/grist-widget/inspect",
     "widgetId": "@gristlabs/widget-inspect",
-    "published": true
+    "published": true,
+    "accessLevel": "read table"
   }
 }
