@@ -1,10 +1,9 @@
 # grist-widget
 A repository of grist custom widgets that have no back-end requirements.
 
-
 # Building
 
-To recreate manifest.json file used by Grist use
+To recreate manifest.json file used by Grist use:
 
 ```bash
 yarn run build
