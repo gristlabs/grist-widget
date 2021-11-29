@@ -33,6 +33,14 @@ for (const folder of folders) {
   }
   if (config.published) {
     console.log('Publishing ' + config.widgetId);
+    // If we have custom server url as a first argument for local testing,
+    // replace widget url.
+    if (process.argv[2] && config.url) {
+      config.url = config.url.replace(
+        'https://gristlabs.github.io/grist-widget',
+        process.argv[2]
+      );
+    }
     widgets.push(config);
   }
 }
