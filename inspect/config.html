@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Configuration</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    :root {
+      --color-green: #16B378;
+      --color-black: #333;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      font-size: 13px;
+      font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;
+    }
+
+    body {
+      display: flex;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.5;
+      margin: 0px;
+      margin-bottom: 16px;
+      color: var(--color-black, black);
+    }
+    body>div {
+      margin: auto;
+      flex-basis: 480px;
+      background: white;
+      padding: 40px 64px;
+      border-radius: 3px;
+    }
+    button {
+      background: var(--color-green, green);
+      padding: 12px 24px;
+      border-radius: 4px;
+      border: 1px solid var(--color-green, green);
+      color: white;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    button.secondary {
+      background: white;
+      color: var(--color-green, green);
+    }
+    input[type='text'] {
+      height: 28px;
+      border: 1px solid #D9D9D9;
+      padding: 0px 6px;
+      border-radius: 3px;
+      width: 100%;
+      outline-color: var(--color-green, green);
+    }
+    form {
+      width: 100%;
+    }
+    form label {
+      width: 100%;
+      display: block;
+      margin: 16px 0px;
+      display: flex;
+      align-items: baseline;
+    }
+    form label span {
+      width: 80px;
+      display: inline-block;
+    }
+  </style>
+</head>
+
+<body onclick="event.target == body ? closeConfig() : void 0">
+  <div>
+    <h1>
+      Configure Widget
+    </h1>
+    <form>
+      <label>
+        <span>Name</span>
+        <input type="text" id="config_name" placeholder="Enter name" />
+      </label>
+    </form>  
+    <div style="margin-top: 40px;">
+    <button onclick="saveConfig()">Save</button>
+    <button class="secondary" onclick="closeConfig()">Cancel</button>
+    </div>
+  </div>
+  <script src="./config.js"></script>
+</body>
+
+</html>
