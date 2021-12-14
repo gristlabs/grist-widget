@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>onConfig</title>
-    <script src="http://localhost:8080/grist-plugin-api.js"></script>
-  </head>
-  <body>
-    <pre id="log">Waiting for data...</pre>
-    <script>
-      function log(msg) {
-        document.getElementById('log').innerHTML = msg;
-      }
+
+<head>
+  <meta charset="utf-8">
+  <title>onConfig</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+</head>
+
+<body>
+  <pre id="log">Waiting for data...</pre>
+  <script>
+    if (!grist.onOptions) {
+      document.getElementById("log").innerHTML = "grist.onOptions handler not present";
+    } else {
       grist.onOptions(function(config) {
-        log(JSON.stringify(config, null, 2));
+        document.getElementById("log").innerHTML = JSON.stringify(config, null, 2);
       });
-      grist.ready();
-    </script>
-  </body>
+    }
+    grist.ready();
+  </script>
+</body>
+
 </html>
