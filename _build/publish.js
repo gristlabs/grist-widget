@@ -7,6 +7,7 @@ const path = require('path');
 
 const rootDir = path.join(__dirname, '..');
 const folders = fs.readdirSync(rootDir);
+const PUBLIC_URL = 'https://gristlabs.github.io/grist-widget';
 
 function isWidgetDir(folder) {
   const indexHtmlFile = path.join(rootDir, folder, 'index.html');
@@ -44,7 +45,13 @@ for (const folder of folders) {
       // replace widget url.
       if (process.argv[2] && config.url) {
         config.url = config.url.replace(
-          'https://gristlabs.github.io/grist-widget',
+          PUBLIC_URL,
+          process.argv[2]
+        );
+      }
+      if (process.argv[2] && config.configurationUrl) {
+        config.configurationUrl = config.configurationUrl.replace(
+          PUBLIC_URL,
           process.argv[2]
         );
       }
