@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>onConfig</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+</head>
+
+<body>
+  <div id="app" style="display: none;">
+    <div id="error" style="display: none;">Not configured</div>
+    <div id="main" style="display: none;">
+      <div>Setting1: <span id="setting1">-</span></div>
+      <div>Setting2: <span id="setting2">-</span></div>
+    </div>
+    <div id="configuration" style="display: none;">
+      <table>
+        <tr>
+          <td>Setting1</td>
+          <td><input type="text" id="config1"></td>
+        </tr>
+        <tr>
+          <td>Setting2</td>
+          <td><input type="text" id="config2"></td>
+        </tr>
+      </table>
+      <button onclick="saveConfig()">Save</input>
+    </div>
+  </div>
+  <pre id="log">Waiting for options ...</pre>
+  <script>
+    // Register global error handler.
+    window.onerror = (message) => alert(String(message));
+    // Tell Grist we are ready.
+    grist.ready();
+    // Register onOptions handler.
+    grist.onOptions((config) => {
+      document.getElementById("log").innerText = JSON.stringify(config, null, -2);
+      showPanel(config ? 'main' : 'error');
+      config = config || {};
+      document.getElementById("config1").value = config.config1 || '';
+      document.getElementById("config2").value = config.config2 || '';
+      document.getElementById("setting1").innerText = config.config1 || '';
+      document.getElementById("setting2").innerText = config.config2 || '';
+      document.getElementById("app").style.display = 'block';
+    });
+    // Register configuration handler to show configuration panel.
+    grist.rpc.registerFunc('configure', () => {
+      showPanel('configuration');
+    })
+    // Define handler for the Save button.
+    async function saveConfig() {
+      await grist.widgetApi.setOption('config1', document.getElementById("config1").value);
+      await grist.widgetApi.setOption('config2', document.getElementById("config2").value);
+      showPanel('main');
+    }
+    // Helper to show or hide panels.
+    function showPanel(name) {
+      document.getElementById("error").style.display = 'none';
+      document.getElementById("configuration").style.display = 'none';
+      document.getElementById("main").style.display = 'none';
+      document.getElementById(name).style.display = 'block';
+    }
+  </script>
+</body>
+
+</html>
