@@ -1,3 +1,5 @@
+const GRIST_PORT = process.env.GRIST_PORT || 8484;
+
 // Simple middleware that will rewrite grist-plugin-api URL.
 // We assume that Custom Widget is importing grist-plugin-api.js by including script tag:
 // <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
@@ -9,11 +11,11 @@ module.exports = function (req, res, next) {
     res._writeRaw = function (data, encoding, callback) {
       // Make sure that the Response data is a string.
       if (typeof data === 'string' && data) {
+        const prodUrl = 'https://docs.getgrist.com/grist-plugin-api.js';
+        const devUrl = `http://localhost:${GRIST_PORT}/grist-plugin-api.js`;
         // Replace first occurrence of grist-plugin-api.js URL.
-        data = data.replace(
-          'https://docs.getgrist.com/grist-plugin-api.js',
-          'http://localhost:8080/grist-plugin-api.js    ' // extra space for length match
-        );
+        // Add extra space at the end to match Content-Length header.
+        data = data.replace(prodUrl, devUrl.padEnd(prodUrl.length));
       }
       _writeRaw(data, encoding, callback);
     };

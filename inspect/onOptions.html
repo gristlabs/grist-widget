@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>onOptions</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+</head>
+
+<body>
+  <div id="app" style="display: none;">
+    <div id="error" style="display: none;">To configure, click "Open configuration" on the Creator panel</div>
+    <div id="main" style="display: none;">
+      <div>Option1: <span id="getOption1">-</span></div>
+      <div>Option2: <span id="getOption2">-</span></div>
+    </div>
+    <div id="configuration" style="display: none;">
+      <table>
+        <tr>
+          <td>Option1</td>
+          <td><input type="text" id="setOption1"></td>
+        </tr>
+        <tr>
+          <td>Option2</td>
+          <td><input type="text" id="setOption2"></td>
+        </tr>
+      </table>
+      <button onclick="saveOptions()">Save</input>
+    </div>
+  </div>
+  Custom options:
+  <pre id="customLog">Waiting for data ...</pre>
+  Interaction options:
+  <pre id="interactionLog">Waiting for data ...</pre>
+  <script>
+    // Register global error handler.
+    window.onerror = (message) => alert(String(message));
+    // Tell Grist we are ready.
+    grist.ready({
+      // Register configuration handler to show configuration panel.
+      onEditOptions() {
+        showPanel('configuration');
+      },
+      // Inform about required access level.
+      requiredAccess: 'read table'
+    });
+    // Register onOptions handler.
+    grist.onOptions((customOptions, interactionOptions) => {
+      document.getElementById("customLog").innerText = JSON.stringify(customOptions, null, -2);
+      document.getElementById("interactionLog").innerText = JSON.stringify(interactionOptions, null, -2);
+      showPanel(customOptions ? 'main' : 'error');
+      customOptions = customOptions || {};
+      document.getElementById("setOption1").value = customOptions.option1 || '';
+      document.getElementById("setOption2").value = customOptions.option2 || '';
+      document.getElementById("getOption1").innerText = customOptions.option1 || '';
+      document.getElementById("getOption2").innerText = customOptions.option2 || '';
+      document.getElementById("app").style.display = 'block';
+    });
+    // Define handler for the Save button.
+    async function saveOptions() {
+      await grist.widgetApi.setOption('option1', document.getElementById("setOption1").value);
+      await grist.widgetApi.setOption('option2', document.getElementById("setOption2").value);
+      // There is no need to update visible options, as Grist will send us a new message that will
+      // be handled by the onOptions handler.
+      showPanel('main');
+    }
+    // Helper to show or hide panels.
+    function showPanel(name) {
+      document.getElementById("error").style.display = 'none';
+      document.getElementById("configuration").style.display = 'none';
+      document.getElementById("main").style.display = 'none';
+      document.getElementById(name).style.display = 'block';
+    }
+  </script>
+</body>
+
+</html>
