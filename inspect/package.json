@@ -17,6 +17,12 @@
       "widgetId": "@gristlabs/widget-inspect#onRecords",
       "published": true,
       "accessLevel": "read table"
+    },
+    {
+      "name": "Inspect Options",
+      "url": "https://gristlabs.github.io/grist-widget/inspect/onOptions.html",
+      "widgetId": "@gristlabs/widget-inspect#onOptions",
+      "published": true
     }
   ]
 }
