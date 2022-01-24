@@ -104,7 +104,7 @@
   <h2>grist.onOptions</h2>
   <script>
     async function gristOnOptions(cmd) {
-      grist.onOptions((data) => cmd.output(data));
+      grist.onOptions((customOptions, interactionOptions) => cmd.output({customOptions, interactionOptions}));
       cmd.output("added onOptions callback");
     }
   </script>
