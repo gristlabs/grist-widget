@@ -49,14 +49,17 @@
     <textarea></textarea>
   </form>
 
-  <h2>grist.docApi.fetchSelectedRecord()</h2>
+  <h2>grist.docApi.fetchSelectedRecord(rowId)</h2>
   <script>
     async function gristSelectedRecord(cmd) {
-      const result = await grist.docApi.fetchSelectedRecord();
+      const result = await grist.docApi.fetchSelectedRecord(
+        parseInt(cmd.input('rowId'), 10)
+      );
       cmd.output(result);
     }
   </script>
   <form onsubmit="run(this, gristSelectedRecord); return false;">
+    rowId <input name="rowId" type="text" />
     <input type=submit value=run />
     <textarea></textarea>
   </form>
