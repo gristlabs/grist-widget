@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Grist Plugin API</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    textarea {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>grist.ready()</h2>
+  <script>
+    async function gristReady(cmd) {
+      cmd.output("(already called, just needs to be called once)");
+    }
+  </script>
+  <form onsubmit="run(this, gristListTables); return false;">
+    <input type=submit value=run />
+    <textarea></textarea>
+  </form>
+
+  <h2>grist.docApi.listTables()</h2>
+  <script>
+    async function gristListTables(cmd) {
+      const result = await grist.docApi.listTables();
+      cmd.output(result);
+    }
+  </script>
+  <form onsubmit="run(this, gristListTables); return false;">
+    <input type=submit value=run />
+    <textarea></textarea>
+  </form>
+
+  <h2>grist.docApi.fetchSelectedTable()</h2>
+  <script>
+    async function gristSelectedTable(cmd) {
+      const result = await grist.docApi.fetchSelectedTable();
+      cmd.output(result);
+    }
+  </script>
+  <form onsubmit="run(this, gristSelectedTable); return false;">
+    <input type=submit value=run />
+    <textarea></textarea>
+  </form>
+
+  <h2>grist.docApi.fetchSelectedRecord()</h2>
+  <script>
+    async function gristSelectedRecord(cmd) {
+      const result = await grist.docApi.fetchSelectedRecord();
+      cmd.output(result);
+    }
+  </script>
+  <form onsubmit="run(this, gristSelectedRecord); return false;">
+    <input type=submit value=run />
+    <textarea></textarea>
+  </form>
+
+  <h2>grist.docApi.fetchTable("tableId")</h2>
+  <script>
+    async function gristFetchTable(cmd) {
+      const result = await grist.docApi.fetchTable(cmd.input('tableId'));
+      cmd.output(result);
+    }
+  </script>
+  <form onsubmit="run(this, gristFetchTable); return false;">
+    tableId <input name="tableId" type="text" />
+    <input type=submit value=run />
+    <textarea></textarea>
+  </form>
+
+  <h2>grist.onRecords</h2>
+  <script>
+    async function gristOnRecords(cmd) {
+      grist.onRecords((data) => cmd.output(data));
+      cmd.output("added onRecords callback");
+    }
+  </script>
+  <form onsubmit="run(this, gristOnRecords); return false;">
+    <input type=submit value=add />
+    <textarea></textarea>
+  </form>
+
+  <h2>grist.onRecord</h2>
+  <script>
+    async function gristOnRecord(cmd) {
+      grist.onRecord((data) => cmd.output(data));
+      cmd.output("added onRecord callback");
+    }
+  </script>
+  <form onsubmit="run(this, gristOnRecord); return false;">
+    <input type=submit value=add />
+    <textarea></textarea>
+  </form>
+
+  <h2>grist.onOptions</h2>
+  <script>
+    async function gristOnOptions(cmd) {
+      grist.onOptions((data) => cmd.output(data));
+      cmd.output("added onOptions callback");
+    }
+  </script>
+  <form onsubmit="run(this, gristOnOptions); return false;">
+    <input type=submit value=add />
+    <textarea></textarea>
+  </form>
+
+  <h2>grist.widgetApi.setOption("key", "value")</h2>
+  <script>
+    async function gristSetOption(cmd) {
+      await grist.widgetApi.setOption(cmd.input('key'), cmd.input('val'));
+      cmd.output('done');
+    }
+  </script>
+  <form onsubmit="run(this, gristSetOption); return false;">
+    key <input name="key" type="text" />
+    value <input name="val" type="text" />
+    <input type=submit value=run />
+    <textarea></textarea>
+  </form>
+  
+  <h2>grist.widgetApi.getOption("key")</h2>
+  <script>
+    async function gristGetOption(cmd) {
+      const result = await grist.widgetApi.getOption(cmd.input('key'));
+      cmd.output(result);
+    }
+  </script>
+  <form onsubmit="run(this, gristGetOption); return false;">
+    key <input name="key" type="text" />
+    <input type=submit value=run />
+    <textarea></textarea>
+  </form>
+  
+  <h2>grist.widgetApi.getOptions()</h2>
+  <script>
+    async function gristGetOptions(cmd) {
+      const result = await grist.widgetApi.getOptions();
+      cmd.output(result);
+    }
+  </script>
+  <form onsubmit="run(this, gristGetOptions); return false;">
+    <input type=submit value=run />
+    <textarea></textarea>
+  </form>
+  
+  <script>
+    async function run(form, method) {
+      const area = form.getElementsByTagName('textarea')[0];
+      const out = (txt) => {
+        area.style.display = 'block';
+        area.value = txt;
+      }
+      try {
+        await method({
+          input(name) {
+            return form.elements[name].value;
+          },
+          output(txt) {
+            out(JSON.stringify(txt, null, 2));
+          }
+        });
+      } catch(e) {
+        out(String(e));
+      }
+    }
+    grist.ready();
+  </script>
+
+</body>
+</html>

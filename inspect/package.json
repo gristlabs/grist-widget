@@ -27,7 +27,12 @@
     {
       "name": "Inspect Columns",
       "url": "https://gristlabs.github.io/grist-widget/inspect/columns.html",
-      "widgetId": "@gristlabs/widget-inspect#columns",
+      "widgetId": "@gristlabs/widget-inspect#columns"
+    }, 
+    {
+      "name": "Inspect API",
+      "url": "https://gristlabs.github.io/grist-widget/inspect/api.html",
+      "widgetId": "@gristlabs/widget-inspect#api",
       "published": true
     }
   ]
