@@ -32,10 +32,7 @@ const templates = [{
   perPage: 80,
 }];
 
-const startTemplate =
-  findTemplate(document.location.hash.slice(1)) ||
-  findTemplate(store.get('printlabels-template')) ||
-  findTemplate('labels30');
+const defaultTemplate = findTemplate('labels30');
 
 function findTemplate(id) {
   return templates.find(t => t.id === id);
@@ -45,7 +42,7 @@ let app = undefined;
 let data = {
   status: 'waiting',
   labels: null,
-  template: startTemplate,
+  template: null,
   showOptions: false,
   // Blanks, if positive, tells to leave this number of labels blank before starting to populate
   // them with data.
@@ -121,8 +118,15 @@ function updateSize() {
 }
 
 ready(function() {
+  grist.ready({
+    requiredAccess: 'read table'
+  });
+  // Listen to configuration change.
+  grist.onOptions(options => {
+    data.template = options?.template ? findTemplate(options.template) : defaultTemplate;
+    data.blanks = options?.blanks || 0;
+  })
   // Update the widget anytime the document data changes.
-  grist.ready();
   grist.onRecords(updateRecords);
   window.onresize = updateSize;
 
@@ -130,10 +134,12 @@ ready(function() {
   app = new Vue({
     el: '#app',
     data: data,
-    methods: {arrangeLabels},
-    watch: {
-      template: function() {
-        store.set('printlabels-template', this.template.id);
+    methods: {
+      arrangeLabels,
+      async save() {
+        // Custom save handler to save only when user changed the value.
+        await grist.widgetApi.setOption('template', this.template.id);
+        await grist.widgetApi.setOption('blanks', this.blanks);
       }
     },
     updated: () => setTimeout(updateSize, 0),
