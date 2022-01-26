@@ -33,6 +33,11 @@ const templates = [{
 }];
 
 const defaultTemplate = findTemplate('labels30');
+// For backward compatibility we will read starting template from a URL's hash or store, but
+// this should not be used any more.
+const startTemplate =
+  findTemplate(document.location.hash.slice(1)) ||
+  defaultTemplate;
 
 function findTemplate(id) {
   return templates.find(t => t.id === id);
@@ -42,7 +47,7 @@ let app = undefined;
 let data = {
   status: 'waiting',
   labels: null,
-  template: null,
+  template: startTemplate,
   showOptions: false,
   // Blanks, if positive, tells to leave this number of labels blank before starting to populate
   // them with data.
