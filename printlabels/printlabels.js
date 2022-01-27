@@ -32,12 +32,11 @@ const templates = [{
   perPage: 80,
 }];
 
-const defaultTemplate = findTemplate('labels30');
 // For backward compatibility we will read starting template from a URL's hash or store, but
 // this should not be used any more.
-const startTemplate =
+const defaultTemplate =
   findTemplate(document.location.hash.slice(1)) ||
-  defaultTemplate;
+  findTemplate('labels30');
 
 function findTemplate(id) {
   return templates.find(t => t.id === id);
@@ -47,7 +46,7 @@ let app = undefined;
 let data = {
   status: 'waiting',
   labels: null,
-  template: startTemplate,
+  template: defaultTemplate,
   showOptions: false,
   // Blanks, if positive, tells to leave this number of labels blank before starting to populate
   // them with data.
@@ -128,8 +127,15 @@ ready(function() {
   });
   // Listen to configuration change.
   grist.onOptions(options => {
-    data.template = options?.template ? findTemplate(options.template) : defaultTemplate;
-    data.blanks = options?.blanks || 0;
+    if (options) {
+      // Read saved options.
+      data.template = findTemplate(options.template) || defaultTemplate;
+      data.blanks = options.blanks || 0;
+    } else {
+      // Revert to defaults.
+      data.template = defaultTemplate;
+      data.blanks = 0;
+    }
   })
   // Update the widget anytime the document data changes.
   grist.onRecords(updateRecords);
