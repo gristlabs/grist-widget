@@ -9,7 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.3/vue.min.js"></script>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 
-    <script src="store.modern.min.js"></script>
     <script src="printlabels.js?ver=1"></script>
     <link rel="stylesheet" href="printlabels.css?ver=1">
   </head>
@@ -24,7 +23,7 @@
         </template>
       </div>
       <div class="header" v-else>
-        <select id="labeltype" v-model="template">
+        <select id="labeltype" v-model="template" @change="save()">
           <option v-for="tmpl in templates" :value="tmpl">
           {{ tmpl.name }}
           </option>
@@ -33,7 +32,7 @@
       </div>
       <div v-show="showOptions" id="options-container" v-on:click="showOptions = false">
         <div id="options-popup" v-on:click.stop>
-          <div>Leave initial blanks <input type="number" id="blanks" v-model="blanks"></div>
+          <div>Leave initial blanks <input type="number" id="blanks" v-model="blanks" @change="save()"></div>
         </div>
       </div>
       <template v-if="labels">

@@ -32,9 +32,10 @@ const templates = [{
   perPage: 80,
 }];
 
-const startTemplate =
+// For backward compatibility we will read starting template from a URL's hash or store, but
+// this should not be used any more.
+const defaultTemplate =
   findTemplate(document.location.hash.slice(1)) ||
-  findTemplate(store.get('printlabels-template')) ||
   findTemplate('labels30');
 
 function findTemplate(id) {
@@ -45,7 +46,7 @@ let app = undefined;
 let data = {
   status: 'waiting',
   labels: null,
-  template: startTemplate,
+  template: defaultTemplate,
   showOptions: false,
   // Blanks, if positive, tells to leave this number of labels blank before starting to populate
   // them with data.
@@ -121,8 +122,22 @@ function updateSize() {
 }
 
 ready(function() {
+  grist.ready({
+    requiredAccess: 'read table'
+  });
+  // Listen to configuration change.
+  grist.onOptions(options => {
+    if (options) {
+      // Read saved options.
+      data.template = findTemplate(options.template) || defaultTemplate;
+      data.blanks = options.blanks || 0;
+    } else {
+      // Revert to defaults.
+      data.template = defaultTemplate;
+      data.blanks = 0;
+    }
+  })
   // Update the widget anytime the document data changes.
-  grist.ready();
   grist.onRecords(updateRecords);
   window.onresize = updateSize;
 
@@ -130,10 +145,12 @@ ready(function() {
   app = new Vue({
     el: '#app',
     data: data,
-    methods: {arrangeLabels},
-    watch: {
-      template: function() {
-        store.set('printlabels-template', this.template.id);
+    methods: {
+      arrangeLabels,
+      async save() {
+        // Custom save handler to save only when user changed the value.
+        await grist.widgetApi.setOption('template', this.template.id);
+        await grist.widgetApi.setOption('blanks', this.blanks);
       }
     },
     updated: () => setTimeout(updateSize, 0),
