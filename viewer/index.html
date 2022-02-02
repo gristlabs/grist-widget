@@ -43,17 +43,22 @@
           el.style.display = 'block';
         }
       }
-      grist.ready();
-      grist.onRecord(function(record) {
+      grist.ready({
+        columns: [{ name: "ImageUrl", title: 'Image URL', type: 'Text'}],
+        requiredAccess: 'read table'
+      });
+      grist.onRecord(function(record, mappings) {
         delete record.id;
         var keys = Object.keys(record);
-        if (keys.length > 1) {
-          rowId = null;
-          colId = null;
+        rowId = null;
+        colId = null;
+        if (!mappings && keys.length > 1) {
           showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
+        } else if (mappings && !mappings.ImageUrl) {
+          showError("Please choose a column to show in the Creator Panel.");
         } else {
           showError("");
-          var data = record[keys[0]];
+          var data = record[mappings?.ImageUrl || keys[0]];
           if (!data) {
             viewer.style.display = 'none';
           } else {

@@ -63,29 +63,40 @@
           showError("Please grant full access for writing.");
         });
       }
-      grist.ready();
+      grist.ready({
+        columns: [{ name: "Content", type: 'Text'}],
+        requiredAccess: 'full'
+      });
       grist.on('message', (e) => {
         if (e.tableId) { tableId = e.tableId; }
       });
-      grist.onRecord(function(record) {
+      grist.onRecord(function(record, mappings) {
         save();
         var nextRowId = record.id;
         delete record.id;
         var keys = Object.keys(record);
-        if (keys.length > 1) {
-          rowId = null;
-          colId = null;
-          showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
-        } else {
-          showError("");
-          data = record[keys[0]];
-          if (nextRowId !== rowId || cachedData !== data) {
-            txt.value("" + data);
-          }
-          cachedData = data;
-          rowId = nextRowId;
+        rowId = null;
+        colId = null;
+        if (!mappings) {
+          if (keys.length !== 1) {
+            showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
+            return;
+          } 
           colId = keys[0];
+        } else if (mappings) {
+          if (!mappings.Content) {
+            showError("Please pick a column to store content on Creator Panel");
+            return;
+          }
+          colId = mappings.Content;
         }
+        showError(null);
+        data = record[colId];
+        if (nextRowId !== rowId || cachedData !== data) {
+          txt.value("" + data);
+        }
+        cachedData = data;
+        rowId = nextRowId;
       });
     </script>
   </body>

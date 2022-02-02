@@ -52,21 +52,26 @@
           el.style.display = 'block';
         }
       }
-      grist.ready();
+      grist.ready({
+        columns:["Html"],
+        requiredAccess: 'read table'
+      });
       grist.on('message', (e) => {
         if (e.tableId) { tableId = e.tableId; }
       });
-      grist.onRecord(function(record) {
+      grist.onRecord(function(record, mappings) {
         var nextRowId = record.id;
         delete record.id;
         var keys = Object.keys(record);
-        if (keys.length > 1) {
-          rowId = null;
-          colId = null;
+        rowId = null;
+        colId = null;
+        if (!mappings && keys.length > 1) {
           render("error", "Please hide all but one of these columns from this widget: " + keys.join(", "));
+        } else if (mappings && !mappings.Html) {
+          render("error", "Please choose a column to show in the Creator Panel");
         } else {
           render("error", null);
-          data = record[keys[0]];
+          data = record[mappings?.Html || keys[0]];
           if (nextRowId !== rowId || cachedData !== data) {
             render("rendered", "" + data);
           }

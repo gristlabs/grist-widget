@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "grist": {
     "name": "Print labels",
-    "url": "https://gristlabs.github.io/grist-widget/printlabels",
+    "url": "https://gristlabs.github.io/grist-widget/printlabels/index.html",
     "widgetId": "@gristlabs/widget-printlabels",
     "published": true,
     "accessLevel": "read table"

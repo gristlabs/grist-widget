@@ -32,24 +32,25 @@ async function applyActions() {
   }
 }
 
-function onRecord(row) {
+function onRecord(row, mapping) {
   try {
     data.status = '';
     data.results = null;
+    data.column = mapping ? mapping.Action : "ActionButton";
     if (!row) {
       throw new Error("No data row. Please add some rows");
     }
-    if (!row.hasOwnProperty('ActionButton')) {
-      throw new Error('Need a visible column named "ActionButton"');
+    if (!row.hasOwnProperty(data.column)) {
+      throw new Error('Need a visible column named "ActionButton". You can map custom column in the Creator Panel.');
     }
     const keys = ['button', 'description', 'actions'];
-    if (!row.ActionButton || keys.some(k => !row.ActionButton[k])) {
+    if (!row[data.column] || keys.some(k => !row[data.column][k])) {
       const allKeys = keys.map(k => JSON.stringify(k)).join(", ");
-      const missing = keys.filter(k => !row.ActionButton[k]).map(k => JSON.stringify(k)).join(", ");
+      const missing = keys.filter(k => !row[data.column][k]).map(k => JSON.stringify(k)).join(", ");
       throw new Error(`"ActionButton" cells should contain an object with keys ${allKeys}. ` +
         `Missing keys: ${missing}`);
     }
-    data.input = row.ActionButton;
+    data.input = row[data.column];
   } catch (err) {
     handleError(err);
   }
@@ -57,7 +58,7 @@ function onRecord(row) {
 
 ready(function() {
   // Update the widget anytime the document data changes.
-  grist.ready();
+  grist.ready({columns: ["Action"]});
   grist.onRecord(onRecord);
 
   Vue.config.errorHandler = handleError;

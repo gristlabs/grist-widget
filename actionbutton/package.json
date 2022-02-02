@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "grist": {
     "name": "Action button",
-    "url": "https://gristlabs.github.io/grist-widget/actionbutton",
+    "url": "https://gristlabs.github.io/grist-widget/actionbutton/index.html",
     "widgetId": "@gristlabs/widget-actionbutton",
     "published": true,
     "accessLevel": "full"

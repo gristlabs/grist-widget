@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "grist": {
     "name": "Image viewer",
-    "url": "https://gristlabs.github.io/grist-widget/viewer",
+    "url": "https://gristlabs.github.io/grist-widget/viewer/index.html",
     "widgetId": "@gristlabs/widget-viewer",
     "published": true,
     "accessLevel": "read table"

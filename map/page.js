@@ -8,6 +8,9 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
+let Name = "Name";
+let Longitude = "Longitude";
+let Latitude = "Latitude";
 
 const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
 if (URLSearchParams && location.search && geocoder) {
@@ -53,13 +56,13 @@ async function scan(tableId, records) {
     if (!record.Geocode) { continue; }
     const address = record.Address;
     if (record.GeocodedAddress && record.GeocodedAddress !== record.Address) {
-      record.Longitude = null;
-      record.Latitude = null;
+      record[Longitude] = null;
+      record[Latitude] = null;
     }
-    if (address && !record.Longitude) {
+    if (address && !record[Longitude]) {
       const result = await geocode(address);
       await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
-        Longitude: result.lng, Latitude: result.lat,
+        [Longitude]: result.lng, [Latitude]: result.lat,
         ...('GeocodedAddress' in record) ? {GeocodedAddress: address} : undefined
       }] ])
       await delay(1000);
@@ -90,9 +93,9 @@ function parseValue(v) {
 function getInfo(rec) {
   const result = {
     id: rec.id,
-    name: parseValue(rec.Name),
-    lng: parseValue(rec.Longitude),
-    lat: parseValue(rec.Latitude)
+    name: parseValue(rec[Name]),
+    lng: parseValue(rec[Longitude]),
+    lat: parseValue(rec[Latitude])
   };
   return result;
 }
@@ -104,8 +107,9 @@ function updateMap(data) {
     showProblem("No data found yet");
     return;
   }
-  if (!('Longitude' in data[0] && 'Latitude' in data[0] && 'Name' in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude");
+  if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
+    " in the Creator Panel");
     return;
   }
   const tiles = L.tileLayer('//server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -173,9 +177,16 @@ grist.on('message', (e) => {
 
 grist.onRecord(selectOnMap);
 if (mode !== 'single') {
-  grist.onRecords((data) => {
+  grist.onRecords((data, mappings) => {
+    if (mappings) {
+      Name = mappings.Name;
+      Longitude = mappings.Longitude;
+      Latitude = mappings.Latitude;
+    }
     updateMap(data);
     scanOnNeed();
   });
 }
-grist.ready();
+grist.ready({
+  columns: ["Name", { name: "Longitude", type: 'Numeric'} , { name: "Latitude", type: 'Numeric'}]
+});

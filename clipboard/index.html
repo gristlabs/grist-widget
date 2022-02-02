@@ -67,20 +67,32 @@
           el.style.display = 'block';
         }
       }
-      grist.ready();
+      function showData(data) {
+        showError("");
+        document.getElementById('text').value = data;
+        document.getElementById('copy').innerHTML = "Copy Text";
+      }
+      grist.ready({
+        columns: ["Column"]
+      });
       grist.on('message', (e) => {
         if (e.tableId) { tableId = e.tableId; }
       });
-      grist.onRecord(function(record) {
-        delete record.id;
-        var keys = Object.keys(record);
-        if (keys.length > 1) {
-          showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
+      grist.onRecord(function(record, mappings) {
+        if (mappings) {
+          if (!mappings.Column) {
+            showError("Select a column to copy using the creator panel.");
+          } else {
+            showData(record[mappings.Column]);
+          }
         } else {
-          showError("");
-          data = record[keys[0]];
-          document.getElementById('text').value = data;
-          document.getElementById('copy').innerHTML = "Copy Text";
+          delete record.id;
+          var keys = Object.keys(record);
+          if (keys.length > 1) {
+            showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
+          } else {
+            showData(record[keys[0]]);
+          }
         }
       });
     </script>
