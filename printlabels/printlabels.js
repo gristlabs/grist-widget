@@ -96,10 +96,10 @@ function updateRecords() {
       throw new Error("No data. Please add some rows");
     }
     if (!data.LabelText) {
-      throw new Error('Please pick a column for Label in the Creator Panel');
+      throw new Error('Please pick a column to show in the Creator Panel.');
     }
     if (!rows[0].hasOwnProperty(data.LabelText)) {
-      throw new Error(`Need a visible column named "${data.LabelText}"`);
+      throw new Error(`Please pick a column to show in the Creator Panel.`);
     }
     const haveCounts = rows[0].hasOwnProperty(data.LabelCount);
     const labels = [];

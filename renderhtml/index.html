@@ -66,9 +66,9 @@
         rowId = null;
         colId = null;
         if (!mappings && keys.length > 1) {
-          render("error", "Please hide all but one of these columns from this widget: " + keys.join(", "));
+          render("error", "Please choose a column to show in the Creator Panel.");
         } else if (mappings && !mappings.Html) {
-          render("error", "Please choose a column to show in the Creator Panel");
+          render("error", "Please choose a column to show in the Creator Panel.");
         } else {
           render("error", null);
           data = record[mappings?.Html || keys[0]];

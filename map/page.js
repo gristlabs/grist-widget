@@ -109,7 +109,7 @@ function updateMap(data) {
   }
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
     showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
-    " in the Creator Panel");
+    " in the Creator Panel.");
     return;
   }
   const tiles = L.tileLayer('//server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {

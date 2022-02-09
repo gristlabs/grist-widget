@@ -53,7 +53,7 @@
         rowId = null;
         colId = null;
         if (!mappings && keys.length > 1) {
-          showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
+          showError("Please choose a column to show in the Creator Panel.");
         } else if (mappings && !mappings.ImageUrl) {
           showError("Please choose a column to show in the Creator Panel.");
         } else {

@@ -32,7 +32,10 @@
       </tr>
     </table>
   </div>
-  <pre id="log">Waiting for data ...</pre>
+  Mapped data:
+  <pre id="mapped">Waiting for data ...</pre>
+  Raw data:
+  <pre id="raw">Waiting for data ...</pre>
   <script>
     // Register global error handler.
     window.onerror = (message) => alert(String(message));
@@ -48,10 +51,12 @@
       requiredAccess: 'read table'
     });
     grist.onRecords((rows, mappings) => {
-      function write(id, json) {
-        document.getElementById(id).innerText = JSON.stringify(json);
+      function write(id, json, space) {
+        document.getElementById(id).innerText = JSON.stringify(json, null, space);
       }
-      write("log", rows);
+      write("raw", rows, 2);
+      const mapped = grist.mapColumnNames(rows);
+      write("mapped", mapped ?? "Please map all required fields" , 2);
       if (mappings) {
         write("column1", mappings.Column1);
         write("column2", mappings.Column2);

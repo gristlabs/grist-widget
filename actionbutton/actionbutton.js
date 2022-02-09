@@ -41,7 +41,7 @@ function onRecord(row, mapping) {
       throw new Error("No data row. Please add some rows");
     }
     if (!row.hasOwnProperty(data.column)) {
-      throw new Error('Need a visible column named "ActionButton". You can map custom column in the Creator Panel.');
+      throw new Error('Need a visible column named "ActionButton". You can map a custom column in the Creator Panel.');
     }
     const keys = ['button', 'description', 'actions'];
     if (!row[data.column] || keys.some(k => !row[data.column][k])) {

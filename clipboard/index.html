@@ -81,7 +81,7 @@
       grist.onRecord(function(record, mappings) {
         if (mappings) {
           if (!mappings.Column) {
-            showError("Select a column to copy using the creator panel.");
+            showError("Select a column to copy using the Creator Panel.");
           } else {
             showData(record[mappings.Column]);
           }
@@ -89,7 +89,7 @@
           delete record.id;
           var keys = Object.keys(record);
           if (keys.length > 1) {
-            showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
+            showError("Select a column to copy using the Creator Panel.");
           } else {
             showData(record[keys[0]]);
           }
