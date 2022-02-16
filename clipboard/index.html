@@ -67,6 +67,10 @@
           el.style.display = 'block';
         }
       }
+      // Returns first column from a record or undefined.
+      function firstColumn(record) {
+        return record ? record[Object.keys(record).filter(k => k !== 'id')[0]] : undefined;
+      }
       function showData(data) {
         showError("");
         document.getElementById('text').value = data;
@@ -78,21 +82,16 @@
       grist.on('message', (e) => {
         if (e.tableId) { tableId = e.tableId; }
       });
-      grist.onRecord(function(record, mappings) {
-        if (mappings) {
-          if (!mappings.Column) {
-            showError("Select a column to copy using the Creator Panel.");
-          } else {
-            showData(record[mappings.Column]);
-          }
+      grist.onRecord(function(record) {
+        const mapped = grist.mapColumnNames(record);
+        // We will fallback to reading a value from a first column to
+        // support old way of mapping (exposing only a single column).
+        // New widgets should only check if mapped object is truthy.
+        const value = mapped?.Column ?? firstColumn(record);
+        if (value === undefined) {
+          showError("Select a column to copy using the Creator Panel.");
         } else {
-          delete record.id;
-          var keys = Object.keys(record);
-          if (keys.length > 1) {
-            showError("Select a column to copy using the Creator Panel.");
-          } else {
-            showData(record[keys[0]]);
-          }
+          showData(value);
         }
       });
     </script>

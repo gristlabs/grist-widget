@@ -8,9 +8,9 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let Name = "Name";
-let Longitude = "Longitude";
-let Latitude = "Latitude";
+const Name = "Name";
+const Longitude = "Longitude";
+const Latitude = "Latitude";
 
 const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
 if (URLSearchParams && location.search && geocoder) {
@@ -177,13 +177,11 @@ grist.on('message', (e) => {
 
 grist.onRecord(selectOnMap);
 if (mode !== 'single') {
-  grist.onRecords((data, mappings) => {
-    if (mappings) {
-      Name = mappings.Name;
-      Longitude = mappings.Longitude;
-      Latitude = mappings.Latitude;
-    }
-    updateMap(data);
+  grist.onRecords((data) => {
+    // If mappings are not done, we will assume that table has correct columns.
+    // This is done to support existing widgets which where configured by
+    // renaming column names.
+    updateMap(grist.mapColumnNames(data) || data);
     scanOnNeed();
   });
 }

@@ -47,18 +47,24 @@
         columns: [{ name: "ImageUrl", title: 'Image URL', type: 'Text'}],
         requiredAccess: 'read table'
       });
-      grist.onRecord(function(record, mappings) {
+      // Helper function that reads first value from a table with a single column.
+      function singleColumn(record) {
+        const columns = Object.keys(record || {}).filter(k => k !== 'id');
+        return columns.length === 1 ? record[columns[0]] : undefined;
+      }
+      grist.onRecord(function(record) {
+        // If user picked all columns, this helper function will return a mapped record.
+        const mapped = grist.mapColumnNames(record);
+        // We will fallback to reading a value from a single column to
+        // support old way of mapping (exposing only a single column).
+        // New widgets should only check if mapped object is truthy.
+        const data = mapped ? mapped.ImageUrl : singleColumn(record);
         delete record.id;
         var keys = Object.keys(record);
-        rowId = null;
-        colId = null;
-        if (!mappings && keys.length > 1) {
-          showError("Please choose a column to show in the Creator Panel.");
-        } else if (mappings && !mappings.ImageUrl) {
+        if (data === undefined) {
           showError("Please choose a column to show in the Creator Panel.");
         } else {
           showError("");
-          var data = record[mappings?.ImageUrl || keys[0]];
           if (!data) {
             viewer.style.display = 'none';
           } else {

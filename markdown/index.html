@@ -78,6 +78,10 @@
         rowId = null;
         colId = null;
         if (!mappings) {
+          // We will fallback to reading a value from a single column to
+          // support old way of mapping (exposing only a single column).
+          // New widgets should only check if mappings object is truthy,
+          // or use grist.mapColumnNames helper method.
           if (keys.length !== 1) {
             showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
             return;

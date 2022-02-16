@@ -46,8 +46,6 @@ let app = undefined;
 let data = {
   status: 'waiting',
   labels: null,
-  LabelText: null,
-  LabelCount: 'LabelCount',
   template: defaultTemplate,
   showOptions: false,
   // Blanks, if positive, tells to leave this number of labels blank before starting to populate
@@ -55,6 +53,10 @@ let data = {
   blanks: 0,
   rows: null
 };
+
+// Columns we expect
+const LabelText = 'LabelText';
+const LabelCount = 'LabelCount';
 
 function arrangeLabels(labels, template, blanks) {
   const pages = [];
@@ -95,19 +97,16 @@ function updateRecords() {
     if (!rows || !rows.length) {
       throw new Error("No data. Please add some rows");
     }
-    if (!data.LabelText) {
-      throw new Error('Please pick a column to show in the Creator Panel.');
-    }
-    if (!rows[0].hasOwnProperty(data.LabelText)) {
+    if (!rows[0].hasOwnProperty(LabelText)) {
       throw new Error(`Please pick a column to show in the Creator Panel.`);
     }
-    const haveCounts = rows[0].hasOwnProperty(data.LabelCount);
+    const haveCounts = rows[0].hasOwnProperty(LabelCount);
     const labels = [];
-    for (let r of rows) {
+    for (const r of rows) {
       // parseFloat to be generous about the type of LabelCount. Text will be accepted.
-      let count = haveCounts ? parseFloat(r[data.LabelCount]) : 1;
+      const count = haveCounts ? parseFloat(r[LabelCount]) : 1;
       for (let i = 0; i < count; i++) {
-        labels.push(r[data.LabelText]);
+        labels.push(r[LabelText]);
       }
     }
     data.labels = labels;
@@ -133,12 +132,12 @@ ready(function() {
     requiredAccess: 'read table',
     columns: [
       {
-        name: "LabelText",
+        name: LabelText,
         title: "Label text",
         type: "Text"
       },
       {
-        name: "LabelCount",
+        name: LabelCount,
         title: "Label count",
         type: "Numeric",
         optional: true
@@ -158,15 +157,10 @@ ready(function() {
     }
   })
   // Update the widget anytime the document data changes.
-  grist.onRecords((rows, mappings) => {
-    if (mappings) {
-      data.LabelText = mappings.LabelText;
-      data.LabelCount = mappings.LabelCount;
-    } else {
-      data.LabelText = "LabelText";
-      data.LabelCount = "LabelCount";
-    }
-    data.rows = rows;
+  grist.onRecords((rows) => {
+    // We will fallback to reading rows directly to support
+    // old widgets that didn't use column mappings.
+    data.rows = grist.mapColumnNames(rows) || rows;
   });
   window.onresize = updateSize;
 

@@ -6,6 +6,7 @@ function ready(fn) {
   }
 }
 
+const column = 'ActionButton';
 let app = undefined;
 let data = {
   status: 'waiting',
@@ -32,25 +33,24 @@ async function applyActions() {
   }
 }
 
-function onRecord(row, mapping) {
+function onRecord(row, mappings) {
   try {
     data.status = '';
     data.results = null;
-    data.column = mapping ? mapping.Action : "ActionButton";
-    if (!row) {
-      throw new Error("No data row. Please add some rows");
-    }
-    if (!row.hasOwnProperty(data.column)) {
-      throw new Error('Need a visible column named "ActionButton". You can map a custom column in the Creator Panel.');
+    // If there is no mapping, test the original record.
+    row = grist.mapColumnNames(row) || row;
+    if (!row.hasOwnProperty(column)) {
+      throw new Error(`Need a visible column named "${column}". You can map a custom column in the Creator Panel.`);
     }
     const keys = ['button', 'description', 'actions'];
-    if (!row[data.column] || keys.some(k => !row[data.column][k])) {
+    if (!row[column] || keys.some(k => !row[column][k])) {
       const allKeys = keys.map(k => JSON.stringify(k)).join(", ");
-      const missing = keys.filter(k => !row[data.column][k]).map(k => JSON.stringify(k)).join(", ");
-      throw new Error(`"ActionButton" cells should contain an object with keys ${allKeys}. ` +
+      const missing = keys.filter(k => !row[column]?.[k]).map(k => JSON.stringify(k)).join(", ");
+      const gristName = mappings?.[column] || column;
+      throw new Error(`"${gristName}" cells should contain an object with keys ${allKeys}. ` +
         `Missing keys: ${missing}`);
     }
-    data.input = row[data.column];
+    data.input = row[column];
   } catch (err) {
     handleError(err);
   }
@@ -58,7 +58,7 @@ function onRecord(row, mapping) {
 
 ready(function() {
   // Update the widget anytime the document data changes.
-  grist.ready({columns: ["Action"]});
+  grist.ready({columns: [{name: column, title: "Action"}]});
   grist.onRecord(onRecord);
 
   Vue.config.errorHandler = handleError;
