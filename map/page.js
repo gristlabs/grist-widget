@@ -8,9 +8,18 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
+// Required, Label value
 const Name = "Name";
+// Required
 const Longitude = "Longitude";
+// Required
 const Latitude = "Latitude";
+// Optional - switch column to trigger geocoding
+const Geocode = 'Geocode';
+// Optional - but required for geocoding. Field with address to find (might be formula)
+const Address = 'Address';
+// Optional - but 
+const GeocodedAddress = 'GeocodedAddress';
 
 const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
 if (URLSearchParams && location.search && geocoder) {
@@ -46,33 +55,48 @@ async function delay(ms) {
   });
 }
 
+// If widget has wright access
 let writeAccess = true;
+// A ongoing scanning promise, to check if we are in progress.
 let scanning = null;
 
-async function scan(tableId, records) {
-  if (!writeAccess) { return false; }
+async function scan(tableId, records, mappings) {
+  if (!writeAccess) { return; }
   for (const record of records) {
-    if (!('Geocode' in record)) { break; }
-    if (!record.Geocode) { continue; }
+    // We can only scan if Geocode column was mapped.
+    if (!(Geocode in record)) { break; }
+    // And the value in the column is truthy.
+    if (!record[Geocode]) { continue; }
+    // Get the address to search.
     const address = record.Address;
-    if (record.GeocodedAddress && record.GeocodedAddress !== record.Address) {
+    // Little caching here. We will set GeocodedAddress to last address we searched,
+    // so after next round - we will check if the address is indeed changed.
+    // But this field is optional, if it is not in the record (not mapped)
+    // we will find the location each time (if coordinates are empty).
+    if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
+      // We have caching field, and last address is diffrent.
+      // So clear coordinates (as if the record wasn't scanned before)
       record[Longitude] = null;
       record[Latitude] = null;
     }
+    // If address is not empty, and coordinates are empty (or were cleared by cache)
     if (address && !record[Longitude]) {
+      // Find coordinates.
       const result = await geocode(address);
+      // Update them, and update cache (if the field was mapped)
       await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
-        [Longitude]: result.lng, [Latitude]: result.lat,
-        ...('GeocodedAddress' in record) ? {GeocodedAddress: address} : undefined
-      }] ])
+        [mappings[Longitude]]: result.lng,
+        [mappings[Latitude]]: result.lat,
+        ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
+      }] ]);
       await delay(1000);
     }
   }
 }
 
-function scanOnNeed() {
+function scanOnNeed(mappings) {
   if (!scanning && selectedTableId && selectedRecords) {
-    scanning = scan(selectedTableId, selectedRecords).then(() => scanning = null).catch(() => scanning = null);
+    scanning = scan(selectedTableId, selectedRecords, mappings).then(() => scanning = null).catch(() => scanning = null);
   }
 }
 
@@ -175,16 +199,52 @@ grist.on('message', (e) => {
   if (e.tableId) { selectedTableId = e.tableId; }
 });
 
-grist.onRecord(selectOnMap);
+function hasCol(col, anything) {
+  return anything && typeof anything === 'object' && col in anything;
+}
+
+function defaultMapping(record, mappings) {
+  if (!mappings) {
+    return {
+      [Longitude]: Longitude,
+      [Name]: Name,
+      [Latitude]: Latitude,
+      [Address]: hasCol(Address, record) ? Address : null,
+      [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
+      [Geocode]: hasCol(Geocode, record) ? Geocode : null,
+    };
+  }
+  return mappings;
+}
+
+grist.onRecord((record, mappings) => {
+  // If mappings are not done, we will assume that table has correct columns.
+  // This is done to support existing widgets which where configured by
+  // renaming column names.
+  selectOnMap(grist.mapColumnNames(record) || record, defaultMapping(record, mappings));
+});
 if (mode !== 'single') {
-  grist.onRecords((data) => {
+  grist.onRecords((data, mappings) => {
     // If mappings are not done, we will assume that table has correct columns.
     // This is done to support existing widgets which where configured by
     // renaming column names.
     updateMap(grist.mapColumnNames(data) || data);
-    scanOnNeed();
+    // We need to mimic the mappings for old widgets
+    scanOnNeed(defaultMapping(data[0], mappings));
   });
 }
+
+const optional = true;
 grist.ready({
-  columns: ["Name", { name: "Longitude", type: 'Numeric'} , { name: "Latitude", type: 'Numeric'}]
+  columns: [
+    "Name",
+    { name: "Longitude", type: 'Numeric'} ,
+    { name: "Latitude", type: 'Numeric'},
+    { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
+    { name: "Address", type: 'Text', optional, optional},
+    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
+  ]
 });
+grist.onOptions((_, interaction) => {
+  writeAccess = interaction.accessLevel === 'full';
+})
