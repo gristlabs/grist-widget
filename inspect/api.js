@@ -35,6 +35,7 @@ function buildEditor(element) {
     renderLineHighlight: 'none',
     scrollbar: {
       vertical: 'hidden',
+      handleMouseWheel: false
     },
     overviewRulerBorder: false,
   });
@@ -42,21 +43,6 @@ function buildEditor(element) {
   editor.getModel().updateOptions({tabSize: 2});
   // Disable scrolling past the last line - we will expand editor if necessary.
   editor.updateOptions({scrollBeyondLastLine: false});
-  // Import definitions from api_deps.js
-  monaco.languages.typescript.javascriptDefaults.addExtraLib(definition, 'plugin.d.ts');
-  // Declare global grist namespace.
-  monaco.languages.typescript.javascriptDefaults.addExtraLib(
-    `
-    import * as Grist from "grist"
-    declare global {
-      interface Window {
-        var grist: typeof Grist;
-      }
-    }
-    export {}
-    `,
-    'main.d.ts'
-  );
 
   // Auto - height algorithm.
   // https://github.com/microsoft/monaco-editor/issues/794
@@ -75,7 +61,7 @@ function buildEditor(element) {
     const height = editor.getTopForLineNumber(lineCount + 1) + lineHeight;
     if (prevHeight !== height) {
       prevHeight = height;
-      editorElement.style.height = `${height}px`;
+      if (height < 1000) editorElement.style.height = `${height}px`;
       editor.layout();
     }
   };
@@ -133,7 +119,26 @@ function buildOutput(form, jsModel) {
   };
 }
 
+function init() {
+  // Import definitions from api_deps.js
+  monaco.languages.typescript.javascriptDefaults.addExtraLib(definition, 'plugin.d.ts');
+  // Declare global grist namespace.
+  monaco.languages.typescript.javascriptDefaults.addExtraLib(
+    `
+    import * as Grist from "grist"
+    declare global {
+      interface Window {
+        var grist: typeof Grist;
+      }
+    }
+    export {}
+    `,
+    'main.d.ts'
+  );
+}
+
 window.onload = () => {
+  init();
   const codes = Array.from(document.querySelectorAll("script[type='code']"));
   for (const code of codes) {
     buildEditor(code);
