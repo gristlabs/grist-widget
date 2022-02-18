@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Grist Plugin API</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.umd.min.js"></script>
+  <script>
+    var require = {paths: {'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs'}};
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js"></script>
+  <script src="api_deps.js"></script>
+  <script src="api.js"></script>
+  <style>
+    h2 {
+      font-size: large;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      color: #333;
+      padding-top: 14px;
+      margin-top: 3em;
+      border-top: 1px solid lightgray;
+    }
+    h2:first-of-type {
+      border: 0px;
+      padding: 0px;
+      margin-top: 0px;
+    }
+    .code-editor {
+      padding: 8px;
+      border: 1px solid lightgray;
+      border-radius: 2px;
+      margin-bottom: 10px;
+    }
+    .doc {
+      margin: 6px 0px;
+    }
+    body {
+      padding-bottom: 4em;
+    }
+  </style>
+</head>
+
+<body>
+ 
+  <h4>
+    Feel free to edit any code snippet and explore the Custom Widget API yourself. Each snippet is fully editable. <br />
+    <a target="_blank" href="https://support.getgrist.com/widget-custom#adding-a-widget">Learn more about the Custom Widget API</a><br />
+  </h4>
+  <h2>grist.ready()</h2>
+  <div class="doc" contenteditable="true">
+    This is initial call a widget needs to make to let Grist know that
+    it is ready to process incoming events.
+  </div>
+  <form>
+    <script type="code">
+function example() {
+  grist.ready();
+  return "ready() should be called only once";
+}
+      </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+  
+  <div style="font-weight: 400;">
+    <br />
+    <i style="color:red">*Note*</i> Do not paste code that you don't trust or is not yours. If this widget has read access,
+    code you paste could read your table and transmit data elsewhere. If this widget has full access, that code could
+    also modify your document.
+  </div>  
+
+  <h2>Interaction options</h2>
+  <div class="doc">
+    The ready method accepts interaction options you may wish to send to Grist.
+    Change current access level to 'none' and run this snippet. Observe how Grist will prompt
+    you to give the widget requested permissions.
+  </div>
+  <form>
+    <script type="code">
+function example() {
+  grist.ready({
+    requiredAccess : 'read table'
+  });
+  return "Open the creator panel";
+}
+      </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+
+    <div class="doc">
+      Here is a full list of supported option at this moment:
+      <ul>
+        <li>
+          <b>requiredAccess</b> - accepts values: 'none', 'read table', 'full'
+        </li>
+        <li>
+          <b>columns</b> - list of columns to map. Columns can be strings or objects in a form:
+          <pre>
+{
+  name: 'ColumnName',
+  title: 'Column label to show',
+  type: 'Any' // optional type of the column,
+  optional: true // if column is optional. 
+}
+          </pre>
+        </li>
+        <li>
+          <b>onEditOptions</b> - handler to call when user clicks "Open configuration" button in the
+          creator panel. Useful to display custom configuration screen.
+        </li>
+      </ul>
+    </div>
+  </form>
+
+
+  <h2>grist.ready() - Column mappings</h2>
+  <div class="doc">
+    Here is a snippet showing how to use     
+    <a target="_blank" href="https://support.getgrist.com/widget-custom#column-mapping">column mappings feature</a>.
+    Run this snippet, pick columns in the creator panel and observe what are the values sent by Grist.
+  </div>
+  <form>
+    <script type="code">
+async function example(cmd) {
+  grist.ready({columns: ['Link', 'Title'], requiredAccess: 'read table'});
+  grist.onRecord(function (record, mappings) {
+    const mapped = grist.mapColumnNames(record);
+    // First check if all columns were mapped.
+    if (mapped) {
+      cmd.output({ record, mapped, mappings});
+    } else {
+      // Helper returned a null value. It means that not all
+      // required columns were mapped.
+      cmd.output("Please map all columns")
+    }
+  });
+  return "Open the creator panel and configure columns";
+}
+    </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.docApi.listTables()</h2>
+  <div class="doc">
+    To list all table ids use the <i>grist.docApi.listTables()</i> method. Your widget needs to have at least
+    'read table' access level.
+  </div>
+  <form>
+    <script type="code">
+async function example() {
+  const result = await grist.docApi.listTables();
+  return result;
+}
+    </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.docApi.fetchSelectedTable()</h2>
+  <div class="doc">
+    This method reads all records from a table this widget is connected to.
+    Your widget needs to have at least 'read table' access level.
+  </div>
+  <form>
+    <script type="code">
+async function example() {
+  return await grist.docApi.fetchSelectedTable();
+}
+    </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.docApi.fetchSelectedRecord(rowId)</h2>
+  <div class="doc">
+    Reads a single row by its id.
+    Your widget needs to have at least 'read table' access level.
+  </div>
+  <form onsubmit="run(this, gristSelectedRecord); return false;">
+    <script type="code">
+async function example() {
+  const recordId = 1;
+  const result = await grist.docApi.fetchSelectedRecord(recordId);
+  return result;
+}
+    </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.docApi.fetchTable("tableId")</h2>
+  <div class="doc">
+    Reads whole table by table id. 
+    Your widget needs to have 'full' access level.
+  </div>
+  <form>
+    <script type="code">
+async function example() {
+  const tableId = 'Table1';
+  const result = await grist.docApi.fetchTable(tableId);
+  return result;
+}
+    </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.onRecords</h2>
+  <div class="doc">
+    Subscribes to a table change event. Every time table is changed (either structure or data) this
+    handler will be called with current table's data.
+  </div>
+  <form>
+    <script type="code">
+async function example(cmd) {
+  grist.onRecords((records) => cmd.output(records));
+  return "Added. Now change some data in the table and observe the result.";
+}
+    </script>
+    <input type=submit value=add />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.onRecord</h2>
+  <div class="doc">
+    Subscribes to a cursor change event. Every time cursor position is changed this handler will be
+    called with current record's data.
+  </div>
+  <form>
+    <script type="code">
+async function example(cmd) {
+  grist.onRecord((data) => cmd.output(data));
+  return "Added. Now change a cursor position in a table and observe the result.";
+}
+    </script>
+    <input type=submit value=add />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.onOptions</h2>
+  <div class="doc">
+    Subscribes to a options change event.
+  </div>
+  <form>
+    <script type="code">
+async function example(cmd) {
+  grist.onOptions((customOptions, interactionOptions) => cmd.output({customOptions, interactionOptions}));
+  return "added onOptions callback";
+}
+    </script>
+    <input type=submit value=add />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.setOption("key", "value")</h2>
+  <div class="doc">
+    Sets an option in the widget's key-value store.
+
+  </div>
+  <form>
+    <script type="code">
+async function example() {
+  await grist.setOption("some", "value");
+  return "done";
+}
+    </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.getOption("key")</h2>
+  <div class="doc">
+    Reads an option from the widget's key-value store. 
+  </div>
+  <form>
+    <script type="code">
+async function example() {
+  const result = await grist.getOption("some");
+  return result;
+}
+    </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.getOptions()</h2>
+  <div class="doc">
+    Reads all options from the widget's key-value store.
+  </div>
+  <form>
+
+    <script type="code">
+async function example() {
+  const result = await grist.getOptions();
+  return result;
+}
+    </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+
+  <h2>grist.ready() - onEditOptions</h2>
+  <div class="doc">
+    To tell Grist to display an additional button <i>Open configuration</i> in the creator panel and the section menu,
+    you need to pass <i>onEditOptions</i> handler to the ready method.
+    When clicked, it will trigger your handler, which you can use to show your own custom configuration screen.
+  </div>
+  <form>
+    <script type="code">
+async function example(cmd) {
+  grist.ready({
+    onEditOptions: function() {
+      cmd.output("Button clicked");
+    }
+  });
+  return "Click 'Open configuration' button in " + 
+         "the section menu or in the creator panel.";
+}
+    </script>
+    <input type=submit value=run />
+    <textarea class="result"></textarea>
+  </form>
+
+  <script>
+    grist.ready();
+  </script>
+
+</body>
+
+</html>
