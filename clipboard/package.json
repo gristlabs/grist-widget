@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "grist": {
     "name": "Copy to clipboard",
-    "url": "https://gristlabs.github.io/grist-widget/clipboard",
+    "url": "https://gristlabs.github.io/grist-widget/clipboard/index.html",
     "widgetId": "@gristlabs/widget-clipboard",
     "published": true,
     "accessLevel": "read table"

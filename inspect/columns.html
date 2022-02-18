@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>onMappings</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+</head>
+
+<body>
+  <div id="configuration">
+    <table>
+      <tr>
+        <th>Column</th>
+        <th>Mapped to</th>
+      </tr>
+      <tr>
+        <td>Column1 (Any, required)</td>
+        <td id="column1">Waiting ...</td>
+      </tr>
+      <tr>
+        <td>Column2 (Text, optional)</td>
+        <td id="column2">Waiting ...</td>
+      </tr>
+      <tr>
+        <td>Column3 (Any, required, allowMultiple)</td>
+        <td id="column3">Waiting ...</td>
+      </tr>
+      <tr>
+        <td>Column4 (Numeric, required, allowMultiple)</td>
+        <td id="column4">Waiting ...</td>
+      </tr>
+    </table>
+  </div>
+  Mapped data:
+  <pre id="mapped">Waiting for data ...</pre>
+  Raw data:
+  <pre id="raw">Waiting for data ...</pre>
+  <script>
+    // Register global error handler.
+    window.onerror = (message) => alert(String(message));
+    // Tell Grist we are ready.
+    grist.ready({
+      columns: [
+        "Column1",
+        { name: "Column2", title: "Map column 2", type: "Text", optional: true },
+        { name: "Column3", allowMultiple: true },
+        { name: "Column4", type: "Numeric", allowMultiple: true },
+      ],
+      // Inform about required access level.
+      requiredAccess: 'read table'
+    });
+    grist.onRecords((rows, mappings) => {
+      function write(id, json, space) {
+        document.getElementById(id).innerText = JSON.stringify(json, null, space);
+      }
+      write("raw", rows, 2);
+      const mapped = grist.mapColumnNames(rows);
+      write("mapped", mapped ?? "Please map all required fields" , 2);
+      if (mappings) {
+        write("column1", mappings.Column1);
+        write("column2", mappings.Column2);
+        write("column3", mappings.Column3);
+        write("column4", mappings.Column4);
+      }
+    })
+  </script>
+</body>
+
+</html>

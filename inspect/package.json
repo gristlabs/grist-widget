@@ -23,6 +23,12 @@
       "url": "https://gristlabs.github.io/grist-widget/inspect/onOptions.html",
       "widgetId": "@gristlabs/widget-inspect#onOptions",
       "published": true
+    },
+    {
+      "name": "Inspect Columns",
+      "url": "https://gristlabs.github.io/grist-widget/inspect/columns.html",
+      "widgetId": "@gristlabs/widget-inspect#columns",
+      "published": true
     }
   ]
 }

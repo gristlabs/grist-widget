@@ -50,8 +50,13 @@ let data = {
   showOptions: false,
   // Blanks, if positive, tells to leave this number of labels blank before starting to populate
   // them with data.
-  blanks: 0
+  blanks: 0,
+  rows: null
 };
+
+// Columns we expect
+const LabelText = 'LabelText';
+const LabelCount = 'LabelCount';
 
 function arrangeLabels(labels, template, blanks) {
   const pages = [];
@@ -85,22 +90,23 @@ function handleError(err) {
   target.status = String(err).replace(/^Error: /, '');
 }
 
-function updateRecords(rows) {
+function updateRecords() {
   try {
     data.status = '';
+    const rows = data.rows;
     if (!rows || !rows.length) {
       throw new Error("No data. Please add some rows");
     }
-    if (!rows[0].hasOwnProperty('LabelText')) {
-      throw new Error('Need a visible column named "LabelText"');
+    if (!rows[0].hasOwnProperty(LabelText)) {
+      throw new Error(`Please pick a column to show in the Creator Panel.`);
     }
-    const haveCounts = rows[0].hasOwnProperty('LabelCount');
+    const haveCounts = rows[0].hasOwnProperty(LabelCount);
     const labels = [];
-    for (let r of rows) {
+    for (const r of rows) {
       // parseFloat to be generous about the type of LabelCount. Text will be accepted.
-      let count = haveCounts ? parseFloat(r.LabelCount) : 1;
+      const count = haveCounts ? parseFloat(r[LabelCount]) : 1;
       for (let i = 0; i < count; i++) {
-        labels.push(r.LabelText);
+        labels.push(r[LabelText]);
       }
     }
     data.labels = labels;
@@ -123,10 +129,23 @@ function updateSize() {
 
 ready(function() {
   grist.ready({
-    requiredAccess: 'read table'
+    requiredAccess: 'read table',
+    columns: [
+      {
+        name: LabelText,
+        title: "Label text",
+        type: "Text"
+      },
+      {
+        name: LabelCount,
+        title: "Label count",
+        type: "Numeric",
+        optional: true
+      }
+    ]
   });
   // Listen to configuration change.
-  grist.onOptions(options => {
+  grist.onOptions((options) => {
     if (options) {
       // Read saved options.
       data.template = findTemplate(options.template) || defaultTemplate;
@@ -138,13 +157,22 @@ ready(function() {
     }
   })
   // Update the widget anytime the document data changes.
-  grist.onRecords(updateRecords);
+  grist.onRecords((rows) => {
+    // We will fallback to reading rows directly to support
+    // old widgets that didn't use column mappings.
+    data.rows = grist.mapColumnNames(rows) || rows;
+  });
   window.onresize = updateSize;
 
   Vue.config.errorHandler = handleError;
   app = new Vue({
     el: '#app',
     data: data,
+    watch : {
+      rows() {
+        updateRecords();
+      }
+    },
     methods: {
       arrangeLabels,
       async save() {

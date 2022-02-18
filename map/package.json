@@ -3,11 +3,20 @@
   "description": "Widget for showing geolocated data on a map.",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
-  "grist": {
-    "name": "Map",
-    "url": "https://gristlabs.github.io/grist-widget/map",
-    "widgetId": "@gristlabs/widget-map",
-    "published": true,
-    "accessLevel": "read table"
-  }
+  "grist": [
+    {
+      "name": "Map",
+      "url": "https://gristlabs.github.io/grist-widget/map/index.html",
+      "widgetId": "@gristlabs/widget-map#map",
+      "published": true,
+      "accessLevel": "read table"
+    },
+    {
+      "name": "Location",
+      "url": "https://gristlabs.github.io/grist-widget/map/index.html?mode=single",
+      "widgetId": "@gristlabs/widget-map#location",
+      "published": true,
+      "accessLevel": "read table"
+    }
+  ]
 }
