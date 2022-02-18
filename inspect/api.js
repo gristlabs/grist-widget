@@ -20,6 +20,7 @@ function buildEditor(element) {
   const editor = monaco.editor.create(container, {
     model: jsModel,
     automaticLayout: true,
+    fontSize: '13px',
     wordWrap: 'on',
     minimap: {
       enabled: false,
@@ -44,8 +45,7 @@ function buildEditor(element) {
   // Disable scrolling past the last line - we will expand editor if necessary.
   editor.updateOptions({scrollBeyondLastLine: false});
 
-  // Auto - height algorithm.
-  // https://github.com/microsoft/monaco-editor/issues/794
+  // Auto-height algorithm see https://github.com/microsoft/monaco-editor/issues/794
   editor.onDidChangeModelDecorations(() => {
     updateEditorHeight(); // typing
     requestAnimationFrame(updateEditorHeight); // folding
@@ -66,6 +66,7 @@ function buildEditor(element) {
     }
   };
   updateEditorHeight();
+  setTimeout(updateEditorHeight, 1);
 
   buildOutput(form, jsModel);
 }
