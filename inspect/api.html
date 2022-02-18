@@ -45,14 +45,10 @@
 </head>
 
 <body>
-
-  <div style="font-weight: 400;">
-    <br />
-    <i style="color:red">*Note*</i> Do not past code that you don't trust or is yours.
-  </div>   
+ 
   <h4>
-    Feel free to explore the API and explore the API yourself. Each snippet is fully editable. <br />
-    <a target="_blank" href="https://support.getgrist.com/widget-custom#adding-a-widget">Learn more about the API</a><br />
+    Feel free to edit any code snippet and explore the Custom Widget API yourself. Each snippet is fully editable. <br />
+    <a target="_blank" href="https://support.getgrist.com/widget-custom#adding-a-widget">Learn more about the Custom Widget API</a><br />
   </h4>
   <h2>grist.ready()</h2>
   <div class="doc" contenteditable="true">
@@ -69,6 +65,13 @@ function example() {
     <input type=submit value=run />
     <textarea class="result"></textarea>
   </form>
+  
+  <div style="font-weight: 400;">
+    <br />
+    <i style="color:red">*Note*</i> Do not paste code that you don't trust or is not yours. If this widget has read access,
+    code you paste could read your table and transmit data elsewhere. If this widget has full access, that code could
+    also modify your document."
+  </div>  
 
   <h2>Interaction options</h2>
   <div class="doc">
