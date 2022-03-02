@@ -32,38 +32,44 @@ grist.onRecords((_rows, _mappings) => {
   }
 })
 
-// Helper function to chunk array into smaller list of max n elements.
-// Yahoo finance API can only receive 10 symbols at a time.
-function* chunks(arr, n) {
-  for (let i = 0; i < arr.length; i += n) {
-    yield arr.slice(i, i + n);
-  }
-}
 
-// Main function that will fetch last price of each symbol in the array
-// from Yahoo Finance API.
 async function fetchPrices(symbols) {
-  const prices = [];
-  for (const c of chunks(symbols, 10)) {
-    const prefix = String(c);
-    const res = await fetch("https://yfapi.net/v6/finance/quote?" + new URLSearchParams({
-      lang: 'en',
-      region: 'US',
-      symbols: prefix
-    }), {
-      headers: {
-        "x-api-key": app.apikey
-      }
-    });
+  const key = `polygon-${new Date().toISOString().slice(0, 13)}`;
+  const today = new Date().toISOString().slice(0, 10);
+  // We are querying daily aggregated data, so we will cache it for 1 hour.
+  if (!localStorage.getItem(key)) {
+    // Endpoint documentation can be found at: 
+    // https://polygon.io/docs/stocks/get_v2_aggs_grouped_locale_us_market_stocks__date
+    const url = `https://api.polygon.io/v2/aggs/grouped/locale/us/market/stocks/${today}?adjusted=true&apiKey=${app.apikey}`;
+    const res = await fetch(url);
     if (res.status === 200) {
       const result = await res.json();
-      if (result?.quoteResponse.error) {
-        throw new Error(result?.quoteResponse.error);
+      if (result?.error) {
+        throw new Error(result?.error);
       }
-      prices.push(...result.quoteResponse.result.map(x => ({Name: x.symbol, Price: x.ask})));
+      // Store successful response in local storage.
+      localStorage.setItem(key, JSON.stringify(result));
+      // To clear previous cache (from an hour before), we will also
+      // store current item's key under 'polygon' key, and use its value
+      // to clear previous cached result.
+      if (localStorage.getItem(`polygon`)) {
+        localStorage.removeItem(localStorage.getItem('polygon'));
+      }
+      localStorage.setItem('polygon', key);
     } else {
-      throw new Error(res.statusText || `Error response with ${res.status} status`);
+      throw new Error(res.statusText || `Error response with ${res.status}`);
     }
+  }
+  const result = JSON.parse(localStorage.getItem(key));
+  const map = new Map();
+  for(const r of result.results) {
+    // Map all symbols to prices
+    map.set(r.T, r.c);
+  }
+  const prices = []; 
+  for(const s of symbols) {
+    const price = map.has(s) ? map.get(s) : null;
+    prices.push({Name: s, Price: price});
   }
   return prices;
 }
