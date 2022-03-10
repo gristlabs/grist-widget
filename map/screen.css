@@ -23,3 +23,28 @@ html, body, #map {
   padding: 2em;
   margin: 2em;
 }
+
+#settings {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 500;
+  padding: 10px;
+  border: 1px solid lightgray;
+  border-radius: 5px;
+  display: none;
+  background: white;
+}
+#btnClose {
+  font-size: small;
+  margin-bottom: 5px;
+  text-align: right;
+  cursor: pointer;
+}
+#btnClose:hover {
+  text-decoration: underline;
+}
+#lblText {
+  min-width: 100px;
+  display: inline-block;
+}

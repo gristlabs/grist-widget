@@ -185,15 +185,6 @@ function updateMap(data) {
   }
 }
 
-function selectOnMap(rec) {
-  selectedRowId = rec.id;
-  if (mode === 'single') {
-    updateMap([rec]);
-    scanOnNeed();
-  } else {
-    updateMap();
-  }
-}
 
 grist.on('message', (e) => {
   if (e.tableId) { selectedTableId = e.tableId; }
@@ -217,21 +208,63 @@ function defaultMapping(record, mappings) {
   return mappings;
 }
 
+function selectOnMap(rec) {
+  selectedRowId = rec.id;
+  if (mode === 'single') {
+    updateMap([rec]);
+  } else {
+    updateMap();
+  }
+}
+
+let lastRecord;
+let lastRecords;
 grist.onRecord((record, mappings) => {
   // If mappings are not done, we will assume that table has correct columns.
   // This is done to support existing widgets which where configured by
   // renaming column names.
-  selectOnMap(grist.mapColumnNames(record) || record, defaultMapping(record, mappings));
+  lastRecord = grist.mapColumnNames(record) || record;
+  selectOnMap(lastRecord);
+  if (mode === 'single') {
+    scanOnNeed(defaultMapping(record, mappings));
+  }
 });
-if (mode !== 'single') {
-  grist.onRecords((data, mappings) => {
+grist.onRecords((data, mappings) => {
+  lastRecords = grist.mapColumnNames(data) || data;
+  if (mode !== 'single') {
     // If mappings are not done, we will assume that table has correct columns.
     // This is done to support existing widgets which where configured by
     // renaming column names.
-    updateMap(grist.mapColumnNames(data) || data);
+    updateMap(lastRecords);
     // We need to mimic the mappings for old widgets
     scanOnNeed(defaultMapping(data[0], mappings));
-  });
+  }
+});
+
+function updateMode() {
+  if (mode === 'single') {
+    selectedRowId = lastRecord.id;
+    updateMap([lastRecord]);
+  } else {
+    updateMap(lastRecords);
+  }
+}
+
+function onEditOptions() {
+  const popup = document.getElementById("settings");
+  popup.style.display = 'block';
+  const btnClose = document.getElementById("btnClose");
+  btnClose.onclick = () => popup.style.display = 'none';
+  const checkbox = document.getElementById('cbxMode');
+  checkbox.checked = mode === 'multi' ? true : false;
+  checkbox.onchange = async (e) => {
+    const newMode = e.target.checked ? 'multi' : 'single';
+    if (newMode != mode) {
+      mode = newMode;
+      await grist.setOption('mode', mode);
+      updateMode();
+    }
+  }
 }
 
 const optional = true;
@@ -243,8 +276,15 @@ grist.ready({
     { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
     { name: "Address", type: 'Text', optional, optional},
     { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
-  ]
+  ],
+  onEditOptions
 });
-grist.onOptions((_, interaction) => {
+
+grist.onOptions((options, interaction) => {
   writeAccess = interaction.accessLevel === 'full';
-})
+  const newMode = options?.mode ?? mode;
+  mode = newMode;
+  if (newMode != mode && lastRecords) {
+    updateMode();
+  }
+});
