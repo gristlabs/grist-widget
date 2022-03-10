@@ -10,13 +10,6 @@
       "widgetId": "@gristlabs/widget-map#map",
       "published": true,
       "accessLevel": "read table"
-    },
-    {
-      "name": "Location",
-      "url": "https://gristlabs.github.io/grist-widget/map/index.html?mode=single",
-      "widgetId": "@gristlabs/widget-map#location",
-      "published": true,
-      "accessLevel": "read table"
     }
   ]
 }
