@@ -20,6 +20,15 @@
           padding: 20px;
           text-align: center;
       }
+      .editor-toolbar {
+        border: none
+      }
+      .EasyMDEContainer .CodeMirror {
+        border: none;
+        border-radius: 0px;
+        border-top: 1px solid #ddd;
+        border-bottom: 1px solid #ddd
+      }
     </style>
   </head>
   <body>
@@ -30,16 +39,39 @@
       var rowId = null;
       var colId = null;
       var cachedData = null;
+      function editMode() {
+        document.querySelector(".edit-action").style.display = 'none';
+        document.querySelector(".save-action").style.display = 'inline-block';
+        if (txt.isPreviewActive()) {
+          txt.togglePreview();
+        }
+      }
+      function readMode() {
+        document.querySelector(".edit-action").style.display = 'inline-block';
+        document.querySelector(".save-action").style.display = 'none';
+        if (!txt.isPreviewActive()) {
+          txt.togglePreview();
+        }
+      }
       var txt = new EasyMDE({
         spellChecker: false,
         toolbar: [{
           name: 'save',
           action: function(editor) {
             save();
+            readMode();
           },
-          className: 'fa fa-save',
+          className: 'fa fa-save save-action',
           title: 'Save markdown'
-        }, "|", "bold", "italic", "heading", "quote", "|", "guide"]
+        },
+        {
+          name: 'edit',
+          action: function(editor) {
+            editMode();
+          },
+          className: 'fa fa-pencil edit-action',
+          title: 'Save markdown'
+        }, "|", "bold", "italic", "heading", "quote", "|", "link", "guide"]
       });
       function showError(msg) {
         var el = document.getElementById('error')
@@ -52,7 +84,7 @@
       }
       function save() {
         if (!rowId || !tableId) { return; }
-        var data = txt.value();
+        var data = txt.value() || '';
         if (data === cachedData) { return; }
         console.log("SAVE", data);
         grist.docApi.applyUserActions([ ['UpdateRecord', tableId, rowId, {
@@ -67,6 +99,7 @@
         columns: [{ name: "Content", type: 'Text'}],
         requiredAccess: 'full'
       });
+      editMode();
       grist.on('message', (e) => {
         if (e.tableId) { tableId = e.tableId; }
       });
@@ -83,7 +116,7 @@
           // New widgets should only check if mappings object is truthy,
           // or use grist.mapColumnNames helper method.
           if (keys.length !== 1) {
-            showError("Please hide all but one of these columns from this widget: " + keys.join(", "));
+            showError("Please pick a column to store content on Creator Panel");
             return;
           } 
           colId = keys[0];
@@ -95,9 +128,14 @@
           colId = mappings.Content;
         }
         showError(null);
-        data = record[colId];
+        data = record[colId] || '';
         if (nextRowId !== rowId || cachedData !== data) {
           txt.value("" + data);
+          if (data) {
+            readMode();
+          } else {
+            editMode();
+          }
         }
         cachedData = data;
         rowId = nextRowId;
