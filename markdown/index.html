@@ -39,11 +39,53 @@
       var rowId = null;
       var colId = null;
       var cachedData = null;
+      window.addEventListener('keypress', (ev) => {
+        // If user pressed Enter or Space
+        if (ev.keyCode === 13 || ev.keyCode === 32) {
+          // and we are in the read mode
+          if (txt.isPreviewActive()) {
+            // switch to edit mode.
+            editMode();
+            ev.preventDefault();
+            return;
+          }
+        } else if (ev.keyCode === 13 || ev.keyCode === 32) {
+          // and we are in the read mode
+          if (txt.isPreviewActive()) {
+            // switch to edit mode.
+            editMode();
+            ev.preventDefault();
+            return;
+          }
+        }
+      });
+      window.addEventListener('keydown', (ev) => {
+        // If user pressed Ctrl + S
+        if (ev.key === 's' && (ev.ctrlKey || ev.metaKey)) {
+          // and in edit mode
+          if (!txt.isPreviewActive()) {
+            // save and go to read mode
+            save();
+            readMode();
+            ev.preventDefault();
+            return;
+          }
+        } else if (ev.keyCode === 27) {
+          // If user pressed Escape, cancel edit
+          txt.value("" + cachedData);
+          readMode();
+          ev.preventDefault();
+        }
+      })
       function editMode() {
         document.querySelector(".edit-action").style.display = 'none';
         document.querySelector(".save-action").style.display = 'inline-block';
         if (txt.isPreviewActive()) {
           txt.togglePreview();
+          // We are using internals here to focus inner code editor.
+          if (txt.codemirror && typeof txt.codemirror.focus === 'function') {
+            txt.codemirror.focus();
+          }
         }
       }
       function readMode() {
@@ -53,6 +95,7 @@
           txt.togglePreview();
         }
       }
+      var isMac = /Mac/.test(navigator.platform);
       var txt = new EasyMDE({
         spellChecker: false,
         toolbar: [{
@@ -62,7 +105,7 @@
             readMode();
           },
           className: 'fa fa-save save-action',
-          title: 'Save markdown'
+          title: `Save (${isMac ? 'Cmd' : 'Ctrl'} + S)`
         },
         {
           name: 'edit',
@@ -70,7 +113,7 @@
             editMode();
           },
           className: 'fa fa-pencil edit-action',
-          title: 'Save markdown'
+          title: 'Edit (Enter or Space)'
         }, "|", "bold", "italic", "heading", "quote", "|", "link", "guide"]
       });
       function showError(msg) {
