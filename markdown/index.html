@@ -49,14 +49,6 @@
             ev.preventDefault();
             return;
           }
-        } else if (ev.keyCode === 13 || ev.keyCode === 32) {
-          // and we are in the read mode
-          if (txt.isPreviewActive()) {
-            // switch to edit mode.
-            editMode();
-            ev.preventDefault();
-            return;
-          }
         }
       });
       window.addEventListener('keydown', (ev) => {
@@ -71,10 +63,12 @@
             return;
           }
         } else if (ev.keyCode === 27) {
-          // If user pressed Escape, cancel edit
-          txt.value("" + cachedData);
-          readMode();
-          ev.preventDefault();
+          if (!txt.isPreviewActive()) {
+            // If user pressed Escape, cancel edit
+            txt.value("" + cachedData);
+            readMode();
+            ev.preventDefault();
+          }
         }
       })
       function editMode() {
@@ -92,6 +86,13 @@
         document.querySelector(".edit-action").style.display = 'inline-block';
         document.querySelector(".save-action").style.display = 'none';
         if (!txt.isPreviewActive()) {
+          // We are using internals to release the focus.
+          if (txt.codemirror && 
+              txt.codemirror.display &&
+              txt.codemirror.display.input &&
+              typeof txt.codemirror.display.input.blur === 'function') {
+            txt.codemirror.display.input.blur();
+          }
           txt.togglePreview();
         }
       }
