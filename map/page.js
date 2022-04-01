@@ -20,6 +20,8 @@ const Geocode = 'Geocode';
 const Address = 'Address';
 // Optional - but 
 const GeocodedAddress = 'GeocodedAddress';
+let lastRecord;
+let lastRecords;
 
 const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
 if (URLSearchParams && location.search && geocoder) {
@@ -176,13 +178,23 @@ function updateMap(data) {
   } catch (err) {
     console.warn('cannot fit bounds');
   }
-  amap = map;
-  const rowId = selectedRowId;
-  if (rowId && popups[rowId]) {
-    var marker = popups[rowId];
-    if (!marker._icon) { marker.__parent.spiderfy(); }
-    marker.openPopup();
+  function makeSureSelectedMarkerIsShown() {
+    const rowId = selectedRowId;
+    if (rowId && popups[rowId]) {
+      var marker = popups[rowId];
+      if (!marker._icon) { marker.__parent.spiderfy(); }
+      marker.openPopup();
+    }
   }
+  map.on('zoomend', () => {
+    // Should reshow marker if it has been lost, but I didn't find a good
+    // event to trigger that exactly. A small timeout seems to work :-(
+    // TODO: find a better way; also, if user has changed selection within
+    // the map we should respect that.
+    setTimeout(makeSureSelectedMarkerIsShown, 500);
+  });
+  amap = map;
+  makeSureSelectedMarkerIsShown();
 }
 
 
@@ -217,8 +229,6 @@ function selectOnMap(rec) {
   }
 }
 
-let lastRecord;
-let lastRecords;
 grist.onRecord((record, mappings) => {
   // If mappings are not done, we will assume that table has correct columns.
   // This is done to support existing widgets which where configured by
@@ -236,6 +246,9 @@ grist.onRecords((data, mappings) => {
     // This is done to support existing widgets which where configured by
     // renaming column names.
     updateMap(lastRecords);
+    if (lastRecord) {
+      selectOnMap(lastRecord);
+    }
     // We need to mimic the mappings for old widgets
     scanOnNeed(defaultMapping(data[0], mappings));
   }
