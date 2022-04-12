@@ -4,7 +4,7 @@ const {debounceTime} = rxjs.operators;
 const toolbarOptions = [
   ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
   ['blockquote', 'code-block'],
-  
+
   [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
 
   [{ 'list': 'ordered'}, { 'list': 'bullet' }],
@@ -34,6 +34,17 @@ let lastContent;
 let lastSave;
 let tableId;
 
+function safeParse(value) {
+  try {
+    return JSON.parse(value);
+  } catch (err) {
+    if (typeof value === 'string') {
+      return {ops: [{insert: `${value}\n`}]};
+    }
+    return null;
+  }
+}
+
 // Subscribe to grist data
 grist.ready({requiredAccess: 'full', columns: [{name: 'Content', type: 'Text'}]});
 grist.onRecord(function (record, mappings) {
@@ -46,9 +57,10 @@ grist.onRecord(function (record, mappings) {
       // Log but don't bother user - maybe we are just testing.
       console.error('Please map columns');
     } else if (lastContent !== mapped.Content) {
-      lastContent = mapped.Content;
       // We will remember last thing sent, to not remove progress.
-      quill.setContents(mapped.Content ? JSON.parse(mapped.Content) : null);
+      const content = safeParse(mapped.Content);
+      lastContent = JSON.stringify(content);
+      quill.setContents(content);
     }
   }
 });
@@ -62,9 +74,9 @@ const table = grist.getTable();
 saveEvent.subscribe(() => {
   // If we are in a middle of saving, skip this.
   if (lastSave) { return; }
-  const content = quill.getContents();
   // If we are mapped.
   if (column) {
+    const content = quill.getContents();
     // Store content as json.
     const newContent = JSON.stringify(content);
     // Don't send what we just received.
