@@ -1,3 +1,5 @@
+// This follows instructions in https://www.dropbox.com/developers/embedder.
+
 // Alias for document.getElementById.
 const getElem = (id) => document.getElementById(id);
 
