@@ -17,18 +17,27 @@ grist.ready({
   requiredAccess: 'read table',
 });
 
+const embedConfig = {
+  folder: {
+    view: 'list',
+    headerSize: 'small',
+  }
+};
+
 const shown = {
   embed: null,
   link: null,
 };
 
 function showLink(link) {
+  // Parse Grist links, i.e. "[link label] url", as for the Hyperlink widget of Text columns.
+  link = link.split(' ').pop();
   if (link !== shown.link) {
     if (shown.embed) {
       Dropbox.unmount(shown.embed);
     }
     shown.link = link;
-    shown.embed = link ? Dropbox.embed({link}, getElem('dropbox')) : null;
+    shown.embed = link ? Dropbox.embed({...embedConfig, link}, getElem('dropbox')) : null;
   }
 }
 
