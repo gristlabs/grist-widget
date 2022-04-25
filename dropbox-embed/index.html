@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Dropbox Embedder</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <script src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="0nctenu5mmc1k5y"></script>
+    <script src="index.js"></script>
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+        font-family: sans-serif;
+        line-height: 1.4;
+      }
+      p {
+        margin: 8px 0;
+      }
+      #setup, #empty {
+        padding: 16px;
+        display: none;
+      }
+      #dropbox {
+        height: 100vh;
+        overflow: hidden;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="setup">
+      <p>Please select a <b><code>DROPBOX LINK</code></b> column in the creator panel.</p>
+      <p>Place <a target="_blank" href="https://help.dropbox.com/files-folders/share/view-only-access">shared links</a> to Dropbox files or folders into this column to show previews in this widget.</p>
+    </div>
+    <div id="empty">
+      <p>No Dropbox link to show.</p>
+    </div>
+    <div id="dropbox">
+    </div>
+  </body>
+</html>
