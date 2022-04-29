@@ -147,7 +147,7 @@
 
         <p class="note">
           Please click on the button below to make your payment today.
-          <a v-bind:href="'https://example.com/example/?invoice=' + invoice.Number + '&client=' + invoice.Invoicer">Pay Now</a>
+          <a v-bind:href="'https://example.com/example/?' + new URLSearchParams({invoice: invoice.Number, client: invoice?.Client?.Name||''}).toString()">Pay Now</a>
         </p>
         <template v-if="invoice.Note">
           <p class="note">{{ invoice.Note }}</p>
