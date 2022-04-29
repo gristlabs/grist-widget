@@ -145,6 +145,10 @@
           </div>
         </div>
 
+        <p class="note">
+          Please click on the button below to make your payment today.
+          <a v-bind:href="'https://uslawpros.com/client-payments/?invoice=' + invoice.Number + '&client=' + business">Pay Now</a>
+        </p>
         <template v-if="invoice.Note">
           <p class="note">{{ invoice.Note }}</p>
         </template>
