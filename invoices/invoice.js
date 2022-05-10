@@ -43,6 +43,7 @@ function addDemo(row) {
     row.Items = [
       {
         Description: 'Items[0].Description',
+        Img: '.Img',
         Quantity: '.Quantity',
         Total: '.Total',
         Price: '.Price',
