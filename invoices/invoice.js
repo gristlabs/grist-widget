@@ -189,6 +189,11 @@ function updateInvoice(row) {
     }
     data.invoice = Object.assign({}, data.invoice, row);
 
+    if (data.invoice.Title) {
+      // Set page title, for printing.
+      document.title = data.invoice.Title;
+    }
+
     // Make invoice information available for debugging.
     window.invoice = row;
   } catch (err) {
