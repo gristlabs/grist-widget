@@ -1,0 +1,13 @@
+{
+  "name": "@gristlabs/widget-rendervideo",
+  "description": "Simple video player",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Grist Video Player",
+    "url": "https://gristlabs.github.io/grist-widget/rendervideo/index.html",
+    "widgetId": "@gristlabs/widget-rendervideo",
+    "published": true,
+    "accessLevel": "read table"
+  }
+}
