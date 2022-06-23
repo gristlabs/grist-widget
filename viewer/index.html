@@ -52,6 +52,10 @@
         const columns = Object.keys(record || {}).filter(k => k !== 'id');
         return columns.length === 1 ? record[columns[0]] : undefined;
       }
+      grist.onNewRecord(() => {
+        showError("");
+        viewer.style.display = 'none';
+      });
       grist.onRecord(function(record) {
         // If user picked all columns, this helper function will return a mapped record.
         const mapped = grist.mapColumnNames(record);
