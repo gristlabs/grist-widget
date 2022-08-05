@@ -6,6 +6,7 @@ const toolbarOptions = [
   ['blockquote', 'code-block'],
 
   [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+  [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
 
   [{ 'list': 'ordered'}, { 'list': 'bullet' }],
   [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
@@ -25,6 +26,9 @@ const quill = new Quill('#editor', {
   theme: 'snow',
   modules: {
     toolbar: toolbarOptions,
+    imageResize: {
+      displaySize: true
+    }
   },
 });
 
