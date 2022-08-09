@@ -24,3 +24,9 @@ body {
     Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
   overflow: hidden;
 }
+.ql-snow .ql-picker.ql-size .ql-picker-label::before {
+  content: 'Regular'
+}
+.ql-snow .ql-picker.ql-size .ql-picker-item::before {
+  content: 'Regular'
+}
