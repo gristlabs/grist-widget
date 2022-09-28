@@ -76,7 +76,13 @@
         document.querySelector(".save-action").style.display = 'inline-block';
         if (txt.isPreviewActive()) {
           txt.togglePreview();
-          // We are using internals here to focus inner code editor.
+          // Focus on the editor, but only if we have focus on the window itself,
+          // We don't want to steal the focus from a table in Grist.
+          if (!document.hasFocus()) {
+            return;
+          }
+          // Warning: We are using internals here to focus on the inner code editor,
+          // it might break in future easymde version.
           if (txt.codemirror && typeof txt.codemirror.focus === 'function') {
             txt.codemirror.focus();
           }
