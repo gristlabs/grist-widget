@@ -7,13 +7,15 @@ const definition = `
 
 declare module 'grist' {
     import { ColumnsToMap, CustomSectionAPI, InteractionOptions, InteractionOptionsRequest, WidgetColumnMap } from 'grist/CustomSectionAPI';
-    import { GristAPI, GristDocAPI, GristView } from 'grist/GristAPI';
+    import { AccessTokenOptions, AccessTokenResult, GristAPI, GristDocAPI, GristView } from 'grist/GristAPI';
     import { RowRecord } from 'grist/GristData';
     import { RenderOptions } from 'grist/RenderOptions';
+    import { TableOperations } from 'grist/TableOperations';
     import { WidgetAPI } from 'grist/WidgetAPI';
     export * from 'grist/TypeCheckers';
     export * from 'grist/FileParserAPI';
     export * from 'grist/GristAPI';
+    export * from 'grist/GristData';
     export * from 'grist/GristTable';
     export * from 'grist/ImportSourceAPI';
     export * from 'grist/StorageAPI';
@@ -24,22 +26,148 @@ declare module 'grist' {
     export const rpc: Rpc;
     export const api: GristAPI;
     export const coreDocApi: GristDocAPI;
+    /**
+        * Interface for the records backing a custom widget.
+        */
     export const viewApi: GristView;
+    /**
+        * Interface for the state of a custom widget.
+        */
     export const widgetApi: WidgetAPI;
+    /**
+        * Interface for the mapping of a custom widget.
+        */
     export const sectionApi: CustomSectionAPI;
+    /**
+        * Shortcut for [[GristView.allowSelectBy]].
+        */
+    export const allowSelectBy: () => Promise<void>;
+    /**
+        * Shortcut for [[GristView.setSelectedRows]].
+        */
+    export const setSelectedRows: (rowIds: number[]) => Promise<void>;
+    /**
+        * Fetches data backing the widget as for [[GristView.fetchSelectedTable]],
+        * but decoding data by default, replacing e.g. ['D', timestamp] with
+        * a moment date. Option 'keepEncoded' skips the decoding step.
+        */
+    export function fetchSelectedTable(options?: {
+            keepEncoded?: boolean;
+    }): Promise<any>;
+    /**
+        * Fetches current selected record as for [[GristView.fetchSelectedRecord]],
+        * but decoding data by default, replacing e.g. ['D', timestamp] with
+        * a moment date. Option 'keepEncoded' skips the decoding step.
+        */
+    export function fetchSelectedRecord(rowId: number, options?: {
+            keepEncoded?: boolean;
+    }): Promise<any>;
+    /**
+        * A collection of methods for fetching document data. The
+        * fetchSelectedTable and fetchSelectedRecord methods are
+        * overridden to decode data by default.
+        */
     export const docApi: GristDocAPI & GristView;
     export const on: (event: string | symbol, listener: (...args: any[]) => void) => Rpc;
+    /**
+        * Shortcut for [[WidgetAPI.getOption]]
+        */
+    export const getOption: (key: string) => Promise<any>;
+    /**
+        * Shortcut for [[WidgetAPI.setOption]]
+        */
+    export const setOption: (key: string, value: any) => Promise<void>;
+    /**
+        * Shortcut for [[WidgetAPI.setOptions]]
+        */
+    export const setOptions: (options: {
+            [key: string]: any;
+    }) => Promise<void>;
+    /**
+        * Shortcut for [[WidgetAPI.getOptions]]
+        */
+    export const getOptions: () => Promise<object | null>;
+    /**
+        * Shortcut for [[WidgetAPI.clearOptions]]
+        */
+    export const clearOptions: () => Promise<void>;
+    /**
+        * Get access to a table in the document. If no tableId specified, this
+        * will use the current selected table (for custom widgets).
+        * If a table does not exist, there will be no error until an operation
+        * on the table is attempted.
+        */
+    export function getTable(tableId?: string): TableOperations;
+    /**
+        * Get an access token, for making API calls outside of the custom widget
+        * API. There is no caching of tokens. The returned token can
+        * be used to authorize regular REST API calls that access the content of the
+        * document. For example, in a custom widget for a table with a 'Photos' column
+        * containing attachments, the following code will update the 'src' of an
+        * image with id 'the_image' to show the attachment:
+        * '''js
+        * grist.onRecord(async (record) => {
+        *   const tokenInfo = await grist.docApi.getAccessToken({readOnly: true});
+        *   const img = document.getElementById('the_image');
+        *   const id = record.Photos[0];  // get an id of an attachment - there could be several
+        *                                 // in a cell, for this example we just take the first.
+        *   const src = '${tokenInfo.baseUrl}/attachments/${id}/download?auth=${tokenInfo.token}';
+        *   img.setAttribute('src', src);
+        * });
+        * '''
+        */
+    export function getAccessToken(options?: AccessTokenOptions): Promise<AccessTokenResult>;
+    /**
+        * Get the current selected table (for custom widgets).
+        */
+    export const selectedTable: TableOperations;
+    export function getSelectedTableId(): Promise<string>;
+    export function getSelectedTableIdSync(): string | undefined;
     /**
         * Renames columns in the result using columns mapping configuration passed in ready method.
         * Returns null if not all required columns were mapped or not widget doesn't support
         * custom column mapping.
         */
     export function mapColumnNames(data: any, options?: {
-            columns: ColumnsToMap | undefined;
-            mappings: WidgetColumnMap | null | undefined;
+            columns?: ColumnsToMap;
+            mappings?: WidgetColumnMap | null;
+            reverse?: boolean;
     }): any;
+    /**
+        * Offer a convenient way to map data with renamed columns back into the
+        * form used in the original table. This is useful for making edits to the
+        * original table in a widget with column mappings. As for mapColumnNames(),
+        * we don't attempt to do these transformations automatically.
+        */
+    export function mapColumnNamesBack(data: any, options?: {
+            columns?: ColumnsToMap;
+            mappings?: WidgetColumnMap | null;
+    }): any;
+    /**
+        * For custom widgets, add a handler that will be called whenever the
+        * row with the cursor changes - either by switching to a different row, or
+        * by some value within the row potentially changing.  Handler may
+        * in the future be called with null if the cursor moves away from
+        * any row.
+        */
     export function onRecord(callback: (data: RowRecord | null, mappings: WidgetColumnMap | null) => unknown): void;
+    /**
+        * For custom widgets, add a handler that will be called whenever the
+        * new (blank) row is selected.
+        */
+    export function onNewRecord(callback: (mappings: WidgetColumnMap | null) => unknown): void;
+    /**
+        * For custom widgets, add a handler that will be called whenever the
+        * selected records change.  Handler will be called with a list of records.
+        */
     export function onRecords(callback: (data: RowRecord[], mappings: WidgetColumnMap | null) => unknown): void;
+    /**
+        * For custom widgets, add a handler that will be called whenever the
+        * widget options change (and on initial ready message). Handler will be
+        * called with an object containing saved json options, or null if no options were saved.
+        * The second parameter has information about the widgets relationship with
+        * the document that contains it.
+        */
     export function onOptions(callback: (options: any, settings: InteractionOptions) => unknown): void;
     /**
         * Calling 'addImporter(...)' adds a safeBrowser importer. It is a short-hand for forwarding calls
@@ -52,13 +180,17 @@ declare module 'grist' {
         * 'name'. Calling 'addImporter(...)' from another component than a 'safeBrowser' component is not
         * currently supported.
         *
+        * @internal
         */
     export function addImporter(name: string, path: string, mode: 'fullscreen' | 'inline', options?: RenderOptions): Promise<void>;
-    interface ReadyPayload extends Omit<InteractionOptionsRequest, "hasCustomOptions"> {
+    /**
+        * Options when initializing connection to Grist.
+        */
+    export interface ReadyPayload extends Omit<InteractionOptionsRequest, "hasCustomOptions"> {
             /**
                 * Handler that will be called by Grist to open additional configuration panel inside the Custom Widget.
                 */
-            onEditOptions: () => unknown;
+            onEditOptions?: () => unknown;
     }
     /**
         * Declare that a component is prepared to receive messages from the outside world.
@@ -80,6 +212,10 @@ declare module 'grist/CustomSectionAPI' {
                 * Title or short description of a column (used as a label in section mapping).
                 */
             title?: string | null;
+            /**
+                * Optional long description of a column (used as a help text in section mapping).
+                */
+            description?: string | null;
             /**
                 * Column type, by default ANY.
                 */
@@ -185,7 +321,7 @@ declare module 'grist/GristAPI' {
             /**
                 * Render the file at 'path' into the 'target' location in Grist. 'path' must be relative to the
                 * root of the plugin's directory and point to an html that is contained within the plugin's
-                * directory. 'target' is a predifined location of the Grist UI, it could be 'fullscreen' or
+                * directory. 'target' is a predefined location of the Grist UI, it could be 'fullscreen' or
                 * identifier for an inline target. Grist provides inline target identifiers in certain call
                 * plugins. E.g. ImportSourceAPI.getImportSource is given a target identifier to allow rende UI
                 * inline in the import dialog. Returns the procId which can be used to dispose the view.
@@ -200,41 +336,179 @@ declare module 'grist/GristAPI' {
             unsubscribe(tableId: string): Promise<void>;
     }
     /**
-        * GristDocAPI interface is implemented by Grist, and allows getting information from and
-        * interacting with the Grist document to which a plugin is attached.
+        * Allows getting information from and interacting with the Grist document to which a plugin or widget is attached.
         */
     export interface GristDocAPI {
+            /**
+                * Returns an identifier for the document.
+                */
             getDocName(): Promise<string>;
+            /**
+                * Returns a sorted list of table IDs.
+                */
             listTables(): Promise<string[]>;
+            /**
+                * Returns a complete table of data as [[RowRecords]], including the
+                * 'id' column. Do not modify the returned arrays in-place, especially if used
+                * directly (not over RPC).
+                */
             fetchTable(tableId: string): Promise<any>;
-            applyUserActions(actions: any[][]): Promise<any>;
+            /**
+                * Applies an array of user actions.
+                */
+            applyUserActions(actions: any[][], options?: any): Promise<any>;
+            /**
+                * Get a token for out-of-band access to the document.
+                */
+            getAccessToken(options: AccessTokenOptions): Promise<AccessTokenResult>;
     }
+    /**
+        * Interface for the data backing a single widget.
+        */
     export interface GristView {
+            /**
+                * Like [[GristDocAPI.fetchTable]], but gets data for the custom section specifically, if there is any.
+                */
             fetchSelectedTable(): Promise<any>;
+            /**
+                * Fetches selected record by its 'rowId'.
+                */
             fetchSelectedRecord(rowId: number): Promise<any>;
+            /**
+                * Allow custom widget to be listed as a possible source for linking with SELECT BY.
+                */
+            allowSelectBy(): Promise<void>;
+            /**
+                * Set the list of selected rows to be used against any linked widget. Requires 'allowSelectBy()'.
+                */
+            setSelectedRows(rowIds: number[]): Promise<void>;
+    }
+    /**
+        * Options when creating access tokens.
+        */
+    export interface AccessTokenOptions {
+            /** Restrict use of token to reading only */
+            readOnly?: boolean;
+    }
+    /**
+        * Access token information, including the token string itself, a base URL for
+        * API calls for which the access token can be used, and the time-to-live the
+        * token was created with.
+        */
+    export interface AccessTokenResult {
+            /**
+                * The token string, which can currently be provided in an api call as a
+                * query parameter called "auth"
+                */
+            token: string;
+            /**
+                * The base url of the API for which the token can be used. Currently tokens
+                * are associated with a single document, so the base url will be something
+                * like 'https://..../api/docs/DOCID'
+                *
+                * Access tokens currently only grant access to endpoints dealing with the
+                * internal content of a document (such as tables and cells) and not its
+                * metadata (such as the document name or who it is shared with).
+                */
+            baseUrl: string;
+            /**
+                * Number of milliseconds the access token will remain valid for
+                * after creation. This will be several minutes.
+                */
+            ttlMsecs: number;
     }
 }
 
 declare module 'grist/GristData' {
-    export const enum GristObjCode {
-        List = "L",
-        LookUp = "l",
-        Dict = "O",
-        DateTime = "D",
-        Date = "d",
-        Skip = "S",
-        Censored = "C",
-        Reference = "R",
-        ReferenceList = "r",
-        Exception = "E",
-        Pending = "P",
-        Unmarshallable = "U",
-        Versions = "V"
+    /**
+        * Letter codes for CellValue types encoded as [code, args...] tuples.
+        */
+    export enum GristObjCode {
+            List = "L",
+            LookUp = "l",
+            Dict = "O",
+            DateTime = "D",
+            Date = "d",
+            Skip = "S",
+            Censored = "C",
+            Reference = "R",
+            ReferenceList = "r",
+            Exception = "E",
+            Pending = "P",
+            Unmarshallable = "U",
+            Versions = "V"
     }
+    /**
+        * Possible types of cell content.
+        */
     export type CellValue = number | string | boolean | null | [GristObjCode, ...unknown[]];
+    export interface BulkColValues {
+            [colId: string]: CellValue[];
+    }
+    /**
+        * Map of column ids to 'CellValue's.
+        *
+        * ### CellValue
+        *
+        * Each 'CellValue' may either be a primitive (e.g. 'true', '123', '"hello"', 'null')
+        * or a tuple (JavaScript Array) representing a Grist object. The first element of the tuple
+        * is a string character representing the object code. For example, '["L", "foo", "bar"]'
+        * is a 'CellValue' of a Choice List column, where '"L"' is the type, and '"foo"' and
+        * '"bar"' are the choices.
+        *
+        * ### Grist Object Types
+        *
+        * | Code | Type           |
+        * | ---- | -------------- |
+        * | L    | List           |
+        * | l    | LookUp         |
+        * | O    | Dict           |
+        * | D    | DateTime       |
+        * | d    | Date           |
+        * | C    | Censored       |
+        * | R    | Reference      |
+        * | r    | ReferenceList  |
+        * | E    | Exception      |
+        * | P    | Pending        |
+        * | U    | Unmarshallable |
+        * | V    | Version        |
+        */
     export interface RowRecord {
-        id: number;
-        [colId: string]: CellValue;
+            id: number;
+            [colId: string]: CellValue;
+    }
+    /**
+        * Map of column ids to 'CellValue' arrays, where array indexes correspond to
+        * rows.
+        *
+        * ### CellValue
+        *
+        * Each 'CellValue' may either be a primitive (e.g. 'true', '123', '"hello"', 'null')
+        * or a tuple (JavaScript Array) representing a Grist object. The first element of the tuple
+        * is a string character representing the object code. For example, '["L", "foo", "bar"]'
+        * is a 'CellValue' of a Choice List column, where '"L"' is the type, and '"foo"' and
+        * '"bar"' are the choices.
+        *
+        * ### Grist Object Types
+        *
+        * | Code | Type           |
+        * | ---- | -------------- |
+        * | L    | List           |
+        * | l    | LookUp         |
+        * | O    | Dict           |
+        * | D    | DateTime       |
+        * | d    | Date           |
+        * | C    | Censored       |
+        * | R    | Reference      |
+        * | r    | ReferenceList  |
+        * | E    | Exception      |
+        * | P    | Pending        |
+        * | U    | Unmarshallable |
+        * | V    | Version        |
+        */
+    export interface RowRecords {
+            id: number[];
+            [colId: string]: CellValue[];
     }
     export type GristType = 'Any' | 'Attachments' | 'Blob' | 'Bool' | 'Choice' | 'ChoiceList' | 'Date' | 'DateTime' | 'Id' | 'Int' | 'ManualSortPos' | 'Numeric' | 'PositionNumber' | 'Ref' | 'RefList' | 'Text';
 }
@@ -242,6 +516,8 @@ declare module 'grist/GristData' {
 declare module 'grist/RenderOptions' {
     /**
         * Where to append the content that a plugin renders.
+        *
+        * @internal
         */
     export type RenderTarget = "fullscreen" | number;
     /**
@@ -249,6 +525,56 @@ declare module 'grist/RenderOptions' {
         */
     export interface RenderOptions {
             height?: string;
+    }
+}
+
+declare module 'grist/TableOperations' {
+    import * as Types from 'grist/DocApiTypes';
+    /**
+        * Offer CRUD-style operations on a table.
+        */
+    export interface TableOperations {
+            /**
+                * Create a record or records.
+                */
+            create(records: Types.NewRecord, options?: OpOptions): Promise<Types.MinimalRecord>;
+            create(records: Types.NewRecord[], options?: OpOptions): Promise<Types.MinimalRecord[]>;
+            /**
+                * Update a record or records.
+                */
+            update(records: Types.Record | Types.Record[], options?: OpOptions): Promise<void>;
+            /**
+                * Delete a record or records.
+                */
+            destroy(recordIds: Types.RecordId | Types.RecordId[]): Promise<void>;
+            /**
+                * Add or update a record or records.
+                */
+            upsert(records: Types.AddOrUpdateRecord | Types.AddOrUpdateRecord[], options?: UpsertOptions): Promise<void>;
+            /**
+                * Determine the tableId of the table.
+                */
+            getTableId(): Promise<string>;
+    }
+    /**
+        * General options for table operations.
+        */
+    export interface OpOptions {
+            /** Whether to parse strings based on the column type. Defaults to true. */
+            parseStrings?: boolean;
+    }
+    /**
+        * Extra options for upserts.
+        */
+    export interface UpsertOptions extends OpOptions {
+            /** Permit inserting a record. Defaults to true. */
+            add?: boolean;
+            /** Permit updating a record. Defaults to true. */
+            update?: boolean;
+            /** Whether to update none, one, or all matching records. Defaults to "first". */
+            onMany?: 'none' | 'first' | 'all';
+            /** Allow "wildcard" operation. Defaults to false. */
+            allowEmptyRequire?: boolean;
     }
 }
 
@@ -300,7 +626,7 @@ declare module 'grist/TypeCheckers' {
     /**
         * We also create and export a global checker object that includes all of the types above.
         */
-    export const checkers: Pick<ICheckerSuite, "ParseOptions" | "ParseFileResult" | "FileSource" | "ParseOptionSchema" | "GristTables" | "RenderTarget" | "RenderOptions" | "GristColumn" | "GristTable" | "ImportSource" | "FileContent" | "FileListItem" | "URL" | "CustomSectionAPI" | "EditOptionsAPI" | "ParseFileAPI" | "ComponentKind" | "GristAPI" | "GristDocAPI" | "GristView" | "ImportSourceAPI" | "ImportProcessorAPI" | "InternalImportSourceAPI" | "Storage" | "WidgetAPI">;
+    export const checkers: Pick<ICheckerSuite, "CustomSectionAPI" | "ParseOptions" | "ParseFileResult" | "FileSource" | "ParseOptionSchema" | "GristTables" | "EditOptionsAPI" | "ParseFileAPI" | "RenderTarget" | "RenderOptions" | "ComponentKind" | "GristAPI" | "GristDocAPI" | "GristView" | "GristColumn" | "GristTable" | "ImportSourceAPI" | "ImportProcessorAPI" | "ImportSource" | "FileContent" | "FileListItem" | "URL" | "InternalImportSourceAPI" | "Storage" | "WidgetAPI">;
 }
 
 declare module 'grist/FileParserAPI' {
@@ -352,12 +678,7 @@ declare module 'grist/FileParserAPI' {
 
 declare module 'grist/GristTable' {
     /**
-        *
-        * Metadata and data for a table.  This is documenting what is currently returned by the
-        * core plugins.  Could be worth reconciling with:
-        *   https://phab.getgrist.com/w/grist_data_format/
-        * Capitalization is python-style.
-        *
+        * Metadata and data for a table.
         */
     export interface GristTable {
             table_name: string | null;
@@ -368,9 +689,7 @@ declare module 'grist/GristTable' {
             tables: GristTable[];
     }
     /**
-        *
         * Metadata about a single column.
-        *
         */
     export interface GristColumn {
             id: string;
@@ -437,6 +756,112 @@ declare module 'grist/StorageAPI' {
     }
 }
 
+declare module 'grist/DocApiTypes' {
+    import { CellValue } from "grist/GristData";
+    /**
+        * JSON schema for api /record endpoint. Used in POST method for adding new records.
+        */
+    export interface NewRecord {
+            /**
+                * Initial values of cells in record. Optional, if not set cells are left
+                * blank.
+                */
+            fields?: {
+                    [coldId: string]: CellValue;
+            };
+    }
+    export interface NewRecordWithStringId {
+            id?: string;
+            /**
+                * Initial values of cells in record. Optional, if not set cells are left
+                * blank.
+                */
+            fields?: {
+                    [coldId: string]: CellValue;
+            };
+    }
+    /**
+        * JSON schema for api /record endpoint. Used in PATCH method for updating existing records.
+        */
+    export interface Record {
+            id: number;
+            fields: {
+                    [coldId: string]: CellValue;
+            };
+    }
+    export interface RecordWithStringId {
+            id: string;
+            fields: {
+                    [coldId: string]: CellValue;
+            };
+    }
+    /**
+        * JSON schema for api /record endpoint. Used in PUT method for adding or updating records.
+        */
+    export interface AddOrUpdateRecord {
+            /**
+                * The values we expect to have in particular columns, either by matching with
+                * an existing record, or creating a new record.
+                */
+            require: {
+                    [coldId: string]: CellValue;
+            } & {
+                    id?: number;
+            };
+            /**
+                * The values we will place in particular columns, either overwriting values in
+                * an existing record, or setting initial values in a new record.
+                */
+            fields?: {
+                    [coldId: string]: CellValue;
+            };
+    }
+    /**
+        * JSON schema for the body of api /record PATCH endpoint
+        */
+    export interface RecordsPatch {
+            records: [Record, ...Record[]];
+    }
+    /**
+        * JSON schema for the body of api /record POST endpoint
+        */
+    export interface RecordsPost {
+            records: [NewRecord, ...NewRecord[]];
+    }
+    /**
+        * JSON schema for the body of api /record PUT endpoint
+        */
+    export interface RecordsPut {
+            records: [AddOrUpdateRecord, ...AddOrUpdateRecord[]];
+    }
+    export type RecordId = number;
+    /**
+        * The row id of a record, without any of its content.
+        */
+    export interface MinimalRecord {
+            id: number;
+    }
+    export interface ColumnsPost {
+            columns: [NewRecordWithStringId, ...NewRecordWithStringId[]];
+    }
+    export interface ColumnsPatch {
+            columns: [RecordWithStringId, ...RecordWithStringId[]];
+    }
+    /**
+        * Creating tables requires a list of columns.
+        * 'fields' is not accepted because it's not generally sensible to set the metadata fields on new tables.
+        */
+    export interface TablePost extends ColumnsPost {
+            id?: string;
+    }
+    export interface TablesPost {
+            tables: [TablePost, ...TablePost[]];
+    }
+    export interface TablesPatch {
+            tables: [RecordWithStringId, ...RecordWithStringId[]];
+    }
+}
+
 declare module 'grist/CustomSectionAPI-ti' {
     /**
       * This module was automatically generated by 'ts-interface-builder'
@@ -476,6 +901,8 @@ declare module 'grist/GristAPI-ti' {
     export const GristAPI: t.TIface;
     export const GristDocAPI: t.TIface;
     export const GristView: t.TIface;
+    export const AccessTokenOptions: t.TIface;
+    export const AccessTokenResult: t.TIface;
     const exportedTypeSuite: t.ITypeSuite;
     export default exportedTypeSuite;
 }
@@ -794,6 +1221,423 @@ declare module 'grain-rpc/rpc' {
     export interface IRpcLogger {
             info?(message: string): void;
             warn?(message: string): void;
+    }
+}
+
+
+// Generated by dts-bundle v0.7.3
+
+declare module 'ts-interface-checker' {
+    import { ITypeSuite, TType } from "ts-interface-checker/types";
+    import { IErrorDetail } from "ts-interface-checker/util";
+    /**
+        * Export functions used to define interfaces.
+        */
+    export { TArray, TEnumType, TEnumLiteral, TFunc, TIface, TLiteral, TName, TOptional, TParam, TParamList, TProp, TTuple, TType, TUnion, TIntersection, array, enumlit, enumtype, func, iface, lit, name, opt, param, tuple, union, intersection, rest, indexKey, BasicType, ITypeSuite, } from "ts-interface-checker/types";
+    export { VError, IErrorDetail } from 'ts-interface-checker/util';
+    export interface ICheckerSuite {
+            [name: string]: Checker;
+    }
+    /**
+        * Takes one of more type suites (e.g. a module generated by 'ts-interface-builder'), and combines
+        * them into a suite of interface checkers. If a type is used by name, that name should be present
+        * among the passed-in type suites.
+        *
+        * The returned object maps type names to Checker objects.
+        */
+    export function createCheckers(...typeSuite: ITypeSuite[]): ICheckerSuite;
+    /**
+        * Checker implements validation of objects, and also includes accessors to validate method calls.
+        * Checkers should be created using 'createCheckers()'.
+        */
+    export class Checker {
+            constructor(suite: ITypeSuite, ttype: TType, _path?: string);
+            /**
+                * Set the path to report in errors, instead of the default "value". (E.g. if the Checker is for
+                * a "person" interface, set path to "person" to report e.g. "person.name is not a string".)
+                */
+            setReportedPath(path: string): void;
+            /**
+                * Check that the given value satisfies this checker's type, or throw Error.
+                */
+            check(value: any): void;
+            /**
+                * A fast check for whether or not the given value satisfies this Checker's type. This returns
+                * true or false, does not produce an error message, and is fast both on success and on failure.
+                */
+            test(value: any): boolean;
+            /**
+                * Returns a non-empty array of error objects describing the errors if the given value does not satisfy this
+                * Checker's type, or null if it does.
+                */
+            validate(value: any): IErrorDetail[] | null;
+            /**
+                * Check that the given value satisfies this checker's type strictly. This checks that objects
+                * and tuples have no extra members. Note that this prevents backward compatibility, so usually
+                * a plain check() is more appropriate.
+                */
+            strictCheck(value: any): void;
+            /**
+                * A fast strict check for whether or not the given value satisfies this Checker's type. Returns
+                * true or false, does not produce an error message, and is fast both on success and on failure.
+                */
+            strictTest(value: any): boolean;
+            /**
+                * Returns a non-empty array of error objects describing the errors if the given value does not satisfy this
+                * Checker's type strictly, or null if it does.
+                */
+            strictValidate(value: any): IErrorDetail[] | null;
+            /**
+                * If this checker is for an interface, returns a Checker for the type required for the given
+                * property of this interface.
+                */
+            getProp(prop: string): Checker;
+            /**
+                * If this checker is for an interface, returns a Checker for the argument-list required to call
+                * the given method of this interface. E.g. if this Checker is for the interface:
+                *    interface Foo {
+                *      find(s: string, pos?: number): number;
+                *    }
+                * Then methodArgs("find").check(...) will succeed for ["foo"] and ["foo", 3], but not for [17].
+                */
+            methodArgs(methodName: string): Checker;
+            /**
+                * If this checker is for an interface, returns a Checker for the return value of the given
+                * method of this interface.
+                */
+            methodResult(methodName: string): Checker;
+            /**
+                * If this checker is for a function, returns a Checker for its argument-list.
+                */
+            getArgs(): Checker;
+            /**
+                * If this checker is for a function, returns a Checker for its result.
+                */
+            getResult(): Checker;
+            /**
+                * Return the type for which this is a checker.
+                */
+            getType(): TType;
+    }
+    /**
+        * Typed checker interface. Adds type guard functionality to a normal 'Checker'.
+        *
+        * To use, cast a 'Checker' to a 'CheckerT<>' using the appropriate type.
+        *
+        * eg.
+        *   import { MyInterface } from './my-interface';
+        *   import MyInterfaceTi from './my-interface-ti';
+        *
+        *   const checkers = createCheckers(MyInterfaceTi) as {
+        *     MyInterface: CheckerT<MyInterface>
+        *   };
+        *
+        * TODO:
+        * - Enable 'check()' and 'strictCheck()' type assertion definitions once the functionality
+        *   is correctly working in TypeScript. (https://github.com/microsoft/TypeScript/issues/36931)
+        */
+    export interface CheckerT<T> extends Checker {
+            test(value: any): value is T;
+            strictTest(value: any): value is T;
+    }
+}
+
+declare module 'ts-interface-checker/types' {
+    /**
+        * This module defines nodes used to define types and validations for objects and interfaces.
+        */
+    import { IContext } from "ts-interface-checker/util";
+    export type CheckerFunc = (value: any, ctx: IContext) => boolean;
+    /** Node that represents a type. */
+    export abstract class TType {
+            abstract getChecker(suite: ITypeSuite, strict: boolean, allowedProps?: Set<string>): CheckerFunc;
+    }
+    /**
+        * Descriptor from which TType may be build (by parseSpec()). A plain string is equivalent to
+        * name(string).
+        */
+    export type TypeSpec = TType | string;
+    /**
+        * Represents a suite of named types. Suites are used to resolve type names.
+        */
+    export interface ITypeSuite {
+            [name: string]: TType;
+    }
+    /**
+        * Defines a type name, either built-in, or defined in this suite. It can typically be included in
+        * the specs as just a plain string.
+        */
+    export function name(value: string): TName;
+    export class TName extends TType {
+            name: string;
+            constructor(name: string);
+            getChecker(suite: ITypeSuite, strict: boolean, allowedProps?: Set<string>): CheckerFunc;
+    }
+    /**
+        * Defines a literal value, e.g. lit('hello') or lit(123).
+        */
+    export function lit(value: any): TLiteral;
+    export class TLiteral extends TType {
+            value: any;
+            name: string;
+            constructor(value: any);
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * Defines an array type, e.g. array('number').
+        */
+    export function array(typeSpec: TypeSpec): TArray;
+    export class TArray extends TType {
+            ttype: TType;
+            name?: string;
+            constructor(ttype: TType);
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * Defines a rest type, e.g. tuple('string', rest(array('number'))).
+        */
+    export function rest(typeSpec: TypeSpec): RestType;
+    export class RestType extends TType {
+            typeSpec: TypeSpec;
+            constructor(typeSpec: TypeSpec);
+            setStart(start: number): void;
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * Defines a tuple type, e.g. tuple('string', 'number').
+        */
+    export function tuple(...typeSpec: TypeSpec[]): TTuple;
+    export class TTuple extends TType {
+            ttypes: TType[];
+            constructor(ttypes: TType[]);
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * Defines a union type, e.g. union('number', 'null').
+        */
+    export function union(...typeSpec: TypeSpec[]): TUnion;
+    export class TUnion extends TType {
+            ttypes: TType[];
+            constructor(ttypes: TType[]);
+            getChecker(suite: ITypeSuite, strict: boolean, allowedProps?: Set<string>): CheckerFunc;
+    }
+    /**
+        * Defines an intersection type, e.g. intersection('number', 'null').
+        */
+    export function intersection(...typeSpec: TypeSpec[]): TIntersection;
+    export class TIntersection extends TType {
+            ttypes: TType[];
+            constructor(ttypes: TType[]);
+            getChecker(suite: ITypeSuite, strict: boolean, allowedProps?: Set<string>): CheckerFunc;
+    }
+    /**
+        * Defines an enum type, e.g. enum({'A': 1, 'B': 2}).
+        */
+    export function enumtype(values: {
+            [name: string]: string | number;
+    }): TEnumType;
+    export class TEnumType extends TType {
+            members: {
+                    [name: string]: string | number;
+            };
+            readonly validValues: Set<string | number>;
+            constructor(members: {
+                    [name: string]: string | number;
+            });
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * Defines a literal enum value, such as Direction.Up, specified as enumlit("Direction", "Up").
+        */
+    export function enumlit(name: string, prop: string): TEnumLiteral;
+    export class TEnumLiteral extends TType {
+            enumName: string;
+            prop: string;
+            constructor(enumName: string, prop: string);
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * indexKey is a special key that indicates an index signature when used as a key in an interface.
+        * E.g. {[key: string]: number} becomes t.iface([], {[t.indexKey]: "number"}).
+        *
+        * We don't distinguish between string- and number-type index signatures, and don't support
+        * multiple index signatures.
+        */
+    export const indexKey: unique symbol;
+    /**
+        * Defines an interface. The first argument is an array of interfaces that it extends, and the
+        * second is an array of properties.
+        */
+    export function iface(bases: string[], props: {
+            [name: string]: TOptional | TypeSpec;
+    }): TIface;
+    export class TIface extends TType {
+            bases: string[];
+            props: TProp[];
+            indexType?: TType;
+            constructor(bases: string[], props: TProp[], indexType?: TOptional | TypeSpec);
+            getChecker(suite: ITypeSuite, strict: boolean, allowedProps?: Set<string>): CheckerFunc;
+    }
+    /**
+        * Defines an optional property on an interface.
+        */
+    export function opt(typeSpec: TypeSpec): TOptional;
+    export class TOptional extends TType {
+            ttype: TType;
+            constructor(ttype: TType);
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * Defines a property in an interface.
+        */
+    export class TProp {
+            name: string;
+            ttype: TType;
+            isOpt: boolean;
+            constructor(name: string, ttype: TType, isOpt: boolean);
+    }
+    /**
+        * Defines a function. The first argument declares the function's return type, the rest declare
+        * its parameters.
+        */
+    export function func(resultSpec: TypeSpec, ...params: TParam[]): TFunc;
+    export class TFunc extends TType {
+            paramList: TParamList;
+            result: TType;
+            constructor(paramList: TParamList, result: TType);
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * Defines a function parameter.
+        */
+    export function param(name: string, typeSpec: TypeSpec, isOpt?: boolean): TParam;
+    export class TParam {
+            name: string;
+            ttype: TType;
+            isOpt: boolean;
+            constructor(name: string, ttype: TType, isOpt: boolean);
+    }
+    /**
+        * Defines a function parameter list.
+        */
+    export class TParamList extends TType {
+            params: TParam[];
+            constructor(params: TParam[]);
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * Single TType implementation for all basic built-in types.
+        */
+    export class BasicType extends TType {
+            validator: (value: any) => boolean;
+            constructor(validator: (value: any) => boolean, message: string);
+            getChecker(suite: ITypeSuite, strict: boolean): CheckerFunc;
+    }
+    /**
+        * Defines the suite of basic types.
+        */
+    export const basicTypes: ITypeSuite;
+}
+
+declare module 'ts-interface-checker/util' {
+    /**
+        * Error thrown by validation. Besides an informative message, it includes the path to the
+        * property which triggered the failure.
+        */
+    export class VError extends Error {
+            path: string;
+            constructor(path: string, message: string);
+    }
+    /**
+        * IContext is used during validation to collect error messages. There is a "noop" fast
+        * implementation that does not pay attention to messages, and a full implementation that does.
+        */
+    export interface IContext {
+            fail(relPath: string | number | null, message: string | null, score: number): false;
+            unionResolver(): IUnionResolver;
+            resolveUnion(ur: IUnionResolver): void;
+            /**
+                * Used only in checkers of types that may record multiple
+                * parallel failures for a single object. After calling fork(), a checker must:
+                *
+                *
+                * - Use the returned forked context instead of the original context for (potential) failures,
+                *    whether it's in a deeper checker or when calling fail().
+                * - After using the fork to check one 'thing' (e.g. a property or a base class), write:
+                *
+                *       if (!origContext.completeFork()) {
+                *         return false;
+                *       }
+                *
+                *    Always call completeFork(), regardless of whether there was a failure.
+                *    Do this instead of returning directly after a failure as is done with non-forked type checkers.
+                * - At the end of your checker function, 'return !ctx.failed()'
+                *    to check whether any failures were gathered along the way in forks.
+                */
+            fork(): IContext;
+            /**
+                * Must always be called after a call to fork() on the same context.
+                *
+                * Indicates that the checker is done with the current fork and any subsequent
+                * checks on the current object will be done on a new fork.
+                *
+                * Returns true if the checker should keep checking the current object,
+                * or false if enough failures have been noted and the checker should return now.
+                *
+                * If this returns false then that implies that failed() would return true,
+                * although the reverse it not necessarily true.
+                */
+            completeFork(): boolean;
+            /**
+                * Returns true if any failures were recorded in this context.
+                */
+            failed(): boolean;
+    }
+    /**
+        * This helper class is used to collect error messages reported while validating unions.
+        */
+    export interface IUnionResolver {
+            createContext(): IContext;
+    }
+    /**
+        * IErrorDetail describes errors as returned by the validate() and validateStrict() methods.
+        */
+    export interface IErrorDetail {
+            path: string;
+            message: string;
+            nested?: IErrorDetail[];
+    }
+    /**
+        * Fast implementation of IContext used for first-pass validation. If that fails, we can validate
+        * using DetailContext to collect error messages. That's faster for the common case when messages
+        * normally pass validation.
+        */
+    export class NoopContext implements IContext, IUnionResolver {
+            fail(relPath: string | number | null, message: string | null, score: number): false;
+            fork(): IContext;
+            completeFork(): boolean;
+            failed(): boolean;
+            unionResolver(): IUnionResolver;
+            createContext(): IContext;
+            resolveUnion(ur: IUnionResolver): void;
+    }
+    /**
+        * Complete implementation of IContext that collects meaningfull errors.
+        */
+    export class DetailContext implements IContext {
+            /**
+                * Maximum number of errors recorded at one level for an object,
+                * i.e. the maximum length of Checker.validate() or IErrorDetail.nested.
+                */
+            static maxForks: number;
+            fail(relPath: string | number | null, message: string | null, score: number): false;
+            unionResolver(): IUnionResolver;
+            resolveUnion(unionResolver: IUnionResolver): void;
+            getError(path: string): VError;
+            getErrorDetails(path: string): IErrorDetail[];
+            fork(): IContext;
+            completeFork(): boolean;
+            failed(): boolean;
     }
 }
 

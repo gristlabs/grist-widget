@@ -23,7 +23,7 @@ const pluginPath = fs.existsSync(eePath) ? eePath : corePath;
 
 console.log(`Using ${pluginPath === eePath ? 'GristEE' : 'GristCore'} located in ${pluginPath}`)
 
-// Bundle grist-plugin.api.d.ts and grain-rpc.d.ts to two files.
+// Bundle grist-plugin.api.d.ts, grain-rpc.d.ts and ts-interface-checker.d.ts to three files.
 const pluginOptions = {
   main: pluginPath,
   name: 'grist',
@@ -34,11 +34,17 @@ const rpcOptions = {
   name: 'grain-rpc',
   out: path.resolve(__dirname, 'grains-rpc.d.ts'),
 };
-dts.bundle(pluginOptions);
-dts.bundle(rpcOptions);
+const tsInterfaceCheckerOptions = {
+  main: path.resolve(GRIST_PATH, 'node_modules/ts-interface-checker/dist/index.d.ts'),
+  name: 'ts-interface-checker',
+  out: path.resolve(__dirname, 'ts-interface-checker.d.ts'),
+};
+const packageOptions = [pluginOptions, rpcOptions, tsInterfaceCheckerOptions];
+packageOptions.forEach((options) => { dts.bundle(options); });
 
 // Get bundle contents, and regenerate api_deps.js by combining those source
 // codes into a single string variable.
+const contents = packageOptions.map(f => fs.readFileSync(f.out).toString()).join("\n").replace(/`/g, "'");
 const contents = [pluginOptions.out, rpcOptions.out].map(f => fs.readFileSync(f).toString()).join("\n").replace(/`/g, "'");
 const apiDepsFile = path.resolve(__dirname, "api_deps.js");
 const apiDepsContent = `
@@ -50,5 +56,4 @@ ${contents}
 fs.writeFileSync(apiDepsFile, apiDepsContent);
 
 // Remove intermediate files
-fs.unlinkSync(pluginOptions.out);
-fs.unlinkSync(rpcOptions.out);
+packageOptions.forEach((options) => { fs.unlinkSync(options.out); });
