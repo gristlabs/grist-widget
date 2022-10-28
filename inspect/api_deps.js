@@ -111,7 +111,7 @@ declare module 'grist' {
         *   const img = document.getElementById('the_image');
         *   const id = record.Photos[0];  // get an id of an attachment - there could be several
         *                                 // in a cell, for this example we just take the first.
-        *   const src = '${tokenInfo.baseUrl}/attachments/${id}/download?auth=${tokenInfo.token}';
+        *   const src = '\${tokenInfo.baseUrl}/attachments/\${id}/download?auth=\${tokenInfo.token}';
         *   img.setAttribute('src', src);
         * });
         * '''
