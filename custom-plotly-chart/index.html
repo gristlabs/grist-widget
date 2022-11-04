@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Custom Plotly Chart</title>
+
+    <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.12.5/src-min-noconflict/ace.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+    <style>
+        html, body, .container {
+            height: 95%;
+        }
+
+        #code {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="container" id="chart" style="display: none"></div>
+    <pre class="container" id="code">const data = [{
+    x: table.A,
+    y: table.B
+}];
+const layout = {
+    margin: {t: 0}
+};
+return [data, layout];
+</pre>
+</div>
+<div>
+    <button id="btn">Save</button>
+</div>
+<script>
+  let editing = true;
+  const button = document.getElementById('btn');
+  const chart = document.getElementById('chart');
+  const code = document.getElementById('code');
+
+  const editor = ace.edit("code");
+  editor.setTheme("ace/theme/dracula");
+  editor.session.setMode("ace/mode/javascript");
+  let table = null;
+
+  function plotTable() {
+    try {
+      const func = Function(`
+            "use strict";
+            return function(table) {
+              ${editor.getValue()}
+            }`
+      )();
+      const args = func(table);
+      const validation = Plotly.validate(...args);
+      if (validation) {
+        chart.innerHTML = `<pre>Plotly validation error:\n${JSON.stringify(validation, null, 2)}</pre>`;
+      } else {
+        Plotly.newPlot(chart, ...args);
+      }
+    } catch (e) {
+      chart.innerHTML = `<pre>Error:\n${e.stack}</pre>`;
+    }
+  }
+
+  button.addEventListener('click', async () => {
+    if (editing) {
+      button.innerText = 'Edit';
+      chart.style.display = 'block';
+      code.style.display = 'none';
+      if (table) {
+        plotTable();
+      }
+    } else {
+      button.innerText = 'Save';
+      chart.style.display = 'none';
+      code.style.display = 'block';
+    }
+    editing = !editing;
+  });
+
+  grist.ready();
+  grist.onRecords(async function (records) {
+    table = Object.fromEntries(Object.keys(records[0]).map(key => [key, records.map(r => r[key])]));
+    if (!editing) {
+      plotTable();
+    }
+  });
+</script>
+</body>
+</html>
