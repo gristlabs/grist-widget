@@ -1,0 +1,15 @@
+env:
+  browser: true
+  es2021: true
+extends: 'eslint:recommended'
+overrides: []
+parserOptions:
+  ecmaVersion: latest
+  sourceType: module
+globals:
+  grist: "readonly"
+  $: "readonly"
+rules: {
+  semi: [2, "always"],
+  no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]
+}
