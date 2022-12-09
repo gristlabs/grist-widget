@@ -7,13 +7,6 @@ grist.ready({
   requiredAccess: 'read table'
 });
 
-const urlParams = new URLSearchParams(window.location.search);
-const rows = urlParams.get('rows')?.split(',');
-const cols = urlParams.get('cols')?.split(',');
-const vals = urlParams.get('vals')?.split(',');
-const aggregatorName = urlParams.get('aggregatorName');
-const rendererName = urlParams.get('rendererName');
-
 function wavg (n) {
   if (!n) { return; }
   n = n.filter(([note]) => typeof (note) === 'number');
