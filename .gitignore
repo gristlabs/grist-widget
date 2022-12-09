@@ -58,3 +58,5 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
+
+pivottable/.eslintrc.yml

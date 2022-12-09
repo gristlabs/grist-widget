@@ -34,17 +34,26 @@ const aggregators = {
   'Weighted Average': weightedAverage
 };
 
-grist.onRecords(rec => {
-  console.log(rec);
+grist.onRecords(async rec => {
+  const { rows, cols, vals, aggregatorName, rendererName } = await grist.getOption('settings') ?? {};
+  let initialRender = true;
   $('#table').pivotUI(
     rec,
     {
       rows,
       cols,
       vals,
+      onRefresh: function (config) {
+        if (initialRender) {
+          initialRender = false;
+          return;
+        }
+        const { rows, cols, vals, aggregatorName, rendererName } = config;
+        grist.setOption('settings', { rows, cols, vals, aggregatorName, rendererName });
+      },
       aggregatorName,
       rendererName,
-      aggregators: $.extend(aggregators, $.pivotUtilities.aggregators),
+      aggregators: $.extend($.pivotUtilities.aggregators, aggregators),
       renderers: $.extend(
         $.pivotUtilities.renderers,
         $.pivotUtilities.plotly_renderers,
