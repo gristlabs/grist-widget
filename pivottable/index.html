@@ -16,6 +16,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/d3_renderers.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/plotly_renderers.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/export_renderers.min.js"></script>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #32323f;
+        }
+        .pvtUiCell,
+        .pvtRenderer,
+        .pvtAggregator,
+        .pvtAttr,
+        .pvtTriangle,
+        .pvtFilterBox,
+        .pvtFilterBox .count,
+        .pvtFilterBox button {
+          background-color: #32323f !important;
+          color: #FFF;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="table"></div>
