@@ -1,0 +1,15 @@
+{
+  "name": "@gristlabs/widget-qrcode",
+  "description": "Simple widget that can be used to generate qrcodes with data from selected record.",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": [
+    {
+      "name": "QR Code",
+      "url": "https://gristlabs.github.io/grist-widget/qrcode/index.html",
+      "widgetId": "@gristlabs/widget-qrcode",
+      "published": true,
+      "accessLevel": "read table"
+    }
+  ]
+}
