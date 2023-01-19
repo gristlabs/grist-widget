@@ -43,6 +43,24 @@
         margin-top: 2rem;
         margin-bottom: 2rem;
       }
+      .editor-preview table {
+        margin: 2rem 0;
+        border-spacing: 0;
+        border: 1px solid lightgrey;
+        border-left: none;
+        border-top: none;
+      }
+      .editor-preview table th, .editor-preview table td {
+        border: 1px solid lightgrey;
+        padding: 0.5rem 1rem;
+        border-right: none;
+        border-bottom: none;
+      }
+      .editor-preview table th:empty, .editor-preview table td:empty {
+        height: 0px;
+        padding: 0px;
+        border-top: none;
+      }
       #error {
         display: none;
         background: red;
@@ -81,7 +99,23 @@
       .editor-preview {
         background: white;
       }
-      .editor-preview-full {
+      @media print {
+        html, body, textarea {
+          height: initial !important;
+        }
+        .editor-toolbar {
+          display: none !important;
+        }
+        .EasyMDEContainer {
+          height: auto !important;
+          display: block !important;
+        }
+        .EasyMDEContainer .CodeMirror-scroll {
+          display: none !important;
+        }
+        .EasyMDEContainer .editor-preview-full {
+          position: relative;
+        }
       }
     </style>
   </head>
