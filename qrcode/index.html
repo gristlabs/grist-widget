@@ -7,23 +7,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" integrity="sha512-pUhApVQtLbnpLtJn6DuzDD5o2xtmLJnJ7oBoMsBnzOkVkpqofGLGPaBJ6ayD2zQe3lCgCibhJBi4cj5wAxwVKA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   </head>
   <body>
-    <canvas id="qr"></canvas>
+    <div id="content"></div>
     <script>
       const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
       const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
       const size = .92 * Math.min(vw, vh)
+      function qrcode (qr) {
+        const canvas = document.createElement('canvas');
+        new QRious ({
+          element: canvas,
+          level: 'L',
+          size,
+          value: qr
+        });
+        return canvas;
+      }
       grist.ready({
         columns: ['QR'],
         requiredAccess: 'read table'
       });
       grist.onRecord(function(record) {
+        const content = document.getElementById('content');
+        content.innerHTML = '';
         const { QR } = grist.mapColumnNames(record);
-        const qr = new QRious ({
-          element: document.getElementById('qr'),
-          level: 'M',
-          size,
-          value: QR
-        });
+        if (typeof(QR) === "object") {
+          for (qr of QR) {
+            content.appendChild(qrcode(qr));
+          }
+        } else {
+          content.appendChild(qrcode(QR));
+        };
       });
     </script>
   </body>
