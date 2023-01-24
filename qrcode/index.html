@@ -9,10 +9,10 @@
   <body>
     <div id="content"></div>
     <script>
-      const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-      const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
-      const size = .92 * Math.min(vw, vh)
       function qrcode (qr) {
+        const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+        const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+        const size = .92 * Math.min(vw, vh)
         const canvas = document.createElement('canvas');
         new QRious ({
           element: canvas,
@@ -28,15 +28,19 @@
       });
       grist.onRecord(function(record) {
         const content = document.getElementById('content');
-        content.innerHTML = '';
         const { QR } = grist.mapColumnNames(record);
-        if (typeof(QR) === "object") {
-          for (qr of QR) {
-            content.appendChild(qrcode(qr));
-          }
-        } else {
-          content.appendChild(qrcode(QR));
+        function update_qr () {
+          content.innerHTML = '';
+          if (typeof(QR) === "object") {
+            for (qr of QR) {
+              content.appendChild(qrcode(qr));
+            }
+          } else {
+            content.appendChild(qrcode(QR));
+          };
         };
+        window.addEventListener("resize", update_qr);
+        update_qr();
       });
     </script>
   </body>
