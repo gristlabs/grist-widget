@@ -1,0 +1,13 @@
+{
+  "name": "@gristlabs/widget-pivottable",
+  "description": "Customizable pivot table",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Pivot Table",
+    "url": "https://gristlabs.github.io/grist-widget/pivottable/index.html",
+    "widgetId": "@gristlabs/widget-pivottable",
+    "published": true,
+    "accessLevel": "read table"
+  }
+}
