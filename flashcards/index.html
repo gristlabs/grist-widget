@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Grist Flash Cards</title>
+
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+    <script src="store.modern.min.js"></script>
+    <script src="index.js"></script>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+      }
+      .flashcards {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        align-items: center;
+      }
+      .cards {
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: 90%;
+        max-width: 600px;
+      }
+      .card {
+        margin: 20px;
+        padding: 40px;
+        position: relative;
+        box-shadow: 1px 1px 4px 1px #999;
+        border-radius: 16px;
+        font-family: sans-serif;
+        font-size: 14pt;
+        line-height: 1.5;
+      }
+      .card::before {
+        font-size: 20pt;
+        font-weight: bold;
+        color: lightgrey;
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        line-height: 1;
+      }
+      #answer {
+        box-shadow: 1px 1px 4px 1px #2d9797;
+      }
+      #question::before {
+        content: 'Q';
+      }
+      #answer::before {
+        content: 'A';
+      }
+      .card ul {
+        margin: 0;
+      }
+      .controls {
+        flex: none;
+        padding-bottom: 40px;
+      }
+      .btn {
+        padding: 16px 32px;
+        background-color: #21bbbb;
+        border-radius: 8px;
+        border: none;
+        outline: none;
+        font-size: 20pt;
+        font-weight: bold;
+        color: white;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="flashcards">
+      <div class="cards">
+        <div class="card" id="question">
+          Waiting for data...
+        </div>
+        <div class="card" id="answer">
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="show">Show</button>
+        <button class="btn" id="next">Next</button>
+      </div>
+    </div>
+  </body>
+</html>
