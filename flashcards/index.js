@@ -8,7 +8,7 @@ function ready(fn) {
 
 let questions = null;
 let at = 0;
-let state = 'Q';  // Can be 'Q' when questio is shown, or 'A' when answer is shown.
+let state = 'Q';  // Can be 'Q' when question is shown, or 'A' when answer is shown.
 
 const ui = {
   questionCard: null,
@@ -70,7 +70,6 @@ ready(function() {
   grist.onRecords(function(records, mappings) {
     records = grist.mapColumnNames(records, mappings);
     at = parseInt(store.get('flashcards-at'), 10) || 0;
-    console.warn("R", records);
     questions = records;
     goNext();
   });
