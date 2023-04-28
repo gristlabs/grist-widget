@@ -33,7 +33,7 @@ function getAnswerHTML(answer) {
     "</ul>";
 }
 
-function goNext(step = 1) {
+function goNext(step) {
   if (question.length === 0) { return; }
   if (step === 'start') {
     at = 0;
@@ -100,7 +100,7 @@ ready(function() {
     sourceRecords = grist.mapColumnNames(records, mappings);
     at = parseInt(store.get('flashcards-at'), 10) || 0;
     shuffleCards(isShuffled);
-    goNext();
+    goNext(0);
   });
   ui.showBtn.addEventListener('click', goShow);
   ui.nextBtn.addEventListener('click', () => goNext(1));
