@@ -12,33 +12,57 @@
       body, html {
         margin: 0;
         padding: 0;
+        font-family: sans-serif;
       }
       .flashcards {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         height: 100vh;
-        align-items: center;
+      }
+      .controls {
+        border-left: 1px solid lightgrey;
       }
       .cards {
-        margin: auto;
         display: flex;
+        flex: auto;
         flex-direction: column;
         align-items: stretch;
-        width: 90%;
-        max-width: 600px;
+        justify-content: start;
+        width: 100%;
+        border-bottom: 1px solid lightgrey;
+      }
+      .card-half {
+        flex: 1 0 0;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 0;
+      }
+      .card-half-scroll {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: auto;
+      }
+      .card-half:first-child {
+        border-bottom: 1px solid lightgrey;
       }
       .card {
-        margin: 20px;
+        margin: 40px;
         padding: 40px;
         position: relative;
+        width: calc(100% - 160px);
+        max-width: 600px;
         box-shadow: 1px 1px 4px 1px #999;
         border-radius: 16px;
-        font-family: sans-serif;
         font-size: 14pt;
         line-height: 1.5;
+        overflow-wrap: break-word;
       }
       .card::before {
-        font-size: 20pt;
+        font-size: 24px;
         font-weight: bold;
         color: lightgrey;
         position: absolute;
@@ -60,33 +84,186 @@
       }
       .controls {
         flex: none;
-        padding-bottom: 40px;
+        padding: 40px;
+        width: 20%;
+        min-width: 120px;
+        display: flex;
+        flex-direction: column;
+      }
+      .controls-main {
+        flex: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .btn {
-        padding: 16px 32px;
+        padding: 16px 16px;
         background-color: #21bbbb;
         border-radius: 8px;
         border: none;
         outline: none;
-        font-size: 20pt;
+        font-size: 24px;
         font-weight: bold;
         color: white;
+        display: flex;
+        align-items: center;
+        justify-content: start;
+        cursor: pointer;
       }
+      .btn:not(:disabled):hover {
+        background-color: #23b3b3;
+      }
+      #progress-bar {
+        height: 8px;
+        background-color: lightgrey;
+      }
+      #progress-bar-filled {
+        height: 8px;
+        background-color: #21bbbb;
+      }
+      #progress-text {
+        font-size: 14px;
+        font-weight: bold;
+        color: lightgrey;
+        text-align: center;
+        margin: 8px;
+      }
+      .advanced {
+        display: flex;
+        flex-direction: column;
+      }
+      .advanced .btn {
+        padding: 4px 16px;
+        font-size: 16px;
+      }
+      .advanced > .btn, .advanced > .btn-group {
+        margin-bottom: 8px;
+      }
+      .btn-group {
+        display: flex;
+      }
+      .btn-group .btn {
+        flex: auto;
+      }
+      .btn-group .btn:not(:first-child) {
+        margin-left: 8px;
+      }
+      #sort, #back {
+        flex: none;
+      }
+      #sort:disabled {
+        background-color: lightgrey;
+        cursor: unset;
+      }
+      @media (max-width: 767px) {
+        .flashcards {
+          flex-direction: column;
+        }
+        .controls {
+          border-top: 1px solid lightgrey;
+          border-left: none;
+          flex: none;
+          flex-direction: row-reverse;
+          width: auto;
+          padding: 8px;
+        }
+        .controls-main {
+          margin-right: -8px;
+        }
+        .cards {
+          flex: 1 1 0px;
+          min-height: 0px;
+          overflow: auto;
+        }
+        .card-half-scroll {
+          display: unset;
+          overflow: visible;
+        }
+        .card-half {
+          display: unset;
+          flex: auto;
+          border: none !important;
+          justify-content: start;
+        }
+        .card {
+          margin: 20px;
+          width: calc(100% - 80px);
+          padding: 40px 20px 20px 20px;
+        }
+        .btn {
+          font-size: 20px;
+        }
+        .advanced .btn {
+          padding: 4px 16px;
+          font-size: 14px;
+        }
+      }
+      .icon {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+      }
+      .icon:not(:last-child) {
+        margin-right: 8px;
+      }
+      .icon-show {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='none'%3E%3Cpath d='M9 7H7v2h2V7zm0 4H7v2h2v-2zm0-8a2 2 0 0 0-2 2h2V3zm4 12h-2v2h2v-2zm6-12v2h2c0-1.1-.9-2-2-2zm-6 0h-2v2h2V3zM9 17v-2H7a2 2 0 0 0 2 2zm10-4h2v-2h-2v2zm0-4h2V7h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2zM5 7H3v12a2 2 0 0 0 2 2h12v-2H5V7zm10-2h2V3h-2v2zm0 12h2v-2h-2v2z' fill='%23ffffff'%3E%3C/path%3E%3C/g%3E%3C/svg%3E");
+      }
+      .icon-shuffle {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M23.787,16.591l-5-3.5A.494.494,0,0,0,18.5,13a.5.5,0,0,0-.5.5V16H16.8a3.174,3.174,0,0,1-2.293-1.007L13.178,13.5l-1.338,1.5,1.214,1.361A5.205,5.205,0,0,0,16.8,18H18v2.5a.5.5,0,0,0,.787.409l5-3.5a.5.5,0,0,0,0-.818Z'%3E%3C/path%3E%3Cpath d='M4.2,6H1A1,1,0,0,0,1,8H4.2A3.351,3.351,0,0,1,6.493,9.007L7.822,10.5,9.16,9,7.946,7.634A5.341,5.341,0,0,0,4.2,6Z'%3E%3C/path%3E%3Cpath d='M23.787,6.591l-5-3.5A.5.5,0,0,0,18,3.5V6H16.8a5.205,5.205,0,0,0-3.746,1.634L6.493,14.993A3.351,3.351,0,0,1,4.2,16H1a1,1,0,0,0,0,2H4.2a5.341,5.341,0,0,0,3.746-1.634l6.561-7.359A3.174,3.174,0,0,1,16.8,8H18v2.5a.5.5,0,0,0,.5.5.494.494,0,0,0,.287-.091l5-3.5a.5.5,0,0,0,0-.818Z' fill='%23ffffff'%3E%3C/path%3E%3C/g%3E%3C/svg%3E");
+      }
+      .icon-sort {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='none'%3E%3Cpath d='M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z' fill='%23ffffff'%3E%3C/path%3E%3C/g%3E%3C/svg%3E");
+      }
+      .icon-restart {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='none'%3E%3Cpath d='M14 12c0-1.1-.9-2-2-2s-2 .9-2 2 .9 2 2 2 2-.9 2-2zm-2-9a9 9 0 0 0-9 9H0l4 4 4-4H5c0-3.87 3.13-7 7-7s7 3.13 7 7a6.995 6.995 0 0 1-11.06 5.7l-1.42 1.44A9 9 0 1 0 12 3z' fill='%23ffffff'%3E%3C/path%3E%3C/g%3E%3C/svg%3E");
+      }
+      .icon-next {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M5.293,19.707l3,3a1,1,0,0,0,1.414,0l10-10a1,1,0,0,0,0-1.414l-10-10a1,1,0,0,0-1.414,0l-3,3a1,1,0,0,0,0,1.414L11.586,12,5.293,18.293A1,1,0,0,0,5.293,19.707Z' fill='%23ffffff'%3E%3C/path%3E%3C/g%3E%3C/svg%3E");
+      }
+      .icon-back {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M14.293,22.707a1,1,0,0,0,1.414,0l3-3a1,1,0,0,0,0-1.414L12.414,12l6.293-6.293a1,1,0,0,0,0-1.414l-3-3a1,1,0,0,0-1.414,0l-10,10a1,1,0,0,0,0,1.414Z' fill='%23ffffff'%3E%3C/path%3E%3C/g%3E%3C/svg%3E");
+      }
+
 
     </style>
   </head>
   <body>
     <div class="flashcards">
       <div class="cards">
-        <div class="card" id="question">
-          Waiting for data...
+        <div class="card-half">
+          <div class="card-half-scroll">
+            <div class="card" id="question">
+              Waiting for data...
+            </div>
+          </div>
         </div>
-        <div class="card" id="answer">
+        <div class="card-half">
+          <div class="card-half-scroll">
+            <div class="card" id="answer">
+            </div>
+          </div>
         </div>
       </div>
       <div class="controls">
-        <button class="btn" id="show">Show</button>
-        <button class="btn" id="next">Next</button>
+        <div class="controls-main">
+          <button class="btn" id="show" title="Keys: Space, Enter, or Right"><span class="icon icon-show"></span><span>Show</span></button>
+          <button class="btn" id="next" title="Keys: Space, Enter, or Right"><span class="icon icon-next"></span><span>Next</span></button>
+        </div>
+        <div class="advanced">
+          <div class="progress">
+            <div id="progress-bar"><div id="progress-bar-filled"></div></div>
+            <div id="progress-text"></div>
+          </div>
+          <div class="btn-group">
+            <button class="btn" id="shuffle"><span class="icon icon-shuffle"></span><span>Shuffle<span></button>
+            <button class="btn" id="sort"><span class="icon icon-sort"></span></button>
+          </div>
+          <div class="btn-group">
+            <button class="btn" id="back" title="Keys: Left"><span class="icon icon-back"></span></button>
+            <button class="btn" id="restart"><span class="icon icon-restart"></span><span>Restart</span></button>
+          </div>
+        </div>
       </div>
     </div>
   </body>
