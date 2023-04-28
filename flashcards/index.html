@@ -108,12 +108,16 @@
         color: white;
         display: flex;
         align-items: center;
-        justify-content: start;
+        justify-content: center;
         cursor: pointer;
       }
-      .btn:not(:disabled):hover {
+      .btn:hover {
         background-color: #23b3b3;
       }
+      .btn.disabled:hover {
+        background-color: #bfbebe;
+      }
+
       #progress-bar {
         height: 8px;
         background-color: lightgrey;
@@ -150,12 +154,8 @@
       .btn-group .btn:not(:first-child) {
         margin-left: 8px;
       }
-      #sort, #back {
-        flex: none;
-      }
-      #sort:disabled {
+      .btn.disabled {
         background-color: lightgrey;
-        cursor: unset;
       }
       @media (max-width: 575px) {
         .flashcards {
@@ -260,12 +260,9 @@
             <div id="progress-text">?</div>
           </div>
           <div class="btn-group">
-            <button class="btn" id="shuffle"><span class="icon icon-shuffle"></span><span>Shuffle<span></button>
-            <button class="btn" id="sort" disabled><span class="icon icon-sort"></span></button>
-          </div>
-          <div class="btn-group">
-            <button class="btn" id="back" title="Keys: Left"><span class="icon icon-back"></span></button>
-            <button class="btn" id="restart"><span class="icon icon-restart"></span><span>Restart</span></button>
+            <button class="btn" id="back" title="Back (Keys: Left)"><span class="icon icon-back"></span></button>
+            <button class="btn" id="restart" title="Restart"><span class="icon icon-restart"></span></button>
+            <button class="btn" id="shuffle" title="Shuffle or Sort"><span class="icon icon-shuffle"></span></button>
           </div>
         </div>
       </div>

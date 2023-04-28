@@ -20,7 +20,6 @@ const ui = {
   backBtn: null,
   restartBtn: null,
   shuffleBtn: null,
-  sortBtn: null,
   progressBarFilled: null,
   progressText: null,
 };
@@ -64,15 +63,19 @@ function setState(nextState) {
 }
 
 function shuffleCards(yesNo) {
-  if (yesNo) {
+  if (yesNo !== null) {
+    isShuffled = yesNo;
+  } else {
+    isShuffled = !isShuffled;
+  }
+  if (isShuffled) {
     questions = sourceRecords.map(val => [Math.random(), val])
       .sort((a, b) => a[0] - b[0])
       .map(a => a[1]);
   } else {
     questions = sourceRecords;
   }
-  isShuffled = yesNo;
-  ui.sortBtn.disabled = isShuffled ? "" : "disabled";
+  ui.shuffleBtn.classList.toggle("disabled", !isShuffled)
 }
 
 ready(function() {
@@ -83,7 +86,6 @@ ready(function() {
   ui.backBtn = document.getElementById('back');
   ui.restartBtn = document.getElementById('restart');
   ui.shuffleBtn = document.getElementById('shuffle');
-  ui.sortBtn = document.getElementById('sort');
   ui.progressBarFilled = document.getElementById('progress-bar-filled');
   ui.progressText = document.getElementById('progress-text');
   grist.ready({
@@ -104,8 +106,7 @@ ready(function() {
   ui.nextBtn.addEventListener('click', () => goNext(1));
   ui.backBtn.addEventListener('click', () => goNext(-1));
   ui.restartBtn.addEventListener('click', () => goNext('start'));
-  ui.shuffleBtn.addEventListener('click', () => { shuffleCards(true); goNext('start'); });
-  ui.sortBtn.addEventListener('click', () => { shuffleCards(false); goNext('start'); });
+  ui.shuffleBtn.addEventListener('click', () => { shuffleCards(null); goNext('start'); });
   document.addEventListener("keydown", function(event) {
     if (event.key === " " || event.key === "Enter" || event.key === "Right" || event.key === "ArrowRight") {
       if (state === 'Q') {
