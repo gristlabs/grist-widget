@@ -9,12 +9,19 @@ function ready(fn) {
 let questions = null;
 let at = 0;
 let state = 'Q';  // Can be 'Q' when question is shown, or 'A' when answer is shown.
+let isShuffled = false;
+let sourceRecords = [];
 
 const ui = {
   questionCard: null,
   answerCard: null,
   showBtn: null,
   nextBtn: null,
+  backBtn: null,
+  restartBtn: null,
+  shuffleBtn: null,
+  progressBarFilled: null,
+  progressText: null,
 };
 
 function getAnswerHTML(answer) {
@@ -26,12 +33,19 @@ function getAnswerHTML(answer) {
     "</ul>";
 }
 
-function goNext() {
+function goNext(step) {
   if (question.length === 0) { return; }
+  if (step === 'start') {
+    at = 0;
+  } else {
+    at += step;
+    if (at < 0) { at = 0; }
+  }
   at = at % questions.length;
+  ui.progressBarFilled.style.width = (at * 100 / questions.length) + "%";
+  ui.progressText.textContent = at + " of " + questions.length;
   const qa = questions[at];
   store.set('flashcards-at', at);
-  at++;
   ui.questionCard.innerHTML = qa.Question;
   ui.answerCard.innerHTML = getAnswerHTML(qa.Answer);
   setState('Q');
@@ -48,10 +62,20 @@ function setState(nextState) {
   show(ui.nextBtn, state === 'A');
 }
 
-function goPrev() {
-  at -= 2;
-  if (at < 0) { at = 0; }
-  goNext();
+function shuffleCards(yesNo) {
+  if (yesNo !== null) {
+    isShuffled = yesNo;
+  } else {
+    isShuffled = !isShuffled;
+  }
+  if (isShuffled) {
+    questions = sourceRecords.map(val => [Math.random(), val])
+      .sort((a, b) => a[0] - b[0])
+      .map(a => a[1]);
+  } else {
+    questions = sourceRecords;
+  }
+  ui.shuffleBtn.classList.toggle("disabled", !isShuffled)
 }
 
 ready(function() {
@@ -59,6 +83,11 @@ ready(function() {
   ui.answerCard = document.getElementById('answer');
   ui.showBtn = document.getElementById('show');
   ui.nextBtn = document.getElementById('next');
+  ui.backBtn = document.getElementById('back');
+  ui.restartBtn = document.getElementById('restart');
+  ui.shuffleBtn = document.getElementById('shuffle');
+  ui.progressBarFilled = document.getElementById('progress-bar-filled');
+  ui.progressText = document.getElementById('progress-text');
   grist.ready({
     columns: [
       { name: "Question", type: 'Text', title: "Question Column"},
@@ -68,24 +97,27 @@ ready(function() {
   });
   grist.ready();
   grist.onRecords(function(records, mappings) {
-    records = grist.mapColumnNames(records, mappings);
+    sourceRecords = grist.mapColumnNames(records, mappings);
     at = parseInt(store.get('flashcards-at'), 10) || 0;
-    questions = records;
-    goNext();
+    shuffleCards(isShuffled);
+    goNext(0);
   });
   ui.showBtn.addEventListener('click', goShow);
-  ui.nextBtn.addEventListener('click', goNext);
+  ui.nextBtn.addEventListener('click', () => goNext(1));
+  ui.backBtn.addEventListener('click', () => goNext(-1));
+  ui.restartBtn.addEventListener('click', () => goNext('start'));
+  ui.shuffleBtn.addEventListener('click', () => { shuffleCards(null); goNext('start'); });
   document.addEventListener("keydown", function(event) {
     if (event.key === " " || event.key === "Enter" || event.key === "Right" || event.key === "ArrowRight") {
       if (state === 'Q') {
         goShow();
       } else {
-        goNext();
+        goNext(1);
       }
       event.preventDefault();
     }
     if (event.key === "Left" || event.key === "ArrowLeft") {
-      goPrev();
+      goNext(-1);
       event.preventDefault();
     }
     return false;
