@@ -70,8 +70,13 @@ let app = undefined;
 
 Vue.filter('currency', formatNumberAsUSD)
 function formatNumberAsUSD(value) {
-  if (!value) { return '—'; }
-  const result = Number(value).toLocaleString('en', {
+  if (typeof value !== "number") {
+    return value || '—';      // falsy value would be shown as a dash.
+  }
+  value = Math.round(value * 100) / 100;    // Round to nearest cent.
+  value = (value === -0 ? 0 : value);       // Avoid negative zero.
+
+  const result = value.toLocaleString('en', {
     style: 'currency', currency: 'USD'
   })
   if (result.includes('NaN')) {
