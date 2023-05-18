@@ -71,7 +71,7 @@ let app = undefined;
 Vue.filter('currency', formatNumberAsUSD)
 function formatNumberAsUSD(value) {
   if (typeof value !== "number") {
-    return value || '—';      // null and undefined would be shown as a dash.
+    return value || '—';      // falsy value would be shown as a dash.
   }
   value = Math.round(value * 100) / 100;    // Round to nearest cent.
   value = (value === -0 ? 0 : value);       // Avoid negative zero.
