@@ -53,6 +53,7 @@ function goNext(step) {
 
 function goShow() {
   setState('A');
+  ui.progressBarFilled.style.width = ((at + 1) * 100 / questions.length) + "%";
 }
 
 function setState(nextState) {
