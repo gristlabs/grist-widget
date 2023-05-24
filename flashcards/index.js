@@ -42,7 +42,7 @@ function goNext(step) {
     if (at < 0) { at = 0; }
   }
   at = at % questions.length;
-  ui.progressBarFilled.style.width = ((at + 1) * 100 / questions.length) + "%";
+  ui.progressBarFilled.style.width = (at * 100 / questions.length) + "%";
   ui.progressText.textContent = (at + 1) + " of " + questions.length;
   const qa = questions[at];
   store.set('flashcards-at', at);
@@ -53,6 +53,7 @@ function goNext(step) {
 
 function goShow() {
   setState('A');
+  ui.progressBarFilled.style.width = ((at + 1) * 100 / questions.length) + "%";
 }
 
 function setState(nextState) {
