@@ -43,7 +43,7 @@ function goNext(step) {
   }
   at = at % questions.length;
   ui.progressBarFilled.style.width = (at * 100 / questions.length) + "%";
-  ui.progressText.textContent = at + " of " + questions.length;
+  ui.progressText.textContent = (at + 1) + " of " + questions.length;
   const qa = questions[at];
   store.set('flashcards-at', at);
   ui.questionCard.innerHTML = qa.Question;
