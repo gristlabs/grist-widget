@@ -1,12 +1,22 @@
-<html>
+<html lang="en">
   <head>
     <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+    <link rel="stylesheet" href="screen.css" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   </head>
   <body>
+  <div id="calendar-options">
+    <input type="radio" id="calendar-day" name="calendar-options" value="day" onchange="calendarViewChanges(this)">
+    <label for="calendar-day">Day</label>
+    <input type="radio" id="calenar-week" name="calendar-options" value="week" onchange="calendarViewChanges(this)">
+    <label for="calenar-week">Week</label>
+    <input type="radio" id="calenar-month" name="calendar-options" value="month" onchange="calendarViewChanges(this)">
+    <label for="calenar-month">Month</label>
+
+  </div>
     <div id="calendar" style="height: 100%; min-height: 600px;">
       Waiting for data...
     </div>
