@@ -39,8 +39,21 @@ ready(function() {
   Calendar = new tui.Calendar(container, options);
   grist.ready({requiredAccess: 'read table'});
   grist.onRecords(updateCalendar);
+  Calendar.on('beforeUpdateEvent', async (info) => {
+       if (info.changes) {
+         if (info.changes.start || info.changes.end) {
+            const record = await grist.fetchSelectedRecord(info.event.id)
+          if (record) {
+            const dateFrom = (info.changes.start?.valueOf() ?? info.event.start.valueOf()) / 1000;
+            const dateTo = (info.changes.end?.valueOf() ?? info.event.start.valueOf()) / 1000;
+             const table = await grist.getTable();
+             await table.update({id:record.id, fields:{B:dateFrom, C:dateTo}})
+          }
+         }
+       }
+  });
+  grist.ready({requiredAccess: 'read table'});
 });
-grist.ready({requiredAccess: 'read table'});
 
 function updateCalendar(records) {
   for(const record of records) {
@@ -55,7 +68,6 @@ function updateCalendar(records) {
           end: record.C,
           category: 'time',
           state: 'Free',
-          isReadOnly: true,
           color: '#fff',
           backgroundColor: '#ccc',
           customStyle: {
