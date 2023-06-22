@@ -8,7 +8,7 @@ function ready(fn) {
 
 const columnsMappingOptions = [
   {
-    name: "StartDate", // What field we will read.
+    name: "startDate", // What field we will read.
     title: "Start Date", // Friendly field name.
     optional: false, // Is this an optional field.
     type: "DateTime", // What type of column we expect.
@@ -16,7 +16,7 @@ const columnsMappingOptions = [
     allowMultiple: false // Allows multiple column assignment.
   },
   {
-    name: "EndDate",
+    name: "endDate",
     title: "End Date",
     optional: false,
     type: "DateTime",
@@ -24,7 +24,7 @@ const columnsMappingOptions = [
     allowMultiple: false
   },
     {
-    name: "Title",
+    name: "title",
     title: "Title",
     optional: false,
     type: "Text",
@@ -32,7 +32,7 @@ const columnsMappingOptions = [
     allowMultiple: false
     },
   {
-    name: "IsAllDay",
+    name: "isAllDay",
     title: "Is All Day",
     optional: true,
     type: "Bool",
@@ -78,7 +78,6 @@ ready(function() {
   grist.ready({requiredAccess: 'read table', columns: columnsMappingOptions});
   grist.onRecords(updateCalendar);
   grist.onOptions(function (options, interaction) {
-    console.log(options, interaction);
     if(options.calendarViewPerspective){
       Calendar.changeView(options.calendarViewPerspective);
       selectRadioButton(options.calendarViewPerspective);
@@ -97,7 +96,6 @@ ready(function() {
         }
       }
     }
-    grist.ready({requiredAccess: 'read table'});
   });
 });
 
@@ -110,19 +108,19 @@ function selectRadioButton(value){
 }
 
 function updateCalendar(records,mappings) {
-  const mapped = grist.mapColumnNames(records, mappings);
-  if(mapped) {
-    for (const record of records) {
+  const mappedRecords = grist.mapColumnNames(records, mappings);
+  if(mappedRecords) {
+    for (const record of mappedRecords) {
       const event = Calendar.getEvent(record.id, 'cal1'); // EventObject
       if (!event) {
         Calendar.createEvents([
           {
             id: record.id,
             calendarId: 'cal1',
-            title: mapped.title,
-            start: mapped.startDate,
-            end: mapped.endDate,
-            isAllday: mapped.isAllDay,
+            title: record.title,
+            start: record.startDate,
+            end: record.endDate,
+            isAllday: record.isAllDay,
             category: 'time',
             state: 'Free',
             color: '#fff',
@@ -135,9 +133,10 @@ function updateCalendar(records,mappings) {
         ]);
       } else {
         Calendar.updateEvent(record.id, 'cal1', {
-          title: record.A,
-          start: record.B,
-          end: record.C,
+          title: record.title,
+          start: record.startDate,
+          end: record.endDate,
+          isAllday: record.isAllDay,
         })
       }
     }
