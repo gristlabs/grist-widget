@@ -37,7 +37,7 @@ ready(function() {
   const container = document.getElementById('calendar');
   // Update the widget anytime the document data changes.
   Calendar = new tui.Calendar(container, options);
-  grist.ready({requiredAccess: 'read table'});
+  grist.ready({requiredAccess: 'read table', columns: ['startDate', 'endDate', 'title', 'isAllDay']});
   grist.onRecords(updateCalendar);
   Calendar.on('beforeUpdateEvent', async (info) => {
        if (info.changes) {
@@ -55,7 +55,7 @@ ready(function() {
   grist.ready({requiredAccess: 'read table'});
 });
 
-function updateCalendar(records) {
+function updateCalendar(records,mappings) {
   for(const record of records) {
     const event = Calendar.getEvent(record.id, 'cal1'); // EventObject
     if (!event) {
@@ -63,9 +63,10 @@ function updateCalendar(records) {
         {
           id: record.id,
           calendarId: 'cal1',
-          title: record.A,
-          start: record.B,
-          end: record.C,
+          title: record[mappings.title],
+          start: record[mappings.startDate],
+          end: record[mappings.endDate],
+          isAllDay: record[mappings.isAllDay],
           category: 'time',
           state: 'Free',
           color: '#fff',
