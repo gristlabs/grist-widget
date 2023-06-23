@@ -94,6 +94,10 @@ ready(function() {
       Calendar.updateEvent(mappedRecord.id, 'cal1',{backgroundColor: selectedColor});
       selectedRecordId = mappedRecord.id;
     }
+    var dom = document.querySelector('.toastui-calendar-time');
+    const middleHour = mappedRecord.startDate.getHours()
+        + (mappedRecord.endDate.getHours() - mappedRecord.startDate.getHours())/2;
+    dom.scrollTo({top: (dom.clientHeight/24)*middleHour, behavior: 'smooth'});
   });
   grist.onOptions(function (options, interaction) {
     if(options.calendarViewPerspective){
