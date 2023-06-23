@@ -1,5 +1,16 @@
-#calendar-options {
-  margin: 10px;
+body{
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+}
+
+#calendar-options{
+  display:flex;
+  gap: 50px;
+  padding-bottom: 10px;
+}
+
+#calendar-navigation-buttons,#calendar-perspective-buttons{
+  display:flex;
+  gap: 0;
 }
 
 #calendar-options input[type="radio"] {
@@ -8,25 +19,39 @@
   width: 0;
 }
 
-#calendar-options label {
-  display: inline-block;
-  background-color: #ddd;
-  padding: 10px 20px;
-  font-family: sans-serif, Arial;
-  font-size: 16px;
-  border: 2px solid #444;
-  border-radius: 4px;
+.calendar-button{
+  font-family: inherit;
+  font-size: 1em;
+  border: none;
+  border-top: 1px solid #11B683;
+  border-bottom: 1px solid #11B683;
+  /*   border-radius: 4px; */
+  letter-spacing: -0.08px;
+  padding: 4px 8px;
+  background:transparent;
 }
 
-#calendar-options label:hover {
-  background-color: #dfd;
+.calendar-button:last-of-type{
+  border-right: 1px solid #11B683;
+  border-radius: 0 5px 5px 0;
 }
 
-#calendar-options input[type="radio"]:focus + label {
-  border: 2px dashed #444;
+.calendar-button:first-of-type{
+  border-left: 1px solid #11B683;
+  border-radius: 5px 0 0 5px;
 }
 
-#calendar-options input[type="radio"]:checked + label {
-  background-color: #bfb;
-  border-color: #4c4;
+.calendar-button:hover{
+  color: #009058;
+  border-color: #009058;
+}
+
+input:checked + label{
+  background-color:#16B378;
+  color: #ffffff;
+  border-color:#000;
+}
+
+.toastui-calendar-day-view .toastui-calendar-panel:not(.toastui-calendar-time), .toastui-calendar-week-view .toastui-calendar-panel:not(.toastui-calendar-time) {
+  overflow-y: hidden;
 }

@@ -107,6 +107,18 @@ function selectRadioButton(value){
   }
 }
 
+function calendarPrevious(){
+  Calendar.prev();
+}
+
+function calendarNext(){
+  Calendar.next();
+}
+
+function calendarToday(){
+  Calendar.today();
+}
+
 function updateCalendar(records,mappings) {
   const mappedRecords = grist.mapColumnNames(records, mappings);
   if(mappedRecords) {

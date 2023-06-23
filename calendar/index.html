@@ -9,13 +9,19 @@
   </head>
   <body>
   <div id="calendar-options">
-    <input type="radio" id="calendar-day" name="calendar-options" value="day" onchange="calendarViewChanges(this)">
-    <label for="calendar-day">Day</label>
-    <input type="radio" id="calenar-week" name="calendar-options" value="week" onchange="calendarViewChanges(this)">
-    <label for="calenar-week">Week</label>
-    <input type="radio" id="calenar-month" name="calendar-options" value="month" onchange="calendarViewChanges(this)">
-    <label for="calenar-month">Month</label>
-
+    <div id="calendar-navigation-buttons">
+      <button class="calendar-button"  onclick="calendarPrevious()"><</button>
+      <button class="calendar-button"  onclick="calendarToday()">Today</button>
+      <button class="calendar-button"  onclick="calendarNext()">></button>
+    </div>
+    <div id="calendar-perspective-buttons">
+      <input type="radio" id="calendar-day" name="calendar-options" value="day" onchange="calendarViewChanges(this)">
+      <label class="calendar-button" for="calendar-day">Day</label>
+      <input type="radio" id="calenar-week" name="calendar-options" value="week" onchange="calendarViewChanges(this)">
+      <label class="calendar-button" for="calenar-week">Week</label>
+      <input  type="radio" id="calenar-month" name="calendar-options" value="month" onchange="calendarViewChanges(this)">
+      <label class="calendar-button" for="calenar-month">Month</label>
+    </div>
   </div>
     <div id="calendar" style="height: 100%; min-height: 600px;">
       Waiting for data...
