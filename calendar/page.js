@@ -6,6 +6,12 @@ function ready(fn) {
   }
 }
 
+let mainColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--main-color')
+
+let selectedColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--selected-color')
+
 const columnsMappingOptions = [
   {
     name: "startDate", // What field we will read.
@@ -54,14 +60,14 @@ const options = {
       return `<span>${title}</span>`;
     },
     allday(event) {
-      return `<span style="color: gray;">${event.title}</span>`;
+      return `<span>${event.title}</span>`;
     },
   },
   calendars: [
     {
       id: 'cal1',
       name: 'Personal',
-      backgroundColor: '#03bd9e',
+      backgroundColor: mainColor,
     },
   ],
 }
@@ -71,12 +77,24 @@ async function calendarViewChanges(radiobutton){
 }
 
 let Calendar
+let selectedRecordId = null;
 ready(function() {
   const container = document.getElementById('calendar');
   // Update the widget anytime the document data changes.
   Calendar = new tui.Calendar(container, options);
   grist.ready({requiredAccess: 'read table', columns: columnsMappingOptions});
   grist.onRecords(updateCalendar);
+  grist.onRecord((record, mappings) => {
+    const mappedRecord = grist.mapColumnNames(record, mappings);
+    if(mappedRecord) {
+      Calendar.setDate(mappedRecord.startDate);
+      if(selectedRecordId){
+        Calendar.updateEvent(selectedRecordId, 'cal1',{backgroundColor: mainColor});
+      }
+      Calendar.updateEvent(mappedRecord.id, 'cal1',{backgroundColor: selectedColor});
+      selectedRecordId = mappedRecord.id;
+    }
+  });
   grist.onOptions(function (options, interaction) {
     if(options.calendarViewPerspective){
       Calendar.changeView(options.calendarViewPerspective);
@@ -135,13 +153,7 @@ function updateCalendar(records,mappings) {
             isAllday: record.isAllDay,
             category: 'time',
             state: 'Free',
-            color: '#fff',
-            backgroundColor: '#ccc',
-            customStyle: {
-              fontStyle: 'italic',
-              fontSize: '15px',
-            },
-          }, // EventObject
+          },
         ]);
       } else {
         Calendar.updateEvent(record.id, 'cal1', {

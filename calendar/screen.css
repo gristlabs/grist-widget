@@ -1,3 +1,9 @@
+:root {
+  --main-color: #16B378;
+  --selected-color: #009058;
+}
+
+
 body{
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
 }
@@ -47,7 +53,7 @@ body{
 }
 
 input:checked + label{
-  background-color:#16B378;
+  background-color:var(--main-color);
   color: #ffffff;
   border-color:#000;
 }
