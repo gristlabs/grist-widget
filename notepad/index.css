@@ -30,3 +30,26 @@ body {
 .ql-snow .ql-picker.ql-size .ql-picker-item::before {
   content: 'Regular'
 }
+
+@media print {
+  html, body {
+    height: unset !important;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0;
+    overflow: unset;
+  }
+  @page {
+    margin: 0 !important;
+  }
+  .ql-editor {
+    overflow: initial !important;
+  }
+  /* remove the scrollbars */
+  .ql-container {
+    overflow: unset !important;
+  }
+  .ql-toolbar {
+    display: none;
+  }
+}
