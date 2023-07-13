@@ -11,7 +11,7 @@
     "dev": "echo 'Starting local server and watching for changes.\nStart Grist with an environmental variable GRIST_WIDGET_LIST_URL=http://localhost:8585/manifest.json' && npm run watch 1> /dev/null & npm run serve:dev 1> /dev/null"
   },
   "devDependencies": {
-    "live-server": "^1.2.1",
+    "live-server": "1.2.1",
     "nodemon": "^2.0.15"
   }
 }

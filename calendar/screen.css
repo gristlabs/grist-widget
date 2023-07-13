@@ -25,6 +25,10 @@ body{
   width: 0;
 }
 
+.toastui-calendar-timegrid{
+  height: 100%;
+}
+
 .calendar-button{
   font-family: inherit;
   font-size: 1em;
@@ -60,4 +64,18 @@ input:checked + label{
 
 .toastui-calendar-day-view .toastui-calendar-panel:not(.toastui-calendar-time), .toastui-calendar-week-view .toastui-calendar-panel:not(.toastui-calendar-time) {
   overflow-y: hidden;
+}
+
+#calendar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+#calendar{
+  flex: 1;
+  min-height: 600px;
+  flex-shrink: 0;
+  background-color: #ff0000;
 }
