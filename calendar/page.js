@@ -119,6 +119,14 @@ ready(function() {
       }
     }
   });
+  // Registering an instance event
+  Calendar.on('selectDateTime', async (info) => {
+    const dateFrom = info.start?.valueOf() / 1000;
+    const dateTo = info.end?.valueOf() / 1000;
+    const table = await grist.getTable();
+    await table.create( {fields: {B: dateFrom, C: dateTo}})
+    console.log(eventObj);
+  });
 });
 
 function selectRadioButton(value){
@@ -141,8 +149,10 @@ function calendarToday(){
   Calendar.today();
 }
 
+let previousIds= [];
 function updateCalendar(records,mappings) {
   const mappedRecords = grist.mapColumnNames(records, mappings);
+
   if(mappedRecords) {
     for (const record of mappedRecords) {
       const event = Calendar.getEvent(record.id, 'cal1'); // EventObject
@@ -168,6 +178,12 @@ function updateCalendar(records,mappings) {
         })
       }
     }
+    for (const id of previousIds) {
+      if (!mappedRecords.find(record => record.id === id)) {
+        Calendar.deleteEvent(id, 'cal1');
+      }
+    }
+    previousIds = new Set(mappedRecords.map(record => record.id));
   }
 }
 
