@@ -14,7 +14,21 @@
 </head>
 
 <body>
-  <div id="editor">
+  <form id="configuration">
+    <h2>Notepad Widget Configuration</h1>
+    <div>
+      <label>Select Quill theme:
+        <select name="quillTheme" id="quillTheme">
+          <option value="snow">Snow (format via toolbar)</option>
+          <option value="bubble">Bubble (format via tooltip)</option>
+        </select>
+      </label>
+    </div>
+    <div>
+      <input type="submit" value="Save">
+    </div>
+  </form>
+  <div id="editor" class="editor-container">
   </div>
   <script src="index.js"></script>
 </body>

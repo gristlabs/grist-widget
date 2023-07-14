@@ -17,13 +17,15 @@ body {
   font-size: 13px;
 }
 
-body {
+.editor-container{
+  height: 100%;
   display: flex;
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif,
     Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
   overflow: hidden;
 }
+
 .ql-snow .ql-picker.ql-size .ql-picker-label::before {
   content: 'Regular'
 }
