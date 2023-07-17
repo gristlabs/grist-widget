@@ -76,6 +76,15 @@ async function calendarViewChanges(radiobutton){
   await grist.setOption('calendarViewPerspective', radiobutton.value);
 }
 
+function mapCalendarEventToGristObject(event){
+  const dateFrom = (info.changes.start?.valueOf() ?? info.event.start.valueOf()) / 1000;
+  const dateTo = (info.changes.end?.valueOf() ?? info.event.start.valueOf()) / 1000;
+  const recordToMap = {id: record.id, startDate: dateFrom, endDate: dateTo, title: info.event.title, isAllDay: info.event.isAllday};
+  const mappedRecord = grist.mapColumnNamesBack(recordToMap);
+  delete mappedRecord.id;
+  return{id:record.id, fields: mappedRecord };
+}
+
 let Calendar
 let selectedRecordId = null;
 ready(function() {
@@ -113,7 +122,10 @@ ready(function() {
             const dateFrom = (info.changes.start?.valueOf() ?? info.event.start.valueOf()) / 1000;
             const dateTo = (info.changes.end?.valueOf() ?? info.event.start.valueOf()) / 1000;
             const table = await grist.getTable();
-            await table.update({id: record.id, fields: {B: dateFrom, C: dateTo}})
+            const recordToMap = {id: record.id, startDate: dateFrom, endDate: dateTo, title: info.event.title, isAllDay: info.event.isAllday};
+            const mappedRecord = grist.mapColumnNamesBack(recordToMap);
+            delete mappedRecord.id;
+            await table.update({id:record.id, fields: mappedRecord });
 
         }
       }
