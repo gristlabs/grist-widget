@@ -82,7 +82,7 @@ ready(function() {
   const container = document.getElementById('calendar');
   // Update the widget anytime the document data changes.
   Calendar = new tui.Calendar(container, options);
-  grist.ready({requiredAccess: 'read table', columns: columnsMappingOptions});
+  grist.allowSelectBy();
   grist.onRecords(updateCalendar);
   grist.onRecord((record, mappings) => {
     const mappedRecord = grist.mapColumnNames(record, mappings);
@@ -119,14 +119,19 @@ ready(function() {
       }
     }
   });
+    Calendar.on('clickEvent', async (info) => {
+      grist.setSelectedRows([info.event.id]);
+    });
   // Registering an instance event
   Calendar.on('selectDateTime', async (info) => {
     const dateFrom = info.start?.valueOf() / 1000;
     const dateTo = info.end?.valueOf() / 1000;
     const table = await grist.getTable();
-    await table.create( {fields: {B: dateFrom, C: dateTo}})
-    console.log(eventObj);
+    await table.create( {fields: {B: dateFrom, C: dateTo, "Is_All_Day_": info.isAllday?1:0, A: "New Event"}})
+    Calendar.clearGridSelections();
   });
+  grist.ready({requiredAccess: 'read table', columns: columnsMappingOptions});
+
 });
 
 function selectRadioButton(value){
