@@ -1,6 +1,8 @@
 const {Subject} = rxjs;
 const {debounceTime} = rxjs.operators;
 
+const defaultTheme = "snow";
+
 const toolbarOptions = [
   ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
   ['blockquote', 'code-block'],
@@ -21,22 +23,45 @@ const toolbarOptions = [
   ['clean']                                         // remove formatting button
 ];
 
-// Create quill editor
-const quill = new Quill('#editor', {
-  theme: 'snow',
-  modules: {
-    toolbar: toolbarOptions,
-    imageResize: {
-      displaySize: true
-    }
-  },
-});
+let quill = {};
 
+const textChanged = new Subject();
 let column;
 let id;
 let lastContent;
 let lastSave;
 let tableId;
+
+// Create a Quill editor with specified theme
+function makeQuill(theme){
+  var quillDiv = document.createElement('div');
+  quillDiv.id = 'quill';
+  document.getElementById('editor').innerHTML = '';
+  document.getElementById('editor').appendChild(quillDiv);
+
+  const quill = new Quill('#quill', {
+    theme: theme,
+    modules: {
+      toolbar: toolbarOptions,
+      imageResize: {
+        displaySize: true
+      }
+    }
+  });
+
+  quill.on('text-change', () => textChanged.next(null));
+  if(lastContent){
+    quill.setContents(safeParse(lastContent));
+  }
+
+  // Set up config save callback
+  document.getElementById("configuration").addEventListener("submit", async function(event){
+    event.preventDefault();
+    await saveOptions();
+  });
+
+  return quill;
+}
 
 function safeParse(value) {
   try {
@@ -49,8 +74,27 @@ function safeParse(value) {
   }
 }
 
+// Helper to show or hide panels.
+function showPanel(name) {
+  document.getElementById("configuration").style.display = 'none';
+  document.getElementById("editor").style.display = 'none';
+  document.getElementById(name).style.display = '';
+}
+
+// Define handler for the Save button.
+async function saveOptions() {
+  const theme = document.getElementById("quillTheme").value;
+  await grist.widgetApi.setOption('quillTheme', theme);
+  showPanel('editor');
+}
+
 // Subscribe to grist data
-grist.ready({requiredAccess: 'full', columns: [{name: 'Content', type: 'Text'}]});
+grist.ready({requiredAccess: 'full', columns: [{name: 'Content', type: 'Text'}],
+  // Register configuration handler to show configuration panel.
+  onEditOptions() {
+    showPanel('configuration');
+  },
+});
 grist.onRecord(function (record, mappings) {
   // If this is a new record, or mapping is diffrent.
   if (id !== record.id || mappings?.Content !== column) {
@@ -69,9 +113,15 @@ grist.onRecord(function (record, mappings) {
   }
 });
 
-// Create a change event.
-const textChanged = new Subject();
-quill.on('text-change', () => textChanged.next(null));
+// Register onOptions handler.
+grist.onOptions((customOptions, _) => {
+  customOptions = customOptions || {};
+  theme = customOptions.quillTheme || defaultTheme;
+  document.getElementById("quillTheme").value = theme;
+  quill = makeQuill(theme);
+  showPanel("editor");
+});
+
 // Debounce the save event, to not save more often than once every 500 ms.
 const saveEvent = textChanged.pipe(debounceTime(500));
 const table = grist.getTable();
