@@ -3,15 +3,41 @@
   "version": "0.0.1",
   "description": "A repository of grist custom widgets that have no back-end requirements.",
   "scripts": {
-    "build": "node ./_build/publish.js",
+    "build": "tsc --build && node ./buildtools/publish.js",
     "serve": "live-server --port=8585 --no-browser -q",
-    "build:dev": "node ./_build/publish.js http://localhost:8585",
-    "serve:dev": "live-server --port=8585 --no-browser -q --middleware=$(pwd)/_build/rewriteUrl.js",
+    "build:dev": "node ./buildtools/publish.js http://localhost:8585",
+    "serve:dev": "live-server --port=8585 --no-browser -q --middleware=$(pwd)/buildtools/rewriteUrl.js",
     "watch": "nodemon --ignore manifest.json -e js,json --exec 'npm run build:dev'",
-    "dev": "echo 'Starting local server and watching for changes.\nStart Grist with an environmental variable GRIST_WIDGET_LIST_URL=http://localhost:8585/manifest.json' && npm run watch 1> /dev/null & npm run serve:dev 1> /dev/null"
+    "dev": "echo 'Starting local server and watching for changes.\nStart Grist with an environmental variable GRIST_WIDGET_LIST_URL=http://localhost:8585/manifest.json' && npm run watch 1> /dev/null & npm run serve:dev 1> /dev/null",
+    "test": "docker image inspect gristlabs/grist --format 'gristlabs/grist image present' && NODE_PATH=_build SELENIUM_BROWSER=chrome mocha _build/test/*.js"
   },
   "devDependencies": {
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.3.1",
+    "@types/node-fetch": "^2.6.4",
+    "@types/selenium-webdriver": "^4.1.15",
+    "chromedriver": "114",
     "live-server": "^1.2.1",
-    "nodemon": "^2.0.15"
+    "mocha": "^10.2.0",
+    "mocha-webdriver": "^0.2.13",
+    "node-fetch": "^2",
+    "nodemon": "^2.0.15",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.3"
+  },
+  "resolutions": {
+    "chromedriver": "114.0.2"
+  },
+  "dependencies": {},
+  "mocha": {
+    "require": [
+      "ts-node/register",
+      "_build/test/init-mocha-webdriver"
+    ],
+    "extensions": [
+      "js",
+      "ts"
+    ]
   }
 }

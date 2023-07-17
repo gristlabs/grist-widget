@@ -1,0 +1,11 @@
+{
+  "extends": "./buildtools/tsconfig-base.json",
+  "files": [],
+  "include": [],
+  "references": [
+    { "path": "./test" },
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
