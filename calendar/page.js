@@ -77,12 +77,9 @@ async function calendarViewChanges(radiobutton){
 }
 
 function mapCalendarEventToGristObject(event){
-  const dateFrom = (info.changes.start?.valueOf() ?? info.event.start.valueOf()) / 1000;
-  const dateTo = (info.changes.end?.valueOf() ?? info.event.start.valueOf()) / 1000;
-  const recordToMap = {id: record.id, startDate: dateFrom, endDate: dateTo, title: info.event.title, isAllDay: info.event.isAllday};
-  const mappedRecord = grist.mapColumnNamesBack(recordToMap);
+  const mappedRecord = grist.mapColumnNamesBack(event);
   delete mappedRecord.id;
-  return{id:record.id, fields: mappedRecord };
+  return{id:event.id, fields: mappedRecord };
 }
 
 let Calendar
@@ -119,13 +116,16 @@ ready(function() {
         if (info.changes.start || info.changes.end) {
           const record = await grist.fetchSelectedRecord(info.event.id)
           if (record) {
-            const dateFrom = (info.changes.start?.valueOf() ?? info.event.start.valueOf()) / 1000;
-            const dateTo = (info.changes.end?.valueOf() ?? info.event.start.valueOf()) / 1000;
+            const gristEvent ={
+              startDate:(info.changes.start?.valueOf() ?? info.event.start.valueOf()) / 1000,
+              endDate: (info.changes.end?.valueOf() ?? info.event.end.valueOf()) / 1000,
+              isAllday: info.changes.isAllday ?? info.event.isAllday,
+              title: info.changes.title ?? info.event.title,
+              id: record.id,
+            }
+            const mappedRecord = mapCalendarEventToGristObject(gristEvent);
             const table = await grist.getTable();
-            const recordToMap = {id: record.id, startDate: dateFrom, endDate: dateTo, title: info.event.title, isAllDay: info.event.isAllday};
-            const mappedRecord = grist.mapColumnNamesBack(recordToMap);
-            delete mappedRecord.id;
-            await table.update({id:record.id, fields: mappedRecord });
+            await table.update(mappedRecord);
 
         }
       }
@@ -136,10 +136,15 @@ ready(function() {
     });
   // Registering an instance event
   Calendar.on('selectDateTime', async (info) => {
-    const dateFrom = info.start?.valueOf() / 1000;
-    const dateTo = info.end?.valueOf() / 1000;
+    const gristEvent ={
+      startDate:info.start?.valueOf() / 1000,
+      endDate: info.end?.valueOf() / 1000,
+      isAllDay: info.isAllday?1:0,
+      title: "New Event"
+    }
+
     const table = await grist.getTable();
-    await table.create( {fields: {B: dateFrom, C: dateTo, "Is_All_Day_": info.isAllday?1:0, A: "New Event"}})
+    await table.create(mapCalendarEventToGristObject(gristEvent));
     Calendar.clearGridSelections();
   });
   grist.ready({requiredAccess: 'read table', columns: columnsMappingOptions});
