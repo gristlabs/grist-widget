@@ -25,7 +25,6 @@ export class GristTestServer implements IGristServer {
     const {port, port2} = gristSettings;
     const cmd = `docker run -d --rm --name ${gristSettings.containerName}` +
       ` --network="host"` +
-      ` -q` +
       ` -e PORT=${port} -p ${port}:${port}` +
       ` -e GRIST_SINGLE_ORG=${gristSettings.site}` +
       ` -e GRIST_WIDGET_LIST_URL=http://localhost:${port2}/manifest.json` +
