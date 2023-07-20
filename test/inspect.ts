@@ -1,9 +1,9 @@
-import {assert} from 'mocha-webdriver';
-import {makeGrist} from 'test/utils';
+import { assert } from 'mocha-webdriver';
+import { getGrist } from 'test/getGrist';
 
 describe('inspect', function() {
   this.timeout(20000);
-  const grist = makeGrist();
+  const grist = getGrist();
 
   it('can show a record', async function() {
     const docId = await grist.upload('test/fixtures/docs/SchoolsSample.grist');

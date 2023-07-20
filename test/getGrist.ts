@@ -1,34 +1,63 @@
 import { ChildProcess, execSync, spawn } from 'child_process';
+import FormData from 'form-data';
+import fs from 'fs';
+import { driver } from 'mocha-webdriver';
 import fetch from 'node-fetch';
-const FormData = require('form-data');
-const fs = require('fs');
-import {driver} from 'mocha-webdriver';
 
-import {GristWebDriverUtils} from 'test/gristWebDriverUtils';
+import { GristWebDriverUtils } from 'test/gristWebDriverUtils';
 
-const gristSettings = {
-  containerName: 'grist-test',
-  port: 9999,
-  port2: 9998,
-  site: 'gristy',
-};
+/**
+ * Set up mocha hooks for starting and stopping Grist. Return
+ * an interface for interacting with Grist.
+ */
+export function getGrist(): GristUtils {
+  const server = new GristTestServer();
+  const grist = new GristUtils(server);
 
-interface IGristServer {
-  url: string;
+  before(async function() {
+    // Server will have started up in a global fixture, we just
+    // need to make sure it is ready.
+    // TODO: mocha-webdriver has a way of explicitly connecting a
+    // server that might have advantages for debugging.
+    await grist.wait();
+  });
+
+  return grist;
 }
 
-export class GristTestServer implements IGristServer {
+/**
+ *
+ * During tests, we will have two servers. The first is Grist itself,
+ * run as a disposable docker container. The second is a webserver
+ * hosting the content in this repository, for use as custom widgets.
+ * I've just hard-coded port numbers here.
+ *
+ */
+const serverSettings = {
+  gristContainerName: 'grist-test',
+  gristImage: 'gristlabs/grist',
+  gristPort: 9999,
+  contentPort: 9998,
+  site: 'grist-widget',
+};
+
+/**
+ * Start and stop servers needed for testing. Grist is run as a docker container.
+ * The grist-widget repo is served in the same way as "yarn run serve:dev" would,
+ * by running live-server with some middleware.
+ */
+export class GristTestServer {
   private _assetServer?: ChildProcess;
 
   public async start() {
     await this.stop();
-    const {port, port2} = gristSettings;
-    const cmd = `docker run -d --rm --name ${gristSettings.containerName}` +
+    const {gristContainerName, gristImage, gristPort, contentPort} = serverSettings;
+    const cmd = `docker run -d --rm --name ${gristContainerName}` +
       ` --network="host"` +
-      ` -e PORT=${port} -p ${port}:${port}` +
-      ` -e GRIST_SINGLE_ORG=${gristSettings.site}` +
-      ` -e GRIST_WIDGET_LIST_URL=http://localhost:${port2}/manifest.json` +
-      ` gristlabs/grist`;
+      ` -e PORT=${gristPort} -p ${gristPort}:${gristPort}` +
+      ` -e GRIST_SINGLE_ORG=${serverSettings.site}` +
+      ` -e GRIST_WIDGET_LIST_URL=http://localhost:${contentPort}/manifest.json` +
+      ` ${gristImage}`;
     try {
       execSync(cmd, {
         stdio: 'pipe'
@@ -40,30 +69,30 @@ export class GristTestServer implements IGristServer {
     }
     const pwd = process.cwd();
     this._assetServer = spawn('live-server', [
-      `--port=${port2}`, '--no-browser', '-q',
+      `--port=${contentPort}`, '--no-browser', '-q',
       `--middleware=${pwd}/buildtools/rewriteUrl.js`
     ], {
       env: {
         ...process.env,
-        GRIST_PORT: String(port),
+        GRIST_PORT: String(gristPort),
       },
     });
   }
 
   public async stop() {
     try {
-      execSync(`docker kill ${gristSettings.containerName}`, {
+      execSync(`docker kill ${serverSettings.gristContainerName}`, {
         stdio: 'pipe'
       });
     } catch (e) {
-      // fine if kill fails.
+      // fine if kill fails, may not have been running.
     }
     try {
-      execSync(`docker rm ${gristSettings.containerName}`, {
+      execSync(`docker rm ${serverSettings.gristContainerName}`, {
         stdio: 'pipe'
       });
     } catch (e) {
-      // fine if rm fails.
+      // fine if rm fails, may not actually exist.
     }
     if (this._assetServer) {
       this._assetServer.kill();
@@ -71,14 +100,14 @@ export class GristTestServer implements IGristServer {
     }
   }
 
-  public get url() {
-    const {port} = gristSettings;
-    return `http://localhost:${port}`;
+  public get gristUrl() {
+    const {gristPort} = serverSettings;
+    return `http://localhost:${gristPort}`;
   }
 
   public get assetUrl() {
-    const {port2} = gristSettings;
-    return `http://localhost:${port2}`;
+    const {contentPort} = serverSettings;
+    return `http://localhost:${contentPort}`;
   }
 }
 
@@ -88,7 +117,7 @@ export class GristUtils extends GristWebDriverUtils {
   }
 
   public get url() {
-    return this.server.url;
+    return this.server.gristUrl;
   }
 
   public async wait() {
@@ -102,7 +131,7 @@ export class GristUtils extends GristWebDriverUtils {
         const resp = await fetch(url + '/status');
         if (resp.status === 200) { break; }
       } catch (e) {
-        // we expect fetch failures.
+        // we expect fetch failures initially.
       }
       await new Promise(resolve => setTimeout(resolve, 250));
       ct++;
@@ -116,7 +145,7 @@ export class GristUtils extends GristWebDriverUtils {
         const resp = await fetch(this.server.assetUrl);
         if (resp.status === 200) { break; }
       } catch (e) {
-        // we expect fetch failures.
+        // we expect fetch failures initially.
       }
       await new Promise(resolve => setTimeout(resolve, 250));
       ct++;
@@ -177,30 +206,36 @@ export class GristUtils extends GristWebDriverUtils {
     await this.driver.findContent(`.test-select-menu li`, text[option]).click();
   }
 
-  // Crude, should elaborate.
-  public async getCustomWidgetBody(): Promise<string> {
+  public async setCustomWidgetMapping(name: string, value: string|RegExp) {
+    const click = (selector: string) => driver.findWait(`${selector}`, 2000).click();
+    const toggleDrop = (selector: string) => click(`${selector} .test-select-open`);
+    const pickerDrop = (name: string) => `.test-config-widget-mapping-for-${name}`;
+    await toggleDrop(pickerDrop(name));
+    const clickOption = async (text: string | RegExp) => {
+      await driver.findContentWait('.test-select-menu li', text, 2000).click();
+      await this.waitForServer();
+    };
+    await clickOption(value);
+  }
+
+  // Crude, assumes a single iframe. Should elaborate.
+  public async getCustomWidgetBody(selector: string = 'html'): Promise<string> {
     const iframe = driver.find('iframe');
     try {
       await this.driver.switchTo().frame(iframe);
-      return await driver.find('html').getText();
+      return await driver.find(selector).getText();
+    } finally {
+      await driver.switchTo().defaultContent();
+    }
+  }
+
+  public async inCustomWidget<T>(op: () => Promise<T>): Promise<T> {
+    const iframe = driver.find('iframe');
+    try {
+      await this.driver.switchTo().frame(iframe);
+      return await op();
     } finally {
       await driver.switchTo().defaultContent();
     }
   }
 }
-
-export function makeGrist(): GristUtils {
-  const server = new GristTestServer();
-  const grist = new GristUtils(server);
-
-  before(async function() {
-    await server.start();
-    await grist.wait();
-  });
-
-  after(async function() {
-    await server.stop();
-  });
-  return grist;
-}
-

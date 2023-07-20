@@ -32,12 +32,7 @@
   "dependencies": {},
   "mocha": {
     "require": [
-      "ts-node/register",
       "_build/test/init-mocha-webdriver"
-    ],
-    "extensions": [
-      "js",
-      "ts"
     ]
   }
 }

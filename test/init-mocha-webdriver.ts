@@ -1,3 +1,6 @@
+import { getMochaHooks } from 'mocha-webdriver';
+import { GristTestServer } from 'test/getGrist';
+
 // Default to chrome.
 if (!process.env.SELENIUM_BROWSER) {
   process.env.SELENIUM_BROWSER = "chrome";
@@ -19,6 +22,21 @@ if (process.env.MOCHA_WEBDRIVER_NO_CONTROL_BANNER === undefined) {
   process.env.MOCHA_WEBDRIVER_NO_CONTROL_BANNER = "1";
 }
 
-const {getMochaHooks} = require('mocha-webdriver');
 exports.mochaHooks = getMochaHooks();
 
+let server: GristTestServer;
+exports.mochaGlobalSetup = async function() {
+  server = new GristTestServer();
+  await server.start();
+};
+
+exports.mochaGlobalTeardown = async function() {
+  // Hack to keep Grist open if --no-exit passed, following method
+  // used by mocha-webdriver. TODO: use mocha-webdriver's useServer.
+  const noexit: boolean = process.argv.includes("--no-exit") || process.argv.includes('-E');
+  if (noexit) {
+    console.log("Keeping Grist open");
+  } else {
+    await server.stop();
+  }
+};
