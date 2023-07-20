@@ -7,6 +7,7 @@ To use this repository for your own Grist instance, you need to copy all the fil
 your own hosting provider and recreate the manifest.json file used by Grist. 
 
 ```bash
+yarn install
 yarn run build
 ```
 
