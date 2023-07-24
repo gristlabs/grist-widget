@@ -1,6 +1,6 @@
 {
   "name": "grist-widget",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A repository of grist custom widgets that have no back-end requirements.",
   "scripts": {
     "build": "node ./_build/publish.js",
