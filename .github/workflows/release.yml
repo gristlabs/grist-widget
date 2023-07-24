@@ -9,7 +9,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+
+    - uses: actions/checkout@v3
+
     - name: Build manifest
       run: ./_build/publish.js
       # Create new release tagged as latest, and overwrite last one.
@@ -21,3 +23,14 @@ jobs:
         prerelease: false
         title: "Automatic release"
         files: manifest.json
+
+    # Would like a version of manifest.json that is usable from browsers
+    # for grist-static. CORS wildcard is not set on releases, but is set
+    # on github pages. Also jsdelivr can mirror branches, but not releases.
+    - name: Make a release branch that includes manifest.json
+      run: |
+          git config user.name "Paul's Grist Bot"
+          git config user.email "<paul+bot@getgrist.com>"
+          git add -f manifest.json
+          git commit -m "add manifest.json" -a
+          git push --set-upstream origin HEAD:release -f
