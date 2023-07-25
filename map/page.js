@@ -18,7 +18,9 @@ const Latitude = "Latitude";
 const Geocode = 'Geocode';
 // Optional - but required for geocoding. Field with address to find (might be formula)
 const Address = 'Address';
-// Optional - but
+// Optional - but useful for geocoding. Blank field which map uses
+//            to store last geocoded Address. Enables map widget
+//            to automatically update the geocoding if Address is changed
 const GeocodedAddress = 'GeocodedAddress';
 let lastRecord;
 let lastRecords;
@@ -294,16 +296,7 @@ function updateMap(data) {
       marker.openPopup();
     }
   }
-  // === Removing this: jumping around every time you zoom makes it really hard to use
-  //     I think it's enough just to show the icon when the selectedRow changes in the
-  //     linked widget
-  // map.on('zoomend', () => {
-  //   // Should reshow marker if it has been lost, but I didn't find a good
-  //   // event to trigger that exactly. A small timeout seems to work :-(
-  //   // TODO: find a better way; also, if user has changed selection within
-  //   // the map we should respect that.
-  //   //setTimeout(makeSureSelectedMarkerIsShown, 500);
-  // });
+
   amap = map;
 
   makeSureSelectedMarkerIsShown();
