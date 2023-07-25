@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows running this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9]
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+
+      - name: Install Node.js packages
+        run: yarn install
+
+      - name: Build Node.js test code
+        run: yarn run build
+
+      - name: Cache Docker images.
+        uses: ScribeMD/docker-cache@0.3.3
+        with:
+          key: docker-${{ runner.os }}-cache0
+
+      - name: Pull Docker image
+        run: docker pull gristlabs/grist:latest
+
+      - name: Run tests
+        run: MOCHA_WEBDRIVER_HEADLESS=1 yarn run test

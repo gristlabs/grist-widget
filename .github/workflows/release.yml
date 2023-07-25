@@ -13,7 +13,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Build manifest
-      run: ./_build/publish.js
+      run: ./buildtools/publish.js
       # Create new release tagged as latest, and overwrite last one.
       # https://github.com/marvinpinto/actions/tree/master/packages/automatic-releases
     - uses: "marvinpinto/action-automatic-releases@latest"
