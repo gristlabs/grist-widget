@@ -1,17 +1,13 @@
 // lets assume that it's imported in a html file
 var grist;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', ()=> {
+  this.calendarHandler = new CalendarHandler();
+  Calendar =  this.calendarHandler.calendar;
   configureGristSettings();
-  Calendar = configureCalendar();
+
 });
 
-
-let mainColor = getComputedStyle(document.documentElement)
-    .getPropertyValue('--main-color');
-
-let selectedColor = getComputedStyle(document.documentElement)
-    .getPropertyValue('--selected-color');
 
 async function calendarViewChanges(radiobutton) {
   await grist.setOption('calendarViewPerspective', radiobutton.value);
@@ -23,7 +19,65 @@ function mapCalendarEventToGristObject(event) {
   return { id: event.id, fields: mappedRecord };
 }
 
-let Calendar = null;
+let Calendar
+class CalendarHandler {
+  static _mainColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--main-color');
+
+  static _selectedColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--selected-color');
+  static getCalendarOptions() {
+    return {
+      week: {
+        taskView: false,
+      },
+      month: {},
+      defaultView: 'week',
+      template: {
+        time(event) {
+          const {title} = event;
+          return `<span>${title}</span>`;
+        },
+        allday(event) {
+          const {title} = event;
+          return `<span>${title}</span>`;
+        },
+      },
+      calendars: [
+        {
+          id: 'cal1',
+          name: 'Personal',
+          backgroundColor: CalendarHandler._mainColor,
+        },
+      ],
+    };
+  }
+  constructor() {
+    const container = document.getElementById('calendar');
+    const options = CalendarHandler.getCalendarOptions();
+    this.calendar = new tui.Calendar(container, options);
+    this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
+    this.calendar.on('clickEvent', async (info) => {
+      grist.setSelectedRows([info.event.id]);
+    });
+    this.calendar.on('selectDateTime', onNewDateBeingSelectedOnCalendar);
+  }
+
+
+  selectRecord(record) {
+    if (this._selectedRecordId) {
+      this.calendar.updateEvent(this._selectedRecordId, 'cal1', {backgroundColor: CalendarHandler._mainColor});
+    }
+    this.calendar.updateEvent(record.id, 'cal1', {backgroundColor: CalendarHandler._selectedColor});
+    this._selectedRecordId = record.id;
+    Calendar.setDate(record.startDate);
+    var dom = document.querySelector('.toastui-calendar-time');
+    const middleHour = record.startDate.getHours()
+        + (record.endDate.getHours() - record.startDate.getHours()) / 2;
+    dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
+
+  }
+}
 
 function getGristOptions() {
   return [
@@ -66,72 +120,36 @@ async function configureGristSettings() {
 
   grist.allowSelectBy();
   grist.onRecords(updateCalendar);
-  grist.onRecord(gristRecordChanged);
+  grist.onRecord(gristSelectedRecordChanged);
   grist.onOptions(onGristSettingsChanged);
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
 }
 
-  function gristRecordChanged(record, mappings) {
+  function gristSelectedRecordChanged(record, mappings) {
     const mappedRecord = grist.mapColumnNames(record, mappings);
-    if (mappedRecord) {
-      Calendar.setDate(mappedRecord.startDate);
-      if (this._selectedRecordId) {
-        Calendar.updateEvent(this._selectedRecordId, 'cal1', {backgroundColor: mainColor});
-      }
-      Calendar.updateEvent(mappedRecord.id, 'cal1', {backgroundColor: selectedColor});
-      this._selectedRecordId = mappedRecord.id;
+    if (mappedRecord && this.calendarHandler) {
+      this.calendarHandler.selectRecord(mappedRecord);
     }
-    var dom = document.querySelector('.toastui-calendar-time');
-    const middleHour = mappedRecord.startDate.getHours()
-        + (mappedRecord.endDate.getHours() - mappedRecord.startDate.getHours()) / 2;
-    dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
   }
 
 let onGristSettingsChanged = function(options) {
-  if (options.calendarViewPerspective) {
+  if (options?.calendarViewPerspective) {
     Calendar.changeView(options.calendarViewPerspective);
     selectRadioButton(options.calendarViewPerspective);
   }
 };
 
-function getCalendarOptions() {
-  return {
-    week: {
-      taskView: false,
-    },
-    month: {},
-    defaultView: 'week',
-    template: {
-      time(event) {
-        const {title} = event;
-        return `<span>${title}</span>`;
-      },
-      allday(event) {
-        const {title} = event;
-        return `<span>${title}</span>`;
-      },
-    },
-    calendars: [
-      {
-        id: 'cal1',
-        name: 'Personal',
-        backgroundColor: mainColor,
-      },
-    ],
-  };
-}
-
-function configureCalendar() {
-  const container = document.getElementById('calendar');
-  const options = getCalendarOptions()
-  Calendar = new tui.Calendar(container, options);
-  Calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
-  Calendar.on('clickEvent', async (info) => {
-    grist.setSelectedRows([info.event.id]);
-  });
-  Calendar.on('selectDateTime', onNewDateBeingSelectedOnCalendar);
-  return Calendar;
-}
+// function configureCalendar() {
+//   const container = document.getElementById('calendar');
+//   const options = getCalendarOptions()
+//   Calendar = new tui.Calendar(container, options);
+//   Calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
+//   Calendar.on('clickEvent', async (info) => {
+//     grist.setSelectedRows([info.event.id]);
+//   });
+//   Calendar.on('selectDateTime', onNewDateBeingSelectedOnCalendar);
+//   return Calendar;
+// }
 
 const onCalendarEventBeingUpdated = async (info) => {
   if (info.changes) {
