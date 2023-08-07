@@ -15,7 +15,7 @@ function getAbstractFromCalendarObject(eventId: number) {
             }else{
                 return calendarObject
             }`
-};
+}
 
 describe('calendar', function () {
     this.timeout(20000);
