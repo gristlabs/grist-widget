@@ -1,43 +1,39 @@
-// grist is imported in html, so it is available here.
+// lets assume that it's imported in a html file
 var grist;
-function ready(fn) {
-  if (document.readyState !== 'loading'){
-    fn();
-  } else {
-    document.addEventListener('DOMContentLoaded', fn);
-  }
-}
+
+document.addEventListener('DOMContentLoaded', function() {
+  configureGristSettings();
+  Calendar = configureCalendar();
+});
+
 
 let mainColor = getComputedStyle(document.documentElement)
-    .getPropertyValue('--main-color')
+    .getPropertyValue('--main-color');
 
 let selectedColor = getComputedStyle(document.documentElement)
-    .getPropertyValue('--selected-color')
+    .getPropertyValue('--selected-color');
 
-async function calendarViewChanges(radiobutton){
+async function calendarViewChanges(radiobutton) {
   await grist.setOption('calendarViewPerspective', radiobutton.value);
 }
 
-function mapCalendarEventToGristObject(event){
+function mapCalendarEventToGristObject(event) {
   const mappedRecord = grist.mapColumnNamesBack(event);
   delete mappedRecord.id;
-  return{id:event.id, fields: mappedRecord };
+  return { id: event.id, fields: mappedRecord };
 }
 
-let selectedRecordId = null;
 let Calendar = null;
 
-
-
-async function configureGristSettings() {
-  const columnsMappingOptions = [
+function getGristOptions() {
+  return [
     {
-      name: "startDate", // What field we will read.
-      title: "Start Date", // Friendly field name.
-      optional: false, // Is this an optional field.
-      type: "DateTime", // What type of column we expect.
-      description: "starting point of event", // Description of a field.
-      allowMultiple: false // Allows multiple column assignment.
+      name: "startDate",
+      title: "Start Date",
+      optional: false,
+      type: "DateTime",
+      description: "starting point of event",
+      allowMultiple: false
     },
     {
       name: "endDate",
@@ -63,43 +59,43 @@ async function configureGristSettings() {
       description: "is event all day long",
     }
   ];
+}
 
-  await grist.allowSelectBy();
+async function configureGristSettings() {
+  const columnsMappingOptions = getGristOptions();
+
+  grist.allowSelectBy();
   grist.onRecords(updateCalendar);
   grist.onRecord(gristRecordChanged);
   grist.onOptions(onGristSettingsChanged);
-  grist.ready({requiredAccess: 'read table', columns: columnsMappingOptions});
+  grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
 }
 
-let gristRecordChanged = (record, mappings) => {
-  const mappedRecord = grist.mapColumnNames(record, mappings);
-  if(mappedRecord) {
-    Calendar.setDate(mappedRecord.startDate);
-    if(selectedRecordId){
-      Calendar.updateEvent(selectedRecordId, 'cal1',{backgroundColor: mainColor});
+  function gristRecordChanged(record, mappings) {
+    const mappedRecord = grist.mapColumnNames(record, mappings);
+    if (mappedRecord) {
+      Calendar.setDate(mappedRecord.startDate);
+      if (this._selectedRecordId) {
+        Calendar.updateEvent(this._selectedRecordId, 'cal1', {backgroundColor: mainColor});
+      }
+      Calendar.updateEvent(mappedRecord.id, 'cal1', {backgroundColor: selectedColor});
+      this._selectedRecordId = mappedRecord.id;
     }
-    Calendar.updateEvent(mappedRecord.id, 'cal1',{backgroundColor: selectedColor});
-    selectedRecordId = mappedRecord.id;
+    var dom = document.querySelector('.toastui-calendar-time');
+    const middleHour = mappedRecord.startDate.getHours()
+        + (mappedRecord.endDate.getHours() - mappedRecord.startDate.getHours()) / 2;
+    dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
   }
-  var dom = document.querySelector('.toastui-calendar-time');
-  const middleHour = mappedRecord.startDate.getHours()
-      + (mappedRecord.endDate.getHours() - mappedRecord.startDate.getHours())/2;
-  dom.scrollTo({top: (dom.clientHeight/24)*middleHour, behavior: 'smooth'});
-};
 
-let onGristSettingsChanged = function (options) {
-  if(options.calendarViewPerspective){
+let onGristSettingsChanged = function(options) {
+  if (options.calendarViewPerspective) {
     Calendar.changeView(options.calendarViewPerspective);
     selectRadioButton(options.calendarViewPerspective);
   }
 };
 
-
-
-function configureCalendar() {
-  const container = document.getElementById('calendar');
-  // ToastUI calendar settings - https://nhn.github.io/tui.calendar/latest/Calendar
-  const options = {
+function getCalendarOptions() {
+  return {
     week: {
       taskView: false,
     },
@@ -122,8 +118,12 @@ function configureCalendar() {
         backgroundColor: mainColor,
       },
     ],
-  }
-  // Update the widget anytime the document data changes.
+  };
+}
+
+function configureCalendar() {
+  const container = document.getElementById('calendar');
+  const options = getCalendarOptions()
   Calendar = new tui.Calendar(container, options);
   Calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
   Calendar.on('clickEvent', async (info) => {
@@ -165,68 +165,59 @@ const onNewDateBeingSelectedOnCalendar = async (info) => {
   await table.create(mapCalendarEventToGristObject(gristEvent));
   Calendar.clearGridSelections();
 }
-ready(function() {
-  configureGristSettings();
-  Calendar = configureCalendar();
-});
 
-function selectRadioButton(value){
-  for(const element of document.getElementsByName('calendar-options')){
-    if(element.value === value){
+function selectRadioButton(value) {
+  for (const element of document.getElementsByName('calendar-options')) {
+    if (element.value === value) {
       element.checked = true;
     }
   }
 }
 
-function calendarPrevious(){
+function calendarPrevious() {
   Calendar.prev();
 }
 
-function calendarNext(){
+function calendarNext() {
   Calendar.next();
 }
 
-function calendarToday(){
+function calendarToday() {
   Calendar.today();
 }
 
-let previousIds= [];
-function updateCalendar(records,mappings) {
-
+let previousIds = new Set();
+function updateCalendar(records, mappings) {
   const mappedRecords = grist.mapColumnNames(records, mappings);
 
-  if(mappedRecords) {
+  if (mappedRecords) {
+    const currentIds = new Set();
     for (const record of mappedRecords) {
-      const event = Calendar.getEvent(record.id, 'cal1'); // EventObject
+      const event = Calendar.getEvent(record.id, 'cal1');
+      const eventData = {
+        id: record.id,
+        calendarId: 'cal1',
+        title: record.title,
+        start: record.startDate,
+        end: record.endDate,
+        isAllday: record.isAllDay,
+        category: 'time',
+        state: 'Free',
+      };
+
       if (!event) {
-        Calendar.createEvents([
-          {
-            id: record.id,
-            calendarId: 'cal1',
-            title: record.title,
-            start: record.startDate,
-            end: record.endDate,
-            isAllday: record.isAllDay,
-            category: 'time',
-            state: 'Free',
-          },
-        ]);
+        Calendar.createEvents([eventData]);
       } else {
-        Calendar.updateEvent(record.id, 'cal1', {
-          title: record.title,
-          start: record.startDate,
-          end: record.endDate,
-          isAllday: record.isAllDay,
-        })
+        Calendar.updateEvent(record.id, 'cal1', eventData);
       }
+      currentIds.add(record.id);
     }
+
     for (const id of previousIds) {
-      if (!mappedRecords.find(record => record.id === id)) {
+      if (!currentIds.has(id)) {
         Calendar.deleteEvent(id, 'cal1');
       }
     }
-    previousIds = new Set(mappedRecords.map(record => record.id));
+    previousIds = currentIds;
   }
 }
-
-
