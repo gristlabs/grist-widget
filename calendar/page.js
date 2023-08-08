@@ -39,7 +39,7 @@ class CalendarHandler {
     this.calendar = new tui.Calendar(container, options);
     this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
     this.calendar.on('clickEvent', async (info) => {
-      grist.setSelectedRows([info.event.id]);
+      await grist.setSelectedRows([info.event.id]);
     });
     this.calendar.on('selectDateTime', (info)=> {
       onNewDateBeingSelectedOnCalendar(info);
