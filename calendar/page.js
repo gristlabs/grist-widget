@@ -8,12 +8,11 @@ document.addEventListener('DOMContentLoaded', ()=> {
 
 });
 
-
 async function calendarViewChanges(radiobutton) {
   await grist.setOption('calendarViewPerspective', radiobutton.value);
 }
 
-function mapCalendarEventToGristObject(event) {
+function convertEventToGristTableFormat(event) {
   const mappedRecord = grist.mapColumnNamesBack(event);
   delete mappedRecord.id;
   return { id: event.id, fields: mappedRecord };
@@ -64,17 +63,39 @@ class CalendarHandler {
   }
 
 
+
   selectRecord(record) {
     if (this._selectedRecordId) {
       this.calendar.updateEvent(this._selectedRecordId, 'cal1', {backgroundColor: CalendarHandler._mainColor});
     }
     this.calendar.updateEvent(record.id, 'cal1', {backgroundColor: CalendarHandler._selectedColor});
     this._selectedRecordId = record.id;
-    Calendar.setDate(record.startDate);
+    this.calendar.setDate(record.startDate);
     var dom = document.querySelector('.toastui-calendar-time');
     const middleHour = record.startDate.getHours()
         + (record.endDate.getHours() - record.startDate.getHours()) / 2;
     dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
+
+  }
+
+  changeView(calendarViewPerspective) {
+    Calendar.changeView(calendarViewPerspective);
+  }
+
+  calendarPrevious() {
+    Calendar.prev();
+  }
+
+  calendarNext() {
+    Calendar.next();
+  }
+
+  calendarToday() {
+    Calendar.today();
+  }
+
+
+  async onNewTimeSelected(aaa){
 
   }
 }
@@ -133,54 +154,57 @@ async function configureGristSettings() {
   }
 
 let onGristSettingsChanged = function(options) {
-  if (options?.calendarViewPerspective) {
-    Calendar.changeView(options.calendarViewPerspective);
-    selectRadioButton(options.calendarViewPerspective);
-  }
+  let option = options?.calendarViewPerspective??'week';
+    this.calendarHandler.changeView(option);
+    selectRadioButton(option);
 };
 
-// function configureCalendar() {
-//   const container = document.getElementById('calendar');
-//   const options = getCalendarOptions()
-//   Calendar = new tui.Calendar(container, options);
-//   Calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
-//   Calendar.on('clickEvent', async (info) => {
-//     grist.setSelectedRows([info.event.id]);
-//   });
-//   Calendar.on('selectDateTime', onNewDateBeingSelectedOnCalendar);
-//   return Calendar;
-// }
 
 const onCalendarEventBeingUpdated = async (info) => {
-  if (info.changes) {
-    if (info.changes.start || info.changes.end) {
-      const record = await grist.fetchSelectedRecord(info.event.id)
+    if (info.changes?.start || info.changes?.end) {
+      const record =  await grist.fetchSelectedRecord(info.event.id);
       if (record) {
-        const gristEvent = {
-          startDate: (info.changes.start?.valueOf() ?? info.event.start.valueOf()) / 1000,
-          endDate: (info.changes.end?.valueOf() ?? info.event.end.valueOf()) / 1000,
-          isAllday: info.changes.isAllday ?? info.event.isAllday,
-          title: info.changes.title ?? info.event.title,
-          id: record.id,
-        }
-        const mappedRecord = mapCalendarEventToGristObject(gristEvent);
-        const table = await grist.getTable();
-        await table.update(mappedRecord);
 
+        const gristEvent = buildGristFlatFormatFromEventObject(info.event)
+        // {
+        //     id: record.id,
+        //     startDate: info.event.start.valueOf() / 1000,
+        //     endDate: info.event.end.valueOf() / 1000,
+        //     isAllDay: info.event.isAllday,
+        //     title: info.event.title,
+        // }
+        if(info.changes.start) gristEvent.startDate = info.changes.start.valueOf() / 1000;
+        if(info.changes.end) gristEvent.endDate = info.changes.end.valueOf() / 1000;
+        await upsertGristRecord(gristEvent);
       }
     }
-  }
 };
 
-const onNewDateBeingSelectedOnCalendar = async (info) => {
+
+async function upsertGristRecord(gristEvent){
+    const table = await grist.getTable();
+    const eventInValidFormat = convertEventToGristTableFormat(gristEvent);
+    if (gristEvent.id) {
+        await table.update(eventInValidFormat);
+    } else {
+        await table.create(eventInValidFormat);
+    }
+}
+function buildGristFlatFormatFromEventObject(TUIEvent) {
   const gristEvent = {
-    startDate: info.start?.valueOf() / 1000,
-    endDate: info.end?.valueOf() / 1000,
-    isAllDay: info.isAllday ? 1 : 0,
-    title: "New Event"
+    startDate: TUIEvent.start?.valueOf() / 1000,
+    endDate: TUIEvent.end?.valueOf() / 1000,
+    isAllDay: TUIEvent.isAllday ? 1 : 0,
+    title: TUIEvent.title??"New Event"
   }
+  if(TUIEvent.id) gristEvent.id = TUIEvent.id;
+  return gristEvent;
+}
+
+const onNewDateBeingSelectedOnCalendar = async (info) => {
+    const gristEvent = buildGristFlatFormatFromEventObject(info);
   const table = await grist.getTable();
-  await table.create(mapCalendarEventToGristObject(gristEvent));
+  await table.create(convertEventToGristTableFormat(gristEvent));
   Calendar.clearGridSelections();
 }
 
@@ -190,18 +214,6 @@ function selectRadioButton(value) {
       element.checked = true;
     }
   }
-}
-
-function calendarPrevious() {
-  Calendar.prev();
-}
-
-function calendarNext() {
-  Calendar.next();
-}
-
-function calendarToday() {
-  Calendar.today();
 }
 
 let previousIds = new Set();

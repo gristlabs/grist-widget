@@ -11,9 +11,9 @@
   <div id="calendar-container">
     <div id="calendar-options">
       <div id="calendar-navigation-buttons">
-        <button class="calendar-button"  onclick="calendarPrevious()"><</button>
-        <button class="calendar-button"  onclick="calendarToday()">Today</button>
-        <button class="calendar-button"  onclick="calendarNext()">></button>
+        <button class="calendar-button"  onclick="calendarHandler.calendarPrevious()"><</button>
+        <button class="calendar-button"  onclick="calendarHandler.calendarToday()">Today</button>
+        <button class="calendar-button"  onclick="calendarHandler.calendarNext()">></button>
       </div>
       <div id="calendar-perspective-buttons">
         <input type="radio" id="calendar-day" name="calendar-options" value="day" onchange="calendarViewChanges(this)">
