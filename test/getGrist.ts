@@ -7,7 +7,8 @@ import fetch from 'node-fetch';
 import {GristWebDriverUtils} from 'test/gristWebDriverUtils';
 
 
-type UserAction = Array<string|number|object|boolean|null|undefined>;
+type UserAction = Array<string | number | object | boolean | null | undefined>;
+
 /**
  * Set up mocha hooks for starting and stopping Grist. Return
  * an interface for interacting with Grist.
@@ -191,20 +192,6 @@ export class GristUtils extends GristWebDriverUtils {
         await this.waitForServer();
     }
 
-
-
-    public async addRow(table: string, data: Record<string, any>): Promise<void> {
-        var fields = await driver.findElements(By.css(`.record-add .field`));
-        const entities = Object.entries(data)
-        for (const col in entities) {
-            await fields[col].click();
-            await driver.sendKeys(entities[col][1]);
-            await driver.sendKeys(Key.ENTER);
-        }
-    }
-
-
-
     public async sendActions(actions: UserAction[]) {
         const result = await driver.executeAsyncScript(`
           const done = arguments[arguments.length - 1];
@@ -213,20 +200,19 @@ export class GristUtils extends GristWebDriverUtils {
           prom.catch((err) => done(String(err?.message || err)));
         `);
         if (result) {
-          throw new Error(result as string);
+            throw new Error(result as string);
         }
         await this.waitForServer();
-      }
+    }
 
-
-      public async waitForServer(optTimeout: number = 2000) {
+    public async waitForServer(optTimeout: number = 2000) {
         await this.driver.wait(() => this.driver.executeScript(
-          "return window.gristApp && (!window.gristApp.comm || !window.gristApp.comm.hasActiveRequests())"
+            "return window.gristApp && (!window.gristApp.comm || !window.gristApp.comm.hasActiveRequests())"
             + " && window.gristApp.testNumPendingApiRequests() === 0",
-          optTimeout,
-          "Timed out waiting for server requests to complete"
+            optTimeout,
+            "Timed out waiting for server requests to complete"
         ));
-      }
+    }
 
     public async clickWidgetPane() {
         const elem = this.driver.find('.test-config-widget-select .test-select-open');
@@ -274,11 +260,11 @@ export class GristUtils extends GristWebDriverUtils {
         }
     }
 
-    public async executeInIframe(fnc:(driver:WebDriver)=>void){
+    public async executeInIframe(fnc: (driver: WebDriver) => void) {
         const iframe = this.driver.find('iframe');
         try {
             await this.driver.switchTo().frame(iframe);
-            return await fnc(this.driver);
+            await fnc(this.driver);
         } finally {
             await this.driver.switchTo().defaultContent();
         }
@@ -294,17 +280,6 @@ export class GristUtils extends GristWebDriverUtils {
             await this.driver.switchTo().defaultContent();
         }
     }
-
-    // Crude, assumes a single iframe. Should elaborate.
-    // public async getCustomWidgetX(selector: string = 'html'): Promise<string> {
-    //   const iframe = this.driver.find('iframe');
-    //   try {
-    //     await this.driver.switchTo().frame(iframe);
-    //     return await this.driver.execute('Calendar.getEvent(1,"cal1")','GettingCalendarObject');
-    //   } finally {
-    //     await this.driver.switchTo().defaultContent();
-    //   }
-    // }
 
     public async inCustomWidget<T>(op: () => Promise<T>): Promise<T> {
         const iframe = driver.find('iframe');
