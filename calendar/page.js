@@ -59,10 +59,11 @@ class CalendarHandler {
     this.calendar.on('clickEvent', async (info) => {
       grist.setSelectedRows([info.event.id]);
     });
-    this.calendar.on('selectDateTime', onNewDateBeingSelectedOnCalendar);
+    this.calendar.on('selectDateTime', (info)=> {
+      onNewDateBeingSelectedOnCalendar(info);
+      this.calendar.clearGridSelections();
+    });
   }
-
-
 
   selectRecord(record) {
     if (this._selectedRecordId) {
@@ -79,23 +80,62 @@ class CalendarHandler {
   }
 
   changeView(calendarViewPerspective) {
-    Calendar.changeView(calendarViewPerspective);
+    this.calendar.changeView(calendarViewPerspective);
   }
 
   calendarPrevious() {
-    Calendar.prev();
+    this.calendar.prev();
   }
 
   calendarNext() {
-    Calendar.next();
+    this.calendar.next();
   }
 
   calendarToday() {
-    Calendar.today();
+    this.calendar.today();
   }
 
+  async updateCalendarEvents(calendarEvents) {
+    const currentIds = new Set();
+    for (const record of calendarEvents) {
+      const event = Calendar.getEvent(record.id, 'cal1');
+      const eventData = record;
 
-  async onNewTimeSelected(aaa){
+      if (!event) {
+        Calendar.createEvents([eventData]);
+      } else {
+        Calendar.updateEvent(record.id, 'cal1', eventData);
+      }
+      currentIds.add(record.id);
+    }
+    for (const id of this.previousIds) {
+      if (!currentIds.has(id)) {
+        Calendar.deleteEvent(id, 'cal1');
+      }
+    }
+    this.previousIds = currentIds;
+    // //const mappedRecords = grist.mapColumnNames(records, mappings);
+    // // if any records was successfully mapped, create or update them in the calendar
+    // if (calendarEvents && calendarEvents.length) {
+    //   const currentIds = new Set();
+    //   for (const record of calendarEvents) {
+    //     const event = this.calendar.getEvent(record.id, 'cal1');
+    //     if (!event) {
+    //       await this.calendar.createEvents(record);
+    //     } else {
+    //       await this.calendar.updateEvent(record.id, 'cal1', record);
+    //     }
+    //     currentIds.add(record.id);
+    //   }
+    //   //Checking if there are any events that are not in the grist table anymore, and delete them from the calendar
+    //   for (const id of this.calendarEventsIds) {
+    //     if (!currentIds.has(id)) {
+    //       this.calendar.deleteEvent(id, 'cal1');
+    //     }
+    //   }
+    //   // update the current ids to reflect the new state
+    //   this.calendarEventsIds = currentIds;
+    // }
 
   }
 }
@@ -140,7 +180,7 @@ async function configureGristSettings() {
   const columnsMappingOptions = getGristOptions();
 
   grist.allowSelectBy();
-  grist.onRecords(updateCalendar);
+  grist.onRecords(updateCalendar2);
   grist.onRecord(gristSelectedRecordChanged);
   grist.onOptions(onGristSettingsChanged);
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
@@ -159,41 +199,35 @@ let onGristSettingsChanged = function(options) {
     selectRadioButton(option);
 };
 
-
 const onCalendarEventBeingUpdated = async (info) => {
     if (info.changes?.start || info.changes?.end) {
       const record =  await grist.fetchSelectedRecord(info.event.id);
       if (record) {
 
         const gristEvent = buildGristFlatFormatFromEventObject(info.event)
-        // {
-        //     id: record.id,
-        //     startDate: info.event.start.valueOf() / 1000,
-        //     endDate: info.event.end.valueOf() / 1000,
-        //     isAllDay: info.event.isAllday,
-        //     title: info.event.title,
-        // }
-        if(info.changes.start) gristEvent.startDate = info.changes.start.valueOf() / 1000;
-        if(info.changes.end) gristEvent.endDate = info.changes.end.valueOf() / 1000;
+        if(info.changes.start) gristEvent.startDate = roundEpochDateToSeconds(info.changes.start.valueOf());
+        if(info.changes.end) gristEvent.endDate = roundEpochDateToSeconds(info.changes.end.valueOf());
         await upsertGristRecord(gristEvent);
       }
     }
 };
 
-
 async function upsertGristRecord(gristEvent){
-    const table = await grist.getTable();
     const eventInValidFormat = convertEventToGristTableFormat(gristEvent);
+    const table = await grist.getTable();
     if (gristEvent.id) {
         await table.update(eventInValidFormat);
     } else {
         await table.create(eventInValidFormat);
     }
 }
+function roundEpochDateToSeconds(date) {
+  return date/1000;
+}
 function buildGristFlatFormatFromEventObject(TUIEvent) {
   const gristEvent = {
-    startDate: TUIEvent.start?.valueOf() / 1000,
-    endDate: TUIEvent.end?.valueOf() / 1000,
+    startDate: roundEpochDateToSeconds(TUIEvent.start?.valueOf()),
+    endDate: roundEpochDateToSeconds(TUIEvent.end?.valueOf()),
     isAllDay: TUIEvent.isAllday ? 1 : 0,
     title: TUIEvent.title??"New Event"
   }
@@ -202,10 +236,8 @@ function buildGristFlatFormatFromEventObject(TUIEvent) {
 }
 
 const onNewDateBeingSelectedOnCalendar = async (info) => {
-    const gristEvent = buildGristFlatFormatFromEventObject(info);
-  const table = await grist.getTable();
-  await table.create(convertEventToGristTableFormat(gristEvent));
-  Calendar.clearGridSelections();
+  const gristEvent = buildGristFlatFormatFromEventObject(info);
+  upsertGristRecord(gristEvent);
 }
 
 function selectRadioButton(value) {
@@ -216,24 +248,38 @@ function selectRadioButton(value) {
   }
 }
 
+
+function buildCalendarEventObject(record) {
+  return {
+    id: record.id,
+    calendarId: 'cal1',
+    title: record.title,
+    start: record.startDate,
+    end: record.endDate,
+    isAllday: record.isAllDay,
+    category: 'time',
+    state: 'Free',
+  };
+}
+
+async function updateCalendar2(records, mappings) {
+  const mappedRecords = grist.mapColumnNames(records, mappings);
+  // if any records was successfully mapped, create or update them in the calendar
+  if (mappedRecords) {
+    const CalendarEventObjects = mappedRecords.map(buildCalendarEventObject);
+    await this.calendarHandler.updateCalendarEvents(CalendarEventObjects);
+  }
+}
+
 let previousIds = new Set();
 function updateCalendar(records, mappings) {
   const mappedRecords = grist.mapColumnNames(records, mappings);
 
   if (mappedRecords) {
     const currentIds = new Set();
-    for (const record of mappedRecords) {
+    for (const record of mappedRecords.map(buildCalendarEventObject)) {
       const event = Calendar.getEvent(record.id, 'cal1');
-      const eventData = {
-        id: record.id,
-        calendarId: 'cal1',
-        title: record.title,
-        start: record.startDate,
-        end: record.endDate,
-        isAllday: record.isAllDay,
-        category: 'time',
-        state: 'Free',
-      };
+      const eventData = record;
 
       if (!event) {
         Calendar.createEvents([eventData]);
