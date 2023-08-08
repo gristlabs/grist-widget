@@ -1,9 +1,10 @@
 import {assert} from 'mocha-webdriver';
 import {getGrist} from "./getGrist";
 
+//not to pretty way to get events from currently used calendar control. but it's working. 
 function getAbstractFromCalendarObject(eventId: number) {
     return `
-            const calendarObject =  Calendar.getEvent(${eventId},"cal1"); 
+            const calendarObject =  this.calendarHandler.calendar.getEvent(${eventId},"cal1"); 
             if(calendarObject)
             {
                 return{
