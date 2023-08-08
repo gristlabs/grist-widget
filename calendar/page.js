@@ -3,7 +3,6 @@ var grist;
 
 document.addEventListener('DOMContentLoaded', ()=> {
   this.calendarHandler = new CalendarHandler();
-  Calendar =  this.calendarHandler.calendar;
   configureGristSettings();
 
 });
@@ -18,7 +17,6 @@ function convertEventToGristTableFormat(event) {
   return { id: event.id, fields: mappedRecord };
 }
 
-let Calendar
 class CalendarHandler {
   static _mainColor = getComputedStyle(document.documentElement)
       .getPropertyValue('--main-color');
@@ -98,45 +96,24 @@ class CalendarHandler {
   async updateCalendarEvents(calendarEvents) {
     const currentIds = new Set();
     for (const record of calendarEvents) {
-      const event = Calendar.getEvent(record.id, 'cal1');
+      const event = this.calendar.getEvent(record.id, 'cal1');
       const eventData = record;
 
       if (!event) {
-        Calendar.createEvents([eventData]);
+        this.calendar.createEvents([eventData]);
       } else {
-        Calendar.updateEvent(record.id, 'cal1', eventData);
+        this.calendar.updateEvent(record.id, 'cal1', eventData);
       }
       currentIds.add(record.id);
     }
-    for (const id of this.previousIds) {
-      if (!currentIds.has(id)) {
-        Calendar.deleteEvent(id, 'cal1');
+    if(this.previousIds) {
+      for (const id of this.previousIds) {
+        if (!currentIds.has(id)) {
+          this.calendar.deleteEvent(id, 'cal1');
+        }
       }
     }
     this.previousIds = currentIds;
-    // //const mappedRecords = grist.mapColumnNames(records, mappings);
-    // // if any records was successfully mapped, create or update them in the calendar
-    // if (calendarEvents && calendarEvents.length) {
-    //   const currentIds = new Set();
-    //   for (const record of calendarEvents) {
-    //     const event = this.calendar.getEvent(record.id, 'cal1');
-    //     if (!event) {
-    //       await this.calendar.createEvents(record);
-    //     } else {
-    //       await this.calendar.updateEvent(record.id, 'cal1', record);
-    //     }
-    //     currentIds.add(record.id);
-    //   }
-    //   //Checking if there are any events that are not in the grist table anymore, and delete them from the calendar
-    //   for (const id of this.calendarEventsIds) {
-    //     if (!currentIds.has(id)) {
-    //       this.calendar.deleteEvent(id, 'cal1');
-    //     }
-    //   }
-    //   // update the current ids to reflect the new state
-    //   this.calendarEventsIds = currentIds;
-    // }
-
   }
 }
 
@@ -268,32 +245,5 @@ async function updateCalendar2(records, mappings) {
   if (mappedRecords) {
     const CalendarEventObjects = mappedRecords.map(buildCalendarEventObject);
     await this.calendarHandler.updateCalendarEvents(CalendarEventObjects);
-  }
-}
-
-let previousIds = new Set();
-function updateCalendar(records, mappings) {
-  const mappedRecords = grist.mapColumnNames(records, mappings);
-
-  if (mappedRecords) {
-    const currentIds = new Set();
-    for (const record of mappedRecords.map(buildCalendarEventObject)) {
-      const event = Calendar.getEvent(record.id, 'cal1');
-      const eventData = record;
-
-      if (!event) {
-        Calendar.createEvents([eventData]);
-      } else {
-        Calendar.updateEvent(record.id, 'cal1', eventData);
-      }
-      currentIds.add(record.id);
-    }
-
-    for (const id of previousIds) {
-      if (!currentIds.has(id)) {
-        Calendar.deleteEvent(id, 'cal1');
-      }
-    }
-    previousIds = currentIds;
   }
 }
