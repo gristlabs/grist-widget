@@ -96,6 +96,7 @@ grist.ready({requiredAccess: 'full', columns: [{name: 'Content', type: 'Text'}],
   },
 });
 grist.onRecord(function (record, mappings) {
+  quill.enable();
   // If this is a new record, or mapping is diffrent.
   if (id !== record.id || mappings?.Content !== column) {
     id = record.id;
@@ -113,6 +114,13 @@ grist.onRecord(function (record, mappings) {
   }
 });
 
+grist.onNewRecord(function () {
+  id = null;
+  lastContent = null;
+  quill.setContents(null);
+  quill.disable();
+})
+
 // Register onOptions handler.
 grist.onOptions((customOptions, _) => {
   customOptions = customOptions || {};
@@ -129,7 +137,7 @@ saveEvent.subscribe(() => {
   // If we are in a middle of saving, skip this.
   if (lastSave) { return; }
   // If we are mapped.
-  if (column) {
+  if (column && id) {
     const content = quill.getContents();
     // Store content as json.
     const newContent = JSON.stringify(content);

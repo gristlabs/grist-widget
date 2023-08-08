@@ -48,3 +48,8 @@ html, body, #map {
   min-width: 100px;
   display: inline-block;
 }
+
+/* JV: Needed to highlight selected cluster */
+.marker-cluster-selected {
+  border: 3px solid #16b378;
+}
