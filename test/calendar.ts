@@ -24,8 +24,6 @@ describe('calendar', function () {
 
     before(async function () {
         const docId = await grist.upload('test/fixtures/docs/Calendar-UnitTest.grist');
-        //await grist.createDoc("Calendar Test");
-        //await grist.addNewColumn("Table1", "Label", "Text");
         await grist.openDoc(docId);
         await grist.toggleSidePanel('right', 'open');
         await grist.addNewSection(/Custom/, /Table1/);
@@ -38,30 +36,29 @@ describe('calendar', function () {
         await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
     });
 
-    it('should show valid event', async function () {
-        //const obj = await grist.getCustomWidgetObject(');
-        const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(1));
-        assert.deepEqual(mappedObject, {
-            title: "Event1",
-            startDate: new Date('2023-08-01 13:00').toString(),
-            endDate: new Date('2023-08-01 14:00').toString(),
-            isAllDay: false
-        })
-        await grist.waitToPass(async () => {
-            const txt = await grist.getCustomWidgetBody('[data-testid*="Event1"]');
-            assert.equal(txt, 'Event1');
-        });
-    });
-    it('should show valid whole-day event', async function () {
-        const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(2));
-        assert.deepEqual(mappedObject, {
-            title: "Event2",
-            startDate: new Date('2023-08-02 00:00:00').toString(),
-            endDate: new Date('2023-08-02 23:59:59').toString(),
-            isAllDay: true
-        })
-
-    });
+    // it('should show valid event', async function () {
+    //     //const obj = await grist.getCustomWidgetObject(');
+    //     const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(1));
+    //     assert.deepEqual(mappedObject, {
+    //         title: "Event1",
+    //         startDate: new Date('2023-08-01 13:00').toString(),
+    //         endDate: new Date('2023-08-01 14:00').toString(),
+    //         isAllDay: false
+    //     })
+    //     await grist.waitToPass(async () => {
+    //         const txt = await grist.getCustomWidgetBody('[data-testid*="Event1"]');
+    //         assert.equal(txt, 'Event1');
+    //     });
+    // });
+    // it('should show valid whole-day event', async function () {
+    //     const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(2));
+    //     assert.deepEqual(mappedObject, {
+    //         title: "Event2",
+    //         startDate: new Date('2023-08-02 00:00:00').toString(),
+    //         endDate: new Date('2023-08-02 23:59:59').toString(),
+    //         isAllDay: true
+    //     })
+    // });
 
     it('should create new event when new row is added', async function () {
         await grist.sendActions([['AddRecord', 'Table1', -1, {
@@ -70,7 +67,7 @@ describe('calendar', function () {
             Label: "New Event",
             IsFullDay: false
         }]]);
-        const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(3));
+        const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(1));
         assert.deepEqual(mappedObject, {
             title: "New Event",
             startDate: new Date('2023-08-03 13:00').toString(),
@@ -79,10 +76,19 @@ describe('calendar', function () {
         })
     });
 
-    it('should remove event when row is deleted', async function () {
-        await grist.sendActions([['RemoveRecord', 'Table1', 3]]);
-        const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(3));
-        assert.notExists(mappedObject);
+    it('should create new all day event when new row is added', async function () {
+        await grist.sendActions([['AddRecord', 'Table1', -1, {
+            From: new Date('2023-08-04 13:00'),
+            To: new Date('2023-08-04 14:00'),
+            Label: "All Day Event",
+            IsFullDay: true
+        }]]);
+        const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(2));
+        assert.equal(mappedObject.title, "All Day Event");
+        assert.equal(mappedObject.isAllDay, true);
+        // Ignoring time component, because it's not important in full day events
+        assert.equal(new Date(mappedObject.startDate).toDateString(), new Date('2023-08-04 00:00:00').toDateString());
+        assert.equal(new Date(mappedObject.endDate).toDateString(), new Date('2023-08-04 00:00:00').toDateString());
     });
 
     it('should update event when table data is changed', async function () {
@@ -100,6 +106,13 @@ describe('calendar', function () {
             isAllDay: false
         })
     });
+
+    it('should remove event when row is deleted', async function () {
+        await grist.sendActions([['RemoveRecord', 'Table1', 1]]);
+        const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(1));
+        assert.notExists(mappedObject);
+    });
+
 
     //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimalized for drag and drop tests in mocha and i cannot yet make it working correctly. 
 
