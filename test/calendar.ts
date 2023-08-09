@@ -87,8 +87,10 @@ describe('calendar', function () {
         assert.equal(mappedObject.title, "All Day Event");
         assert.equal(mappedObject.isAllDay, true);
         // Ignoring time component, because it's not important in full day events
-        assert.equal(new Date(mappedObject.startDate).toDateString(), new Date('2023-08-04 00:00:00').toDateString());
-        assert.equal(new Date(mappedObject.endDate).toDateString(), new Date('2023-08-04 00:00:00').toDateString());
+        assert.equal(new Date(mappedObject.startDate).toDateString(),
+          new Date('2023-08-04 00:00:00').toDateString());
+        assert.equal(new Date(mappedObject.endDate).toDateString(),
+          new Date('2023-08-04 00:00:00').toDateString());
     });
 
     it('should update event when table data is changed', async function () {
