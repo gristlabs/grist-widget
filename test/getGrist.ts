@@ -242,6 +242,8 @@ export class GristUtils extends GristWebDriverUtils {
       try {
         driver.findWait(`${selector}`, 2000).click();
       } catch (e) {
+        //sometimes here we get into "detached" state and test fail.
+        //if this happend, just try one more time
         driver.findWait(`${selector}`, 2000).click();
       }
     };
