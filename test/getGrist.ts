@@ -238,7 +238,13 @@ export class GristUtils extends GristWebDriverUtils {
   }
 
   public async setCustomWidgetMapping(name: string, value: string | RegExp) {
-    const click = (selector: string) => driver.findWait(`${selector}`, 2000).click();
+    const click = (selector: string) => {
+      try {
+        driver.findWait(`${selector}`, 2000).click();
+      } catch (e) {
+        driver.findWait(`${selector}`, 2000).click();
+      }
+    };
     const toggleDrop = (selector: string) => click(`${selector} .test-select-open`);
     const pickerDrop = (name: string) => `.test-config-widget-mapping-for-${name}`;
     await toggleDrop(pickerDrop(name));
