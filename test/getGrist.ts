@@ -242,7 +242,9 @@ export class GristUtils extends GristWebDriverUtils {
       try {
         await driver.findWait(`${selector}`, 2000).click();
       } catch (e) {
-        await driver.findWait(`${selector}`, 2000).click();
+        //sometimes here we get into "detached" state and test fail.
+        //if this happened, just try one more time
+       await  driver.findWait(`${selector}`, 2000).click();
       }
     };
     const toggleDrop = async (selector: string) => await click(`${selector} .test-select-open`);
