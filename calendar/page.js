@@ -1,5 +1,6 @@
 // let's assume that it's imported in an html file
 var grist;
+const CALENDAR_NAME = 'standardCalendar';
 
 class CalendarHandler {
   static _mainColor = getComputedStyle(document.documentElement)
@@ -26,7 +27,7 @@ class CalendarHandler {
       },
       calendars: [
         {
-          id: 'cal1',
+          id:  CALENDAR_NAME,
           name: 'Personal',
           backgroundColor: CalendarHandler._mainColor,
         },
@@ -36,6 +37,7 @@ class CalendarHandler {
   constructor() {
     const container = document.getElementById('calendar');
     const options = CalendarHandler.getCalendarOptions();
+    this.previousIds = new Set();
     this.calendar = new tui.Calendar(container, options);
     this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
     this.calendar.on('clickEvent', async (info) => {
@@ -50,9 +52,9 @@ class CalendarHandler {
   // navigate to the selected date in the calendar and scroll to the time period of the event
   selectRecord(record) {
     if (this._selectedRecordId) {
-      this.calendar.updateEvent(this._selectedRecordId, 'cal1', {backgroundColor: CalendarHandler._mainColor});
+      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {backgroundColor: CalendarHandler._mainColor});
     }
-    this.calendar.updateEvent(record.id, 'cal1', {backgroundColor: CalendarHandler._selectedColor});
+    this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
     this._selectedRecordId = record.id;
     this.calendar.setDate(record.startDate);
     var dom = document.querySelector('.toastui-calendar-time');
@@ -87,15 +89,14 @@ class CalendarHandler {
     // we need to keep track of the ids of the events that are currently in the calendar to compare it
     // with the new set of events when they come.
     const currentIds = new Set();
-
     for (const record of calendarEvents) {
       //chek if event already exist in the calendar - update it if so, create new otherwise
-      const event = this.calendar.getEvent(record.id, 'cal1');
+      const event = this.calendar.getEvent(record.id, CALENDAR_NAME);
       const eventData = record;
       if (!event) {
         this.calendar.createEvents([eventData]);
       } else {
-        this.calendar.updateEvent(record.id, 'cal1', eventData);
+        this.calendar.updateEvent(record.id, CALENDAR_NAME, eventData);
       }
       currentIds.add(record.id);
     }
@@ -103,7 +104,7 @@ class CalendarHandler {
     if(this.previousIds) {
       for (const id of this.previousIds) {
         if (!currentIds.has(id)) {
-          this.calendar.deleteEvent(id, 'cal1');
+          this.calendar.deleteEvent(id, CALENDAR_NAME);
         }
       }
     }
@@ -265,7 +266,7 @@ function selectRadioButton(value) {
 function buildCalendarEventObject(record) {
   return {
     id: record.id,
-    calendarId: 'cal1',
+    calendarId: CALENDAR_NAME,
     title: record.title,
     start: record.startDate,
     end: record.endDate,
