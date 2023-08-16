@@ -131,8 +131,8 @@ ready(async () => {
 });
 
 
-//to update the table, grist require other format that it is returning in onRecords event (it's flat there),
-// so it need to be converted
+//to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
+// onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
 function convertEventToGristTableFormat(event) {
   const mappedRecord = grist.mapColumnNamesBack(event);
   // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
