@@ -198,16 +198,16 @@ async function calendarViewChanges(radiobutton) {
 }
 
 
-// when user change a perspective of calendar we want this to be persisted in grist options between sessions.
-// This is the place where we can react to this change and update calendar view, or when new session is started
+// When a user changes a perspective of calendar, we want this to be persisted in grist options between sessions.
+// this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
 let onGristSettingsChanged = function(options) {
-  let option = options?.calendarViewPerspective??'week';
+  let option = options?.calendarViewPerspective ?? 'week';
     this.calendarHandler.changeView(option);
     selectRadioButton(option);
 };
 
-// when user move or resize event on the calendar, we want to update the record in the table
+// when user moves or resizes event on the calendar, we want to update the record in the table
 const onCalendarEventBeingUpdated = async (info) => {
     if (info.changes?.start || info.changes?.end) {
       const record =  await grist.fetchSelectedRecord(info.event.id);
@@ -244,21 +244,21 @@ function roundEpochDateToSeconds(date) {
 
 // conversion between calendar event object and grist flat format (so the one that is returned in onRecords event
 // and can be mapped by grist.mapColumnNamesBack)
-function buildGristFlatFormatFromEventObject(TUIEvent) {
+function buildGristFlatFormatFromEventObject(tuiEvent) {
   const gristEvent = {
-    startDate: roundEpochDateToSeconds(TUIEvent.start?.valueOf()),
-    endDate: roundEpochDateToSeconds(TUIEvent.end?.valueOf()),
-    isAllDay: TUIEvent.isAllday ? 1 : 0,
-    title: TUIEvent.title??"New Event"
+    startDate: roundEpochDateToSeconds(tuiEvent.start?.valueOf()),
+    endDate: roundEpochDateToSeconds(tuiEvent.end?.valueOf()),
+    isAllDay: tuiEvent.isAllday ? 1 : 0,
+    title: tuiEvent.title??"New Event"
   }
-  if(TUIEvent.id) gristEvent.id = TUIEvent.id;
+  if(tuiEvent.id) { gristEvent.id = tuiEvent.id; }
   return gristEvent;
 }
 
-// when user select new date range on the calendar, we want to create new record in the table
-const onNewDateBeingSelectedOnCalendar = async (info) => {
+// when user selects new date range on the calendar, we want to create new record in the table
+async function onNewDateBeingSelectedOnCalendar(info){
   const gristEvent = buildGristFlatFormatFromEventObject(info);
-  upsertGristRecord(gristEvent);
+  await upsertGristRecord(gristEvent);
 }
 
 //helper function to select radio button in the GUI
@@ -270,7 +270,7 @@ function selectRadioButton(value) {
   }
 }
 
-// helper function to build calendar event object from grist flat record
+// helper function to build a calendar event object from grist flat record
 function buildCalendarEventObject(record) {
   return {
     id: record.id,
@@ -287,7 +287,7 @@ function buildCalendarEventObject(record) {
 // when some CRUD operation is performed on the table, we want to update calendar
 async function updateCalendar(records, mappings) {
   const mappedRecords = grist.mapColumnNames(records, mappings);
-  // if any records was successfully mapped, create or update them in the calendar
+  // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
     const CalendarEventObjects = mappedRecords.map(buildCalendarEventObject);
     await this.calendarHandler.updateCalendarEvents(CalendarEventObjects);
