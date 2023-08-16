@@ -130,17 +130,7 @@ ready(async () => {
   await configureGristSettings();
 });
 
-
-//to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
-// onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
-function convertEventToGristTableFormat(event) {
-  const mappedRecord = grist.mapColumnNamesBack(event);
-  // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
-  delete mappedRecord.id;
-  return { id: event.id, fields: mappedRecord };
-}
-
-// Data for column mapping fileds in Widget GUI
+// Data for column mapping fields in Widget GUI
 function getGristOptions() {
   return [
     {
@@ -177,9 +167,9 @@ function getGristOptions() {
   ];
 }
 
-// let subscribe all the events that we need
+// let's subscribe to all the events that we need
 async function configureGristSettings() {
-  // table selection should change when other event is selected
+  // table selection should change when another event is selected
   grist.allowSelectBy();
   // CRUD operations on records in table
   grist.onRecords(updateCalendar);
@@ -193,16 +183,16 @@ async function configureGristSettings() {
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
 }
 
-// when user select record in the table, we want to select it on the calendar
-  function gristSelectedRecordChanged(record, mappings) {
-    const mappedRecord = grist.mapColumnNames(record, mappings);
-    if (mappedRecord && this.calendarHandler) {
-      this.calendarHandler.selectRecord(mappedRecord);
-    }
+// when a user selects a record in the table, we want to select it on the calendar
+function gristSelectedRecordChanged(record, mappings) {
+  const mappedRecord = grist.mapColumnNames(record, mappings);
+  if (mappedRecord && CalendarHandler) {
+    CalendarHandler.selectRecord(mappedRecord);
+  }
 }
 
-// when user change the perspective in the GUI, we want to save it as grist option
-// - rest of logic is in reaction to grist option changed
+// when a user changes the perspective in the GUI, we want to save it as grist option
+// - rest of logic is in reaction to the grist option changed
 async function calendarViewChanges(radiobutton) {
   await grist.setOption('calendarViewPerspective', radiobutton.value);
 }
@@ -233,7 +223,12 @@ const onCalendarEventBeingUpdated = async (info) => {
 
 // saving events to the table or updating existing one - basing on if ID is present or not in the send event
 async function upsertGristRecord(gristEvent){
-    const eventInValidFormat = convertEventToGristTableFormat(gristEvent);
+    //to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
+    // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
+    const mappedRecord = grist.mapColumnNamesBack(gristEvent);
+    // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
+    delete mappedRecord.id;
+    const eventInValidFormat =  { id: gristEvent.id, fields: mappedRecord };
     const table = await grist.getTable();
     if (gristEvent.id) {
         await table.update(eventInValidFormat);
@@ -242,7 +237,7 @@ async function upsertGristRecord(gristEvent){
     }
 }
 
-// grist expect date in seconds, but calendar is returning it in miliseconds, so we need to convert it
+// grist expects date in seconds, but the calendar is returning it in milliseconds, so we need to convert it
 function roundEpochDateToSeconds(date) {
   return date/1000;
 }
