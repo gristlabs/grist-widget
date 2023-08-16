@@ -5,6 +5,12 @@ var grist;
 let calendarHandler;
 const CALENDAR_NAME = 'standardCalendar';
 
+//for tests
+let dataVersion = Date.now();
+function testGetDataVersion(){
+  return dataVersion;
+}
+
 //registering code to run when a document is ready
 function ready(fn) {
   if (document.readyState !== 'loading') {
@@ -55,8 +61,8 @@ class CalendarHandler {
     this.calendar.on('clickEvent', async (info) => {
       await grist.setSelectedRows([info.event.id]);
     });
-    this.calendar.on('selectDateTime', (info)=> {
-      onNewDateBeingSelectedOnCalendar(info);
+    this.calendar.on('selectDateTime', async (info)=> {
+      await onNewDateBeingSelectedOnCalendar(info);
       this.calendar.clearGridSelections();
     });
   }
@@ -186,8 +192,8 @@ async function configureGristSettings() {
 // when a user selects a record in the table, we want to select it on the calendar
 function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
-  if (mappedRecord && CalendarHandler) {
-    CalendarHandler.selectRecord(mappedRecord);
+  if (mappedRecord && calendarHandler) {
+    calendarHandler.selectRecord(mappedRecord);
   }
 }
 
@@ -203,7 +209,7 @@ async function calendarViewChanges(radiobutton) {
 // (so we are loading previous settings)
 let onGristSettingsChanged = function(options) {
   let option = options?.calendarViewPerspective ?? 'week';
-    this.calendarHandler.changeView(option);
+    calendarHandler.changeView(option);
     selectRadioButton(option);
 };
 
@@ -284,12 +290,28 @@ function buildCalendarEventObject(record) {
   };
 }
 
-// when some CRUD operation is performed on the table, we want to update calendar
+// when some CRUD operation is performed on the table, we want to update the calendar
 async function updateCalendar(records, mappings) {
   const mappedRecords = grist.mapColumnNames(records, mappings);
   // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
     const CalendarEventObjects = mappedRecords.map(buildCalendarEventObject);
-    await this.calendarHandler.updateCalendarEvents(CalendarEventObjects);
+    await calendarHandler.updateCalendarEvents(CalendarEventObjects);
+  }
+  dataVersion = Date.now();
+}
+
+function testGetCalendarEvent(eventId){
+  const calendarObject =  calendarHandler.calendar.getEvent(eventId,CALENDAR_NAME);
+  if(calendarObject)
+  {
+    return{
+      title: calendarObject?.title,
+      startDate: calendarObject?.start.toString(),
+      endDate: calendarObject?.end.toString(),
+      isAllDay: calendarObject?.isAllday??false
+    }
+  }else{
+    return calendarObject
   }
 }

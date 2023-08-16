@@ -192,7 +192,7 @@ export class GristUtils extends GristWebDriverUtils {
     await this.waitForServer();
   }
 
-  public async sendActions(actions: UserAction[]) {
+  public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number=2000){
     const result = await driver.executeAsyncScript(`
           const done = arguments[arguments.length - 1];
           const prom = gristDocPageModel.gristDoc.get().docModel.docData.sendActions(${JSON.stringify(actions)});
@@ -202,7 +202,7 @@ export class GristUtils extends GristWebDriverUtils {
     if (result) {
       throw new Error(result as string);
     }
-    await this.waitForServer();
+    await this.waitForServer(optTimeout);
   }
 
   public async waitForServer(optTimeout: number = 2000) {
@@ -276,7 +276,7 @@ export class GristUtils extends GristWebDriverUtils {
     }
   }
 
-  public async getCustomWidgetObject(script: string): Promise<any> {
+  public async executeScriptOnCustomWidget(script: string): Promise<any> {
     const iframe = this.driver.find('iframe');
     try {
       await this.driver.switchTo().frame(iframe);
