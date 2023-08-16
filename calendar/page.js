@@ -1,4 +1,4 @@
-// lets assume that it's imported in a html file
+// let's assume that it's imported in an html file
 var grist;
 
 class CalendarHandler {

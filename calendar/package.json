@@ -10,7 +10,7 @@
     {
       "name": "Calendar",
       "url": "https://gristlabs.github.io/grist-widget/calendar/index.html",
-      "widgetId": "@gristlabs/widget-calendar#calendar",
+      "widgetId": "@gristlabs/widget-calendar",
       "published": true,
       "accessLevel": "read table"
     }
