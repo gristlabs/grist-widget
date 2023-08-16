@@ -36,30 +36,6 @@ describe('calendar', function () {
         await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
     });
 
-    // it('should show valid event', async function () {
-    //     //const obj = await grist.getCustomWidgetObject(');
-    //     const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(1));
-    //     assert.deepEqual(mappedObject, {
-    //         title: "Event1",
-    //         startDate: new Date('2023-08-01 13:00').toString(),
-    //         endDate: new Date('2023-08-01 14:00').toString(),
-    //         isAllDay: false
-    //     })
-    //     await grist.waitToPass(async () => {
-    //         const txt = await grist.getCustomWidgetBody('[data-testid*="Event1"]');
-    //         assert.equal(txt, 'Event1');
-    //     });
-    // });
-    // it('should show valid whole-day event', async function () {
-    //     const mappedObject = await grist.getCustomWidgetObject(getAbstractFromCalendarObject(2));
-    //     assert.deepEqual(mappedObject, {
-    //         title: "Event2",
-    //         startDate: new Date('2023-08-02 00:00:00').toString(),
-    //         endDate: new Date('2023-08-02 23:59:59').toString(),
-    //         isAllDay: true
-    //     })
-    // });
-
     it('should create new event when new row is added', async function () {
         await grist.sendActions([['AddRecord', 'Table1', -1, {
             From: new Date('2023-08-03 13:00'),

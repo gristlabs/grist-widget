@@ -1,6 +1,18 @@
 // let's assume that it's imported in an html file
 var grist;
+
+// to keep all calendar related logic;
+let calendarHandler;
 const CALENDAR_NAME = 'standardCalendar';
+
+//registering code to run when a document is ready
+function ready(fn) {
+  if (document.readyState !== 'loading') {
+    fn();
+  } else {
+    document.addEventListener('DOMContentLoaded', fn);
+  }
+}
 
 class CalendarHandler {
   static _mainColor = getComputedStyle(document.documentElement)
@@ -101,7 +113,7 @@ class CalendarHandler {
       currentIds.add(record.id);
     }
     // if some events are not in the new set of events, we need to remove them from the calendar
-    if(this.previousIds) {
+    if (this.previousIds) {
       for (const id of this.previousIds) {
         if (!currentIds.has(id)) {
           this.calendar.deleteEvent(id, CALENDAR_NAME);
@@ -112,11 +124,12 @@ class CalendarHandler {
   }
 }
 
-// when document is ready, register calendar and subscribe to grist events
-document.addEventListener('DOMContentLoaded', ()=> {
-  this.calendarHandler = new CalendarHandler();
-  configureGristSettings();
+// when a document is ready, register the calendar and subscribe to grist events
+ready(async () => {
+  calendarHandler = new CalendarHandler();
+  await configureGristSettings();
 });
+
 
 //to update the table, grist require other format that it is returning in onRecords event (it's flat there),
 // so it need to be converted
