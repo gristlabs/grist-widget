@@ -29,7 +29,7 @@ jobs:
         run: yarn install
 
       - name: Build Node.js test code
-        run: yarn run build:test
+        run: yarn run build http://localhost:9998
 
       - name: Cache Docker images.
         uses: ScribeMD/docker-cache@0.3.3

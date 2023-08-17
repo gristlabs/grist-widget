@@ -20,6 +20,12 @@ function ready(fn) {
   }
 }
 
+function isRecordValid(record){
+  return record.startDate instanceof Date &&
+  record.endDate instanceof Date &&
+  typeof record.title === 'string'
+}
+
 class CalendarHandler {
   static _mainColor = getComputedStyle(document.documentElement)
       .getPropertyValue('--main-color');
@@ -69,17 +75,18 @@ class CalendarHandler {
 
   // navigate to the selected date in the calendar and scroll to the time period of the event
   selectRecord(record) {
-    if (this._selectedRecordId) {
-      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {backgroundColor: CalendarHandler._mainColor});
-    }
-    this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
-    this._selectedRecordId = record.id;
-    this.calendar.setDate(record.startDate);
-    var dom = document.querySelector('.toastui-calendar-time');
-    const middleHour = record.startDate.getHours()
+    if(isRecordValid(record)) {
+      if (this._selectedRecordId) {
+        this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {backgroundColor: CalendarHandler._mainColor});
+      }
+      this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
+      this._selectedRecordId = record.id;
+      this.calendar.setDate(record.startDate);
+      var dom = document.querySelector('.toastui-calendar-time');
+      const middleHour = record.startDate.getHours()
         + (record.endDate.getHours() - record.startDate.getHours()) / 2;
-    dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
-
+      dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
+    }
   }
 
   // change calendar perspective between week, month and day.
@@ -296,7 +303,7 @@ async function updateCalendar(records, mappings) {
   const mappedRecords = grist.mapColumnNames(records, mappings);
   // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
-    const CalendarEventObjects = mappedRecords.map(buildCalendarEventObject);
+    const CalendarEventObjects = mappedRecords.filter(isRecordValid).map(buildCalendarEventObject);
     await calendarHandler.updateCalendarEvents(CalendarEventObjects);
   }
   dataVersion = Date.now();
