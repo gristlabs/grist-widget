@@ -1,7 +1,7 @@
 import {ChildProcess, execSync, spawn} from 'child_process';
 import FormData from 'form-data';
 import fs from 'fs';
-import {driver, WebDriver} from 'mocha-webdriver';
+import {driver} from 'mocha-webdriver';
 import fetch from 'node-fetch';
 
 import {GristWebDriverUtils} from 'test/gristWebDriverUtils';
@@ -236,11 +236,11 @@ export class GristUtils extends GristWebDriverUtils {
   public async setCustomWidgetMapping(name: string, value: string | RegExp) {
     const click = async (selector: string) => {
       try {
-        await driver.findWait(`${selector}`, 2000).click();
+        await driver.findWait(selector, 2000).click();
       } catch (e) {
         //sometimes here we get into "detached" state and test fail.
         //if this happened, just try one more time
-       await  driver.findWait(`${selector}`, 2000).click();
+       await  driver.findWait(selector, 2000).click();
       }
     };
     const toggleDrop = async (selector: string) => await click(`${selector} .test-select-open`);
@@ -259,16 +259,6 @@ export class GristUtils extends GristWebDriverUtils {
     try {
       await this.driver.switchTo().frame(iframe);
       return await this.driver.find(selector).getText();
-    } finally {
-      await this.driver.switchTo().defaultContent();
-    }
-  }
-
-  public async executeInIframe(fnc: (driver: WebDriver) => void) {
-    const iframe = this.driver.find('iframe');
-    try {
-      await this.driver.switchTo().frame(iframe);
-      await fnc(this.driver);
     } finally {
       await this.driver.switchTo().defaultContent();
     }
