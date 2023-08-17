@@ -315,3 +315,8 @@ function testGetCalendarEvent(eventId){
     return calendarObject
   }
 }
+
+function testGetCalendarViewName(){
+  // noinspection JSUnresolvedReference
+  return calendarHandler.calendar.getViewName();
+}

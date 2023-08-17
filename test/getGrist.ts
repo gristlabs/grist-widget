@@ -264,12 +264,12 @@ export class GristUtils extends GristWebDriverUtils {
     }
   }
 
-  public async executeScriptOnCustomWidget(script: string): Promise<any> {
+  public async executeScriptOnCustomWidget<T>(script: string|Function): Promise<T> {
     const iframe = this.driver.find('iframe');
     try {
       await this.driver.switchTo().frame(iframe);
       const jsValue = await this.driver.executeScript(script);
-      return await jsValue;
+      return jsValue as T;
     } finally {
       await this.driver.switchTo().defaultContent();
     }
