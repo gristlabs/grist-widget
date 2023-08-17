@@ -52,16 +52,6 @@ const serverSettings = {
 export class GristTestServer {
   private _assetServer?: ChildProcess;
 
-  public get gristUrl() {
-    const {gristPort} = serverSettings;
-    return `http://localhost:${gristPort}`;
-  }
-
-  public get assetUrl() {
-    const {contentPort} = serverSettings;
-    return `http://localhost:${contentPort}`;
-  }
-
   public async start() {
     await this.stop();
     const {gristContainerName, gristImage, gristPort, contentPort} = serverSettings;
@@ -82,10 +72,8 @@ export class GristTestServer {
     }
     const pwd = process.cwd();
     this._assetServer = spawn('live-server', [
-      `--port=${contentPort}`,
-      `--middleware=${pwd}/buildtools/rewriteUrl.js`,
-      `-q`,
-      `--no-browser`
+      `--port=${contentPort}`, '--no-browser', '-q',
+      `--middleware=${pwd}/buildtools/rewriteUrl.js`
     ], {
       env: {
         ...process.env,
@@ -113,6 +101,16 @@ export class GristTestServer {
       this._assetServer.kill();
       this._assetServer = undefined;
     }
+  }
+
+  public get gristUrl() {
+    const {gristPort} = serverSettings;
+    return `http://localhost:${gristPort}`;
+  }
+
+  public get assetUrl() {
+    const {contentPort} = serverSettings;
+    return `http://localhost:${contentPort}`;
   }
 }
 
@@ -150,9 +148,7 @@ export class GristUtils extends GristWebDriverUtils {
       }
       try {
         const resp = await fetch(this.server.assetUrl);
-        if (resp.status === 200) {
-          break;
-        }
+        if (resp.status === 200) { break; }
       } catch (e) {
         // we expect fetch failures initially.
       }
