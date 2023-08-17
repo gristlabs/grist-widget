@@ -104,7 +104,7 @@ class CalendarHandler {
 
   // update calendar events based on the collection of records from the grist table.
   async updateCalendarEvents(calendarEvents) {
-    // we need to keep track of the ids of the events that are currently in the calendar to compare it
+    // we need to keep track the ids of the events that are currently in the calendar to compare it
     // with the new set of events when they come.
     const currentIds = new Set();
     for (const record of calendarEvents) {
@@ -216,14 +216,12 @@ let onGristSettingsChanged = function(options) {
 // when user moves or resizes event on the calendar, we want to update the record in the table
 const onCalendarEventBeingUpdated = async (info) => {
     if (info.changes?.start || info.changes?.end) {
-      const record =  await grist.fetchSelectedRecord(info.event.id);
-      if (record) {
-        // get all the record data from the event, and update only start and end date
-        const gristEvent = buildGristFlatFormatFromEventObject(info.event)
+        let gristEvent = {};
+        gristEvent.id = info.event.id;
         if(info.changes.start) gristEvent.startDate = roundEpochDateToSeconds(info.changes.start.valueOf());
         if(info.changes.end) gristEvent.endDate = roundEpochDateToSeconds(info.changes.end.valueOf());
         await upsertGristRecord(gristEvent);
-      }
+      //}
     }
 };
 
@@ -234,7 +232,10 @@ async function upsertGristRecord(gristEvent){
     const mappedRecord = grist.mapColumnNamesBack(gristEvent);
     // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
     delete mappedRecord.id;
-    const eventInValidFormat =  { id: gristEvent.id, fields: mappedRecord };
+    //mapColumnNamesBack is returning undefined for all absent fields, so we need to remove them as well
+    const filteredRecord = Object.fromEntries(Object.entries(mappedRecord)
+      .filter(([key, value]) => value !== undefined));
+    const eventInValidFormat =  { id: gristEvent.id, fields: filteredRecord };
     const table = await grist.getTable();
     if (gristEvent.id) {
         await table.update(eventInValidFormat);
