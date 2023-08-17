@@ -189,12 +189,12 @@ export class GristUtils extends GristWebDriverUtils {
   }
 
   public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number=2000){
-    const result = await driver.executeAsyncScript(`
-          const done = arguments[arguments.length - 1];
-          const prom = gristDocPageModel.gristDoc.get().docModel.docData.sendActions(${JSON.stringify(actions)});
-          prom.then(() => done(null));
-          prom.catch((err) => done(String(err?.message || err)));
-        `);
+    //const flatActions = JSON.stringify(actions);
+    const result = await driver.executeAsyncScript(async (actions:any, done:Function)=> {
+      const prom = (window as any).gristDocPageModel.gristDoc.get().docModel.docData.sendActions(actions);
+      prom.then(() => done(null));
+      prom.catch((err:any) => done(String(err?.message || err)));
+    },actions);
     if (result) {
       throw new Error(result as string);
     }
