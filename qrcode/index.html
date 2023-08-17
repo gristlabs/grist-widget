@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>QR Code</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" integrity="sha512-pUhApVQtLbnpLtJn6DuzDD5o2xtmLJnJ7oBoMsBnzOkVkpqofGLGPaBJ6ayD2zQe3lCgCibhJBi4cj5wAxwVKA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  </head>
+  <body>
+    <div id="content"></div>
+    <script>
+      function qrcode (qr) {
+        const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
+        const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+        const size = .92 * Math.min(vw, vh)
+        const canvas = document.createElement('canvas');
+        new QRious ({
+          element: canvas,
+          level: 'L',
+          size,
+          value: qr
+        });
+        return canvas;
+      }
+      grist.ready({
+        columns: ['QR'],
+        requiredAccess: 'read table'
+      });
+      grist.onRecord(function(record) {
+        const content = document.getElementById('content');
+        const { QR } = grist.mapColumnNames(record);
+        function update_qr () {
+          content.innerHTML = '';
+          if (typeof(QR) === "object") {
+            for (qr of QR) {
+              content.appendChild(qrcode(qr));
+            }
+          } else {
+            content.appendChild(qrcode(QR));
+          };
+        };
+        window.addEventListener("resize", update_qr);
+        update_qr();
+      });
+    </script>
+  </body>
+</html>
