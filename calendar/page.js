@@ -20,7 +20,7 @@ function ready(fn) {
   }
 }
 
-function isRecordValid(record){
+function isRecordValid(record) {
   return record.startDate instanceof Date &&
   record.endDate instanceof Date &&
   typeof record.title === 'string'
@@ -75,14 +75,14 @@ class CalendarHandler {
 
   // navigate to the selected date in the calendar and scroll to the time period of the event
   selectRecord(record) {
-    if(isRecordValid(record)) {
+    if (isRecordValid(record)) {
       if (this._selectedRecordId) {
         this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {backgroundColor: CalendarHandler._mainColor});
       }
       this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
       this._selectedRecordId = record.id;
       this.calendar.setDate(record.startDate);
-      var dom = document.querySelector('.toastui-calendar-time');
+      const dom = document.querySelector('.toastui-calendar-time');
       const middleHour = record.startDate.getHours()
         + (record.endDate.getHours() - record.startDate.getHours()) / 2;
       dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
@@ -265,12 +265,12 @@ function buildGristFlatFormatFromEventObject(tuiEvent) {
     isAllDay: tuiEvent.isAllday ? 1 : 0,
     title: tuiEvent.title??"New Event"
   }
-  if(tuiEvent.id) { gristEvent.id = tuiEvent.id; }
+  if (tuiEvent.id) { gristEvent.id = tuiEvent.id; }
   return gristEvent;
 }
 
-// when user selects new date range on the calendar, we want to create new record in the table
-async function onNewDateBeingSelectedOnCalendar(info){
+// when user selects new date range on the calendar, we want to create a new record in the table
+async function onNewDateBeingSelectedOnCalendar(info) {
   const gristEvent = buildGristFlatFormatFromEventObject(info);
   await upsertGristRecord(gristEvent);
 }

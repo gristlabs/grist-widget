@@ -78,7 +78,7 @@ describe('calendar', function () {
         const mappedObject  = await getCalendarEvent(2);
         assert.equal(mappedObject.title, "All Day Event");
         assert.equal(mappedObject.isAllDay, true);
-        // Ignoring time component, because it's not important in full day events
+        // Ignoring a time component, because it's not important in full day events
         assert.equal(new Date(mappedObject.startDate).toDateString(),
           new Date('2023-08-04 00:00:00').toDateString());
         assert.equal(new Date(mappedObject.endDate).toDateString(),
@@ -158,8 +158,6 @@ describe('calendar', function () {
         await navigateAndValidate('#calendar-button-next', 7);
     });
 
-
-
-    //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimalized for drag and drop tests in mocha and i cannot yet make it working correctly. 
+    //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimized for drag and drop tests in mocha and i cannot yet make it working correctly.
 
 });

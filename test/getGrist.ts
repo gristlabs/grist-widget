@@ -188,26 +188,19 @@ export class GristUtils extends GristWebDriverUtils {
     await this.waitForServer();
   }
 
-  public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number=2000){
-    //const flatActions = JSON.stringify(actions);
-    const result = await driver.executeAsyncScript(async (actions:any, done:Function)=> {
-      const prom = (window as any).gristDocPageModel.gristDoc.get().docModel.docData.sendActions(actions);
-      prom.then(() => done(null));
-      prom.catch((err:any) => done(String(err?.message || err)));
-    },actions);
+  public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number = 2000) {
+    const result = await driver.executeAsyncScript(async (actions: any, done: Function) => {
+      try {
+        await (window as any).gristDocPageModel.gristDoc.get().docModel.docData.sendActions(actions);
+        done(null);
+      } catch (err) {
+        done(String(err?.message || err));
+      }
+    }, actions);
     if (result) {
       throw new Error(result as string);
     }
     await this.waitForServer(optTimeout);
-  }
-
-  public async waitForServer(optTimeout: number = 2000) {
-    await this.driver.wait(() => this.driver.executeScript(
-      "return window.gristApp && (!window.gristApp.comm || !window.gristApp.comm.hasActiveRequests())"
-      + " && window.gristApp.testNumPendingApiRequests() === 0",
-      optTimeout,
-      "Timed out waiting for server requests to complete"
-    ));
   }
 
   public async clickWidgetPane() {
@@ -240,7 +233,7 @@ export class GristUtils extends GristWebDriverUtils {
       } catch (e) {
         //sometimes here we get into "detached" state and test fail.
         //if this happened, just try one more time
-       await  driver.findWait(selector, 2000).click();
+        await driver.findWait(selector, 2000).click();
       }
     };
     const toggleDrop = async (selector: string) => await click(`${selector} .test-select-open`);
@@ -264,7 +257,7 @@ export class GristUtils extends GristWebDriverUtils {
     }
   }
 
-  public async executeScriptOnCustomWidget<T>(script: string|Function): Promise<T> {
+  public async executeScriptOnCustomWidget<T>(script: string | Function): Promise<T> {
     const iframe = this.driver.find('iframe');
     try {
       await this.driver.switchTo().frame(iframe);
