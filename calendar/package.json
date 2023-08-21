@@ -1,0 +1,19 @@
+{
+  "name": "@gristlabs/widget-calendar",
+  "description": "Widget for visualizing data as an calendar",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "dependencies": {
+    "@toast-ui/calendar": "^2.1.3"
+  },
+  "grist": [
+    {
+      "name": "Calendar",
+      "url": "https://gristlabs.github.io/grist-widget/calendar/index.html",
+      "widgetId": "@gristlabs/widget-calendar",
+      "published": true,
+      "accessLevel": "read table"
+    }
+
+  ]
+}

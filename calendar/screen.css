@@ -1,0 +1,81 @@
+:root {
+  --main-color: #16B378;
+  --selected-color: #009058;
+}
+
+
+body{
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+}
+
+#calendar-options{
+  display:flex;
+  gap: 50px;
+  padding-bottom: 10px;
+}
+
+#calendar-navigation-buttons,#calendar-perspective-buttons{
+  display:flex;
+  gap: 0;
+}
+
+#calendar-options input[type="radio"] {
+  opacity: 0;
+  position: fixed;
+  width: 0;
+}
+
+.toastui-calendar-timegrid{
+  height: 100%;
+}
+
+.calendar-button{
+  font-family: inherit;
+  font-size: 1em;
+  border: none;
+  border-top: 1px solid #11B683;
+  border-bottom: 1px solid #11B683;
+  /*   border-radius: 4px; */
+  letter-spacing: -0.08px;
+  padding: 4px 8px;
+  background:transparent;
+}
+
+.calendar-button:last-of-type{
+  border-right: 1px solid #11B683;
+  border-radius: 0 5px 5px 0;
+}
+
+.calendar-button:first-of-type{
+  border-left: 1px solid #11B683;
+  border-radius: 5px 0 0 5px;
+}
+
+.calendar-button:hover{
+  color: #009058;
+  border-color: #009058;
+}
+
+input:checked + label{
+  background-color:var(--main-color);
+  color: #ffffff;
+  border-color:#000;
+}
+
+.toastui-calendar-day-view .toastui-calendar-panel:not(.toastui-calendar-time), .toastui-calendar-week-view .toastui-calendar-panel:not(.toastui-calendar-time) {
+  overflow-y: hidden;
+}
+
+#calendar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+#calendar{
+  flex: 1;
+  min-height: 600px;
+  flex-shrink: 0;
+  background-color: #ff0000;
+}

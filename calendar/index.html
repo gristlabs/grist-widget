@@ -1,0 +1,34 @@
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
+    <link rel="stylesheet" href="screen.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <title>Calendar Widget</title>
+  </head>
+  <body>
+  <div id="calendar-container">
+    <div id="calendar-options">
+      <div id="calendar-navigation-buttons">
+        <button id="calendar-button-previous" class="calendar-button"  onclick="calendarHandler.calendarPrevious()"><</button>
+        <button id="calendar-button-today" class="calendar-button"  onclick="calendarHandler.calendarToday()">Today</button>
+        <button id="calendar-button-next" class="calendar-button"  onclick="calendarHandler.calendarNext()">></button>
+      </div>
+      <div id="calendar-perspective-buttons">
+        <input type="radio" id="calendar-day" name="calendar-options" value="day" onchange="calendarViewChanges(this)">
+        <label id="calendar-day-label" class="calendar-button" for="calendar-day">Day</label>
+        <input type="radio" id="calendar-week" name="calendar-options" value="week" onchange="calendarViewChanges(this)">
+        <label id="calendar-week-label" class="calendar-button" for="calendar-week">Week</label>
+        <input  type="radio" id="calendar-month" name="calendar-options" value="month" onchange="calendarViewChanges(this)">
+        <label id="calendar-month-label" class="calendar-button" for="calendar-month">Month</label>
+      </div>
+    </div>
+    <div id="calendar">
+    </div>
+  </div>
+  </body>
+  <script src="page.js"></script>
+
+</html>

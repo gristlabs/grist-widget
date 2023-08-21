@@ -1,10 +1,13 @@
-import { ChildProcess, execSync, spawn } from 'child_process';
+import {ChildProcess, execSync, spawn} from 'child_process';
 import FormData from 'form-data';
 import fs from 'fs';
-import { driver } from 'mocha-webdriver';
+import {driver} from 'mocha-webdriver';
 import fetch from 'node-fetch';
 
-import { GristWebDriverUtils } from 'test/gristWebDriverUtils';
+import {GristWebDriverUtils} from 'test/gristWebDriverUtils';
+
+
+type UserAction = Array<string | number | object | boolean | null | undefined>;
 
 /**
  * Set up mocha hooks for starting and stopping Grist. Return
@@ -14,7 +17,7 @@ export function getGrist(): GristUtils {
   const server = new GristTestServer();
   const grist = new GristUtils(server);
 
-  before(async function() {
+  before(async function () {
     // Server will have started up in a global fixture, we just
     // need to make sure it is ready.
     // TODO: mocha-webdriver has a way of explicitly connecting a
@@ -75,7 +78,7 @@ export class GristTestServer {
       env: {
         ...process.env,
         GRIST_PORT: String(gristPort),
-      },
+      }
     });
   }
 
@@ -129,7 +132,9 @@ export class GristUtils extends GristWebDriverUtils {
       try {
         const url = this.url;
         const resp = await fetch(url + '/status');
-        if (resp.status === 200) { break; }
+        if (resp.status === 200) {
+          break;
+        }
       } catch (e) {
         // we expect fetch failures initially.
       }
@@ -183,6 +188,21 @@ export class GristUtils extends GristWebDriverUtils {
     await this.waitForServer();
   }
 
+  public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number = 2000) {
+    const result = await driver.executeAsyncScript(async (actions: any, done: Function) => {
+      try {
+        await (window as any).gristDocPageModel.gristDoc.get().docModel.docData.sendActions(actions);
+        done(null);
+      } catch (err) {
+        done(String(err?.message || err));
+      }
+    }, actions);
+    if (result) {
+      throw new Error(result as string);
+    }
+    await this.waitForServer(optTimeout);
+  }
+
   public async clickWidgetPane() {
     const elem = this.driver.find('.test-config-widget-select .test-select-open');
     if (await elem.isPresent()) {
@@ -196,9 +216,9 @@ export class GristUtils extends GristWebDriverUtils {
     await this.waitForServer();
   }
 
-  public async setCustomWidgetAccess(option: "none"|"read table"|"full") {
+  public async setCustomWidgetAccess(option: "none" | "read table" | "full") {
     const text = {
-      "none" : "No document access",
+      "none": "No document access",
       "read table": "Read selected table",
       "full": "Full document access"
     };
@@ -206,9 +226,17 @@ export class GristUtils extends GristWebDriverUtils {
     await this.driver.findContent(`.test-select-menu li`, text[option]).click();
   }
 
-  public async setCustomWidgetMapping(name: string, value: string|RegExp) {
-    const click = (selector: string) => driver.findWait(`${selector}`, 2000).click();
-    const toggleDrop = (selector: string) => click(`${selector} .test-select-open`);
+  public async setCustomWidgetMapping(name: string, value: string | RegExp) {
+    const click = async (selector: string) => {
+      try {
+        await driver.findWait(selector, 2000).click();
+      } catch (e) {
+        //sometimes here we get into "detached" state and test fail.
+        //if this happened, just try one more time
+        await driver.findWait(selector, 2000).click();
+      }
+    };
+    const toggleDrop = async (selector: string) => await click(`${selector} .test-select-open`);
     const pickerDrop = (name: string) => `.test-config-widget-mapping-for-${name}`;
     await toggleDrop(pickerDrop(name));
     const clickOption = async (text: string | RegExp) => {
@@ -220,12 +248,23 @@ export class GristUtils extends GristWebDriverUtils {
 
   // Crude, assumes a single iframe. Should elaborate.
   public async getCustomWidgetBody(selector: string = 'html'): Promise<string> {
-    const iframe = driver.find('iframe');
+    const iframe = this.driver.find('iframe');
     try {
       await this.driver.switchTo().frame(iframe);
-      return await driver.find(selector).getText();
+      return await this.driver.find(selector).getText();
     } finally {
-      await driver.switchTo().defaultContent();
+      await this.driver.switchTo().defaultContent();
+    }
+  }
+
+  public async executeScriptOnCustomWidget<T>(script: string | Function): Promise<T> {
+    const iframe = this.driver.find('iframe');
+    try {
+      await this.driver.switchTo().frame(iframe);
+      const jsValue = await this.driver.executeScript(script);
+      return jsValue as T;
+    } finally {
+      await this.driver.switchTo().defaultContent();
     }
   }
 
