@@ -38,6 +38,7 @@ class CalendarHandler {
         taskView: false,
       },
       month: {},
+      usageStatistics: false,
       defaultView: 'week',
       template: {
         time(event) {

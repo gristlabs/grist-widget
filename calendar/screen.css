@@ -77,5 +77,4 @@ input:checked + label{
   flex: 1;
   min-height: 600px;
   flex-shrink: 0;
-  background-color: #ff0000;
 }
