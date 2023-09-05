@@ -20,10 +20,10 @@ describe('calendar', function () {
     }
 
     //wait until the event is loaded on the calendar
-    async function getCalendarEvent(eventId: number) {
+    async function getCalendarEvent(eventId: number): Promise<any> {
         let mappedObject:any;
         mappedObject = await grist.executeScriptOnCustomWidget(buildGetCalendarObjectScript(eventId));
-        return mappedObject;
+        return JSON.parse(mappedObject);
     }
 
     async function getCalendarSettings():Promise<string> {
@@ -60,8 +60,8 @@ describe('calendar', function () {
         const mappedObject = await getCalendarEvent(1);
         assert.deepEqual(mappedObject, {
             title: "New Event",
-            startDate: new Date('2023-08-03 13:00').toString(),
-            endDate: new Date('2023-08-03 14:00').toString(),
+            startDate: new Date('2023-08-03 13:00').toJSON(),
+            endDate: new Date('2023-08-03 14:00').toJSON(),
             isAllDay: false
         })
     });
@@ -97,8 +97,8 @@ describe('calendar', function () {
         const mappedObject = await getCalendarEvent(1);
         assert.deepEqual(mappedObject, {
             title: "New Event",
-            startDate: new Date('2023-08-03 13:00').toString(),
-            endDate: new Date('2023-08-03 15:00').toString(),
+            startDate: new Date('2023-08-03 13:00').toJSON(),
+            endDate: new Date('2023-08-03 15:00').toJSON(),
             isAllDay: false
         })
     });
@@ -108,7 +108,7 @@ describe('calendar', function () {
             await grist.sendActionsAndWaitForServer([['RemoveRecord', 'Table1', 1]]);
         });
         const mappedObject = await getCalendarEvent(1)
-        assert.notExists(mappedObject);
+        assert.isNull(mappedObject);
     });
 
     it('should change calendar perspective when button is pressed', async function () {
@@ -132,12 +132,14 @@ describe('calendar', function () {
     it('should navigate to appropriate time periods when button is pressed', async function () {
         const today = new Date();
 
-        // Function to navigate and validate date change
-        const navigateAndValidate = async (buttonSelector:string, daysToAdd:number) => {
-            await grist.inCustomWidget(async () => {
-                await driver.findWait(buttonSelector, 200).click();
-            });
+        // // Function to navigate and validate date change
+        // const navigateAndValidate = async (buttonSelector:string, daysToAdd:number) => {
+        //     await grist.inCustomWidget(async () => {
+        //         await driver.findWait(buttonSelector, 200).click();
+        //     });
+        // };
 
+        const validateDate = async (daysToAdd:number) => {
             const newDate = await grist.executeScriptOnCustomWidget<string>(
               'return calendarHandler.calendar.getDate().d.toDate().toDateString()'
             );
@@ -146,17 +148,63 @@ describe('calendar', function () {
             expectedDate.setDate(today.getDate() + daysToAdd);
 
             assert.equal(newDate, expectedDate.toDateString());
-        };
+        }
 
         // Navigate to the previous week
-        await navigateAndValidate('#calendar-button-previous', -7);
+        await navigateCalendar('previous');
+        await validateDate(-7);
 
         // Navigate to today
-        await navigateAndValidate('#calendar-button-today', 0);
+        await navigateCalendar('today');
+        await validateDate(0);
 
         // Navigate to next week
-        await navigateAndValidate('#calendar-button-next', 7);
+        await navigateCalendar('next');
+        await validateDate(7);
     });
+
+    it('should show correct month name when navigating to previous and next month', async function () {
+        const findCalendarTitle = async ():Promise<string> => await grist.inCustomWidget(async () => {
+            return await driver.findWait("#calendar-title",200).getText();
+        });
+
+        await selectPerspective('month');
+        await navigateCalendar('today');
+
+        // TUI Calendar use it's own data enegine, so mocking Date is not working here. In future it will be good to
+        // find a way to mock a date both in the system (by using TimeShift) and in the TUI Calendar to get rid of this
+        // data builder here.
+        const monthNameOf = (date:Date) => date.toLocaleString('en-us', {month: 'long', year: 'numeric'});
+        const shiftMonth = (date:Date, months:number) => {
+            const newDate = new Date(date);
+            newDate.setMonth(date.getMonth() + months);
+            return newDate;
+        };
+        const now = new Date(Date.now());
+        assert.equal(await findCalendarTitle(), monthNameOf(now));
+       
+        await navigateCalendar('previous');
+
+        assert.equal(await findCalendarTitle(),monthNameOf(shiftMonth(now,-1)));
+        
+        await navigateCalendar('today');
+        await navigateCalendar('next');
+
+        assert.equal(await findCalendarTitle(),monthNameOf(shiftMonth(now,1)));
+    });
+
+    //Helpers 
+    async function selectPerspective(perspective: 'month'|'week'|'day'){
+        await grist.inCustomWidget(async () => {
+            await driver.findWait(`#calendar-${perspective}-label`, 200).click();
+        });
+    }
+
+    async function navigateCalendar(toWhere:'previous'|'next'|'today'){
+        await grist.inCustomWidget(async () => {
+            await driver.findWait(`#calendar-button-${toWhere}`, 200).click();
+        });
+    }       
 
     //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimized for drag and drop tests in mocha and i cannot yet make it working correctly.
 
