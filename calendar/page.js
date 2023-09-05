@@ -28,7 +28,6 @@ function isRecordValid(record) {
 
 function getMonthName(){
   return calendarHandler.calendar.getDate().d.d.toLocaleString('en-us', { month: 'long', year:'numeric' })
-
 }
 
 class CalendarHandler {
@@ -37,6 +36,7 @@ class CalendarHandler {
 
   static _selectedColor = getComputedStyle(document.documentElement)
       .getPropertyValue('--selected-color');
+
   static getCalendarOptions() {
     return {
       week: {
@@ -64,6 +64,7 @@ class CalendarHandler {
       ],
     };
   }
+
   constructor() {
     const container = document.getElementById('calendar');
     const options = CalendarHandler.getCalendarOptions();
@@ -108,7 +109,6 @@ class CalendarHandler {
   calendarPrevious() {
     this.calendar.prev();
     setMonthNameInDom();
-
   }
 
   // navigate to the next time period

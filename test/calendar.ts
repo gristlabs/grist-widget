@@ -131,14 +131,6 @@ describe('calendar', function () {
 
     it('should navigate to appropriate time periods when button is pressed', async function () {
         const today = new Date();
-
-        // // Function to navigate and validate date change
-        // const navigateAndValidate = async (buttonSelector:string, daysToAdd:number) => {
-        //     await grist.inCustomWidget(async () => {
-        //         await driver.findWait(buttonSelector, 200).click();
-        //     });
-        // };
-
         const validateDate = async (daysToAdd:number) => {
             const newDate = await grist.executeScriptOnCustomWidget<string>(
               'return calendarHandler.calendar.getDate().d.toDate().toDateString()'
@@ -146,7 +138,6 @@ describe('calendar', function () {
 
             const expectedDate = new Date(today);
             expectedDate.setDate(today.getDate() + daysToAdd);
-
             assert.equal(newDate, expectedDate.toDateString());
         }
 
