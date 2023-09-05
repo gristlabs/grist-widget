@@ -26,6 +26,11 @@ function isRecordValid(record) {
   typeof record.title === 'string'
 }
 
+function getMonthName(){
+  return calendarHandler.calendar.getDate().d.d.toLocaleString('en-us', { month: 'long', year:'numeric' })
+
+}
+
 class CalendarHandler {
   static _mainColor = getComputedStyle(document.documentElement)
       .getPropertyValue('--main-color');
@@ -92,21 +97,26 @@ class CalendarHandler {
   // change calendar perspective between week, month and day.
   changeView(calendarViewPerspective) {
     this.calendar.changeView(calendarViewPerspective);
+    document.getElementById('calendar-title').innerText = getMonthName();
   }
 
   // navigate to the previous time period
   calendarPrevious() {
     this.calendar.prev();
+    setMonthNameInDom();
+
   }
 
   // navigate to the next time period
   calendarNext() {
     this.calendar.next();
+    setMonthNameInDom();
   }
 
   //navigate to today
   calendarToday() {
     this.calendar.today();
+    setMonthNameInDom();
   }
 
   // update calendar events based on the collection of records from the grist table.
@@ -180,6 +190,10 @@ function getGristOptions() {
   ];
 }
 
+
+function setMonthNameInDom(){
+  document.getElementById('calendar-title').innerText = getMonthName();
+}
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
   // table selection should change when another event is selected
