@@ -12,6 +12,7 @@ body{
   display:flex;
   gap: 50px;
   padding-bottom: 10px;
+  align-items: baseline;
 }
 
 #calendar-navigation-buttons,#calendar-perspective-buttons{
