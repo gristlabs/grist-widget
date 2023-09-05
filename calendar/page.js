@@ -87,10 +87,13 @@ class CalendarHandler {
       this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
       this._selectedRecordId = record.id;
       this.calendar.setDate(record.startDate);
-      const dom = document.querySelector('.toastui-calendar-time');
-      const middleHour = record.startDate.getHours()
-        + (record.endDate.getHours() - record.startDate.getHours()) / 2;
-      dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
+      if (this.calendar.getViewName() !== 'month') {
+        //Scoll to the middle of the event, if it's not month view
+        const dom = document.querySelector('.toastui-calendar-time');
+        const middleHour = record.startDate.getHours()
+          + (record.endDate.getHours() - record.startDate.getHours()) / 2;
+        dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
+      }
     }
   }
 
@@ -323,18 +326,18 @@ async function updateCalendar(records, mappings) {
   dataVersion = Date.now();
 }
 
-function testGetCalendarEvent(eventId){
-  const calendarObject =  calendarHandler.calendar.getEvent(eventId,CALENDAR_NAME);
-  if(calendarObject)
-  {
-    return{
+function testGetCalendarEvent(eventId) {
+  const calendarObject = calendarHandler.calendar.getEvent(eventId, CALENDAR_NAME);
+  if (calendarObject) {
+    const eventData = {
       title: calendarObject?.title,
-      startDate: calendarObject?.start.toString(),
-      endDate: calendarObject?.end.toString(),
-      isAllDay: calendarObject?.isAllday??false
-    }
-  }else{
-    return calendarObject
+      startDate: calendarObject?.start.d.d,
+      endDate: calendarObject?.end.d.d,
+      isAllDay: calendarObject?.isAllday ?? false
+    };
+    return JSON.stringify(eventData);
+  } else {
+    return null;
   }
 }
 
