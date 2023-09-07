@@ -26,8 +26,8 @@ function isRecordValid(record) {
   typeof record.title === 'string'
 }
 
-function getMonthName(){
-  return calendarHandler.calendar.getDate().d.d.toLocaleString('en-us', { month: 'long', year:'numeric' })
+function getMonthName() {
+  return calendarHandler.calendar.getDate().toDate().toLocaleString('en-us', { month: 'long', year: 'numeric' })
 }
 
 class CalendarHandler {
@@ -89,8 +89,11 @@ class CalendarHandler {
       this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
       this._selectedRecordId = record.id;
       this.calendar.setDate(record.startDate);
+      updateUIAfterNavigation();
       if (this.calendar.getViewName() !== 'month') {
-        //Scoll to the middle of the event, if it's not month view
+        //Scroll to the middle of the event if it's not month view.
+        //In some cases, an event is not visible even if a valid day is focused - for example, when event is in the
+        //last hour of the day, so to make it visible, we need to scroll to the middle of the event.
         const dom = document.querySelector('.toastui-calendar-time');
         const middleHour = record.startDate.getHours()
           + (record.endDate.getHours() - record.startDate.getHours()) / 2;
@@ -108,19 +111,19 @@ class CalendarHandler {
   // navigate to the previous time period
   calendarPrevious() {
     this.calendar.prev();
-    setMonthNameInDom();
+    updateUIAfterNavigation();
   }
 
   // navigate to the next time period
   calendarNext() {
     this.calendar.next();
-    setMonthNameInDom();
+    updateUIAfterNavigation();
   }
 
   //navigate to today
   calendarToday() {
     this.calendar.today();
-    setMonthNameInDom();
+    updateUIAfterNavigation();
   }
 
   // update calendar events based on the collection of records from the grist table.
@@ -195,7 +198,8 @@ function getGristOptions() {
 }
 
 
-function setMonthNameInDom(){
+function updateUIAfterNavigation(){
+  //update name of the month and year displaed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
 }
 // let's subscribe to all the events that we need
