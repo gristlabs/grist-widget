@@ -95,6 +95,7 @@ class CalendarHandler {
         // In some cases, an event is not visible even if a valid day is focused - for example, when event is in the
         // last hour of the day, so to make it visible, we need to scroll to the middle of the event.
         const dom = document.querySelector('.toastui-calendar-time');
+        if(dom) {
         const middleHour = record.startDate.getHours()
           + (record.endDate.getHours() - record.startDate.getHours()) / 2;
         dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
@@ -158,6 +159,7 @@ class CalendarHandler {
 ready(async () => {
   calendarHandler = new CalendarHandler();
   await configureGristSettings();
+
 });
 
 // Data for column mapping fields in Widget GUI
