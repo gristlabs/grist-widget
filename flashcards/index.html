@@ -9,11 +9,7 @@
     <script src="store.modern.min.js"></script>
     <script src="index.js"></script>
     <style>
-      body, html {
-        margin: 0;
-        padding: 0;
-        font-family: sans-serif;
-
+      :root {
         --color-button-primary-fg: white;
         --color-button-primary-bg: #16B378;
         --color-button-primary-hover-bg: #009058;
@@ -22,6 +18,11 @@
         --color-button-secondary-hover-bg: #929299;
         --color-shadow-normal: #999;
         --color-shadow-selected: #009058;
+      }
+      body, html {
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
       }
       .flashcards {
         display: flex;
