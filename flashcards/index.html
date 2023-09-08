@@ -9,6 +9,16 @@
     <script src="store.modern.min.js"></script>
     <script src="index.js"></script>
     <style>
+      :root {
+        --color-button-primary-fg: white;
+        --color-button-primary-bg: #16B378;
+        --color-button-primary-hover-bg: #009058;
+        --color-button-secondary-fg: white;
+        --color-button-secondary-bg: #e4e4e4;
+        --color-button-secondary-hover-bg: #929299;
+        --color-shadow-normal: #999;
+        --color-shadow-selected: #009058;
+      }
       body, html {
         margin: 0;
         padding: 0;
@@ -55,7 +65,7 @@
         position: relative;
         width: calc(100% - 160px);
         max-width: 600px;
-        box-shadow: 1px 1px 4px 1px #999;
+        box-shadow: 1px 1px 4px 1px var(--color-shadow-normal);
         border-radius: 16px;
         font-size: 14pt;
         line-height: 1.5;
@@ -72,7 +82,7 @@
         line-height: 1;
       }
       #answer {
-        box-shadow: 1px 1px 4px 1px #2d9797;
+        box-shadow: 1px 1px 4px 1px var(--color-shadow-selected);
       }
       #question::before {
         content: 'Q';
@@ -101,23 +111,23 @@
       }
       .btn {
         padding: 16px 16px;
-        background-color: #21bbbb;
+        background-color: var(--color-button-primary-bg);
         border-radius: 8px;
         border: none;
         outline: none;
         font-size: 24px;
         font-weight: bold;
-        color: white;
+        color: var(--color-button-primary-fg);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
       }
       .btn:hover {
-        background-color: #23b3b3;
+        background-color: var(--color-button-primary-hover-bg);
       }
       .btn.disabled:hover {
-        background-color: #bfbebe;
+        background-color: var(--color-button-secondary-hover-bg);
       }
 
       #progress-bar {
@@ -126,7 +136,7 @@
       }
       #progress-bar-filled {
         height: 8px;
-        background-color: #21bbbb;
+        background-color: var(--color-button-primary-bg);
         width: 0%;
       }
       #progress-text {
@@ -157,7 +167,8 @@
         margin-left: 8px;
       }
       .btn.disabled {
-        background-color: lightgrey;
+        color: var(--color-button-secondary-fg);
+        background-color: var(--color-button-secondary-bg);
       }
       @media (max-width: 575px) {
         .flashcards {
