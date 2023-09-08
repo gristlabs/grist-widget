@@ -45,7 +45,8 @@ function goNext(step) {
   ui.progressBarFilled.style.width = (at * 100 / questions.length) + "%";
   ui.progressText.textContent = (at + 1) + " of " + questions.length;
   const qa = questions[at];
-  store.set('flashcards-at', at);
+  // Store rowId, so we come back to the same card if possible, and restart if not.
+  store.set('flashcards-rowid', qa.id);
   ui.questionCard.innerHTML = qa.Question;
   ui.answerCard.innerHTML = getAnswerHTML(qa.Answer);
   setState('Q');
@@ -99,8 +100,9 @@ ready(function() {
   grist.ready();
   grist.onRecords(function(records, mappings) {
     sourceRecords = grist.mapColumnNames(records, mappings);
-    at = parseInt(store.get('flashcards-at'), 10) || 0;
     shuffleCards(isShuffled);
+    const storedRowId = parseInt(store.get('flashcards-rowid'), 10);
+    at = questions.findIndex(qa => qa.id === storedRowId);
     goNext(0);
   });
   ui.showBtn.addEventListener('click', goShow);
