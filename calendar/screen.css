@@ -1,23 +1,28 @@
-:root {
-  --main-color: #16B378;
-  --selected-color: #009058;
-}
-
 html, body{
     height: 100%;
 }
 
 body{
+  background-color: var(--grist-theme-page-panels-main-panel-bg) !important;
  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol !important;
 }
 
 #calendar-options{
+  color: var(--grist-theme-text) !important;
   display:flex;
   gap: 10px 15px;
   flex-wrap: wrap;
   padding-bottom: 10px;
   align-items: baseline;
 }
+
+/*ovveriding bootstrap button colors*/
+#calendar-options .btn{
+  color: #323237 !important;
+  background-color: #b7b7bc !important;
+  border-color: black !important;
+}
+
 
 #calendar-navigation-buttons,#calendar-perspective-buttons{
   display:flex;
@@ -37,17 +42,17 @@ body{
   height: 100%;
 }
 
-.calendar-button{
-  font-family: inherit;
-  font-size: 1em;
-  border: none;
-  border-top: 1px solid #11B683;
-  border-bottom: 1px solid #11B683;
-  /*   border-radius: 4px; */
-  letter-spacing: -0.08px;
-  padding: 4px 8px;
-  background:transparent;
-}
+/*.calendar-button{*/
+/*  font-family: inherit;*/
+/*  font-size: 1em;*/
+/*  border: none;*/
+/*  border-top: 1px solid #11B683;*/
+/*  border-bottom: 1px solid #11B683;*/
+/*  !*   border-radius: 4px; *!*/
+/*  letter-spacing: -0.08px;*/
+/*  padding: 4px 8px;*/
+/*  background:transparent;*/
+/*}*/
 
 .calendar-button:last-of-type{
   border-right: 1px solid #11B683;
@@ -65,9 +70,9 @@ body{
 }
 
 input:checked + label{
-  background-color:var(--main-color);
-  color: #ffffff;
-  border-color:#000;
+  /*background-color:var(--main-color);*/
+  color: var(--grist-theme-control-primary-fg);
+  /*border-color:#000;*/
 }
 
 .toastui-calendar-day-view .toastui-calendar-panel:not(.toastui-calendar-time), .toastui-calendar-week-view .toastui-calendar-panel:not(.toastui-calendar-time) {

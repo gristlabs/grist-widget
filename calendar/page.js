@@ -31,19 +31,34 @@ function getMonthName() {
 }
 
 class CalendarHandler {
-  static _mainColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--main-color');
+  _mainColor = () => this._gristTheme?.colors['table-add-new-bg'];
+  _calendarBackgroundColor = () => this._gristTheme?.colors['page-panels-main-panel-bg'];
+  _selectedColor = ()=> this._gristTheme?.colors['top-bar-button-primary-fg'];
+  _borderStyle = () => `1px solid ${this._gristTheme?.colors['table-body-border']}`;
+  _textColor = () => this._gristTheme?.colors['text'];
+  _calendarTheme = () => {return {
+    common: {
+      backgroundColor: this._calendarBackgroundColor(),
+      border: this._borderStyle(),
+    },
+    week:{
+      timeGrid:{
+        borderRight: this._borderStyle(),
+      },
+      timeGridHourLine:{
+        borderBottom: this._borderStyle()
+      }
+    }}
+  }
 
-  static _selectedColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--selected-color');
-
-  static getCalendarOptions() {
+  _getCalendarOptions() {
     return {
       week: {
         taskView: false,
       },
       month: {},
       usageStatistics: false,
+      theme: this._calendarTheme(),
       defaultView: 'week',
       template: {
         time(event) {
@@ -59,7 +74,9 @@ class CalendarHandler {
         {
           id:  CALENDAR_NAME,
           name: 'Personal',
-          backgroundColor: CalendarHandler._mainColor,
+          backgroundColor: this._mainColor(),
+          color: this._textColor(),
+          borderColor: 'white'
         },
       ],
     };
@@ -67,7 +84,7 @@ class CalendarHandler {
 
   constructor() {
     const container = document.getElementById('calendar');
-    const options = CalendarHandler.getCalendarOptions();
+    const options = this._getCalendarOptions();
     this.previousIds = new Set();
     this.calendar = new tui.Calendar(container, options);
     this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
@@ -84,9 +101,9 @@ class CalendarHandler {
   selectRecord(record) {
     if (isRecordValid(record)) {
       if (this._selectedRecordId) {
-        this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {backgroundColor: CalendarHandler._mainColor});
+        this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor()});
       }
-      this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
+      this.calendar.updateEvent(record.id, CALENDAR_NAME, {borderColor: this._selectedColor()});
       this._selectedRecordId = record.id;
       this.calendar.setDate(record.startDate);
       updateUIAfterNavigation();
@@ -152,6 +169,15 @@ class CalendarHandler {
       }
     }
     this.previousIds = currentIds;
+  }
+
+  setTheme(gristThemeConfiguration) {
+    this._gristTheme = gristThemeConfiguration;
+    const options = this._getCalendarOptions();
+    this.calendar.setTheme(options.theme);
+    //this.calendar.setOptions(options);
+    this.calendar.setCalendars(options.calendars);
+    this.calendar.render();
   }
 }
 
@@ -238,10 +264,12 @@ async function calendarViewChanges(radiobutton) {
 // When a user changes a perspective of calendar, we want this to be persisted in grist options between sessions.
 // this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
-let onGristSettingsChanged = function(options) {
+let onGristSettingsChanged = function(options, settings) {
   let option = options?.calendarViewPerspective ?? 'week';
     calendarHandler.changeView(option);
     selectRadioButton(option);
+    calendarHandler.setTheme(settings.theme)
+    //calendarHandler.setTheme();
 };
 
 // when user moves or resizes event on the calendar, we want to update the record in the table
