@@ -20,7 +20,9 @@ const toolbarOptions = [
   [{ 'font': [] }],
   [{ 'align': [] }],
 
-  ['clean']                                         // remove formatting button
+  ['clean'],                                        // remove formatting button
+
+  ['link'],
 ];
 
 let quill = {};
