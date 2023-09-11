@@ -109,8 +109,8 @@ class CalendarHandler {
       updateUIAfterNavigation();
       if (this.calendar.getViewName() !== 'month') {
         // Scroll to the middle of the event if it's not month view.
-        //In some cases, an event is not visible even if a valid day is focused - for example, when event is in the
-        //last hour of the day, so to make it visible, we need to scroll to the middle of the event.
+        // In some cases, an event is not visible even if a valid day is focused - for example, when event is in the
+        // last hour of the day, so to make it visible, we need to scroll to the middle of the event.
         const dom = document.querySelector('.toastui-calendar-time');
         if(dom) {
         const middleHour = record.startDate.getHours()
@@ -123,6 +123,7 @@ class CalendarHandler {
   // change calendar perspective between week, month and day.
   changeView(calendarViewPerspective) {
     this.calendar.changeView(calendarViewPerspective);
+    updateUIAfterNavigation();
     updateUIAfterNavigation();
   }
 
