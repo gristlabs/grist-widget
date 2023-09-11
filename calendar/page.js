@@ -90,9 +90,9 @@ class CalendarHandler {
       this.calendar.setDate(record.startDate);
       updateUIAfterNavigation();
       if (this.calendar.getViewName() !== 'month') {
-        //Scroll to the middle of the event if it's not month view.
-        //In some cases, an event is not visible even if a valid day is focused - for example, when event is in the
-        //last hour of the day, so to make it visible, we need to scroll to the middle of the event.
+        // Scroll to the middle of the event if it's not month view.
+        // In some cases, an event is not visible even if a valid day is focused - for example, when event is in the
+        // last hour of the day, so to make it visible, we need to scroll to the middle of the event.
         const dom = document.querySelector('.toastui-calendar-time');
         const middleHour = record.startDate.getHours()
           + (record.endDate.getHours() - record.startDate.getHours()) / 2;
@@ -105,6 +105,7 @@ class CalendarHandler {
   changeView(calendarViewPerspective) {
     this.calendar.changeView(calendarViewPerspective);
     document.getElementById('calendar-title').innerText = getMonthName();
+    updateUIAfterNavigation();
   }
 
   // navigate to the previous time period
@@ -131,7 +132,7 @@ class CalendarHandler {
     // with the new set of events when they come.
     const currentIds = new Set();
     for (const record of calendarEvents) {
-      //chek if event already exist in the calendar - update it if so, create new otherwise
+      // check if an event already exists in the calendar - update it if so, create new otherwise
       const event = this.calendar.getEvent(record.id, CALENDAR_NAME);
       const eventData = record;
       if (!event) {
@@ -198,7 +199,7 @@ function getGristOptions() {
 
 
 function updateUIAfterNavigation(){
-  //update name of the month and year displaed on the top of the widget
+  // update name of the month and year displayed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
 }
 // let's subscribe to all the events that we need
