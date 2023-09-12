@@ -104,7 +104,6 @@ class CalendarHandler {
   // change calendar perspective between week, month and day.
   changeView(calendarViewPerspective) {
     this.calendar.changeView(calendarViewPerspective);
-    document.getElementById('calendar-title').innerText = getMonthName();
     updateUIAfterNavigation();
   }
 
@@ -205,7 +204,7 @@ function updateUIAfterNavigation(){
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
   // table selection should change when another event is selected
-  grist.allowSelectBy();
+  await grist.allowSelectBy();
   // CRUD operations on records in table
   grist.onRecords(updateCalendar);
   // When cursor (selected record) change in the table
