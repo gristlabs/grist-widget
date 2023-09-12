@@ -124,7 +124,6 @@ class CalendarHandler {
   changeView(calendarViewPerspective) {
     this.calendar.changeView(calendarViewPerspective);
     updateUIAfterNavigation();
-    updateUIAfterNavigation();
   }
 
   // navigate to the previous time period
@@ -234,7 +233,7 @@ function updateUIAfterNavigation(){
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
   // table selection should change when another event is selected
-  grist.allowSelectBy();
+  await grist.allowSelectBy();
   // CRUD operations on records in table
   grist.onRecords(updateCalendar);
   // When cursor (selected record) change in the table
