@@ -204,7 +204,7 @@ function updateUIAfterNavigation(){
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
   // table selection should change when another event is selected
-  await grist.allowSelectBy();
+  grist.allowSelectBy();
   // CRUD operations on records in table
   grist.onRecords(updateCalendar);
   // When cursor (selected record) change in the table
