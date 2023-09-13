@@ -51,6 +51,7 @@ describe('calendar', function () {
     this.afterAll(async function () {
         //In case "Changes you made may not be saved" dialog is shown, we need to close it.
         try{
+            grist.closeDoc();
             await driver.switchTo().alert().accept();
         }
         catch (e) {

@@ -188,6 +188,12 @@ export class GristUtils extends GristWebDriverUtils {
     await this.waitForServer();
   }
 
+  public async closeDoc(): Promise<void> {
+    await driver.get(this.url);
+    await this.waitForServer();
+
+  }
+
   public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number = 2000) {
     const result = await driver.executeAsyncScript(async (actions: any, done: Function) => {
       try {
