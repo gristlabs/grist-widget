@@ -27,11 +27,11 @@ describe('calendar', function () {
     }
 
     async function getCalendarSettings():Promise<string> {
-        return await grist.executeScriptOnCustomWidget<string>('return testGetCalendarViewName()');
+        return await grist.executeScriptOnCustomWidget('return testGetCalendarViewName()');
     }
 
     async function getDateVersion(): Promise<Date>{
-        return await grist.executeScriptOnCustomWidget<Date>('return testGetDataVersion()');
+        return await grist.executeScriptOnCustomWidget('return testGetDataVersion()');
     }
 
     before(async function () {
@@ -46,6 +46,16 @@ describe('calendar', function () {
         await grist.setCustomWidgetMapping('endDate', /To/);
         await grist.setCustomWidgetMapping('title', /Label/);
         await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
+    });
+
+    this.afterAll(async function () {
+        //In case "Changes you made may not be saved" dialog is shown, we need to close it.
+        try{
+            await driver.switchTo().alert().accept();
+        }
+        catch (e) {
+            //do nothing - there was no alert. 
+        }
     });
 
     it('should create new event when new row is added', async function () {
@@ -132,7 +142,7 @@ describe('calendar', function () {
     it('should navigate to appropriate time periods when button is pressed', async function () {
         const today = new Date();
         const validateDate = async (daysToAdd:number) => {
-            const newDate = await grist.executeScriptOnCustomWidget<string>(
+            const newDate = await grist.executeScriptOnCustomWidget(
               'return calendarHandler.calendar.getDate().d.toDate().toDateString()'
             );
 
