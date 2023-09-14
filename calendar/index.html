@@ -13,22 +13,22 @@
     <div id="calendar-options">
       <div id="calendar-navigation-buttons">
         <button id="calendar-button-previous" class="calendar-button"  onclick="calendarHandler.calendarPrevious()"><</button>
-        <button id="calendar-button-today" class="calendar-button"  onclick="calendarHandler.calendarToday()">Today</button>
+        <button id="calendar-button-today" class="calendar-button"  onclick="calendarHandler.calendarToday()" data-i18n="today">Today</button>
         <button id="calendar-button-next" class="calendar-button"  onclick="calendarHandler.calendarNext()">></button>
       </div>
       <div id="calendar-perspective-buttons">
         <input type="radio" id="calendar-day" name="calendar-options" value="day" onchange="calendarViewChanges(this)">
-        <label id="calendar-day-label" class="calendar-button" for="calendar-day">Day</label>
+        <label id="calendar-day-label" class="calendar-button" for="calendar-day" data-i18n="day">Day</label>
         <input type="radio" id="calendar-week" name="calendar-options" value="week" onchange="calendarViewChanges(this)">
-        <label id="calendar-week-label" class="calendar-button" for="calendar-week">Week</label>
+        <label id="calendar-week-label" class="calendar-button" for="calendar-week" data-i18n="week">Week</label>
         <input  type="radio" id="calendar-month" name="calendar-options" value="month" onchange="calendarViewChanges(this)">
-        <label id="calendar-month-label" class="calendar-button" for="calendar-month">Month</label>
+        <label id="calendar-month-label" class="calendar-button" for="calendar-month" data-i18n="month">Month</label>
       </div>
     </div>
     <div id="calendar">
     </div>
   </div>
   </body>
-  <script src="page.js"></script>
+  <script src="out.js"></script>
 
 </html>
