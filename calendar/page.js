@@ -1,5 +1,5 @@
-// let's assume that it's imported in an html file
-var grist;
+import i18next, {t} from 'i18next';
+import HttpApi from 'i18next-http-backend';
 
 // to keep all calendar related logic;
 let calendarHandler;
@@ -41,8 +41,11 @@ class CalendarHandler {
     return {
       week: {
         taskView: false,
+        dayNames: [t('Sun'), t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat')],
       },
-      month: {},
+      month: {
+        dayNames: [t('Sun'), t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat')],
+      },
       usageStatistics: false,
       defaultView: 'week',
       template: {
@@ -54,6 +57,9 @@ class CalendarHandler {
           const {title} = event;
           return `<span>${title}</span>`;
         },
+        allDayTitle() {
+          return t('All Day')
+        }
       },
       calendars: [
         {
@@ -156,6 +162,7 @@ class CalendarHandler {
 
 // when a document is ready, register the calendar and subscribe to grist events
 ready(async () => {
+  await translatePage();
   calendarHandler = new CalendarHandler();
   await configureGristSettings();
 });
@@ -165,34 +172,34 @@ function getGristOptions() {
   return [
     {
       name: "startDate",
-      title: "Start Date",
+      title: t("Start Date"),
       optional: false,
       type: "DateTime",
-      description: "starting point of event",
+      description: t("starting point of event"),
       allowMultiple: false
     },
     {
       name: "endDate",
-      title: "End Date",
+      title: t("End Date"),
       optional: false,
       type: "DateTime",
-      description: "ending point of event",
+      description: t("ending point of event"),
       allowMultiple: false
     },
     {
       name: "title",
-      title: "Title",
+      title: t("Title"),
       optional: false,
       type: "Text",
-      description: "title of event",
+      description: t("title of event"),
       allowMultiple: false
     },
     {
       name: "isAllDay",
-      title: "Is All Day",
+      title: t("Is All Day"),
       optional: true,
       type: "Bool",
-      description: "is event all day long",
+      description: t("is event all day long"),
     }
   ];
 }
@@ -204,8 +211,7 @@ function updateUIAfterNavigation(){
 }
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
-  // table selection should change when another event is selected
-  grist.allowSelectBy();
+
   // CRUD operations on records in table
   grist.onRecords(updateCalendar);
   // When cursor (selected record) change in the table
@@ -213,9 +219,45 @@ async function configureGristSettings() {
   // When options changed in the widget configuration (reaction to perspective change)
   grist.onOptions(onGristSettingsChanged);
 
-  // bind columns mapping options to the GUI
+    // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
+  // table selection should change when another event is selected
+  await grist.allowSelectBy();
+
+}
+
+async function translatePage(){
+
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const backendOptions = {
+
+      loadPath: 'i18n/{{lng}}/{{ns}}.json',
+
+      // path to post missing resources, or a function
+      // function(lng, namespace) { return customPath; }
+      // the returned path will interpolate lng, ns if provided like giving a static path
+      addPath: 'i18n/add/{{lng}}/{{ns}}',
+
+      // allow cross domain requests
+      crossDomain: false,
+      // allow credentials on cross domain requests
+      withCredentials: false,
+      // overrideMimeType sets request.overrideMimeType("application/json")
+      overrideMimeType: false,
+    }
+    await i18next.use(HttpApi).init({
+        lng: urlParams.get('lang')??'en',
+        debug: true,
+        saveMissing: true,
+        returnNull: false,
+        backend: backendOptions,
+      }, function(err, t) {
+      document.body.querySelectorAll('[data-i18n]').forEach(function(elem) {
+        elem.textContent = t(elem.dataset.i18n);
+      });
+    });
 }
 
 // when a user selects a record in the table, we want to select it on the calendar
