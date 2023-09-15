@@ -28,16 +28,13 @@ jobs:
       - name: Install Node.js packages
         run: yarn install
 
-      - name: Build Node.js test code
-        run: yarn run build http://localhost:9998
-
       - name: Cache Docker images.
         uses: ScribeMD/docker-cache@0.3.3
         with:
           key: docker-${{ runner.os }}-cache0
 
-      - name: Pull Docker image
-        run: docker pull gristlabs/grist:latest
+      - name: Prepare for tests
+        run: yarn run pretest
 
       - name: Run tests
         run: MOCHA_WEBDRIVER_HEADLESS=1 yarn run test

@@ -23,6 +23,13 @@ export function getGrist(): GristUtils {
     // TODO: mocha-webdriver has a way of explicitly connecting a
     // server that might have advantages for debugging.
     await grist.wait();
+    // "Changes you made may not be saved" alerts are consumed
+    // in grist-core tests - do the same here.
+    // TODO: figure out why they occur.
+    await grist.driver.navigate().refresh();
+    if (await grist.isAlertShown()) {
+      await grist.acceptAlert();
+    }
   });
 
   return grist;

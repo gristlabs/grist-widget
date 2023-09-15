@@ -48,17 +48,6 @@ describe('calendar', function () {
         await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
     });
 
-    this.afterAll(async function () {
-        //In case "Changes you made may not be saved" dialog is shown, we need to close it.
-        try{
-            await grist.closeDoc();
-            await driver.switchTo().alert().accept();
-        }
-        catch (e) {
-            //do nothing - there was no alert. 
-        }
-    });
-
     it('should create new event when new row is added', async function () {
         await executeAndWaitForCalendar(async () => {
                 await grist.sendActionsAndWaitForServer([['AddRecord', 'Table1', -1, {
