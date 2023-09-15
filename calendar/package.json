@@ -10,7 +10,13 @@
       "widgetId": "@gristlabs/widget-calendar",
       "published": true,
       "accessLevel": "full",
-      "renderAfterReady": true
+      "renderAfterReady": true,
+      "archive": {
+        "domains": ["uicdn.toast.com", "maxcdn.bootstrapcdn.com"],
+        "entrypoints": [
+          "https://gristlabs.github.io/grist-widget/calendar/i18n/"
+        ]
+      }
     }
   ]
 }
