@@ -21,9 +21,15 @@ function ready(fn) {
 }
 
 function isRecordValid(record) {
-  return record.startDate instanceof Date &&
-  record.endDate instanceof Date &&
-  typeof record.title === 'string'
+  return ( 
+    record.startDate instanceof Date &&
+    (
+      (record.endDate === null && typeof record.isAllDay === 'boolean') ||
+      record.endDate instanceof Date
+    ) &&
+    typeof record.title === 'string' &&
+    (record.isAllDay === undefined || typeof record.isAllDay === 'boolean')
+  );
 }
 
 function getMonthName() {
@@ -72,33 +78,37 @@ class CalendarHandler {
     this.calendar = new tui.Calendar(container, options);
     this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
     this.calendar.on('clickEvent', async (info) => {
+      defaultFocus();
       await grist.setSelectedRows([info.event.id]);
     });
-    this.calendar.on('selectDateTime', async (info)=> {
+    this.calendar.on('selectDateTime', async (info) => {
+      defaultFocus();
       await onNewDateBeingSelectedOnCalendar(info);
       this.calendar.clearGridSelections();
     });
   }
 
-  // navigate to the selected date in the calendar and scroll to the time period of the event
   selectRecord(record) {
-    if (isRecordValid(record)) {
-      if (this._selectedRecordId) {
-        this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {backgroundColor: CalendarHandler._mainColor});
-      }
-      this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
-      this._selectedRecordId = record.id;
-      this.calendar.setDate(record.startDate);
-      updateUIAfterNavigation();
-      if (this.calendar.getViewName() !== 'month') {
-        // Scroll to the middle of the event if it's not month view.
-        // In some cases, an event is not visible even if a valid day is focused - for example, when event is in the
-        // last hour of the day, so to make it visible, we need to scroll to the middle of the event.
-        const dom = document.querySelector('.toastui-calendar-time');
-        const middleHour = record.startDate.getHours()
-          + (record.endDate.getHours() - record.startDate.getHours()) / 2;
-        dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
-      }
+    if (!isRecordValid(record) || this._selectedRecordId === record.id) {
+      return;
+    }
+
+    if (this._selectedRecordId) {
+      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {backgroundColor: CalendarHandler._mainColor});
+    }
+    this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
+    this._selectedRecordId = record.id;
+    this.calendar.setDate(record.startDate);
+    updateUIAfterNavigation();
+  
+    // If the view has a vertical timeline, scroll to the start of the event.
+    if (!record.isAllDay && this.calendar.getViewName() !== 'month') {
+      const dom = document.querySelector('.toastui-calendar-time');
+      const start = record.startDate;
+      const minutesInDayUntilStart = (start.getHours() * 60) + start.getMinutes();
+      const totalMinutesInDay = 24 * 60;
+      const top = ((dom.scrollHeight / totalMinutesInDay) * minutesInDayUntilStart);
+      dom.scrollTo({top, behavior: 'smooth'});
     }
   }
 
@@ -259,6 +269,8 @@ async function upsertGristRecord(gristEvent){
     //to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
     // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
     const mappedRecord = grist.mapColumnNamesBack(gristEvent);
+    if (!mappedRecord) { return; }
+
     // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
     delete mappedRecord.id;
     //mapColumnNamesBack is returning undefined for all absent fields, so we need to remove them as well
@@ -308,12 +320,16 @@ function selectRadioButton(value) {
 
 // helper function to build a calendar event object from grist flat record
 function buildCalendarEventObject(record) {
+  let {startDate: start, endDate: end} = record;
+  if (end === null || (end.getTime() <= start.getTime())) {
+    end = thirtyMinutesFrom(start);
+  }
   return {
     id: record.id,
     calendarId: CALENDAR_NAME,
     title: record.title,
-    start: record.startDate,
-    end: record.endDate,
+    start,
+    end,
     isAllday: record.isAllDay,
     category: 'time',
     state: 'Free',
@@ -329,6 +345,14 @@ async function updateCalendar(records, mappings) {
     await calendarHandler.updateCalendarEvents(CalendarEventObjects);
   }
   dataVersion = Date.now();
+}
+
+function defaultFocus() {
+  window.focus();
+}
+
+function thirtyMinutesFrom(date) {
+  return new Date(date.getTime() + 30 * 60 * 1000);
 }
 
 function testGetCalendarEvent(eventId) {
