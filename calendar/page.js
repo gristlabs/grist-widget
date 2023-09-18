@@ -1,9 +1,7 @@
-import i18next, {t} from 'i18next';
-import HttpApi from 'i18next-http-backend';
-
 // to keep all calendar related logic;
 let calendarHandler;
 const CALENDAR_NAME = 'standardCalendar';
+const t = i18next.t;
 
 //for tests
 let dataVersion = Date.now();
@@ -226,7 +224,7 @@ async function translatePage(){
       // overrideMimeType sets request.overrideMimeType("application/json")
       overrideMimeType: false,
     }
-    await i18next.use(HttpApi).init({
+    await i18next.use(i18nextHttpBackend).init({
         lng: urlParams.get('lang')??'en',
         debug: true,
         saveMissing: true,
