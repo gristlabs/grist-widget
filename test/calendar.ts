@@ -214,12 +214,13 @@ describe('calendar', function () {
             });
         }
 
-        await switchLanguage('Polski');
-        await assertTodayButtonText('dzisiaj');
-        await switchLanguage('English');
-        await assertTodayButtonText('today');
+        try{
+            await switchLanguage('Polski');
+            await assertTodayButtonText('dzisiaj');
+        }finally {
+            await switchLanguage('English');
+            await assertTodayButtonText('today');
+        }
     });
-
     //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimized for drag and drop tests in mocha and i cannot yet make it working correctly.
-
 });

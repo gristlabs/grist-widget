@@ -40,8 +40,12 @@ export class GristWebDriverUtils {
 
   public async login(){
     //just click log in to get example account.
-    const menu = await this.driver.findWait('.test-dm-account', 1000)
+    const menu = await this.driver.findWait('.test-dm-account', 1000);
     await menu.click();
+    if(await this.isAlertShown){
+      await this.acceptAlert();
+    }
+    await this.waitForServer();
   }
 
   public async waitForSidePanel() {
@@ -225,24 +229,14 @@ export class GristWebDriverUtils {
     await this.openAccountMenu();
     await this.driver.find('.grist-floating-menu .test-dm-account-settings').click();
     await this.driver.findWait('.test-account-page-login-method', 5000);
+    //close alert if it is shown
+    if(await this.isAlertShown()){
+      await this.acceptAlert();
+    };
+    await this.waitForServer();
     return new ProfileSettingsPage(this);
   }
-}
 
-class ProfileSettingsPage {
-  private driver: WebDriver;
-  private gu: GristWebDriverUtils;
-
-  constructor(gu: GristWebDriverUtils) {
-    this.gu = gu;
-    this.driver = gu.driver;
-  }
-
-  public async setLanguage(language: string) {
-    this.driver.find('.test-account-page-language .test-select-open');
-    await this.driver.findContentWait('.test-select-menu li', language, 100).click();
-    await this.gu.waitForServer();
-  }
 
   /**
    * Refresh browser and dismiss alert that is shown (for refreshing during edits).
@@ -303,4 +297,20 @@ export interface PageWidgetPickerOptions {
   dontAdd?: boolean;
   /** If true, dismiss any tooltips that are shown. */
   dismissTips?: boolean;
+}
+
+class ProfileSettingsPage {
+  private driver: WebDriver;
+  private gu: GristWebDriverUtils;
+
+  constructor(gu: GristWebDriverUtils) {
+    this.gu = gu;
+    this.driver = gu.driver;
+  }
+
+  public async setLanguage(language: string) {
+    await this.driver.find('.test-account-page-language .test-select-open').click();
+    await this.driver.findContentWait('.test-select-menu li', language, 100).click();
+    await this.gu.waitForServer();
+  }
 }

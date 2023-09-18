@@ -5,8 +5,21 @@ const t = i18next.t;
 
 //for tests
 let dataVersion = Date.now();
-function testGetDataVersion(){
+
+function testGetDataVersion() {
   return dataVersion;
+}
+
+
+function getLanguage() {
+  if (this._lang) {
+    return this._lang;
+  } else {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    this._lang = urlParams.get('lang') ?? 'en'
+    return this._lang;
+  }
 }
 
 //registering code to run when a document is ready
@@ -20,20 +33,20 @@ function ready(fn) {
 
 function isRecordValid(record) {
   return record.startDate instanceof Date &&
-  record.endDate instanceof Date &&
-  typeof record.title === 'string'
+    record.endDate instanceof Date &&
+    typeof record.title === 'string'
 }
 
 function getMonthName() {
-  return calendarHandler.calendar.getDate().toDate().toLocaleString('en-us', { month: 'long', year: 'numeric' })
+  return calendarHandler.calendar.getDate().toDate().toLocaleString(getLanguage(), {month: 'long', year: 'numeric'})
 }
 
 class CalendarHandler {
   static _mainColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--main-color');
+    .getPropertyValue('--main-color');
 
   static _selectedColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--selected-color');
+    .getPropertyValue('--selected-color');
 
   static getCalendarOptions() {
     return {
@@ -61,7 +74,7 @@ class CalendarHandler {
       },
       calendars: [
         {
-          id:  CALENDAR_NAME,
+          id: CALENDAR_NAME,
           name: 'Personal',
           backgroundColor: CalendarHandler._mainColor,
         },
@@ -78,7 +91,7 @@ class CalendarHandler {
     this.calendar.on('clickEvent', async (info) => {
       await grist.setSelectedRows([info.event.id]);
     });
-    this.calendar.on('selectDateTime', async (info)=> {
+    this.calendar.on('selectDateTime', async (info) => {
       await onNewDateBeingSelectedOnCalendar(info);
       this.calendar.clearGridSelections();
     });
@@ -94,7 +107,8 @@ class CalendarHandler {
       this._selectedRecordId = record.id;
       this.calendar.setDate(record.startDate);
       updateUIAfterNavigation();
-      if (this.calendar.getViewName() !== 'month') {
+      const dom = document.querySelector('.toastui-calendar-time');
+      if (this.calendar.getViewName() !== 'month' && dom) {
         // Scroll to the middle of the event if it's not month view.
         // In some cases, an event is not visible even if a valid day is focused - for example, when event is in the
         // last hour of the day, so to make it visible, we need to scroll to the middle of the event.
@@ -203,10 +217,11 @@ function getGristOptions() {
 }
 
 
-function updateUIAfterNavigation(){
+function updateUIAfterNavigation() {
   // update name of the month and year displayed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
 }
+
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
   // CRUD operations on records in table
@@ -218,42 +233,35 @@ async function configureGristSettings() {
 
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
-  grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
+  grist.ready({requiredAccess: 'read table', columns: columnsMappingOptions});
   // table selection should change when another event is selected
   await grist.allowSelectBy();
 }
 
-async function translatePage(){
+async function translatePage() {
 
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const backendOptions = {
+  const backendOptions = {
 
-      loadPath: 'i18n/{{lng}}/{{ns}}.json',
-
-      // path to post missing resources, or a function
-      // function(lng, namespace) { return customPath; }
-      // the returned path will interpolate lng, ns if provided like giving a static path
-      addPath: 'i18n/add/{{lng}}/{{ns}}',
-
-      // allow cross domain requests
-      crossDomain: false,
-      // allow credentials on cross domain requests
-      withCredentials: false,
-      // overrideMimeType sets request.overrideMimeType("application/json")
-      overrideMimeType: false,
-    }
-    await i18next.use(i18nextHttpBackend).init({
-        lng: urlParams.get('lang')??'en',
-        debug: true,
-        saveMissing: true,
-        returnNull: false,
-        backend: backendOptions,
-      }, function(err, t) {
-      document.body.querySelectorAll('[data-i18n]').forEach(function(elem) {
-        elem.textContent = t(elem.dataset.i18n);
-      });
+    loadPath: 'i18n/{{lng}}/{{ns}}.json',
+    addPath: 'i18n/add/{{lng}}/{{ns}}',
+    // allow cross domain requests
+    crossDomain: false,
+    // allow credentials on cross domain requests
+    withCredentials: false,
+    // overrideMimeType sets request.overrideMimeType("application/json")
+    overrideMimeType: false,
+  }
+  await i18next.use(i18nextHttpBackend).init({
+    lng: getLanguage(),
+    debug: false,
+    saveMissing: true,
+    returnNull: false,
+    backend: backendOptions,
+  }, function (err, t) {
+    document.body.querySelectorAll('[data-i18n]').forEach(function (elem) {
+      elem.textContent = t(elem.dataset.i18n);
     });
+  });
 }
 
 // when a user selects a record in the table, we want to select it on the calendar
@@ -274,46 +282,46 @@ async function calendarViewChanges(radiobutton) {
 // When a user changes a perspective of calendar, we want this to be persisted in grist options between sessions.
 // this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
-let onGristSettingsChanged = function(options) {
+let onGristSettingsChanged = function (options) {
   let option = options?.calendarViewPerspective ?? 'week';
-    calendarHandler.changeView(option);
-    selectRadioButton(option);
+  calendarHandler.changeView(option);
+  selectRadioButton(option);
 };
 
 // when user moves or resizes event on the calendar, we want to update the record in the table
 const onCalendarEventBeingUpdated = async (info) => {
-    if (info.changes?.start || info.changes?.end) {
-        let gristEvent = {};
-        gristEvent.id = info.event.id;
-        if(info.changes.start) gristEvent.startDate = roundEpochDateToSeconds(info.changes.start.valueOf());
-        if(info.changes.end) gristEvent.endDate = roundEpochDateToSeconds(info.changes.end.valueOf());
-        await upsertGristRecord(gristEvent);
-      //}
-    }
+  if (info.changes?.start || info.changes?.end) {
+    let gristEvent = {};
+    gristEvent.id = info.event.id;
+    if (info.changes.start) gristEvent.startDate = roundEpochDateToSeconds(info.changes.start.valueOf());
+    if (info.changes.end) gristEvent.endDate = roundEpochDateToSeconds(info.changes.end.valueOf());
+    await upsertGristRecord(gristEvent);
+    //}
+  }
 };
 
 // saving events to the table or updating existing one - basing on if ID is present or not in the send event
-async function upsertGristRecord(gristEvent){
-    //to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
-    // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
-    const mappedRecord = grist.mapColumnNamesBack(gristEvent);
-    // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
-    delete mappedRecord.id;
-    //mapColumnNamesBack is returning undefined for all absent fields, so we need to remove them as well
-    const filteredRecord = Object.fromEntries(Object.entries(mappedRecord)
-      .filter(([key, value]) => value !== undefined));
-    const eventInValidFormat =  { id: gristEvent.id, fields: filteredRecord };
-    const table = await grist.getTable();
-    if (gristEvent.id) {
-        await table.update(eventInValidFormat);
-    } else {
-        await table.create(eventInValidFormat);
-    }
+async function upsertGristRecord(gristEvent) {
+  //to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
+  // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
+  const mappedRecord = grist.mapColumnNamesBack(gristEvent);
+  // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
+  delete mappedRecord.id;
+  //mapColumnNamesBack is returning undefined for all absent fields, so we need to remove them as well
+  const filteredRecord = Object.fromEntries(Object.entries(mappedRecord)
+    .filter(([key, value]) => value !== undefined));
+  const eventInValidFormat = {id: gristEvent.id, fields: filteredRecord};
+  const table = await grist.getTable();
+  if (gristEvent.id) {
+    await table.update(eventInValidFormat);
+  } else {
+    await table.create(eventInValidFormat);
+  }
 }
 
 // grist expects date in seconds, but the calendar is returning it in milliseconds, so we need to convert it
 function roundEpochDateToSeconds(date) {
-  return date/1000;
+  return date / 1000;
 }
 
 // conversion between calendar event object and grist flat format (so the one that is returned in onRecords event
@@ -323,9 +331,11 @@ function buildGristFlatFormatFromEventObject(tuiEvent) {
     startDate: roundEpochDateToSeconds(tuiEvent.start?.valueOf()),
     endDate: roundEpochDateToSeconds(tuiEvent.end?.valueOf()),
     isAllDay: tuiEvent.isAllday ? 1 : 0,
-    title: tuiEvent.title??"New Event"
+    title: tuiEvent.title ?? "New Event"
   }
-  if (tuiEvent.id) { gristEvent.id = tuiEvent.id; }
+  if (tuiEvent.id) {
+    gristEvent.id = tuiEvent.id;
+  }
   return gristEvent;
 }
 
@@ -384,7 +394,7 @@ function testGetCalendarEvent(eventId) {
   }
 }
 
-function testGetCalendarViewName(){
+function testGetCalendarViewName() {
   // noinspection JSUnresolvedReference
   return calendarHandler.calendar.getViewName();
 }
