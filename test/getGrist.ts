@@ -44,6 +44,7 @@ const serverSettings = {
   site: 'grist-widget',
 };
 
+
 /**
  * Start and stop servers needed for testing. Grist is run as a docker container.
  * The grist-widget repo is served in the same way as "yarn run serve:dev" would,
@@ -122,6 +123,7 @@ export class GristUtils extends GristWebDriverUtils {
   public get url() {
     return this.server.gristUrl;
   }
+
 
   public async wait() {
     let ct = 0;
