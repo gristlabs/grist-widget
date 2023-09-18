@@ -254,6 +254,7 @@ let onGristSettingsChanged = function(options) {
 
 // when user moves or resizes event on the calendar, we want to update the record in the table
 const onCalendarEventBeingUpdated = async (info) => {
+    defaultFocus();
     if (info.changes?.start || info.changes?.end) {
         let gristEvent = {};
         gristEvent.id = info.event.id;
