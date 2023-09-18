@@ -21,15 +21,12 @@ function ready(fn) {
 }
 
 function isRecordValid(record) {
-  return ( 
-    record.startDate instanceof Date &&
-    (
-      (record.endDate === null && typeof record.isAllDay === 'boolean') ||
-      record.endDate instanceof Date
-    ) &&
-    typeof record.title === 'string' &&
-    (record.isAllDay === undefined || typeof record.isAllDay === 'boolean')
-  );
+  const hasStartDate = record.startDate instanceof Date;
+  const hasTitle = typeof record.title === 'string';
+  const hasEndDateOrIsAllDay = record.endDate instanceof Date ||
+    (record.endDate === null && typeof record.isAllDay === 'boolean');
+  const hasValidIsAllDay = record.isAllDay === undefined || typeof record.isAllDay === 'boolean';
+  return hasStartDate && hasTitle && hasEndDateOrIsAllDay && hasValidIsAllDay;
 }
 
 function getMonthName() {
@@ -78,11 +75,11 @@ class CalendarHandler {
     this.calendar = new tui.Calendar(container, options);
     this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
     this.calendar.on('clickEvent', async (info) => {
-      defaultFocus();
+      focusWidget();
       await grist.setSelectedRows([info.event.id]);
     });
     this.calendar.on('selectDateTime', async (info) => {
-      defaultFocus();
+      focusWidget();
       await onNewDateBeingSelectedOnCalendar(info);
       this.calendar.clearGridSelections();
     });
@@ -254,15 +251,18 @@ let onGristSettingsChanged = function(options) {
 
 // when user moves or resizes event on the calendar, we want to update the record in the table
 const onCalendarEventBeingUpdated = async (info) => {
-    defaultFocus();
-    if (info.changes?.start || info.changes?.end) {
-        let gristEvent = {};
-        gristEvent.id = info.event.id;
-        if(info.changes.start) gristEvent.startDate = roundEpochDateToSeconds(info.changes.start.valueOf());
-        if(info.changes.end) gristEvent.endDate = roundEpochDateToSeconds(info.changes.end.valueOf());
-        await upsertGristRecord(gristEvent);
-      //}
+  focusWidget();
+  if (info.changes?.start || info.changes?.end) {
+    let gristEvent = {};
+    gristEvent.id = info.event.id;
+    if (info.changes.start) {
+      gristEvent.startDate = roundEpochDateToSeconds(info.changes.start.valueOf());
     }
+    if (info.changes.end) {
+      gristEvent.endDate = roundEpochDateToSeconds(info.changes.end.valueOf());
+    }
+    await upsertGristRecord(gristEvent);
+  }
 };
 
 // saving events to the table or updating existing one - basing on if ID is present or not in the send event
@@ -348,7 +348,7 @@ async function updateCalendar(records, mappings) {
   dataVersion = Date.now();
 }
 
-function defaultFocus() {
+function focusWidget() {
   window.focus();
 }
 
