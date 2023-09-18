@@ -188,7 +188,6 @@ function getGristOptions() {
 
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
-
   // CRUD operations on records in table
   grist.onRecords(updateCalendar);
   // When cursor (selected record) change in the table
@@ -196,12 +195,11 @@ async function configureGristSettings() {
   // When options changed in the widget configuration (reaction to perspective change)
   grist.onOptions(onGristSettingsChanged);
 
-    // bind columns mapping options to the GUI
+  // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
   // table selection should change when another event is selected
   await grist.allowSelectBy();
-
 }
 
 async function translatePage(){
