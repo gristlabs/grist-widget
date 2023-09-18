@@ -34,19 +34,21 @@ describe('calendar', function () {
     return await grist.executeScriptOnCustomWidget('return testGetDataVersion()');
   }
 
-  before(async function () {
-    const docId = await grist.upload('test/fixtures/docs/Calendar.grist');
-    await grist.openDoc(docId);
-    await grist.toggleSidePanel('right', 'open');
-    await grist.addNewSection(/Custom/, /Table1/);
-    await grist.clickWidgetPane();
-    await grist.selectCustomWidget(/Calendar/);
-    await grist.setCustomWidgetAccess('full');
-    await grist.setCustomWidgetMapping('startDate', /From/);
-    await grist.setCustomWidgetMapping('endDate', /To/);
-    await grist.setCustomWidgetMapping('title', /Label/);
-    await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
-  });
+    before(async function () {
+        const docId = await grist.upload('test/fixtures/docs/Calendar.grist');
+        await grist.openDoc(docId);
+        await grist.toggleSidePanel('right', 'open');
+        await grist.addNewSection(/Custom/, /Table1/);
+        await grist.clickWidgetPane();
+        await grist.selectCustomWidget(/Calendar/);
+        await grist.setCustomWidgetAccess('full');
+        await grist.setCustomWidgetMapping('startDate', /From/);
+        await grist.setCustomWidgetMapping('endDate', /To/);
+        await grist.setCustomWidgetMapping('title', /Label/);
+        await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
+        //sing in to grist
+        await grist.login();
+    });
 
   it('should create new event when new row is added', async function () {
     await executeAndWaitForCalendar(async () => {
@@ -197,6 +199,27 @@ describe('calendar', function () {
     });
   }
 
-  //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimized for drag and drop tests in mocha and i cannot yet make it working correctly.
+  it("Switch language to polish, check if text are different", async function () {
+        async function switchLanguage(language: string) {
+            const profileSettings = await grist.openProfileSettingsPage();
+            //Switch language
+            await profileSettings.setLanguage(language);
+            await driver.navigate().back();
+            await grist.waitForServer();
+        }
+        async function assertTodayButtonText(text: string) {
+            await grist.inCustomWidget(async ()=>{
+                const buttontext = await driver.find("#calendar-button-today").getText();
+                assert.equal(buttontext,text)
+            });
+        }
+
+        await switchLanguage('Polski');
+        await assertTodayButtonText('dzisiaj');
+        await switchLanguage('English');
+        await assertTodayButtonText('today');
+    });
+
+    //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimized for drag and drop tests in mocha and i cannot yet make it working correctly.
 
 });
