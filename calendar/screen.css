@@ -10,8 +10,10 @@ body{
 
 #calendar-options{
   display:flex;
-  gap: 50px;
+  gap: 10px 15px;
+  flex-wrap: wrap;
   padding-bottom: 10px;
+  align-items: baseline;
 }
 
 #calendar-navigation-buttons,#calendar-perspective-buttons{

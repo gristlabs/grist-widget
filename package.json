@@ -9,7 +9,8 @@
     "serve:dev": "live-server --port=8585 --no-browser -q --middleware=$(pwd)/buildtools/rewriteUrl.js",
     "watch": "nodemon --ignore manifest.json -e js,json --exec 'npm run build:dev'",
     "dev": "echo 'Starting local server and watching for changes.\nStart Grist with an environmental variable GRIST_WIDGET_LIST_URL=http://localhost:8585/manifest.json' && npm run watch 1> /dev/null & npm run serve:dev 1> /dev/null",
-    "test": "docker image inspect gristlabs/grist --format 'gristlabs/grist image present' && NODE_PATH=_build SELENIUM_BROWSER=chrome mocha _build/test/*.js"
+    "test": "docker image inspect gristlabs/grist --format 'gristlabs/grist image present' && NODE_PATH=_build SELENIUM_BROWSER=chrome mocha _build/test/*.js",
+    "pretest": "docker pull gristlabs/grist && tsc --build && node ./buildtools/publish.js http://localhost:9998"
   },
   "devDependencies": {
     "@types/chai": "^4.3.5",

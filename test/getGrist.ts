@@ -23,6 +23,13 @@ export function getGrist(): GristUtils {
     // TODO: mocha-webdriver has a way of explicitly connecting a
     // server that might have advantages for debugging.
     await grist.wait();
+    // "Changes you made may not be saved" alerts are consumed
+    // in grist-core tests - do the same here.
+    // TODO: figure out why they occur.
+    await grist.driver.navigate().refresh();
+    if (await grist.isAlertShown()) {
+      await grist.acceptAlert();
+    }
   });
 
   return grist;
@@ -186,6 +193,12 @@ export class GristUtils extends GristWebDriverUtils {
     await driver.get(this.url + `/doc/${docId}`);
     await driver.findWait('.viewsection_title', 10000);
     await this.waitForServer();
+  }
+
+  public async closeDoc(): Promise<void> {
+    await driver.get(this.url);
+    await this.waitForServer();
+
   }
 
   public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number = 2000) {

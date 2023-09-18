@@ -26,12 +26,17 @@ function isRecordValid(record) {
   typeof record.title === 'string'
 }
 
+function getMonthName() {
+  return calendarHandler.calendar.getDate().toDate().toLocaleString('en-us', { month: 'long', year: 'numeric' })
+}
+
 class CalendarHandler {
   static _mainColor = getComputedStyle(document.documentElement)
       .getPropertyValue('--main-color');
 
   static _selectedColor = getComputedStyle(document.documentElement)
       .getPropertyValue('--selected-color');
+
   static getCalendarOptions() {
     return {
       week: {
@@ -59,6 +64,7 @@ class CalendarHandler {
       ],
     };
   }
+
   constructor() {
     const container = document.getElementById('calendar');
     const options = CalendarHandler.getCalendarOptions();
@@ -83,31 +89,41 @@ class CalendarHandler {
       this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
       this._selectedRecordId = record.id;
       this.calendar.setDate(record.startDate);
-      const dom = document.querySelector('.toastui-calendar-time');
-      const middleHour = record.startDate.getHours()
-        + (record.endDate.getHours() - record.startDate.getHours()) / 2;
-      dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
+      updateUIAfterNavigation();
+      if (this.calendar.getViewName() !== 'month') {
+        // Scroll to the middle of the event if it's not month view.
+        // In some cases, an event is not visible even if a valid day is focused - for example, when event is in the
+        // last hour of the day, so to make it visible, we need to scroll to the middle of the event.
+        const dom = document.querySelector('.toastui-calendar-time');
+        const middleHour = record.startDate.getHours()
+          + (record.endDate.getHours() - record.startDate.getHours()) / 2;
+        dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
+      }
     }
   }
 
   // change calendar perspective between week, month and day.
   changeView(calendarViewPerspective) {
     this.calendar.changeView(calendarViewPerspective);
+    updateUIAfterNavigation();
   }
 
   // navigate to the previous time period
   calendarPrevious() {
     this.calendar.prev();
+    updateUIAfterNavigation();
   }
 
   // navigate to the next time period
   calendarNext() {
     this.calendar.next();
+    updateUIAfterNavigation();
   }
 
   //navigate to today
   calendarToday() {
     this.calendar.today();
+    updateUIAfterNavigation();
   }
 
   // update calendar events based on the collection of records from the grist table.
@@ -116,7 +132,7 @@ class CalendarHandler {
     // with the new set of events when they come.
     const currentIds = new Set();
     for (const record of calendarEvents) {
-      //chek if event already exist in the calendar - update it if so, create new otherwise
+      // check if an event already exists in the calendar - update it if so, create new otherwise
       const event = this.calendar.getEvent(record.id, CALENDAR_NAME);
       const eventData = record;
       if (!event) {
@@ -181,6 +197,11 @@ function getGristOptions() {
   ];
 }
 
+
+function updateUIAfterNavigation(){
+  // update name of the month and year displayed on the top of the widget
+  document.getElementById('calendar-title').innerText = getMonthName();
+}
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
   // table selection should change when another event is selected
@@ -310,18 +331,18 @@ async function updateCalendar(records, mappings) {
   dataVersion = Date.now();
 }
 
-function testGetCalendarEvent(eventId){
-  const calendarObject =  calendarHandler.calendar.getEvent(eventId,CALENDAR_NAME);
-  if(calendarObject)
-  {
-    return{
+function testGetCalendarEvent(eventId) {
+  const calendarObject = calendarHandler.calendar.getEvent(eventId, CALENDAR_NAME);
+  if (calendarObject) {
+    const eventData = {
       title: calendarObject?.title,
-      startDate: calendarObject?.start.toString(),
-      endDate: calendarObject?.end.toString(),
-      isAllDay: calendarObject?.isAllday??false
-    }
-  }else{
-    return calendarObject
+      startDate: calendarObject?.start.d.d,
+      endDate: calendarObject?.end.d.d,
+      isAllDay: calendarObject?.isAllday ?? false
+    };
+    return JSON.stringify(eventData);
+  } else {
+    return null;
   }
 }
 
