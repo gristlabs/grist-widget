@@ -150,7 +150,9 @@ export class GristUtils extends GristWebDriverUtils {
       }
       try {
         const resp = await fetch(this.server.assetUrl);
-        if (resp.status === 200) { break; }
+        if (resp.status === 200) {
+          break;
+        }
       } catch (e) {
         // we expect fetch failures initially.
       }

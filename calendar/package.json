@@ -3,11 +3,6 @@
   "description": "Widget for visualizing data as an calendar",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
-  "dependencies": {
-    "@toast-ui/calendar": "^2.1.3",
-    "i18next": "^23.5.1",
-    "i18next-http-backend": "^2.2.2"
-  },
   "grist": [
     {
       "name": "Calendar",
