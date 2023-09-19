@@ -282,6 +282,22 @@ export class GristWebDriverUtils {
   }
 }
 
+class ProfileSettingsPage {
+  private driver: WebDriver;
+  private gu: GristWebDriverUtils;
+
+  constructor(gu: GristWebDriverUtils) {
+    this.gu = gu;
+    this.driver = gu.driver;
+  }
+
+  public async setLanguage(language: string) {
+    this.driver.find('.test-account-page-language .test-select-open');
+    await this.driver.findContentWait('.test-select-menu li', language, 100).click();
+    await this.gu.waitForServer();
+  }
+}
+
 export interface WindowDimensions {
   width: number;
   height: number;
