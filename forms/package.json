@@ -1,0 +1,16 @@
+{
+  "name": "@gristlabs/widget-forms",
+  "description": "Form builder and viewer based on formio",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Forms",
+    "url": "https://gristlabs.github.io/grist-widget/forms/index.html",
+    "widgetId": "@gristlabs/widget-forms",
+    "published": true,
+    "accessLevel": "full"
+  },
+  "dependencies": {
+    "@formio/js": "^5.0.0-rc.27"
+  }
+}
