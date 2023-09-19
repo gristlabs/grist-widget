@@ -314,19 +314,3 @@ export interface PageWidgetPickerOptions {
   /** If true, dismiss any tooltips that are shown. */
   dismissTips?: boolean;
 }
-
-class ProfileSettingsPage {
-  private driver: WebDriver;
-  private gu: GristWebDriverUtils;
-
-  constructor(gu: GristWebDriverUtils) {
-    this.gu = gu;
-    this.driver = gu.driver;
-  }
-
-  public async setLanguage(language: string) {
-    await this.driver.find('.test-account-page-language .test-select-open').click();
-    await this.driver.findContentWait('.test-select-menu li', language, 100).click();
-    await this.gu.waitForServer();
-  }
-}
