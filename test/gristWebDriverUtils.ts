@@ -228,11 +228,11 @@ export class GristWebDriverUtils {
   public async openProfileSettingsPage(): Promise<ProfileSettingsPage> {
     await this.openAccountMenu();
     await this.driver.find('.grist-floating-menu .test-dm-account-settings').click();
-    await this.driver.findWait('.test-account-page-login-method', 5000);
     //close alert if it is shown
     if(await this.isAlertShown()){
       await this.acceptAlert();
     };
+    await this.driver.findWait('.test-account-page-login-method', 5000);
     await this.waitForServer();
     return new ProfileSettingsPage(this);
   }
