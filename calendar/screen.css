@@ -92,3 +92,6 @@ input:checked + label{
   min-height: 600px;
   flex-shrink: 0;
 }
+
+.toastui-calendar-panel.toastui-calendar-time { overflow-y: inherit; }
+.toastui-calendar-timegrid-time { color: var(--grist-theme-text); }

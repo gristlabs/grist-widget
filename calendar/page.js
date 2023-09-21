@@ -31,8 +31,8 @@ function getMonthName() {
 }
 
 class CalendarHandler {
-  _mainColor = () => this._gristTheme?.colors['table-add-new-bg'];
-  _calendarBackgroundColor = () => this._gristTheme?.colors['page-panels-main-panel-bg'];
+  _mainColor = () => 'var(--grist-theme-date-picker-selected-bg-hover)'; //this._gristTheme?.colors['table-add-new-bg'];
+  _calendarBackgroundColor = () => 'var(--grist-theme-page-panels-main-panel-bg)';
   _selectedColor = ()=> this._gristTheme?.colors['top-bar-button-primary-fg'];
   _borderStyle = () => `1px solid ${this._gristTheme?.colors['table-body-border']}`;
   _textColor = () => this._gristTheme?.colors['text'];
@@ -47,6 +47,12 @@ class CalendarHandler {
       },
       timeGridHourLine:{
         borderBottom: this._borderStyle()
+      },
+      pastTime:{
+        color: this._textColor(),
+      },
+      futureTime:{
+        color: this._textColor(),
       }
     }}
   }
@@ -76,7 +82,7 @@ class CalendarHandler {
           name: 'Personal',
           backgroundColor: this._mainColor(),
           color: this._textColor(),
-          borderColor: 'white'
+          borderColor: this._mainColor(),
         },
       ],
     };
@@ -113,9 +119,10 @@ class CalendarHandler {
         // last hour of the day, so to make it visible, we need to scroll to the middle of the event.
         const dom = document.querySelector('.toastui-calendar-time');
         if(dom) {
-        const middleHour = record.startDate.getHours()
-          + (record.endDate.getHours() - record.startDate.getHours()) / 2;
-        dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
+          const middleHour = record.startDate.getHours()
+            + (record.endDate.getHours() - record.startDate.getHours()) / 2;
+          dom.scrollTo({top: (dom.clientHeight / 24) * middleHour, behavior: 'smooth'});
+        }
       }
     }
   }
