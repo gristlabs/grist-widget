@@ -339,6 +339,11 @@ function selectRadioButton(value) {
   for (const element of document.getElementsByName('calendar-options')) {
     if (element.value === value) {
       element.checked = true;
+      element.parentElement.classList.add('active')
+    }
+    else{
+      element.checked = false;
+      element.parentElement.classList.remove('active')
     }
   }
 }

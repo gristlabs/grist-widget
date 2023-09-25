@@ -12,15 +12,15 @@ body{
   display:flex;
   gap: 10px 15px;
   flex-wrap: wrap;
-  padding-bottom: 10px;
+  padding: 10px;
   align-items: baseline;
 }
 
 /*ovveriding bootstrap button colors*/
 #calendar-options .btn{
-  color: #323237 !important;
-  background-color: #b7b7bc !important;
-  border-color: black !important;
+  color: var(--grist-theme-text);
+  background-color: var(--grist-theme-right-panel-toggle-button-disabled-bg);
+  border-color: black;
 }
 
 
@@ -91,6 +91,11 @@ input:checked + label{
   flex: 1;
   min-height: 600px;
   flex-shrink: 0;
+}
+
+#calendar-options .btn.active{
+  background-color: var(--grist-theme-right-panel-toggle-button-enabled-bg);
+  color: var(--grist-theme-right-panel-toggle-button-enabled-fg);
 }
 
 .toastui-calendar-panel.toastui-calendar-time { overflow-y: inherit; }
