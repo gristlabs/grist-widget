@@ -31,15 +31,18 @@ function getMonthName() {
 }
 
 class CalendarHandler {
-  _mainColor = () => 'var(--grist-theme-date-picker-selected-bg-hover)'; //this._gristTheme?.colors['table-add-new-bg'];
+  //TODO: find a theme value with that color
+  _mainColor = () => '#70707D'//'var(--grist-theme-date-picker-selected-bg-hover)'; //this._gristTheme?.colors['table-add-new-bg'];
   _calendarBackgroundColor = () => 'var(--grist-theme-page-panels-main-panel-bg)';
   _selectedColor = ()=> this._gristTheme?.colors['top-bar-button-primary-fg'];
   _borderStyle = () => `1px solid ${this._gristTheme?.colors['table-body-border']}`;
+  _accentColor = () => 'var(--grist-theme-accent-text)'
   _textColor = () => this._gristTheme?.colors['text'];
   _calendarTheme = () => {return {
     common: {
       backgroundColor: this._calendarBackgroundColor(),
       border: this._borderStyle(),
+      holiday: {color: this._accentColor()},
     },
     week:{
       timeGrid:{
