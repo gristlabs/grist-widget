@@ -103,3 +103,4 @@ input:checked + label{
 .toastui-calendar-timegrid-time { color: var(--grist-theme-text); }
 .toastui-calendar-template-alldayTitle {color: var(--grist-theme-text); }
 .toastui-calendar-template-time {color: var(--grist-theme-text); }
+.toastui-calendar-week-view-day-names {border-bottom: 1px solid var(--grist-table-body-border);}

@@ -53,6 +53,22 @@ class CalendarHandler {
       timeGrid:{
         borderRight: this._borderStyle(),
       },
+      timeGridLeft:{
+        borderRight: this._borderStyle(),
+      },
+      panelResizer:{
+        border: this._borderStyle(),
+      },
+      dayName:{
+        borderBottom: this._borderStyle(),
+        borderTop: this._borderStyle(),
+      },
+      dayGrid:{
+        borderRight: this._borderStyle(),
+      },
+      dayGridLeft:{
+        borderRight: this._borderStyle(),
+      },
       timeGridHourLine:{
         borderBottom: this._borderStyle()
       },
