@@ -73,9 +73,8 @@ input:checked + label {
 
 #calendar {
   height: 100%;
-  flex: 1;
-  min-height: 600px;
-  flex-shrink: 0;
+  flex-grow: 1;
+  overflow: auto;
 }
 
 #calendar-options .btn.active {
