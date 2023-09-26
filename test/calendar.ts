@@ -129,17 +129,17 @@ describe('calendar', function () {
     assert.equal(viewType, 'week');
   })
 
-    it('should navigate to appropriate time periods when button is pressed', async function () {
-        const today = new Date();
-        const validateDate = async (daysToAdd:number) => {
-            const newDate = await grist.executeScriptOnCustomWidget(
+  it('should navigate to appropriate time periods when button is pressed', async function () {
+    const today = new Date();
+    const validateDate = async (daysToAdd: number) => {
+      const newDate = await grist.executeScriptOnCustomWidget(
         'return calendarHandler.calendar.getDate().d.toDate().toDateString()'
       );
 
-            const expectedDate = new Date(today);
-            expectedDate.setDate(today.getDate() + daysToAdd);
-            assert.equal(newDate, expectedDate.toDateString());
-        }
+      const expectedDate = new Date(today);
+      expectedDate.setDate(today.getDate() + daysToAdd);
+      assert.equal(newDate, expectedDate.toDateString());
+    }
 
     // Navigate to the previous week
     await navigateCalendar('previous');
