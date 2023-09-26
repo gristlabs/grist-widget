@@ -156,6 +156,8 @@ class CalendarHandler {
           borderColor: this._mainColor,
         },
       ],
+      useFormPopup: true,
+      useDetailPopup: true,
     };
   }
 
@@ -171,8 +173,45 @@ class CalendarHandler {
     });
     this.calendar.on('selectDateTime', async (info) => {
       focusWidget();
-      await onNewDateBeingSelectedOnCalendar(info);
+
+      setTimeout(() => {
+        const title = container.querySelector('input[name=title]');
+        if (title) {
+          title.focus();
+        }
+      }, 0);
       this.calendar.clearGridSelections();
+    });
+    this.calendar.on('beforeUpdateEvent', async (e) => {
+      const info = {...e.event, ...e.changes};
+      const gristEvent = buildGristFlatFormatFromEventObject(info);
+      await upsertGristRecord(gristEvent);
+    });
+    this.calendar.on('beforeCreateEvent', async (e) => {
+      const gristEvent = buildGristFlatFormatFromEventObject(e);
+      await upsertGristRecord(gristEvent);
+    });
+
+    container.addEventListener('mousedown', () => {
+      // Follows the suggested workaround in
+      // https://github.com/nhn/tui.calendar/issues/1300#issuecomment-1273902472
+      this.calendar.clearGridSelections();
+    });
+
+    container.addEventListener('mouseup', () => {
+      setTimeout(() => {
+        if (this.calendar.getStoreState('dnd').draggingState !== 0) {
+          this.calendar.getStoreDispatchers('dnd').cancelDrag();
+        }
+      }, 0);
+    });
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') {
+        this.calendar.getStoreDispatchers('popup').hideFormPopup();
+        this.calendar.getStoreDispatchers('popup').hideDetailPopup();
+      } else if (ev.key === 'Enter') {
+        container.querySelector('button[type=submit]').click();
+      }
     });
   }
 
