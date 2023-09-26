@@ -23,7 +23,6 @@ body {
   border-color: var(--grist-theme-button-group-border);
 }
 
-
 #calendar-navigation-buttons, #calendar-perspective-buttons {
   display: flex;
 }
@@ -58,9 +57,7 @@ body {
 }
 
 input:checked + label {
-  /*background-color:var(--main-color);*/
   color: var(--grist-theme-control-primary-fg);
-  /*border-color:#000;*/
 }
 
 .toastui-calendar-day-view .toastui-calendar-panel:not(.toastui-calendar-time), .toastui-calendar-week-view .toastui-calendar-panel:not(.toastui-calendar-time) {
