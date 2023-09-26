@@ -35,7 +35,7 @@ function getMonthName() {
 
 class CalendarHandler {
   //TODO: find a theme value with that color
-  _mainColor = () => '#70707D'//'var(--grist-theme-date-picker-selected-bg-hover)'; //this._gristTheme?.colors['table-add-new-bg'];
+  _mainColor = () => 'var(--grist-theme-choice-token-bg)'
   _calendarBackgroundColor = () => 'var(--grist-theme-page-panels-main-panel-bg)';
   _selectedColor = ()=> this._gristTheme?.colors['top-bar-button-primary-fg'];
   _borderStyle = () => `1px solid ${this._gristTheme?.colors['table-body-border']}`;
