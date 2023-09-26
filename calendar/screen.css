@@ -1,15 +1,15 @@
-html, body{
-    height: 100%;
+html, body {
+  height: 100%;
 }
 
-body{
+body {
   background-color: var(--grist-theme-page-panels-main-panel-bg) !important;
- font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol !important;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol !important;
 }
 
-#calendar-options{
+#calendar-options {
   color: var(--grist-theme-text) !important;
-  display:flex;
+  display: flex;
   gap: 10px 15px;
   flex-wrap: wrap;
   padding: 10px;
@@ -17,18 +17,18 @@ body{
 }
 
 /*ovveriding bootstrap button colors*/
-#calendar-options .btn{
+#calendar-options .btn {
   color: var(--grist-theme-text);
   background-color: var(--grist-theme-button-group-bg);
   border-color: var(--grist-theme-button-group-border);
 }
 
 
-#calendar-navigation-buttons,#calendar-perspective-buttons{
-  display:flex;
+#calendar-navigation-buttons, #calendar-perspective-buttons {
+  display: flex;
 }
 
-#calendar-navigation-buttons{
+#calendar-navigation-buttons {
   gap: 10px;
 }
 
@@ -38,38 +38,26 @@ body{
   width: 0;
 }
 
-.toastui-calendar-timegrid{
+.toastui-calendar-timegrid {
   height: 100%;
 }
 
-/*.calendar-button{*/
-/*  font-family: inherit;*/
-/*  font-size: 1em;*/
-/*  border: none;*/
-/*  border-top: 1px solid #11B683;*/
-/*  border-bottom: 1px solid #11B683;*/
-/*  !*   border-radius: 4px; *!*/
-/*  letter-spacing: -0.08px;*/
-/*  padding: 4px 8px;*/
-/*  background:transparent;*/
-/*}*/
-
-.calendar-button:last-of-type{
+.calendar-button:last-of-type {
   border-right: 1px solid #11B683;
   border-radius: 0 5px 5px 0;
 }
 
-.calendar-button:first-of-type{
+.calendar-button:first-of-type {
   border-left: 1px solid #11B683;
   border-radius: 5px 0 0 5px;
 }
 
-.calendar-button:hover{
+.calendar-button:hover {
   color: #009058;
   border-color: #009058;
 }
 
-input:checked + label{
+input:checked + label {
   /*background-color:var(--main-color);*/
   color: var(--grist-theme-control-primary-fg);
   /*border-color:#000;*/
@@ -86,21 +74,35 @@ input:checked + label{
   height: 100%;
 }
 
-#calendar{
+#calendar {
   height: 100%;
   flex: 1;
   min-height: 600px;
   flex-shrink: 0;
 }
 
-#calendar-options .btn.active{
+#calendar-options .btn.active {
   background-color: var(--grist-theme-button-group-selected-bg);
   color: var(--grist-theme-right-panel-toggle-button-enabled-fg);
 }
 
 /*Overriding some Toast UI styles that cannot be configured via theme*/
-.toastui-calendar-panel.toastui-calendar-time { overflow-y: inherit; }
-.toastui-calendar-timegrid-time { color: var(--grist-theme-text); }
-.toastui-calendar-template-alldayTitle {color: var(--grist-theme-text); }
-.toastui-calendar-template-time {color: var(--grist-theme-text); }
-.toastui-calendar-week-view-day-names {border-bottom: 1px solid var(--grist-table-body-border);}
+.toastui-calendar-panel.toastui-calendar-time {
+  overflow-y: inherit;
+}
+
+.toastui-calendar-timegrid-time {
+  color: var(--grist-theme-text);
+}
+
+.toastui-calendar-template-alldayTitle {
+  color: var(--grist-theme-text);
+}
+
+.toastui-calendar-template-time {
+  color: var(--grist-theme-text);
+}
+
+.toastui-calendar-week-view-day-names {
+  border-bottom: 1px solid var(--grist-table-body-border);
+}

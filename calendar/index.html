@@ -1,62 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" />
-    <link rel="stylesheet" href="screen.css" />
-    <meta charset="utf-8" />
+<head>
+    <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css"/>
+    <link rel="stylesheet" href="screen.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <meta charset="utf-8"/>
     <meta
             name="viewport"
             content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
     />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
     <title>Calendar Widget</title>
-  </head>
-  <body>
-  <div id="calendar-container">
+</head>
+<body>
+<div id="calendar-container">
     <nav id="calendar-options">
-      <div id="calendar-navigation-buttons">
-<!--     &#x25C0;&#xFE0E; is magic code for ◀ and ▶ to be rendered as text arrow, not emoji-->
-        <button id="calendar-button-previous" class="btn btn-sm" onclick="calendarHandler.calendarPrevious()">&#x25C0;&#xFE0E;</button>
-        <button id="calendar-button-next" class="btn btn-sm"  onclick="calendarHandler.calendarNext()">&#9654;&#xFE0E;</button>
-        <button id="calendar-button-today" class="btn btn-sm" onclick="calendarHandler.calendarToday()">Today</button>
-      </div>
-<!--    <div id="calendar-navigation-buttons">-->
-<!--        <div class="btn-group btn-group-xs">-->
-<!--            <div id="calendar-button-today" class="btn btn-default detail-add-btn"  onclick="calendarHandler.calendarToday()">Today</div>-->
-<!--        </div>-->
-<!--        <div class="btn-group btn-group-xs  calendar-date-change-buttons">-->
-<!--            <div class="btn btn-default">-->
-<!--                <span id="calendar-button-previous" class="glyphicon glyphicon-chevron-left"  onclick="calendarHandler.calendarPrevious()"></span>-->
-<!--            </div>-->
-<!--            <div class="btn btn-default">-->
-<!--                <span id="calendar-button-next" class="glyphicon glyphicon-chevron-right"  onclick="calendarHandler.calendarNext()"></span>-->
-<!--            </div>-->
-<!--        </div>-->
-      <div id="calendar-perspective-buttons" class="btn-group btn-group-sm" data-toggle="buttons">
-        <label id="calendar-day-label" class="btn" for="calendar-day">
-            <input type="radio" id="calendar-day" class="btn-check" name="calendar-options" value="day" onchange="calendarViewChanges(this)">
-            Day
-        </label>
-        <label id="calendar-week-label" class="btn" for="calendar-week">
-            <input type="radio" id="calendar-week" class="btn-check" name="calendar-options" value="week" onchange="calendarViewChanges(this)">
-            Week
-        </label>
-        <label id="calendar-month-label" class="btn" for="calendar-month">
-            <input  type="radio" id="calendar-month" class="btn-check" name="calendar-options" value="month" onchange="calendarViewChanges(this)">
-            Month
-        </label>
-      </div>
-      <time id="calendar-title"></time>
+        <div id="calendar-navigation-buttons">
+            <!--     &#x25C0;&#xFE0E; is magic code for ◀ and ▶ to be rendered as text arrow, not emoji-->
+            <button id="calendar-button-previous" class="btn btn-sm" onclick="calendarHandler.calendarPrevious()">
+                &#x25C0;&#xFE0E;
+            </button>
+            <button id="calendar-button-next" class="btn btn-sm" onclick="calendarHandler.calendarNext()">&#9654;&#xFE0E;</button>
+            <button id="calendar-button-today" class="btn btn-sm" onclick="calendarHandler.calendarToday()">Today
+            </button>
+        </div>
+        <div id="calendar-perspective-buttons" class="btn-group btn-group-sm" data-toggle="buttons">
+            <label id="calendar-day-label" class="btn" for="calendar-day">
+                <input type="radio" id="calendar-day" class="btn-check" name="calendar-options" value="day"
+                       onchange="calendarViewChanges(this)">
+                Day
+            </label>
+            <label id="calendar-week-label" class="btn" for="calendar-week">
+                <input type="radio" id="calendar-week" class="btn-check" name="calendar-options" value="week"
+                       onchange="calendarViewChanges(this)">
+                Week
+            </label>
+            <label id="calendar-month-label" class="btn" for="calendar-month">
+                <input type="radio" id="calendar-month" class="btn-check" name="calendar-options" value="month"
+                       onchange="calendarViewChanges(this)">
+                Month
+            </label>
+        </div>
+        <time id="calendar-title"></time>
     </nav>
     <div id="calendar">
     </div>
-  </div>
-  </body>
-  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-  <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
-  <script src="page.js"></script>
-
-
-  </body>
+</div>
+</body>
+<script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+<script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+<script src="page.js"></script>
+</body>
 </html>
