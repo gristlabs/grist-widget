@@ -19,8 +19,8 @@ body{
 /*ovveriding bootstrap button colors*/
 #calendar-options .btn{
   color: var(--grist-theme-text);
-  background-color: var(--theme-button-group-bg);
-  border-color: black;
+  background-color: var(--grist-theme-button-group-bg);
+  border-color: var(--grist-theme-button-group-border);
 }
 
 
