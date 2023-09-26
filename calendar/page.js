@@ -140,9 +140,9 @@ class CalendarHandler {
     }
 
     if (this._selectedRecordId) {
-      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor});
+      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor()});
     }
-    this.calendar.updateEvent(record.id, CALENDAR_NAME, {borderColor: this._selectedColor});
+    this.calendar.updateEvent(record.id, CALENDAR_NAME, {borderColor: this._selectedColor()});
     this._selectedRecordId = record.id;
     this.calendar.setDate(record.startDate);
     updateUIAfterNavigation();
@@ -271,7 +271,7 @@ function updateUIAfterNavigation(){
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
   // table selection should change when another event is selected
-  grist.allowSelectBy();
+
   // CRUD operations on records in table
   grist.onRecords(updateCalendar);
   // When cursor (selected record) change in the table
@@ -282,6 +282,7 @@ async function configureGristSettings() {
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
+  await grist.allowSelectBy();
 }
 
 // when a user selects a record in the table, we want to select it on the calendar
