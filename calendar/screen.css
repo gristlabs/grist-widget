@@ -98,5 +98,8 @@ input:checked + label{
   color: var(--grist-theme-right-panel-toggle-button-enabled-fg);
 }
 
+/*Overriding some Toast UI styles that cannot be configured via theme*/
 .toastui-calendar-panel.toastui-calendar-time { overflow-y: inherit; }
 .toastui-calendar-timegrid-time { color: var(--grist-theme-text); }
+.toastui-calendar-template-alldayTitle {color: var(--grist-theme-text); }
+.toastui-calendar-template-time {color: var(--grist-theme-text); }

@@ -38,11 +38,16 @@ class CalendarHandler {
   _borderStyle = () => `1px solid ${this._gristTheme?.colors['table-body-border']}`;
   _accentColor = () => 'var(--grist-theme-accent-text)'
   _textColor = () => this._gristTheme?.colors['text'];
+  _selectionColor = () => 'var(--grist-theme-selection)'
   _calendarTheme = () => {return {
     common: {
       backgroundColor: this._calendarBackgroundColor(),
       border: this._borderStyle(),
       holiday: {color: this._accentColor()},
+      gridSelection: {
+        backgroundColor: this._selectionColor(),
+        border: `1px solid ${this._selectionColor()}`
+      },
     },
     week:{
       timeGrid:{
@@ -51,6 +56,8 @@ class CalendarHandler {
       timeGridHourLine:{
         borderBottom: this._borderStyle()
       },
+      gridSelection: this._accentColor(),
+
       pastTime:{
         color: this._textColor(),
       },
