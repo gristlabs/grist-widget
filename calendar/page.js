@@ -5,6 +5,9 @@ var grist;
 let calendarHandler;
 const CALENDAR_NAME = 'standardCalendar';
 
+const isReadOnly = window.location.href.includes('readonly=true')
+               || !window.location.href.includes('access=full');
+
 //for tests
 let dataVersion = Date.now();
 function testGetDataVersion(){
@@ -48,6 +51,7 @@ class CalendarHandler {
       month: {},
       usageStatistics: false,
       defaultView: 'week',
+      isReadOnly,
       template: {
         time(event) {
           const {title} = event;
@@ -236,6 +240,7 @@ function gristSelectedRecordChanged(record, mappings) {
 // when a user changes the perspective in the GUI, we want to save it as grist option
 // - rest of logic is in reaction to the grist option changed
 async function calendarViewChanges(radiobutton) {
+  if (isReadOnly) { return; }
   await grist.setOption('calendarViewPerspective', radiobutton.value);
 }
 
@@ -251,7 +256,10 @@ let onGristSettingsChanged = function(options) {
 
 // when user moves or resizes event on the calendar, we want to update the record in the table
 const onCalendarEventBeingUpdated = async (info) => {
+  if (isReadOnly) { return; }
   focusWidget();
+
+
   if (info.changes?.start || info.changes?.end) {
     let gristEvent = {};
     gristEvent.id = info.event.id;
@@ -266,7 +274,8 @@ const onCalendarEventBeingUpdated = async (info) => {
 };
 
 // saving events to the table or updating existing one - basing on if ID is present or not in the send event
-async function upsertGristRecord(gristEvent){
+async function upsertGristRecord(gristEvent) {
+  try {
     //to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
     // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
     const mappedRecord = grist.mapColumnNamesBack(gristEvent);
@@ -280,10 +289,15 @@ async function upsertGristRecord(gristEvent){
     const eventInValidFormat =  { id: gristEvent.id, fields: filteredRecord };
     const table = await grist.getTable();
     if (gristEvent.id) {
-        await table.update(eventInValidFormat);
+      await table.update(eventInValidFormat);
     } else {
-        await table.create(eventInValidFormat);
+      await table.create(eventInValidFormat);
     }
+  } catch (err) {
+    // Nothing clever we can do here, just log the error.
+    // Grist should actually show the error in the UI, but it doesn't.
+    console.error(err);
+  }
 }
 
 // grist expects date in seconds, but the calendar is returning it in milliseconds, so we need to convert it
@@ -306,6 +320,7 @@ function buildGristFlatFormatFromEventObject(tuiEvent) {
 
 // when user selects new date range on the calendar, we want to create a new record in the table
 async function onNewDateBeingSelectedOnCalendar(info) {
+  if (isReadOnly) { return; }
   const gristEvent = buildGristFlatFormatFromEventObject(info);
   await upsertGristRecord(gristEvent);
 }
