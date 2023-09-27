@@ -213,7 +213,6 @@ describe('calendar', function () {
                 assert.equal(buttontext,text)
             });
         }
-
         try{
             await switchLanguage('Polski');
             await assertTodayButtonText('dzisiaj');
