@@ -35,13 +35,13 @@ function getMonthName() {
 
 class CalendarHandler {
   //TODO: find a theme value with that color
-  _mainColor = () => 'var(--grist-theme-choice-token-bg)'
+  _mainColor = () => 'var(--grist-theme-choice-token-bg)';
   _calendarBackgroundColor = () => 'var(--grist-theme-page-panels-main-panel-bg)';
-  _selectedColor = ()=> this._gristTheme?.colors['top-bar-button-primary-fg'];
-  _borderStyle = () => `1px solid ${this._gristTheme?.colors['table-body-border']}`;
-  _accentColor = () => 'var(--grist-theme-accent-text)'
-  _textColor = () => this._gristTheme?.colors['text'];
-  _selectionColor = () => 'var(--grist-theme-selection)'
+  _selectedColor = ()=> 'var(--grist-top-bar-button-primary-fg';
+  _borderStyle = () => '1px solid var(--grist-theme-table-body-border)';
+  _accentColor = () => 'var(--grist-theme-accent-text)';
+  _textColor = () => 'var(--grist-theme-text)';
+  _selectionColor = () => 'var(--grist-theme-selection)';
   _calendarTheme = () => {return {
     common: {
       backgroundColor: this._calendarBackgroundColor(),
