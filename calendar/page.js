@@ -241,7 +241,7 @@ class CalendarHandler {
 
   refreshSelectedRecord(){
     if (this._selectedRecordId) {
-      this._colorCalendarEvent(this._selectedRecordId, this._accentColor);
+      this._colorCalendarEvent(this._selectedRecordId, this._selectedColor);
     }
   }
 
@@ -511,7 +511,7 @@ function testGetCalendarEvent(eventId) {
       startDate: calendarObject?.start.d.d,
       endDate: calendarObject?.end.d.d,
       isAllDay: calendarObject?.isAllday ?? false,
-      selected: calendarObject?.backgroundColor === CalendarHandler._selectedColor
+      selected: calendarObject?.borderColor === calendarHandler._selectedColor
     };
     return JSON.stringify(eventData);
   } else {
