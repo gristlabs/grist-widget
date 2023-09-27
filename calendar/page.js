@@ -22,11 +22,12 @@ function ready(fn) {
 
 function isRecordValid(record) {
   const hasStartDate = record.startDate instanceof Date;
+  const maybeHasEndDate = record.endDate === undefined ||
+    record.endDate === null ||
+    record.endDate instanceof Date;
   const hasTitle = typeof record.title === 'string';
-  const hasEndDateOrIsAllDay = record.endDate instanceof Date ||
-    (record.endDate === null && typeof record.isAllDay === 'boolean');
-  const hasValidIsAllDay = record.isAllDay === undefined || typeof record.isAllDay === 'boolean';
-  return hasStartDate && hasTitle && hasEndDateOrIsAllDay && hasValidIsAllDay;
+  const maybeHasIsAllDay = record.isAllDay === undefined || typeof record.isAllDay === 'boolean';
+  return hasStartDate && maybeHasEndDate && hasTitle && maybeHasIsAllDay;
 }
 
 function getMonthName() {
@@ -82,6 +83,26 @@ class CalendarHandler {
       focusWidget();
       await onNewDateBeingSelectedOnCalendar(info);
       this.calendar.clearGridSelections();
+    });
+
+    let ignoreTap = false;
+    container.addEventListener('mousedown', () => {
+      // Avoid overlapping selections; follows the suggested workaround in
+      // https://github.com/nhn/tui.calendar/issues/1300#issuecomment-1273902472
+      this.calendar.clearGridSelections();
+
+      // There is a bug with taps on Chrome/Firefox, which seem to fire mouseup event before
+      // Calendar/React has time to add a listener for it, so that the started drag continues
+      // after mouseup. We deal with it by using a setTimeout(0): if 'mouseup' happens before it's
+      // called, we'll cancel the drag.
+      ignoreTap = true;
+      setTimeout(() => { ignoreTap = false; }, 0);
+    }, true);
+
+    container.addEventListener('mouseup', () => {
+      if (ignoreTap) {
+        this.calendar.getStoreDispatchers('dnd').cancelDrag();
+      }
     });
   }
 
@@ -174,15 +195,15 @@ function getGristOptions() {
       name: "startDate",
       title: "Start Date",
       optional: false,
-      type: "DateTime",
+      type: "Date,DateTime",
       description: "starting point of event",
       allowMultiple: false
     },
     {
       name: "endDate",
       title: "End Date",
-      optional: false,
-      type: "DateTime",
+      optional: true,
+      type: "Date,DateTime",
       description: "ending point of event",
       allowMultiple: false
     },
@@ -322,7 +343,7 @@ function selectRadioButton(value) {
 // helper function to build a calendar event object from grist flat record
 function buildCalendarEventObject(record) {
   let {startDate: start, endDate: end} = record;
-  if (end === null || (end.getTime() <= start.getTime())) {
+  if (end === undefined || end === null || (end.getTime() <= start.getTime())) {
     end = thirtyMinutesFrom(start);
   }
   return {
