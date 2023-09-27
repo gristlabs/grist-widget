@@ -41,7 +41,7 @@ class CalendarHandler {
   //TODO: switch to new variables once they are published.
   _mainColor =  'var(--grist-theme-input-readonly-border)';
   _calendarBackgroundColor =  'var(--grist-theme-page-panels-main-panel-bg)';
-  _selectedColor = 'var(--grist-top-bar-button-primary-fg';
+  _selectedColor = 'var(--grist-theme-top-bar-button-primary-fg)';
   _borderStyle =  '1px solid var(--grist-theme-table-body-border)';
   _accentColor =  'var(--grist-theme-accent-text)';
   _textColor =  'var(--grist-theme-text)';
@@ -106,7 +106,7 @@ class CalendarHandler {
         backgroundColor: 'var(--grist-theme-accent-text)',
       },
       nowIndicatorToday: {
-        border: '1px solid var(--grist-theme-accent-border',
+        border: '1px solid var(--grist-theme-accent-border)',
       },
       today: {
         color: this._textColor,
