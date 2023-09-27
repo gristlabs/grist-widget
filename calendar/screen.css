@@ -138,3 +138,34 @@ input:checked + label {
 .toastui-calendar-day-names.toastui-calendar-month{
   padding: 0px;
 }
+
+@media (max-width: 575.98px) {
+  /* CSS hacks to make days of week more responsive in week view. */
+  .toastui-calendar-week-view .toastui-calendar-day-name__date,
+  .toastui-calendar-week-view .toastui-calendar-day-name__name {
+    font-size: 11px;
+    line-height: 11px;
+  }
+
+  .toastui-calendar-week-view .toastui-calendar-day-name-item.toastui-calendar-week {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toastui-calendar-week-view .toastui-calendar-day-name-item > span {
+    /* Collapse the &nbsp characters by shrinking the font and line-height to 0px. */
+    font-size: 0px;
+    line-height: 0px;
+
+    display: flex;
+    flex-direction: column-reverse;
+    row-gap: 4px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toastui-calendar-week-view .toastui-calendar-day-name-item {
+    padding: 0 4px;
+  }
+}
