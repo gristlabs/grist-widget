@@ -64,7 +64,7 @@ describe('calendar', function () {
       startDate: new Date('2023-08-03 13:00').toJSON(),
       endDate: new Date('2023-08-03 14:00').toJSON(),
       isAllDay: false,
-      selected: false
+      selected: true,
     })
   });
 
@@ -102,7 +102,7 @@ describe('calendar', function () {
       startDate: new Date('2023-08-03 13:00').toJSON(),
       endDate: new Date('2023-08-03 15:00').toJSON(),
       isAllDay: false,
-      selected: false
+      selected: true,
     })
   });
 
