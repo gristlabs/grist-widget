@@ -196,7 +196,7 @@ class CalendarHandler {
     grist.setCursorPos({rowId: record.id});
 
     // If the view has a vertical timeline, scroll to the start of the event.
-    if (!destinationCalendarEvent.isAllDay && this.calendar.getViewName() !== 'month') {
+    if (!destinationCalendarEvent.isAllday && this.calendar.getViewName() !== 'month') {
       const dom = document.querySelector('.toastui-calendar-time');
       const start = destinationCalendarEvent.start.toDate();
       const minutesInDayUntilStart = (start.getHours() * 60) + start.getMinutes();
