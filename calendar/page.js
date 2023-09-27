@@ -325,7 +325,7 @@ function getGristOptions() {
 function updateUIAfterNavigation(){
   // update name of the month and year displayed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
-  // refresh colors of selected event (in month view it's different than in other views)
+  // refresh colors of selected event (in month view it's different from in other views)
   if (calendarHandler._selectedRecordId) {
     calendarHandler.refreshRecord(calendarHandler._selectedRecordId);
   }
