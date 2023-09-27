@@ -80,7 +80,7 @@ class CalendarHandler {
     this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
     this.calendar.on('clickEvent', async (info) => {
       focusWidget();
-      await grist.setSelectedRows([info.event.id]);
+      await grist.setCursorPos({rowId: info.event.id});
     });
     this.calendar.on('selectDateTime', async (info) => {
       focusWidget();
@@ -93,6 +93,7 @@ class CalendarHandler {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
+    grist.setCursorPos({rowId: record.id});
 
     if (this._selectedRecordId) {
       this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {backgroundColor: CalendarHandler._mainColor});
@@ -215,8 +216,6 @@ function updateUIAfterNavigation(){
 }
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
-  // table selection should change when another event is selected
-  grist.allowSelectBy();
   // CRUD operations on records in table
   grist.onRecords(updateCalendar);
   // When cursor (selected record) change in the table
@@ -226,7 +225,7 @@ async function configureGristSettings() {
 
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
-  grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
+  grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions, allowSelectBy: true });
 }
 
 // when a user selects a record in the table, we want to select it on the calendar
@@ -291,7 +290,8 @@ async function upsertGristRecord(gristEvent) {
     if (gristEvent.id) {
       await table.update(eventInValidFormat);
     } else {
-      await table.create(eventInValidFormat);
+      const {id} = await table.create(eventInValidFormat);
+      await grist.setCursorPos({rowId: id});
     }
   } catch (err) {
     // Nothing clever we can do here, just log the error.
@@ -378,7 +378,8 @@ function testGetCalendarEvent(eventId) {
       title: calendarObject?.title,
       startDate: calendarObject?.start.d.d,
       endDate: calendarObject?.end.d.d,
-      isAllDay: calendarObject?.isAllday ?? false
+      isAllDay: calendarObject?.isAllday ?? false,
+      selected: calendarObject?.backgroundColor === CalendarHandler._selectedColor
     };
     return JSON.stringify(eventData);
   } else {
