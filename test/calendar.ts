@@ -46,7 +46,7 @@ describe('calendar', function () {
         await grist.setCustomWidgetMapping('endDate', /To/);
         await grist.setCustomWidgetMapping('title', /Label/);
         await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
-        //sing in to grist
+        //sign in to grist
         await grist.login();
     });
 
@@ -164,7 +164,7 @@ describe('calendar', function () {
     await selectPerspective('month');
     await navigateCalendar('today');
 
-    // TUI Calendar use it's own data enegine, so mocking Date is not working here. In future it will be good to
+    // TUI Calendar use it's own data engine, so mocking Date is not working here. In future it will be good to
     // find a way to mock a date both in the system (by using TimeShift) and in the TUI Calendar to get rid of this
     // data builder here.
     const monthNameOf = (date: Date) => date.toLocaleString('en-us', {month: 'long', year: 'numeric'});

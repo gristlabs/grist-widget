@@ -244,9 +244,9 @@ async function translatePage() {
 
     loadPath: 'i18n/{{lng}}/{{ns}}.json',
     addPath: 'i18n/add/{{lng}}/{{ns}}',
-    // allow cross domain requests
+    // don't allow cross domain requests
     crossDomain: false,
-    // allow credentials on cross domain requests
+    // don't include credentials on cross domain requests
     withCredentials: false,
     // overrideMimeType sets request.overrideMimeType("application/json")
     overrideMimeType: false,
