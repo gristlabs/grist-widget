@@ -37,19 +37,103 @@ function getMonthName() {
 }
 
 class CalendarHandler {
-  static _mainColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--main-color');
+  //TODO: switch to new variables once they are published.
+  _mainColor =  'var(--grist-theme-input-readonly-border)';
+  _calendarBackgroundColor =  'var(--grist-theme-page-panels-main-panel-bg)';
+  _selectedColor = 'var(--grist-top-bar-button-primary-fg';
+  _borderStyle =  '1px solid var(--grist-theme-table-body-border)';
+  _accentColor =  'var(--grist-theme-accent-text)';
+  _textColor =  'var(--grist-theme-text)';
+  _selectionColor =  'var(--grist-theme-selection)';
+  _calendarTheme = () => {return {
+    common: {
+      backgroundColor: this._calendarBackgroundColor,
+      border: this._borderStyle,
+      holiday: {color: this._textColor},
+      gridSelection: {
+        backgroundColor: this._selectionColor,
+        border: `1px solid ${this._selectionColor}`
+      },
+      dayName: {
+        color: this._textColor,
+      },
+      today: {
+        color: this._textColor,
+      },
+      saturday:{
+        color: this._textColor,
+      }
+    },
+    week:{
+      timeGrid:{
+        borderRight: this._borderStyle,
+      },
+      timeGridLeft:{
+        borderRight: this._borderStyle,
+      },
+      panelResizer:{
+        border: this._borderStyle,
+      },
+      dayName:{
+        borderBottom: this._borderStyle,
+        borderTop: this._borderStyle,
+      },
+      dayGrid:{
+        borderRight: this._borderStyle,
+      },
+      dayGridLeft:{
+        borderRight: this._borderStyle,
+      },
+      timeGridHourLine:{
+        borderBottom: this._borderStyle
+      },
+      gridSelection: this._accentColor,
 
-  static _selectedColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--selected-color');
+      pastTime:{
+        color: this._textColor,
+      },
+      futureTime:{
+        color: this._textColor,
+      },
+      nowIndicatorLabel: {
+        color: 'var(--grist-theme-accent-text)',
+      },
+      nowIndicatorPast: {
+        border: '1px dashed var(--grist-theme-accent-border)',
+      },
+      nowIndicatorBullet: {
+        backgroundColor: 'var(--grist-theme-accent-text)',
+      },
+      nowIndicatorToday: {
+        border: '1px solid var(--grist-theme-accent-border',
+      },
+      today: {
+        color: this._textColor,
+        backgroundColor: 'inherit',
+      },
+    },
+    month: {
+      dayName:{
+        borderLeft: this._borderStyle,
+        backgroundColor: 'inherit',
+      },
+      dayExceptThisMonth: {
+        color: this._textColor,
+      },
+      holidayExceptThisMonth: {
+        color: this._textColor,
+      },
+    }}
+  }
 
-  static getCalendarOptions() {
+  _getCalendarOptions() {
     return {
       week: {
         taskView: false,
       },
       month: {},
       usageStatistics: false,
+      theme: this._calendarTheme(),
       defaultView: 'week',
       isReadOnly,
       template: {
@@ -66,7 +150,9 @@ class CalendarHandler {
         {
           id:  CALENDAR_NAME,
           name: 'Personal',
-          backgroundColor: CalendarHandler._mainColor,
+          backgroundColor: this._mainColor,
+          color: this._textColor,
+          borderColor: this._mainColor,
         },
       ],
     };
@@ -74,7 +160,7 @@ class CalendarHandler {
 
   constructor() {
     const container = document.getElementById('calendar');
-    const options = CalendarHandler.getCalendarOptions();
+    const options = this._getCalendarOptions();
     this.previousIds = new Set();
     this.calendar = new tui.Calendar(container, options);
     this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
@@ -96,13 +182,13 @@ class CalendarHandler {
     grist.setCursorPos({rowId: record.id});
 
     if (this._selectedRecordId) {
-      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {backgroundColor: CalendarHandler._mainColor});
+      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor});
     }
-    this.calendar.updateEvent(record.id, CALENDAR_NAME, {backgroundColor: CalendarHandler._selectedColor});
+    this.calendar.updateEvent(record.id, CALENDAR_NAME, {borderColor: this._selectedColor});
     this._selectedRecordId = record.id;
     this.calendar.setDate(record.startDate);
     updateUIAfterNavigation();
-  
+
     // If the view has a vertical timeline, scroll to the start of the event.
     if (!record.isAllDay && this.calendar.getViewName() !== 'month') {
       const dom = document.querySelector('.toastui-calendar-time');
@@ -164,12 +250,21 @@ class CalendarHandler {
     }
     this.previousIds = currentIds;
   }
+
+  setTheme(gristThemeConfiguration) {
+    this._gristTheme = gristThemeConfiguration;
+    const options = this._getCalendarOptions();
+    this.calendar.setTheme(options.theme);
+    this.calendar.setCalendars(options.calendars);
+    this.calendar.render();
+  }
 }
 
 // when a document is ready, register the calendar and subscribe to grist events
 ready(async () => {
   calendarHandler = new CalendarHandler();
   await configureGristSettings();
+
 });
 
 // Data for column mapping fields in Widget GUI
@@ -247,10 +342,11 @@ async function calendarViewChanges(radiobutton) {
 // When a user changes a perspective of calendar, we want this to be persisted in grist options between sessions.
 // this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
-let onGristSettingsChanged = function(options) {
+let onGristSettingsChanged = function(options, settings) {
   let option = options?.calendarViewPerspective ?? 'week';
     calendarHandler.changeView(option);
     selectRadioButton(option);
+    calendarHandler.setTheme(settings.theme)
 };
 
 // when user moves or resizes event on the calendar, we want to update the record in the table
@@ -330,6 +426,11 @@ function selectRadioButton(value) {
   for (const element of document.getElementsByName('calendar-options')) {
     if (element.value === value) {
       element.checked = true;
+      element.parentElement.classList.add('active')
+    }
+    else{
+      element.checked = false;
+      element.parentElement.classList.remove('active')
     }
   }
 }

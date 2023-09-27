@@ -64,7 +64,7 @@ describe('calendar', function () {
       startDate: new Date('2023-08-03 13:00').toJSON(),
       endDate: new Date('2023-08-03 14:00').toJSON(),
       isAllDay: false,
-      selected: false
+      selected: true,
     })
   });
 
@@ -102,7 +102,7 @@ describe('calendar', function () {
       startDate: new Date('2023-08-03 13:00').toJSON(),
       endDate: new Date('2023-08-03 15:00').toJSON(),
       isAllDay: false,
-      selected: false
+      selected: true,
     })
   });
 
@@ -165,7 +165,7 @@ describe('calendar', function () {
     await selectPerspective('month');
     await navigateCalendar('today');
 
-    // TUI Calendar use it's own data enegine, so mocking Date is not working here. In future it will be good to
+    // TUI Calendar uses its own data engine, so mocking Date is not working here. In the future, it will be good to
     // find a way to mock a date both in the system (by using TimeShift) and in the TUI Calendar to get rid of this
     // data builder here.
     const monthNameOf = (date: Date) => date.toLocaleString('en-us', {month: 'long', year: 'numeric'});
