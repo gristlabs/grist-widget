@@ -26,7 +26,7 @@ body {
 }
 
 #calendar-options .btn:hover {
-  background-color: var(--grist-theme-hover);
+  background-color: var(--grist-theme-button-group-bg-hover);
   border-color: var(--grist-theme-button-group-border-hover);
 }
 

@@ -191,10 +191,9 @@ class CalendarHandler {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
-    grist.setCursorPos({rowId: record.id});
-
     const destinationCalendarEvent = this.calendar.getEvent(record.id, CALENDAR_NAME);
     this._colorCalendarEvent(destinationCalendarEvent);
+    grist.setCursorPos({rowId: record.id});
 
     // If the view has a vertical timeline, scroll to the start of the event.
     if (!destinationCalendarEvent.isAllDay && this.calendar.getViewName() !== 'month') {
@@ -352,6 +351,8 @@ async function configureGristSettings() {
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions, allowSelectBy: true });
+  // table selection should change when another event is selected
+  await grist.allowSelectBy();
 }
 
 // when a user selects a record in the table, we want to select it on the calendar
@@ -367,7 +368,7 @@ function gristSelectedRecordChanged(record, mappings) {
 async function calendarViewChanges(radiobutton) {
   changeCalendarView(radiobutton.value);
   if (!isReadOnly) {
-    await grist.setOption('calendarViewPerspective', radiobutton.value);    
+    await grist.setOption('calendarViewPerspective', radiobutton.value);
   }
 }
 
@@ -375,10 +376,10 @@ async function calendarViewChanges(radiobutton) {
 // this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
 let onGristSettingsChanged = function(options, settings) {
-  const view = options?.calendarViewPerspective ?? 'week';
-  changeCalendarView(view);
-
-  calendarHandler.setTheme(settings.theme)
+  let option = options?.calendarViewPerspective ?? 'week';
+    calendarHandler.changeView(option);
+    selectRadioButton(option);
+    calendarHandler.setTheme(settings.theme)
 };
 
 function changeCalendarView(view) {
