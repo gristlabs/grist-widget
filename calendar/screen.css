@@ -8,7 +8,7 @@ body {
 }
 
 #calendar-options {
-  color: var(--grist-theme-text) !important;
+  color: var(--grist-theme-text);
   display: flex;
   gap: 10px 15px;
   flex-wrap: wrap;
@@ -16,11 +16,28 @@ body {
   align-items: baseline;
 }
 
-/*ovveriding bootstrap button colors*/
+/*overriding bootstrap button colors*/
 #calendar-options .btn {
   color: var(--grist-theme-text);
   background-color: var(--grist-theme-button-group-bg);
   border-color: var(--grist-theme-button-group-border);
+  padding: 4px 10px;
+  outline: none;
+}
+
+#calendar-options .btn:hover {
+  background-color: var(--grist-theme-button-group-bg-hover);
+  border-color: var(--grist-theme-button-group-border-hover);
+}
+
+#calendar-perspective-buttons .btn:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+#calendar-perspective-buttons .btn:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
 }
 
 #calendar-navigation-buttons, #calendar-perspective-buttons {
@@ -78,8 +95,9 @@ input:checked + label {
 }
 
 #calendar-options .btn.active {
+  color: var(--grist-theme-button-group-selected-fg);
   background-color: var(--grist-theme-button-group-selected-bg);
-  color: var(--grist-theme-right-panel-toggle-button-enabled-fg);
+  border-color: var(--grist-theme-button-group-selected-border);
 }
 
 /*Overriding some Toast UI styles that cannot be configured via theme*/
@@ -101,5 +119,18 @@ input:checked + label {
 }
 
 .toastui-calendar-week-view-day-names {
-  border-bottom: 1px solid var(--grist-table-body-border);
+  border-bottom: 1px solid var(--grist-theme-table-body-border);
+}
+
+.toastui-calendar-weekday-grid-date-decorator {
+  color: var(--grist-theme-add-new-circle-small-fg) !important;
+  background-color: var(--grist-theme-add-new-circle-small-bg) !important;
+}
+
+.toastui-calendar-day-view-day-names, .toastui-calendar-week-view-day-names {
+  border-bottom: 1px solid var(--grist-theme-table-body-border);
+}
+
+.toastui-calendar-daygrid-cell+.toastui-calendar-daygrid-cell {
+  border-left: 1px solid var(--grist-theme-table-body-border);
 }
