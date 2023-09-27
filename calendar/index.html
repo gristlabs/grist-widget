@@ -16,11 +16,12 @@
 <div id="calendar-container">
     <nav id="calendar-options">
         <div id="calendar-navigation-buttons">
-            <!--     &#x25C0;&#xFE0E; is magic code for ◀ and ▶ to be rendered as text arrow, not emoji-->
             <button id="calendar-button-previous" class="btn btn-sm" onclick="calendarHandler.calendarPrevious()">
-                &#x25C0;&#xFE0E;
+                <div class="icon icon-arrow-left"></div>
             </button>
-            <button id="calendar-button-next" class="btn btn-sm" onclick="calendarHandler.calendarNext()">&#9654;&#xFE0E;</button>
+            <button id="calendar-button-next" class="btn btn-sm" onclick="calendarHandler.calendarNext()">
+                <div class="icon icon-arrow-right"></div>
+            </button>
             <button id="calendar-button-today" class="btn btn-sm" onclick="calendarHandler.calendarToday()">Today
             </button>
         </div>
