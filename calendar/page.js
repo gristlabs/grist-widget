@@ -176,29 +176,32 @@ class CalendarHandler {
     });
   }
 
-  _getSelectedBackgroundColor(rec)  {
+  _isMultidayInMonthViewEvent(rec)  {
     const startDate = rec.start.toDate();
     const endDate = rec.end.toDate();
     const isItMonthView = this.calendar.getViewName() === 'month';
     const isEventMultiDay = startDate.getDate() !== endDate.getDate() ||
       startDate.getMonth() !== endDate.getMonth() ||
       startDate.getFullYear() !== endDate.getFullYear();
-    return isItMonthView &&  !isEventMultiDay ?
-      this._selectedColor : this._mainColor;
+    return isItMonthView &&  !isEventMultiDay
   }
 
   selectRecord(record) {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
-    const destinationCalendarEvent = this.calendar.getEvent(record.id, CALENDAR_NAME);
-    this._colorCalendarEvent(destinationCalendarEvent);
     grist.setCursorPos({rowId: record.id});
+    if (this._selectedRecordId) {
+      this._colorCalendarEvent(this._selectedRecordId, this._mainColor);
+    }
+    this._selectedRecordId = record.id;
+    this.calendar.setDate(record.startDate);
+    updateUIAfterNavigation();
 
     // If the view has a vertical timeline, scroll to the start of the event.
-    if (!destinationCalendarEvent.isAllday && this.calendar.getViewName() !== 'month') {
+    if (!record.isAllday && this.calendar.getViewName() !== 'month') {
       const dom = document.querySelector('.toastui-calendar-time');
-      const start = destinationCalendarEvent.start.toDate();
+      const start = record.startDate;
       const minutesInDayUntilStart = (start.getHours() * 60) + start.getMinutes();
       const totalMinutesInDay = 24 * 60;
       const top = ((dom.scrollHeight / totalMinutesInDay) * minutesInDayUntilStart);
@@ -206,14 +209,10 @@ class CalendarHandler {
     }
   }
 
-  _colorCalendarEvent(event){
-    if (this._selectedRecordId) {
-      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor, backgroundColor: this._mainColor});
-    }
-
-    this.calendar.updateEvent(event.id, CALENDAR_NAME, {borderColor: this._selectedColor, backgroundColor: this._getSelectedBackgroundColor(event)});
-    this._selectedRecordId = event.id;
-    this.calendar.setDate(event.start.toDate());
+  _colorCalendarEvent(eventId, color) {
+    const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
+    const shouldPaintBackground = this._isMultidayInMonthViewEvent(event);
+    this.calendar.updateEvent(eventId, CALENDAR_NAME, {borderColor: color, backgroundColor: shouldPaintBackground?color:this._mainColor});
   }
 
   // change calendar perspective between week, month and day.
@@ -240,10 +239,9 @@ class CalendarHandler {
     updateUIAfterNavigation();
   }
 
-  refreshRecord(record) {
-    const calendarEvent = this.calendar.getEvent(record, CALENDAR_NAME);
-    if (calendarEvent) {
-      this._colorCalendarEvent(calendarEvent);
+  refreshSelectedRecord(){
+    if (this._selectedRecordId) {
+      this._colorCalendarEvent(this._selectedRecordId, this._accentColor);
     }
   }
 
@@ -332,9 +330,7 @@ function updateUIAfterNavigation(){
   // update name of the month and year displayed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
   // refresh colors of selected event (in month view it's different from in other views)
-  if (calendarHandler._selectedRecordId) {
-    calendarHandler.refreshRecord(calendarHandler._selectedRecordId);
-  }
+  calendarHandler.refreshSelectedRecord();
 }
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
@@ -351,8 +347,6 @@ async function configureGristSettings() {
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions, allowSelectBy: true });
-  // table selection should change when another event is selected
-  await grist.allowSelectBy();
 }
 
 // when a user selects a record in the table, we want to select it on the calendar
@@ -376,10 +370,9 @@ async function calendarViewChanges(radiobutton) {
 // this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
 let onGristSettingsChanged = function(options, settings) {
-  let option = options?.calendarViewPerspective ?? 'week';
-    calendarHandler.changeView(option);
-    selectRadioButton(option);
-    calendarHandler.setTheme(settings.theme)
+  const view = options?.calendarViewPerspective ?? 'week';
+  changeCalendarView(view);
+  calendarHandler.setTheme(settings.theme);
 };
 
 function changeCalendarView(view) {
