@@ -292,7 +292,7 @@ class ProfileSettingsPage {
   }
 
   public async setLanguage(language: string) {
-    this.driver.find('.test-account-page-language .test-select-open');
+    await this.driver.findWait('.test-account-page-language .test-select-open',100).click();
     await this.driver.findContentWait('.test-select-menu li', language, 100).click();
     await this.gu.waitForServer();
   }
