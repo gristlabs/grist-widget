@@ -1,24 +1,51 @@
-:root {
-  --main-color: #16B378;
-  --selected-color: #009058;
+html, body {
+  height: 100%;
 }
 
-
-body{
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+body {
+  background-color: var(--grist-theme-page-panels-main-panel-bg) !important;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol !important;
 }
 
-#calendar-options{
-  display:flex;
+#calendar-options {
+  color: var(--grist-theme-text);
+  display: flex;
   gap: 10px 15px;
   flex-wrap: wrap;
-  padding-bottom: 10px;
+  padding: 10px;
   align-items: baseline;
 }
 
-#calendar-navigation-buttons,#calendar-perspective-buttons{
-  display:flex;
-  gap: 0;
+/*overriding bootstrap button colors*/
+#calendar-options .btn {
+  color: var(--grist-theme-text);
+  background-color: var(--grist-theme-button-group-bg);
+  border-color: var(--grist-theme-button-group-border);
+  padding: 4px 10px;
+  outline: none;
+}
+
+#calendar-options .btn:hover {
+  background-color: var(--grist-theme-hover);
+  border-color: var(--grist-theme-button-group-border-hover);
+}
+
+#calendar-perspective-buttons .btn:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+#calendar-perspective-buttons .btn:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+#calendar-navigation-buttons, #calendar-perspective-buttons {
+  display: flex;
+}
+
+#calendar-navigation-buttons {
+  gap: 10px;
 }
 
 #calendar-options input[type="radio"] {
@@ -27,41 +54,27 @@ body{
   width: 0;
 }
 
-.toastui-calendar-timegrid{
+.toastui-calendar-timegrid {
   height: 100%;
 }
 
-.calendar-button{
-  font-family: inherit;
-  font-size: 1em;
-  border: none;
-  border-top: 1px solid #11B683;
-  border-bottom: 1px solid #11B683;
-  /*   border-radius: 4px; */
-  letter-spacing: -0.08px;
-  padding: 4px 8px;
-  background:transparent;
-}
-
-.calendar-button:last-of-type{
+.calendar-button:last-of-type {
   border-right: 1px solid #11B683;
   border-radius: 0 5px 5px 0;
 }
 
-.calendar-button:first-of-type{
+.calendar-button:first-of-type {
   border-left: 1px solid #11B683;
   border-radius: 5px 0 0 5px;
 }
 
-.calendar-button:hover{
+.calendar-button:hover {
   color: #009058;
   border-color: #009058;
 }
 
-input:checked + label{
-  background-color:var(--main-color);
-  color: #ffffff;
-  border-color:#000;
+input:checked + label {
+  color: var(--grist-theme-control-primary-fg);
 }
 
 .toastui-calendar-day-view .toastui-calendar-panel:not(.toastui-calendar-time), .toastui-calendar-week-view .toastui-calendar-panel:not(.toastui-calendar-time) {
@@ -75,7 +88,53 @@ input:checked + label{
   height: 100%;
 }
 
-#calendar{
+#calendar {
+  height: 100%;
   flex-grow: 1;
   overflow: auto;
+}
+
+#calendar-options .btn.active {
+  color: var(--grist-theme-button-group-selected-fg);
+  background-color: var(--grist-theme-button-group-selected-bg);
+  border-color: var(--grist-theme-button-group-selected-border);
+}
+
+/*Overriding some Toast UI styles that cannot be configured via theme*/
+.toastui-calendar-panel.toastui-calendar-time {
+  overflow-y: inherit;
+}
+
+.toastui-calendar-timegrid-time {
+  color: var(--grist-theme-text);
+}
+
+.toastui-calendar-template-alldayTitle {
+  color: var(--grist-theme-text);
+}
+
+.toastui-calendar-template-time,
+.toastui-calendar-template-monthDayName{
+  color: var(--grist-theme-text);
+}
+
+.toastui-calendar-week-view-day-names {
+  border-bottom: 1px solid var(--grist-theme-table-body-border);
+}
+
+.toastui-calendar-weekday-grid-date-decorator {
+  color: var(--grist-theme-add-new-circle-small-fg) !important;
+  background-color: var(--grist-theme-add-new-circle-small-bg) !important;
+}
+
+.toastui-calendar-day-view-day-names, .toastui-calendar-week-view-day-names {
+  border-bottom: 1px solid var(--grist-theme-table-body-border);
+}
+
+.toastui-calendar-daygrid-cell+.toastui-calendar-daygrid-cell {
+  border-left: 1px solid var(--grist-theme-table-body-border);
+}
+
+.toastui-calendar-day-names.toastui-calendar-month{
+  padding: 0px;
 }

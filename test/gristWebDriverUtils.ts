@@ -246,6 +246,32 @@ export class GristWebDriverUtils {
     await this.driver.navigate().refresh();
     await this.waitForDocToLoad();
   }
+
+
+  /**
+   * Click the Undo button and wait for server. If optCount is given, click Undo that many times.
+   */
+  public async undo(optCount: number = 1, optTimeout?: number) {
+    for (let i = 0; i < optCount; ++i) {
+      await this.driver.find('.test-undo').doClick();
+    }
+    await this.waitForServer(optTimeout);
+  }
+
+
+  /**
+   * Changes browser window dimensions to FullHd for a test suite.
+   */
+  public bigScreen() {
+    let oldDimensions: WindowDimensions;
+    before(async () => {
+      oldDimensions = await this.driver.manage().window().getRect();
+      await this.driver.manage().window().setRect({width: 1920, height: 1080});
+    });
+    after(async () => {
+      await this.driver.manage().window().setRect(oldDimensions);
+    });
+  }
 }
 
 export interface WindowDimensions {

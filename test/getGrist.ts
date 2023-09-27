@@ -239,6 +239,10 @@ export class GristUtils extends GristWebDriverUtils {
     await this.driver.findContent(`.test-select-menu li`, text[option]).click();
   }
 
+  public async waitForFrame() {
+    await driver.findWait("iframe.test-custom-widget-ready", 1000);
+  }
+
   public async setCustomWidgetMapping(name: string, value: string | RegExp) {
     const click = async (selector: string) => {
       try {
