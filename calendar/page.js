@@ -35,59 +35,62 @@ function getMonthName() {
 
 class CalendarHandler {
   //TODO: switch to new variables once they are published.
-  _mainColor = () => 'var(--grist-theme-input-readonly-border)';
-  _calendarBackgroundColor = () => 'var(--grist-theme-page-panels-main-panel-bg)';
-  _selectedColor = ()=> 'var(--grist-top-bar-button-primary-fg';
-  _borderStyle = () => '1px solid var(--grist-theme-table-body-border)';
-  _accentColor = () => 'var(--grist-theme-accent-text)';
-  _textColor = () => 'var(--grist-theme-text)';
-  _selectionColor = () => 'var(--grist-theme-selection)';
+  _mainColor =  'var(--grist-theme-input-readonly-border)';
+  _calendarBackgroundColor =  'var(--grist-theme-page-panels-main-panel-bg)';
+  _selectedColor = 'var(--grist-top-bar-button-primary-fg';
+  _borderStyle =  '1px solid var(--grist-theme-table-body-border)';
+  _accentColor =  'var(--grist-theme-accent-text)';
+  _textColor =  'var(--grist-theme-text)';
+  _selectionColor =  'var(--grist-theme-selection)';
   _calendarTheme = () => {return {
     common: {
-      backgroundColor: this._calendarBackgroundColor(),
-      border: this._borderStyle(),
-      holiday: {color: this._textColor()},
+      backgroundColor: this._calendarBackgroundColor,
+      border: this._borderStyle,
+      holiday: {color: this._textColor},
       gridSelection: {
-        backgroundColor: this._selectionColor(),
-        border: `1px solid ${this._selectionColor()}`
+        backgroundColor: this._selectionColor,
+        border: `1px solid ${this._selectionColor}`
       },
       dayName: {
-        color: this._textColor(),
+        color: this._textColor,
       },
       today: {
-        color: this._textColor(),
+        color: this._textColor,
       },
+      saturday:{
+        color: this._textColor,
+      }
     },
     week:{
       timeGrid:{
-        borderRight: this._borderStyle(),
+        borderRight: this._borderStyle,
       },
       timeGridLeft:{
-        borderRight: this._borderStyle(),
+        borderRight: this._borderStyle,
       },
       panelResizer:{
-        border: this._borderStyle(),
+        border: this._borderStyle,
       },
       dayName:{
-        borderBottom: this._borderStyle(),
-        borderTop: this._borderStyle(),
+        borderBottom: this._borderStyle,
+        borderTop: this._borderStyle,
       },
       dayGrid:{
-        borderRight: this._borderStyle(),
+        borderRight: this._borderStyle,
       },
       dayGridLeft:{
-        borderRight: this._borderStyle(),
+        borderRight: this._borderStyle,
       },
       timeGridHourLine:{
-        borderBottom: this._borderStyle()
+        borderBottom: this._borderStyle
       },
-      gridSelection: this._accentColor(),
+      gridSelection: this._accentColor,
 
       pastTime:{
-        color: this._textColor(),
+        color: this._textColor,
       },
       futureTime:{
-        color: this._textColor(),
+        color: this._textColor,
       },
       nowIndicatorLabel: {
         color: 'var(--grist-theme-accent-text)',
@@ -102,20 +105,20 @@ class CalendarHandler {
         border: '1px solid var(--grist-theme-accent-border',
       },
       today: {
-        color: this._textColor(),
+        color: this._textColor,
         backgroundColor: 'inherit',
       },
     },
     month: {
       dayName:{
-        borderLeft: this._borderStyle(),
+        borderLeft: this._borderStyle,
         backgroundColor: 'inherit',
       },
       dayExceptThisMonth: {
-        color: this._textColor(),
+        color: this._textColor,
       },
       holidayExceptThisMonth: {
-        color: this._textColor(),
+        color: this._textColor,
       },
     }}
   }
@@ -143,9 +146,9 @@ class CalendarHandler {
         {
           id:  CALENDAR_NAME,
           name: 'Personal',
-          backgroundColor: this._mainColor(),
-          color: this._textColor(),
-          borderColor: this._mainColor(),
+          backgroundColor: this._mainColor,
+          color: this._textColor,
+          borderColor: this._mainColor,
         },
       ],
     };
@@ -174,9 +177,9 @@ class CalendarHandler {
     }
 
     if (this._selectedRecordId) {
-      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor()});
+      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor});
     }
-    this.calendar.updateEvent(record.id, CALENDAR_NAME, {borderColor: this._selectedColor()});
+    this.calendar.updateEvent(record.id, CALENDAR_NAME, {borderColor: this._selectedColor});
     this._selectedRecordId = record.id;
     this.calendar.setDate(record.startDate);
     updateUIAfterNavigation();
@@ -303,8 +306,6 @@ function updateUIAfterNavigation(){
 }
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
-  // table selection should change when another event is selected
-
   // CRUD operations on records in table
   grist.onRecords(updateCalendar);
   // When cursor (selected record) change in the table
@@ -315,6 +316,7 @@ async function configureGristSettings() {
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
+  // table selection should change when another event is selected
   await grist.allowSelectBy();
 }
 

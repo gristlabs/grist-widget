@@ -134,3 +134,7 @@ input:checked + label {
 .toastui-calendar-daygrid-cell+.toastui-calendar-daygrid-cell {
   border-left: 1px solid var(--grist-theme-table-body-border);
 }
+
+.toastui-calendar-day-names.toastui-calendar-month{
+  padding: 0px;
+}
