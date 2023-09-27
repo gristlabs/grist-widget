@@ -5,8 +5,9 @@ var grist;
 let calendarHandler;
 const CALENDAR_NAME = 'standardCalendar';
 
-const isReadOnly = window.location.href.includes('readonly=true')
-               || !window.location.href.includes('access=full');
+const urlParams = new URLSearchParams(window.location.search);
+const isReadOnly = urlParams.get('readonly') === 'true' ||
+  (urlParams.has('access') && urlParams.get('access') !== 'full');
 
 //for tests
 let dataVersion = Date.now();
@@ -334,20 +335,26 @@ function gristSelectedRecordChanged(record, mappings) {
 // when a user changes the perspective in the GUI, we want to save it as grist option
 // - rest of logic is in reaction to the grist option changed
 async function calendarViewChanges(radiobutton) {
-  if (isReadOnly) { return; }
-  await grist.setOption('calendarViewPerspective', radiobutton.value);
+  changeCalendarView(radiobutton.value);
+  if (!isReadOnly) {
+    await grist.setOption('calendarViewPerspective', radiobutton.value);    
+  }
 }
-
 
 // When a user changes a perspective of calendar, we want this to be persisted in grist options between sessions.
 // this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
 let onGristSettingsChanged = function(options, settings) {
-  let option = options?.calendarViewPerspective ?? 'week';
-    calendarHandler.changeView(option);
-    selectRadioButton(option);
-    calendarHandler.setTheme(settings.theme)
+  const view = options?.calendarViewPerspective ?? 'week';
+  changeCalendarView(view);
+
+  calendarHandler.setTheme(settings.theme)
 };
+
+function changeCalendarView(view) {
+  selectRadioButton(view);
+  calendarHandler.changeView(view);
+}
 
 // when user moves or resizes event on the calendar, we want to update the record in the table
 const onCalendarEventBeingUpdated = async (info) => {
