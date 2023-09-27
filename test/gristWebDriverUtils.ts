@@ -257,6 +257,21 @@ export class GristWebDriverUtils {
     }
     await this.waitForServer(optTimeout);
   }
+
+
+  /**
+   * Changes browser window dimensions to FullHd for a test suite.
+   */
+  public bigScreen() {
+    let oldDimensions: WindowDimensions;
+    before(async () => {
+      oldDimensions = await this.driver.manage().window().getRect();
+      await this.driver.manage().window().setRect({width: 1920, height: 1080});
+    });
+    after(async () => {
+      await this.driver.manage().window().setRect(oldDimensions);
+    });
+  }
 }
 
 export interface WindowDimensions {
