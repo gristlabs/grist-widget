@@ -11,7 +11,8 @@
     "dev": "echo 'Starting local server and watching for changes.\nStart Grist with an environmental variable GRIST_WIDGET_LIST_URL=http://localhost:8585/manifest.json' && npm run watch 1> /dev/null & npm run serve:dev 1> /dev/null",
     "test": "docker image inspect gristlabs/grist --format 'gristlabs/grist image present' && NODE_PATH=_build SELENIUM_BROWSER=chrome mocha -g \"${GREP_TESTS}\" _build/test/*.js",
     "test:ci": "MOCHA_WEBDRIVER_HEADLESS=1 npm run test",
-    "pretest": "docker pull gristlabs/grist && tsc --build && node ./buildtools/publish.js http://localhost:9998"
+    "pretest": "docker pull gristlabs/grist && tsc --build && node ./buildtools/publish.js http://localhost:9998",
+    "grist": "docker run -t -i --rm --name grist-dev --network=host -e PORT=8484 -e GRIST_SINGLE_ORG=preview -e GRIST_WIDGET_LIST_URL=http://localhost:8585/manifest.json gristlabs/grist"
   },
   "devDependencies": {
     "@types/chai": "^4.3.5",
