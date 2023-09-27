@@ -40,7 +40,7 @@ class CalendarHandler {
   //TODO: switch to new variables once they are published.
   _mainColor =  'var(--grist-theme-input-readonly-border)';
   _calendarBackgroundColor =  'var(--grist-theme-page-panels-main-panel-bg)';
-  _selectedColor = 'var(--grist-top-bar-button-primary-fg';
+  _selectedColor = 'var(--grist-theme-top-bar-button-primary-fg)';
   _borderStyle =  '1px solid var(--grist-theme-table-body-border)';
   _accentColor =  'var(--grist-theme-accent-text)';
   _textColor =  'var(--grist-theme-text)';
@@ -175,29 +175,45 @@ class CalendarHandler {
     });
   }
 
+  _getSelectedBackgroundColor(rec)  {
+    const startDate = rec.start.toDate();
+    const endDate = rec.end.toDate();
+    const isItMonthView = this.calendar.getViewName() === 'month';
+    const isEventMultiDay = startDate.getDate() !== endDate.getDate() ||
+      startDate.getMonth() !== endDate.getMonth() ||
+      startDate.getFullYear() !== endDate.getFullYear();
+    return isItMonthView &&  !isEventMultiDay ?
+      this._selectedColor : this._mainColor;
+  }
+
   selectRecord(record) {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
     grist.setCursorPos({rowId: record.id});
 
-    if (this._selectedRecordId) {
-      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor});
-    }
-    this.calendar.updateEvent(record.id, CALENDAR_NAME, {borderColor: this._selectedColor});
-    this._selectedRecordId = record.id;
-    this.calendar.setDate(record.startDate);
-    updateUIAfterNavigation();
+    const destinationCalendarEvent = this.calendar.getEvent(record.id, CALENDAR_NAME);
+    this._colorCalendarEvent(destinationCalendarEvent);
 
     // If the view has a vertical timeline, scroll to the start of the event.
-    if (!record.isAllDay && this.calendar.getViewName() !== 'month') {
+    if (!event.isAllDay && this.calendar.getViewName() !== 'month') {
       const dom = document.querySelector('.toastui-calendar-time');
-      const start = record.startDate;
+      const start = event.start.toDate();
       const minutesInDayUntilStart = (start.getHours() * 60) + start.getMinutes();
       const totalMinutesInDay = 24 * 60;
       const top = ((dom.scrollHeight / totalMinutesInDay) * minutesInDayUntilStart);
       dom.scrollTo({top, behavior: 'smooth'});
     }
+  }
+
+  _colorCalendarEvent(event){
+    if (this._selectedRecordId) {
+      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor, backgroundColor: this._mainColor});
+    }
+
+    this.calendar.updateEvent(event.id, CALENDAR_NAME, {borderColor: this._selectedColor, backgroundColor: this._getSelectedBackgroundColor(event)});
+    this._selectedRecordId = event.id;
+    this.calendar.setDate(event.start.toDate());
   }
 
   // change calendar perspective between week, month and day.
@@ -222,6 +238,13 @@ class CalendarHandler {
   calendarToday() {
     this.calendar.today();
     updateUIAfterNavigation();
+  }
+
+  refreshRecord(record) {
+    const calendarEvent = this.calendar.getEvent(record, CALENDAR_NAME);
+    if (calendarEvent) {
+      this._colorCalendarEvent(calendarEvent);
+    }
   }
 
   // update calendar events based on the collection of records from the grist table.
@@ -308,6 +331,10 @@ function getGristOptions() {
 function updateUIAfterNavigation(){
   // update name of the month and year displayed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
+  // refresh colors of selected event (in month view it's different than in other views)
+  if (calendarHandler._selectedRecordId) {
+    calendarHandler.refreshRecord(calendarHandler._selectedRecordId);
+  }
 }
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
