@@ -184,6 +184,45 @@ describe('calendar', function () {
     assert.equal(await findCalendarTitle(), monthNameOf(shiftMonth(now, 1)));
   });
 
+  it("should respect non full access", async function () {
+    await grist.setCustomWidgetAccess('none');
+    await grist.waitForServer();
+    await grist.waitForFrame();
+
+    // Now try to add a record. It should fail.
+    await clickDay(10);
+
+    // We don't have a good way of checking it. So we just check at the end that we have only one event..
+
+    // Now with read access.
+    await grist.setCustomWidgetAccess('read table');
+    await grist.waitForServer();
+    await grist.waitForFrame();
+
+    // Now try to add a record. It should fail.
+    await clickDay(11);
+
+    // Now with full access.
+    await grist.setCustomWidgetAccess('full');
+    await grist.waitForServer();
+    await grist.waitForFrame();
+
+    await clickDay(12);
+    await grist.waitForServer();
+
+    await grist.waitToPass(async () => {
+      await grist.inCustomWidget(async () => {
+        // We see only summaries (like 1 more)
+        const texts = await driver.findAll(`.toastui-calendar-weekday-grid-more-events`, g => g.getText());
+        const numbers = texts.map(t => Number(t.replace(/[^0-9]/g, '')));
+        const sum = numbers.reduce((a, b) => a + b, 0);
+        assert.equal(sum, 1);
+      });
+    });
+
+    // TODO: add test for ACL permissions tests and looking at document as a different user.
+  });
+
   //Helpers
   async function selectPerspective(perspective: 'month' | 'week' | 'day') {
     await grist.inCustomWidget(async () => {
@@ -198,5 +237,18 @@ describe('calendar', function () {
   }
 
   //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimized for drag and drop tests in mocha and i cannot yet make it working correctly.
+
+  /**
+   * Clicks on a day in a month view.
+   */
+  async function clickDay(which: number) {
+    await grist.inCustomWidget(async () => {
+      await driver.withActions(ac =>
+        ac.move({origin: driver.findContentWait(`.toastui-calendar-template-monthGridHeader`, String(which), 200)})
+          .press().pause(100).release()
+      );
+    });
+    await grist.waitForServer();
+  }
 
 });

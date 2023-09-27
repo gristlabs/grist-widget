@@ -246,6 +246,17 @@ export class GristWebDriverUtils {
     await this.driver.navigate().refresh();
     await this.waitForDocToLoad();
   }
+
+
+  /**
+   * Click the Undo button and wait for server. If optCount is given, click Undo that many times.
+   */
+  public async undo(optCount: number = 1, optTimeout?: number) {
+    for (let i = 0; i < optCount; ++i) {
+      await this.driver.find('.test-undo').doClick();
+    }
+    await this.waitForServer(optTimeout);
+  }
 }
 
 export interface WindowDimensions {
