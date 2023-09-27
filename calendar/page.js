@@ -220,7 +220,8 @@ async function configureGristSettings() {
   // When options changed in the widget configuration (reaction to perspective change)
   grist.onOptions(onGristSettingsChanged);
 
-  grist.enableKeyboardShortcuts();
+  // TODO: remove optional chaining once grist-plugin-api.js includes this function.
+  grist.enableKeyboardShortcuts?.();
 
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
