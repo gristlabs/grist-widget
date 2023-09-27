@@ -458,9 +458,21 @@ function selectRadioButton(value) {
 
 // helper function to build a calendar event object from grist flat record
 function buildCalendarEventObject(record) {
-  let {startDate: start, endDate: end} = record;
-  if (end === undefined || end === null || (end.getTime() <= start.getTime())) {
-    end = thirtyMinutesFrom(start);
+  let {startDate: start, endDate: end, isAllDay: isAllday} = record;
+  if (!end) {
+    end = start;
+  }
+  if (hasNonzeroTime(start) || hasNonzeroTime(end)) {
+    isAllday = isAllday ?? false;
+  } else if (isAllday !== undefined && !isAllday) {
+    isAllday = false;
+    if (!hasNonzeroTime(start) && !hasNonzeroTime(end) && start.getTime() === end.getTime()) {
+      // The calendar has a bug where events that start and end at midnight aren't visible.
+      // Work around it by using a minimum 30 minute event duration.
+      end = thirtyMinutesFrom(start);
+    }
+  } else {
+    isAllday = true;
   }
   return {
     id: record.id,
@@ -468,7 +480,7 @@ function buildCalendarEventObject(record) {
     title: record.title,
     start,
     end,
-    isAllday: record.isAllDay,
+    isAllday,
     category: 'time',
     state: 'Free',
   };
@@ -491,6 +503,10 @@ function focusWidget() {
 
 function thirtyMinutesFrom(date) {
   return new Date(date.getTime() + 30 * 60 * 1000);
+}
+
+function hasNonzeroTime(date) {
+  return date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
 }
 
 function testGetCalendarEvent(eventId) {
