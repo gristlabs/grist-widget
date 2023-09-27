@@ -34,8 +34,8 @@ function getMonthName() {
 }
 
 class CalendarHandler {
-  //TODO: find a theme value with that color
-  _mainColor = () => 'var(--grist-theme-choice-token-bg)';
+  //TODO: switch to new variables once they are published.
+  _mainColor = () => 'var(--grist-theme-input-readonly-border)';
   _calendarBackgroundColor = () => 'var(--grist-theme-page-panels-main-panel-bg)';
   _selectedColor = ()=> 'var(--grist-top-bar-button-primary-fg';
   _borderStyle = () => '1px solid var(--grist-theme-table-body-border)';
@@ -46,10 +46,16 @@ class CalendarHandler {
     common: {
       backgroundColor: this._calendarBackgroundColor(),
       border: this._borderStyle(),
-      holiday: {color: this._accentColor()},
+      holiday: {color: this._textColor()},
       gridSelection: {
         backgroundColor: this._selectionColor(),
         border: `1px solid ${this._selectionColor()}`
+      },
+      dayName: {
+        color: this._textColor(),
+      },
+      today: {
+        color: this._textColor(),
       },
     },
     week:{
@@ -82,7 +88,35 @@ class CalendarHandler {
       },
       futureTime:{
         color: this._textColor(),
-      }
+      },
+      nowIndicatorLabel: {
+        color: 'var(--grist-theme-accent-text)',
+      },
+      nowIndicatorPast: {
+        border: '1px dashed var(--grist-theme-accent-border)',
+      },
+      nowIndicatorBullet: {
+        backgroundColor: 'var(--grist-theme-accent-text)',
+      },
+      nowIndicatorToday: {
+        border: '1px solid var(--grist-theme-accent-border',
+      },
+      today: {
+        color: this._textColor(),
+        backgroundColor: 'inherit',
+      },
+    },
+    month: {
+      dayName:{
+        borderLeft: this._borderStyle(),
+        backgroundColor: 'inherit',
+      },
+      dayExceptThisMonth: {
+        color: this._textColor(),
+      },
+      holidayExceptThisMonth: {
+        color: this._textColor(),
+      },
     }}
   }
 
@@ -213,7 +247,6 @@ class CalendarHandler {
     this._gristTheme = gristThemeConfiguration;
     const options = this._getCalendarOptions();
     this.calendar.setTheme(options.theme);
-    //this.calendar.setOptions(options);
     this.calendar.setCalendars(options.calendars);
     this.calendar.render();
   }
@@ -308,7 +341,6 @@ let onGristSettingsChanged = function(options, settings) {
     calendarHandler.changeView(option);
     selectRadioButton(option);
     calendarHandler.setTheme(settings.theme)
-    //calendarHandler.setTheme();
 };
 
 // when user moves or resizes event on the calendar, we want to update the record in the table
