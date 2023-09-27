@@ -5,6 +5,9 @@ var grist;
 let calendarHandler;
 const CALENDAR_NAME = 'standardCalendar';
 
+const isReadOnly = window.location.href.includes('readonly=true')
+               || !window.location.href.includes('access=full');
+
 //for tests
 let dataVersion = Date.now();
 function testGetDataVersion(){
@@ -132,6 +135,7 @@ class CalendarHandler {
       usageStatistics: false,
       theme: this._calendarTheme(),
       defaultView: 'week',
+      isReadOnly,
       template: {
         time(event) {
           const {title} = event;
@@ -162,7 +166,7 @@ class CalendarHandler {
     this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
     this.calendar.on('clickEvent', async (info) => {
       focusWidget();
-      await grist.setSelectedRows([info.event.id]);
+      await grist.setCursorPos({rowId: info.event.id});
     });
     this.calendar.on('selectDateTime', async (info) => {
       focusWidget();
@@ -175,6 +179,7 @@ class CalendarHandler {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
+    grist.setCursorPos({rowId: record.id});
 
     if (this._selectedRecordId) {
       this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor});
@@ -315,9 +320,7 @@ async function configureGristSettings() {
 
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
-  grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions });
-  // table selection should change when another event is selected
-  await grist.allowSelectBy();
+  grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions, allowSelectBy: true });
 }
 
 // when a user selects a record in the table, we want to select it on the calendar
@@ -331,6 +334,7 @@ function gristSelectedRecordChanged(record, mappings) {
 // when a user changes the perspective in the GUI, we want to save it as grist option
 // - rest of logic is in reaction to the grist option changed
 async function calendarViewChanges(radiobutton) {
+  if (isReadOnly) { return; }
   await grist.setOption('calendarViewPerspective', radiobutton.value);
 }
 
@@ -347,7 +351,10 @@ let onGristSettingsChanged = function(options, settings) {
 
 // when user moves or resizes event on the calendar, we want to update the record in the table
 const onCalendarEventBeingUpdated = async (info) => {
+  if (isReadOnly) { return; }
   focusWidget();
+
+
   if (info.changes?.start || info.changes?.end) {
     let gristEvent = {};
     gristEvent.id = info.event.id;
@@ -362,7 +369,8 @@ const onCalendarEventBeingUpdated = async (info) => {
 };
 
 // saving events to the table or updating existing one - basing on if ID is present or not in the send event
-async function upsertGristRecord(gristEvent){
+async function upsertGristRecord(gristEvent) {
+  try {
     //to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
     // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
     const mappedRecord = grist.mapColumnNamesBack(gristEvent);
@@ -376,10 +384,16 @@ async function upsertGristRecord(gristEvent){
     const eventInValidFormat =  { id: gristEvent.id, fields: filteredRecord };
     const table = await grist.getTable();
     if (gristEvent.id) {
-        await table.update(eventInValidFormat);
+      await table.update(eventInValidFormat);
     } else {
-        await table.create(eventInValidFormat);
+      const {id} = await table.create(eventInValidFormat);
+      await grist.setCursorPos({rowId: id});
     }
+  } catch (err) {
+    // Nothing clever we can do here, just log the error.
+    // Grist should actually show the error in the UI, but it doesn't.
+    console.error(err);
+  }
 }
 
 // grist expects date in seconds, but the calendar is returning it in milliseconds, so we need to convert it
@@ -402,6 +416,7 @@ function buildGristFlatFormatFromEventObject(tuiEvent) {
 
 // when user selects new date range on the calendar, we want to create a new record in the table
 async function onNewDateBeingSelectedOnCalendar(info) {
+  if (isReadOnly) { return; }
   const gristEvent = buildGristFlatFormatFromEventObject(info);
   await upsertGristRecord(gristEvent);
 }
@@ -464,7 +479,8 @@ function testGetCalendarEvent(eventId) {
       title: calendarObject?.title,
       startDate: calendarObject?.start.d.d,
       endDate: calendarObject?.end.d.d,
-      isAllDay: calendarObject?.isAllday ?? false
+      isAllDay: calendarObject?.isAllday ?? false,
+      selected: calendarObject?.backgroundColor === CalendarHandler._selectedColor
     };
     return JSON.stringify(eventData);
   } else {
