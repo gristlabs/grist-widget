@@ -250,7 +250,6 @@ class CalendarHandler {
   }
 
   _highlightEvent(eventId) {
-    debugger
     const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
     if (!event) { return; }
     // If this event is shown on month view as a dot.
@@ -362,6 +361,13 @@ function getGristOptions() {
       allowMultiple: false
     },
     {
+      name: "isAllDay",
+      title: "Is All Day",
+      optional: true,
+      type: "Bool",
+      description: "is event all day long",
+    },
+    {
       name: "title",
       title: "Title",
       optional: false,
@@ -370,12 +376,13 @@ function getGristOptions() {
       allowMultiple: false
     },
     {
-      name: "isAllDay",
-      title: "Is All Day",
+      name: "type",
+      title: "Type",
       optional: true,
-      type: "Bool",
-      description: "is event all day long",
-    }
+      type: "Choice",
+      description: "Event type",
+      allowMultiple: false
+    },
   ];
 }
 
@@ -524,9 +531,10 @@ function selectRadioButton(value) {
 }
 
 // helper function to build a calendar event object from grist flat record
-function buildCalendarEventObject(record, colTypes) {
+function buildCalendarEventObject(record, colTypes, colOptions) {
   let {startDate: start, endDate: end, isAllDay: isAllday} = record;
   let [startType, endType] = colTypes;
+  let [,,type] = colOptions;
   endType = endType || startType;
   start = new calendarHandler.TZDate(start).tz(startType === 'Date' ? 'UTC' : 'Local');
   end = end ? new calendarHandler.TZDate(end).tz(endType === 'Date' ? 'UTC' : 'Local') : start;
@@ -537,6 +545,12 @@ function buildCalendarEventObject(record, colTypes) {
   if (!isAllday && end.valueOf() === start.valueOf() && isZeroTime(end) && isZeroTime(start)) {
     end = new calendarHandler.TZDate(end).addHours(1);
   }
+
+  const raw = {
+    backgroundColor: type?.choiceOptions?.[record.type]?.fillColor,
+    color: type?.choiceOptions?.[record.type]?.textColor,
+  };
+
   return {
     id: record.id,
     calendarId: CALENDAR_NAME,
@@ -546,6 +560,8 @@ function buildCalendarEventObject(record, colTypes) {
     isAllday,
     category: 'time',
     state: 'Free',
+    raw,
+    ...raw
   };
 }
 
@@ -557,7 +573,9 @@ async function updateCalendar(records, mappings) {
   // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
     const colTypes = await colTypesFetcher.getColTypes();
-    const CalendarEventObjects = mappedRecords.filter(isRecordValid).map(r => buildCalendarEventObject(r, colTypes));
+    const colOptions = await colTypesFetcher.getColOptions();
+    const CalendarEventObjects = mappedRecords.filter(isRecordValid)
+                                              .map(r => buildCalendarEventObject(r, colTypes, colOptions));
     await calendarHandler.updateCalendarEvents(CalendarEventObjects);
   }
   dataVersion = Date.now();
@@ -580,14 +598,16 @@ function isZeroTime(date) {
 // changed, so we skip that for now.
 // TODO: Drop all this once the API can tell us column info.
 class ColTypesFetcher {
-  // Returns array of types for the array of colIds.
+  // Returns array of column records for the array of colIds.
   static async getTypes(tableId, colIds) {
     const tables = await grist.docApi.fetchTable('_grist_Tables');
     const columns = await grist.docApi.fetchTable('_grist_Tables_column');
+    const fields = Object.keys(columns);
     const tableRef = tables.id[tables.tableId.indexOf(tableId)];
     return colIds.map(colId => {
       const index = columns.id.findIndex((id, i) => (columns.parentId[i] === tableRef && columns.colId[i] === colId));
-      return columns.type[index];
+      if (index === -1) { return null; }
+      return Object.fromEntries(fields.map(f => [f, columns[f][index]]));
     });
   }
 
@@ -604,7 +624,7 @@ class ColTypesFetcher {
     // Can't fetch metadata when no full access.
     if (this._accessLevel !== 'full') { return; }
     if (!this._colIds || !(mappings.startDate === this._colIds[0] && mappings.endDate === this._colIds[1])) {
-      this._colIds = [mappings.startDate, mappings.endDate];
+      this._colIds = [mappings.startDate, mappings.endDate, mappings.type];
       if (this._tableId) {
         this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
       }
@@ -618,8 +638,13 @@ class ColTypesFetcher {
       this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
     }
   }
+
   async getColTypes() {
-    return this._colTypesPromise;
+    return this._colTypesPromise.then(types => types.map(t => t?.type));
+  }
+
+  async getColOptions() {
+    return this._colTypesPromise.then(types => types.map(t => safeParse(t?.widgetOptions)));
   }
 }
 
@@ -644,4 +669,12 @@ function testGetCalendarEvent(eventId) {
 function testGetCalendarViewName(){
   // noinspection JSUnresolvedReference
   return calendarHandler.calendar.getViewName();
+}
+
+function safeParse(value) {
+  try {
+    return JSON.parse(value);
+  } catch (err) {
+    return null;
+  }
 }
