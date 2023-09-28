@@ -254,13 +254,20 @@ class CalendarHandler {
     if (!event) { return; }
     // If this event is shown on month view as a dot.
     const shouldPaintBackground = this._isMultidayInMonthViewEvent(event);
-    // We will highlight it by changing the background color. Otherwise wi will change the border color.
+    // We will highlight it by changing the background color. Otherwise we will change the border color.
     const partToColor = shouldPaintBackground ? 'backgroundColor' : 'borderColor';
-    this.calendar.updateEvent(eventId, CALENDAR_NAME, { [partToColor]: this._selectedColor});
+    this.calendar.updateEvent(eventId, CALENDAR_NAME, {
+      ...{
+        borderColor: event.raw?.['backgroundColor'] ?? this._mainColor,
+        backgroundColor: event.raw?.['backgroundColor'] ?? this._mainColor,
+      },
+      [partToColor]: this._selectedColor
+    });
   }
 
   _clearHighlightEvent(eventId) {
     const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
+    if (!event) { return; }
     // We will highlight it by changing the background color. Otherwise wi will change the border color.
     this.calendar.updateEvent(eventId, CALENDAR_NAME, {
       borderColor: event.raw?.['backgroundColor'] ?? this._mainColor,
@@ -559,7 +566,8 @@ function buildCalendarEventObject(record, colTypes, colOptions) {
     category: 'time',
     state: 'Free',
     raw,
-    ...raw
+    ...raw,
+    ...{borderColor: raw.backgroundColor},
   };
 }
 

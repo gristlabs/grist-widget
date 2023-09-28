@@ -307,8 +307,11 @@ input:checked + label {
   color: var(--grist-theme-text);
 }
 
-.toastui-calendar-template-time,
 .toastui-calendar-template-monthDayName{
+  color: var(--grist-theme-text);
+}
+
+.toastui-calendar-weekday-event{
   color: var(--grist-theme-text);
 }
 
