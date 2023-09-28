@@ -239,6 +239,10 @@ export class GristUtils extends GristWebDriverUtils {
     await this.driver.findContent(`.test-select-menu li`, text[option]).click();
   }
 
+  public async rejectAccess() {
+    await this.driver.findWait('.test-config-widget-access-reject', 2000).click();
+  }
+
   public async waitForFrame() {
     await driver.findWait("iframe.test-custom-widget-ready", 1000);
   }
@@ -292,6 +296,15 @@ export class GristUtils extends GristWebDriverUtils {
       return await op();
     } finally {
       await driver.switchTo().defaultContent();
+    }
+  }
+
+  public async rejects(op: Promise<any> | (() => Promise<any>)): Promise<void> {
+    try {
+      await (typeof op === 'function' ? op() : op);
+      throw new Error("Expected rejection");
+    } catch (e) {
+      // expected
     }
   }
 }

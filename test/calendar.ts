@@ -189,6 +189,7 @@ describe('calendar', function () {
 
   it("should respect non full access", async function () {
     await grist.setCustomWidgetAccess('none');
+    await grist.rejectAccess();
     await grist.waitForServer();
     await grist.waitForFrame();
 
@@ -200,6 +201,7 @@ describe('calendar', function () {
 
     // Now with read access.
     await grist.setCustomWidgetAccess('read table');
+    await grist.rejectAccess();
     await grist.waitForServer();
     await grist.waitForFrame();
 
@@ -245,7 +247,7 @@ describe('calendar', function () {
     });
 
     // Select 2 row in grid view.
-    await clickRow(2);
+    await selectRow(2);
 
     assert.equal(await selectedRow(), 2);
 
@@ -253,7 +255,7 @@ describe('calendar', function () {
     assert.isTrue(await getCalendarEvent(3).then(c => c.selected));
 
     // Click 4th row
-    await clickRow(3);
+    await selectRow(3);
     assert.equal(await selectedRow(), 3);
     assert.isTrue(await getCalendarEvent(4).then(c => c.selected));
 
@@ -330,7 +332,7 @@ describe('calendar', function () {
     });
   }
 
-  async function clickRow(rowIndex: number) {
+  async function selectRow(rowIndex: number) {
     await driver.findContentWait('.gridview_data_row_num', String(rowIndex), 200).click();
   }
 
