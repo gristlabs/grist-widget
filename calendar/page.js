@@ -364,7 +364,7 @@ async function configureGristSettings() {
 
   // To get types, we need to know the tableId. This is a way to get it.
   grist.on('message', (e) => {
-    if (e.tableId) { colTypesFetcher.gotTableId(e.tableId); }
+    if (e.tableId && e.mappingsChange) { colTypesFetcher.gotNewMappings(e.tableId); }
   });
 
   // TODO: remove optional chaining once grist-plugin-api.js includes this function.
@@ -456,10 +456,10 @@ function makeGristDateTime(tzDate, colType) {
   }
 }
 
-// conversion between calendar event object and grist flat format (so the one that is returned in onRecords event
-// and can be mapped by grist.mapColumnNamesBack)
-// tuiEvent can be partial: only the fields present will be updated in Grist.
 async function upsertEvent(tuiEvent) {
+  // conversion between calendar event object and grist flat format (so the one that is returned in onRecords event
+  // and can be mapped by grist.mapColumnNamesBack)
+  // tuiEvent can be partial: only the fields present will be updated in Grist.
   const [startType, endType] = await colTypesFetcher.getColTypes();
   upsertGristRecord({
     id: tuiEvent.id,
@@ -542,6 +542,17 @@ function isZeroTime(date) {
 // changed, so we skip that for now.
 // TODO: Drop all this once the API can tell us column info.
 class ColTypesFetcher {
+  // Returns array of types for the array of colIds.
+  static async getTypes(tableId, colIds) {
+    const tables = await grist.docApi.fetchTable('_grist_Tables');
+    const columns = await grist.docApi.fetchTable('_grist_Tables_column');
+    const tableRef = tables.id[tables.tableId.indexOf(tableId)];
+    return colIds.map(colId => {
+      const index = columns.id.findIndex((id, i) => (columns.parentId[i] === tableRef && columns.colId[i] === colId));
+      return columns.type[index];
+    });
+  }
+
   constructor() {
     this._tableId = null;
     this._colIds = null;
@@ -551,16 +562,14 @@ class ColTypesFetcher {
     if (!this._colIds || !(mappings.startDate === this._colIds[0] && mappings.endDate === this._colIds[1])) {
       this._colIds = [mappings.startDate, mappings.endDate];
       if (this._tableId) {
-        this._colTypesPromise = getTypes(this._tableId, this._colIds);
+        this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
       }
     }
   }
-  gotTableId(tableId) {
-    if (tableId !== this._tableId) {
-      this._tableId = tableId;
-      if (this._colIds) {
-        this._colTypesPromise = getTypes(this._tableId, this._colIds);
-      }
+  gotNewMappings(tableId) {
+    this._tableId = tableId;
+    if (this._colIds) {
+      this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
     }
   }
   async getColTypes() {
@@ -569,17 +578,6 @@ class ColTypesFetcher {
 }
 
 const colTypesFetcher = new ColTypesFetcher();
-
-// Returns array of types for the array of colIds.
-async function getTypes(tableId, colIds) {
-  const tables = await grist.docApi.fetchTable('_grist_Tables');
-  const columns = await grist.docApi.fetchTable('_grist_Tables_column');
-  const tableRef = tables.id[tables.tableId.indexOf(tableId)];
-  return colIds.map(colId => {
-    const index = columns.id.findIndex((id, i) => (columns.parentId[i] === tableRef && columns.colId[i] === colId));
-    return columns.type[index];
-  });
-}
 
 function testGetCalendarEvent(eventId) {
   const calendarObject = calendarHandler.calendar.getEvent(eventId, CALENDAR_NAME);
