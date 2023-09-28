@@ -263,7 +263,7 @@ class CalendarHandler {
     const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
     // We will highlight it by changing the background color. Otherwise wi will change the border color.
     this.calendar.updateEvent(eventId, CALENDAR_NAME, {
-      borderColor: event.raw?.['borderColor'] ?? this._mainColor,
+      borderColor: event.raw?.['backgroundColor'] ?? this._mainColor,
       backgroundColor: event.raw?.['backgroundColor'] ?? this._mainColor,
     });
   }
@@ -416,11 +416,9 @@ async function configureGristSettings() {
 }
 
 // When a user selects a record in the table, we want to select it on the calendar.
-// This method must be run after updateCalendar method, so we need to wait for the same promise to resolve.
-async function gristSelectedRecordChanged(record, mappings) {
+function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
   if (mappedRecord && calendarHandler) {
-    await colTypesFetcher.getColTypes();
     calendarHandler.selectRecord(mappedRecord);
   }
 }
@@ -577,6 +575,7 @@ async function updateCalendar(records, mappings) {
     const CalendarEventObjects = mappedRecords.filter(isRecordValid)
                                               .map(r => buildCalendarEventObject(r, colTypes, colOptions));
     await calendarHandler.updateCalendarEvents(CalendarEventObjects);
+    updateUIAfterNavigation();
   }
   dataVersion = Date.now();
 }
@@ -637,6 +636,10 @@ class ColTypesFetcher {
     if (this._colIds) {
       this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
     }
+  }
+
+  async wait() {
+    return this._colTypesPromise;
   }
 
   async getColTypes() {
