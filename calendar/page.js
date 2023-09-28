@@ -229,7 +229,7 @@ class CalendarHandler {
     return isItMonthView &&  !isEventMultiDay
   }
 
-  selectRecord(record) {
+  async selectRecord(record) {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
@@ -237,7 +237,11 @@ class CalendarHandler {
       this._colorCalendarEvent(this._selectedRecordId, this._mainColor);
     }
     this._selectedRecordId = record.id;
-    this.calendar.setDate(record.startDate);
+    const [startType] = await colTypesFetcher.getColTypes();
+    const startDate = new calendarHandler
+      .TZDate(record.startDate)
+      .tz(startType === 'Date' ? 'UTC' : 'Local');
+    this.calendar.setDate(startDate);
     updateUIAfterNavigation();
 
     // If the view has a vertical timeline, scroll to the start of the event.
@@ -395,12 +399,10 @@ async function configureGristSettings() {
 }
 
 // When a user selects a record in the table, we want to select it on the calendar.
-// This method must be run after updateCalendar method, so we need to wait for the same promise to resolve.
 async function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
   if (mappedRecord && calendarHandler) {
-    await colTypesFetcher.getColTypes();
-    calendarHandler.selectRecord(mappedRecord);
+    await calendarHandler.selectRecord(mappedRecord);
   }
 }
 
