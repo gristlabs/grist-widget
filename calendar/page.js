@@ -398,8 +398,7 @@ async function calendarViewChanges(radiobutton) {
 let onGristSettingsChanged = function(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
-
-  calendarHandler.setTheme(settings.theme)
+  colTypesFetcher.setAccessLevel(settings.accessLevel);
 };
 
 function changeCalendarView(view) {
@@ -556,9 +555,15 @@ class ColTypesFetcher {
   constructor() {
     this._tableId = null;
     this._colIds = null;
-    this._colTypesPromise = null;
+    this._colTypesPromise = Promise.resolve([null, null]);;
+    this._accessLevel = 'full';
+  }
+  setAccessLevel(accessLevel) {
+    this._accessLevel = accessLevel;
   }
   gotMappings(mappings) {
+    // Can't fetch metadata when no full access.
+    if (this._accessLevel !== 'full') { return; }
     if (!this._colIds || !(mappings.startDate === this._colIds[0] && mappings.endDate === this._colIds[1])) {
       this._colIds = [mappings.startDate, mappings.endDate];
       if (this._tableId) {
@@ -567,6 +572,8 @@ class ColTypesFetcher {
     }
   }
   gotNewMappings(tableId) {
+    // Can't fetch metadata when no full access.
+    if (this._accessLevel !== 'full') { return; }
     this._tableId = tableId;
     if (this._colIds) {
       this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
