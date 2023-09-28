@@ -167,13 +167,15 @@ class CalendarHandler {
     const options = this._getCalendarOptions();
     this.previousIds = new Set();
     this.calendar = new tui.Calendar(container, options);
+
+    // Not sure how to get a reference to this constructor, so doing it in a roundabout way.
+    this.TZDate = this.calendar.getDate().constructor;
+
     this.calendar.on('clickEvent', async (info) => {
-      focusWidget();
       await grist.setCursorPos({rowId: info.event.id});
     });
 
     this.calendar.on('selectDateTime', async (info) => {
-      focusWidget();
       this.calendar.clearGridSelections();
 
       // If this click results in the form popup, focus the title field in it.
@@ -187,6 +189,7 @@ class CalendarHandler {
     this.calendar.on('beforeUpdateEvent', (update) => upsertEvent({id: update.event.id, ...update.changes}));
 
     container.addEventListener('mousedown', () => {
+      focusWidget();
       // Clear existing selection; this follows the suggested workaround in
       // https://github.com/nhn/tui.calendar/issues/1300#issuecomment-1273902472
       this.calendar.clearGridSelections();
@@ -359,6 +362,11 @@ async function configureGristSettings() {
   // When options changed in the widget configuration (reaction to perspective change)
   grist.onOptions(onGristSettingsChanged);
 
+  // To get types, we need to know the tableId. This is a way to get it.
+  grist.on('message', (e) => {
+    if (e.tableId) { colTypesFetcher.gotTableId(e.tableId); }
+  });
+
   // TODO: remove optional chaining once grist-plugin-api.js includes this function.
   grist.enableKeyboardShortcuts?.();
 
@@ -437,15 +445,27 @@ function roundEpochDateToSeconds(date) {
   return date/1000;
 }
 
+const secondsPerDay = 24 * 60 * 60;
+
+function makeGristDateTime(tzDate, colType) {
+  const secondsSinceEpoch = tzDate.valueOf() / 1000;
+  if (colType === 'Date') {
+    return Math.floor(secondsSinceEpoch / secondsPerDay) * secondsPerDay;
+  } else {
+    return secondsSinceEpoch;
+  }
+}
+
 // conversion between calendar event object and grist flat format (so the one that is returned in onRecords event
 // and can be mapped by grist.mapColumnNamesBack)
 // tuiEvent can be partial: only the fields present will be updated in Grist.
-function upsertEvent(tuiEvent) {
+async function upsertEvent(tuiEvent) {
+  const [startType, endType] = await colTypesFetcher.getColTypes();
   upsertGristRecord({
     id: tuiEvent.id,
     // undefined values will be removed from the fields sent to Grist.
-    startDate: tuiEvent.start ? roundEpochDateToSeconds(tuiEvent.start.valueOf()) : undefined,
-    endDate: tuiEvent.end ? roundEpochDateToSeconds(tuiEvent.end.valueOf()) : undefined,
+    startDate: tuiEvent.start ? makeGristDateTime(tuiEvent.start, startType) : undefined,
+    endDate: tuiEvent.end ? makeGristDateTime(tuiEvent.end, endType) : undefined,
     isAllDay: tuiEvent.isAllday !== undefined ? (tuiEvent.isAllday ? 1 : 0) : undefined,
     title: tuiEvent.title !== undefined ? (tuiEvent.title || "New Event") : undefined,
   });
@@ -466,22 +486,18 @@ function selectRadioButton(value) {
 }
 
 // helper function to build a calendar event object from grist flat record
-function buildCalendarEventObject(record) {
+function buildCalendarEventObject(record, colTypes) {
   let {startDate: start, endDate: end, isAllDay: isAllday} = record;
-  if (!end) {
-    end = start;
-  }
-  if (hasNonzeroTime(start) || hasNonzeroTime(end)) {
-    isAllday = isAllday ?? false;
-  } else if (isAllday !== undefined && !isAllday) {
-    isAllday = false;
-    if (!hasNonzeroTime(start) && !hasNonzeroTime(end) && start.getTime() === end.getTime()) {
-      // The calendar has a bug where events that start and end at midnight aren't visible.
-      // Work around it by using a minimum 30 minute event duration.
-      end = thirtyMinutesFrom(start);
-    }
-  } else {
+  let [startType, endType] = colTypes;
+  endType = endType || startType;
+  start = new calendarHandler.TZDate(start).tz(startType === 'Date' ? 'UTC' : 'Local');
+  end = end ? new calendarHandler.TZDate(end).tz(endType === 'Date' ? 'UTC' : 'Local') : start;
+  if (startType === 'Date' && endType === 'Date') {
     isAllday = true;
+  }
+  // Workaround for midnight zero-length events not showing up.
+  if (!isAllday && end.valueOf() === start.valueOf() && isZeroTime(end) && isZeroTime(start)) {
+    end = new calendarHandler.TZDate(end).addHours(1);
   }
   return {
     id: record.id,
@@ -497,10 +513,13 @@ function buildCalendarEventObject(record) {
 
 // when some CRUD operation is performed on the table, we want to update the calendar
 async function updateCalendar(records, mappings) {
+  if (mappings) { colTypesFetcher.gotMappings(mappings); }
+
   const mappedRecords = grist.mapColumnNames(records, mappings);
   // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
-    const CalendarEventObjects = mappedRecords.filter(isRecordValid).map(buildCalendarEventObject);
+    const colTypes = await colTypesFetcher.getColTypes();
+    const CalendarEventObjects = mappedRecords.filter(isRecordValid).map(r => buildCalendarEventObject(r, colTypes));
     await calendarHandler.updateCalendarEvents(CalendarEventObjects);
   }
   dataVersion = Date.now();
@@ -514,8 +533,52 @@ function thirtyMinutesFrom(date) {
   return new Date(date.getTime() + 30 * 60 * 1000);
 }
 
-function hasNonzeroTime(date) {
-  return date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
+function isZeroTime(date) {
+  return date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0;
+}
+
+// We have no good way yet to get the type of a mapped column when multiple types are allowed. We
+// get it via the metadata tables instead. There is no good way to know when a column's type is
+// changed, so we skip that for now.
+// TODO: Drop all this once the API can tell us column info.
+class ColTypesFetcher {
+  constructor() {
+    this._tableId = null;
+    this._colIds = null;
+    this._colTypesPromise = null;
+  }
+  gotMappings(mappings) {
+    if (!this._colIds || !(mappings.startDate === this._colIds[0] && mappings.endDate === this._colIds[1])) {
+      this._colIds = [mappings.startDate, mappings.endDate];
+      if (this._tableId) {
+        this._colTypesPromise = getTypes(this._tableId, this._colIds);
+      }
+    }
+  }
+  gotTableId(tableId) {
+    if (tableId !== this._tableId) {
+      this._tableId = tableId;
+      if (this._colIds) {
+        this._colTypesPromise = getTypes(this._tableId, this._colIds);
+      }
+    }
+  }
+  async getColTypes() {
+    return this._colTypesPromise;
+  }
+}
+
+const colTypesFetcher = new ColTypesFetcher();
+
+// Returns array of types for the array of colIds.
+async function getTypes(tableId, colIds) {
+  const tables = await grist.docApi.fetchTable('_grist_Tables');
+  const columns = await grist.docApi.fetchTable('_grist_Tables_column');
+  const tableRef = tables.id[tables.tableId.indexOf(tableId)];
+  return colIds.map(colId => {
+    const index = columns.id.findIndex((id, i) => (columns.parentId[i] === tableRef && columns.colId[i] === colId));
+    return columns.type[index];
+  });
 }
 
 function testGetCalendarEvent(eventId) {
