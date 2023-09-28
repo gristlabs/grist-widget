@@ -26,11 +26,10 @@ function ready(fn) {
 
 function isRecordValid(record) {
   const hasStartDate = record.startDate instanceof Date;
+  const maybeHasEndDate = !record.endDate || record.endDate instanceof Date;
   const hasTitle = typeof record.title === 'string';
-  const hasEndDateOrIsAllDay = record.endDate instanceof Date ||
-    (record.endDate === null && typeof record.isAllDay === 'boolean');
-  const hasValidIsAllDay = record.isAllDay === undefined || typeof record.isAllDay === 'boolean';
-  return hasStartDate && hasTitle && hasEndDateOrIsAllDay && hasValidIsAllDay;
+  const maybeHasIsAllDay = record.isAllDay === undefined || typeof record.isAllDay === 'boolean';
+  return hasStartDate && maybeHasEndDate && hasTitle && maybeHasIsAllDay;
 }
 
 function getMonthName() {
@@ -282,7 +281,7 @@ function getGristOptions() {
     {
       name: "endDate",
       title: "End Date",
-      optional: false,
+      optional: true,
       type: "DateTime",
       description: "ending point of event",
       allowMultiple: false
@@ -448,7 +447,7 @@ function selectRadioButton(value) {
 // helper function to build a calendar event object from grist flat record
 function buildCalendarEventObject(record) {
   let {startDate: start, endDate: end} = record;
-  if (end === null || (end.getTime() <= start.getTime())) {
+  if (!end || (end.getTime() <= start.getTime())) {
     end = thirtyMinutesFrom(start);
   }
   return {
