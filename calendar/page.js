@@ -394,10 +394,12 @@ async function configureGristSettings() {
   grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions, allowSelectBy: true });
 }
 
-// when a user selects a record in the table, we want to select it on the calendar
-function gristSelectedRecordChanged(record, mappings) {
+// When a user selects a record in the table, we want to select it on the calendar.
+// This method must be run after updateCalendar method, so we need to wait for the same promise to resolve.
+async function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
   if (mappedRecord && calendarHandler) {
+    await colTypesFetcher.getColTypes();
     calendarHandler.selectRecord(mappedRecord);
   }
 }
