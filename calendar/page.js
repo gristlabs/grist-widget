@@ -26,11 +26,12 @@ function ready(fn) {
 
 function isRecordValid(record) {
   const hasStartDate = record.startDate instanceof Date;
+  const maybeHasEndDate = record.endDate === undefined ||
+    record.endDate === null ||
+    record.endDate instanceof Date;
   const hasTitle = typeof record.title === 'string';
-  const hasEndDateOrIsAllDay = record.endDate instanceof Date ||
-    (record.endDate === null && typeof record.isAllDay === 'boolean');
-  const hasValidIsAllDay = record.isAllDay === undefined || typeof record.isAllDay === 'boolean';
-  return hasStartDate && hasTitle && hasEndDateOrIsAllDay && hasValidIsAllDay;
+  const maybeHasIsAllDay = record.isAllDay === undefined || typeof record.isAllDay === 'boolean';
+  return hasStartDate && maybeHasEndDate && hasTitle && maybeHasIsAllDay;
 }
 
 function getMonthName() {
@@ -156,6 +157,8 @@ class CalendarHandler {
           borderColor: this._mainColor,
         },
       ],
+      useFormPopup: true,
+      useDetailPopup: true,
     };
   }
 
@@ -164,15 +167,55 @@ class CalendarHandler {
     const options = this._getCalendarOptions();
     this.previousIds = new Set();
     this.calendar = new tui.Calendar(container, options);
-    this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
+
+    // Not sure how to get a reference to this constructor, so doing it in a roundabout way.
+    this.TZDate = this.calendar.getDate().constructor;
+
     this.calendar.on('clickEvent', async (info) => {
-      focusWidget();
       await grist.setCursorPos({rowId: info.event.id});
     });
+
     this.calendar.on('selectDateTime', async (info) => {
-      focusWidget();
-      await onNewDateBeingSelectedOnCalendar(info);
       this.calendar.clearGridSelections();
+
+      // If this click results in the form popup, focus the title field in it.
+      setTimeout(() => container.querySelector('input[name=title]')?.focus(), 0);
+    });
+
+    // Creation happens via the event-edit form.
+    this.calendar.on('beforeCreateEvent', (eventInfo) => upsertEvent(eventInfo));
+
+    // Updates happen via the form or when dragging the event or its end-time.
+    this.calendar.on('beforeUpdateEvent', (update) => upsertEvent({id: update.event.id, ...update.changes}));
+
+    container.addEventListener('mousedown', () => {
+      focusWidget();
+      // Clear existing selection; this follows the suggested workaround in
+      // https://github.com/nhn/tui.calendar/issues/1300#issuecomment-1273902472
+      this.calendar.clearGridSelections();
+    });
+
+    container.addEventListener('mouseup', () => {
+      // Fix dragging after a tap, when 'mouseup' follows the 'mousedown' so quickly that ToastUI
+      // misses adding a handler, and doesn't stop the drag. If ToastUI handles it, it will stop
+      // the drag or switch to a popup open. If on the next tick, the drag is still on, cancel it.
+      setTimeout(() => {
+        if (this.calendar.getStoreState('dnd').draggingState !== 0) {
+          this.calendar.getStoreDispatchers('dnd').cancelDrag();
+        }
+      }, 0);
+    });
+
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') {
+        this.calendar.getStoreDispatchers('popup').hideFormPopup();
+        this.calendar.getStoreDispatchers('popup').hideDetailPopup();
+      } else if (ev.key === 'Enter') {
+        // On a view popup, click "Edit"; on the edit popup, click "Save". Just try both to keep
+        // it simple, since only one button will be present in practice.
+        container.querySelector('button.toastui-calendar-edit-button')?.click();
+        container.querySelector('button.toastui-calendar-popup-confirm')?.click();
+      }
     });
   }
 
@@ -292,15 +335,15 @@ function getGristOptions() {
       name: "startDate",
       title: "Start Date",
       optional: false,
-      type: "DateTime",
+      type: "Date,DateTime",
       description: "starting point of event",
       allowMultiple: false
     },
     {
       name: "endDate",
       title: "End Date",
-      optional: false,
-      type: "DateTime",
+      optional: true,
+      type: "Date,DateTime",
       description: "ending point of event",
       allowMultiple: false
     },
@@ -338,6 +381,11 @@ async function configureGristSettings() {
   // When options changed in the widget configuration (reaction to perspective change)
   grist.onOptions(onGristSettingsChanged);
 
+  // To get types, we need to know the tableId. This is a way to get it.
+  grist.on('message', (e) => {
+    if (e.tableId && e.mappingsChange) { colTypesFetcher.gotNewMappings(e.tableId); }
+  });
+
   // TODO: remove optional chaining once grist-plugin-api.js includes this function.
   grist.enableKeyboardShortcuts?.();
 
@@ -369,6 +417,7 @@ async function calendarViewChanges(radiobutton) {
 let onGristSettingsChanged = function(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
+  colTypesFetcher.setAccessLevel(settings.accessLevel);
   calendarHandler.setTheme(settings.theme);
 };
 
@@ -376,25 +425,6 @@ function changeCalendarView(view) {
   selectRadioButton(view);
   calendarHandler.changeView(view);
 }
-
-// when user moves or resizes event on the calendar, we want to update the record in the table
-const onCalendarEventBeingUpdated = async (info) => {
-  if (isReadOnly) { return; }
-  focusWidget();
-
-
-  if (info.changes?.start || info.changes?.end) {
-    let gristEvent = {};
-    gristEvent.id = info.event.id;
-    if (info.changes.start) {
-      gristEvent.startDate = roundEpochDateToSeconds(info.changes.start.valueOf());
-    }
-    if (info.changes.end) {
-      gristEvent.endDate = roundEpochDateToSeconds(info.changes.end.valueOf());
-    }
-    await upsertGristRecord(gristEvent);
-  }
-};
 
 // saving events to the table or updating existing one - basing on if ID is present or not in the send event
 async function upsertGristRecord(gristEvent) {
@@ -406,9 +436,14 @@ async function upsertGristRecord(gristEvent) {
 
     // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
     delete mappedRecord.id;
-    //mapColumnNamesBack is returning undefined for all absent fields, so we need to remove them as well
+    // mapColumnNamesBack returns undefined for all absent fields, so we need to remove them as well
+    // (we also use undefined for updates when a field hasn't changed).
     const filteredRecord = Object.fromEntries(Object.entries(mappedRecord)
       .filter(([key, value]) => value !== undefined));
+
+    // Send nothing if there are no changes.
+    if (Object.keys(filteredRecord).length === 0) { return; }
+
     const eventInValidFormat =  { id: gristEvent.id, fields: filteredRecord };
     const table = await grist.getTable();
     if (gristEvent.id) {
@@ -429,24 +464,30 @@ function roundEpochDateToSeconds(date) {
   return date/1000;
 }
 
-// conversion between calendar event object and grist flat format (so the one that is returned in onRecords event
-// and can be mapped by grist.mapColumnNamesBack)
-function buildGristFlatFormatFromEventObject(tuiEvent) {
-  const gristEvent = {
-    startDate: roundEpochDateToSeconds(tuiEvent.start?.valueOf()),
-    endDate: roundEpochDateToSeconds(tuiEvent.end?.valueOf()),
-    isAllDay: tuiEvent.isAllday ? 1 : 0,
-    title: tuiEvent.title??"New Event"
+const secondsPerDay = 24 * 60 * 60;
+
+function makeGristDateTime(tzDate, colType) {
+  const secondsSinceEpoch = tzDate.valueOf() / 1000;
+  if (colType === 'Date') {
+    return Math.floor(secondsSinceEpoch / secondsPerDay) * secondsPerDay;
+  } else {
+    return secondsSinceEpoch;
   }
-  if (tuiEvent.id) { gristEvent.id = tuiEvent.id; }
-  return gristEvent;
 }
 
-// when user selects new date range on the calendar, we want to create a new record in the table
-async function onNewDateBeingSelectedOnCalendar(info) {
-  if (isReadOnly) { return; }
-  const gristEvent = buildGristFlatFormatFromEventObject(info);
-  await upsertGristRecord(gristEvent);
+async function upsertEvent(tuiEvent) {
+  // conversion between calendar event object and grist flat format (so the one that is returned in onRecords event
+  // and can be mapped by grist.mapColumnNamesBack)
+  // tuiEvent can be partial: only the fields present will be updated in Grist.
+  const [startType, endType] = await colTypesFetcher.getColTypes();
+  upsertGristRecord({
+    id: tuiEvent.id,
+    // undefined values will be removed from the fields sent to Grist.
+    startDate: tuiEvent.start ? makeGristDateTime(tuiEvent.start, startType) : undefined,
+    endDate: tuiEvent.end ? makeGristDateTime(tuiEvent.end, endType) : undefined,
+    isAllDay: tuiEvent.isAllday !== undefined ? (tuiEvent.isAllday ? 1 : 0) : undefined,
+    title: tuiEvent.title !== undefined ? (tuiEvent.title || "New Event") : undefined,
+  });
 }
 
 //helper function to select radio button in the GUI
@@ -464,10 +505,18 @@ function selectRadioButton(value) {
 }
 
 // helper function to build a calendar event object from grist flat record
-function buildCalendarEventObject(record) {
-  let {startDate: start, endDate: end} = record;
-  if (end === null || (end.getTime() <= start.getTime())) {
-    end = thirtyMinutesFrom(start);
+function buildCalendarEventObject(record, colTypes) {
+  let {startDate: start, endDate: end, isAllDay: isAllday} = record;
+  let [startType, endType] = colTypes;
+  endType = endType || startType;
+  start = new calendarHandler.TZDate(start).tz(startType === 'Date' ? 'UTC' : 'Local');
+  end = end ? new calendarHandler.TZDate(end).tz(endType === 'Date' ? 'UTC' : 'Local') : start;
+  if (startType === 'Date' && endType === 'Date') {
+    isAllday = true;
+  }
+  // Workaround for midnight zero-length events not showing up.
+  if (!isAllday && end.valueOf() === start.valueOf() && isZeroTime(end) && isZeroTime(start)) {
+    end = new calendarHandler.TZDate(end).addHours(1);
   }
   return {
     id: record.id,
@@ -475,7 +524,7 @@ function buildCalendarEventObject(record) {
     title: record.title,
     start,
     end,
-    isAllday: record.isAllDay,
+    isAllday,
     category: 'time',
     state: 'Free',
   };
@@ -483,10 +532,13 @@ function buildCalendarEventObject(record) {
 
 // when some CRUD operation is performed on the table, we want to update the calendar
 async function updateCalendar(records, mappings) {
+  if (mappings) { colTypesFetcher.gotMappings(mappings); }
+
   const mappedRecords = grist.mapColumnNames(records, mappings);
   // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
-    const CalendarEventObjects = mappedRecords.filter(isRecordValid).map(buildCalendarEventObject);
+    const colTypes = await colTypesFetcher.getColTypes();
+    const CalendarEventObjects = mappedRecords.filter(isRecordValid).map(r => buildCalendarEventObject(r, colTypes));
     await calendarHandler.updateCalendarEvents(CalendarEventObjects);
   }
   dataVersion = Date.now();
@@ -499,6 +551,60 @@ function focusWidget() {
 function thirtyMinutesFrom(date) {
   return new Date(date.getTime() + 30 * 60 * 1000);
 }
+
+function isZeroTime(date) {
+  return date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0;
+}
+
+// We have no good way yet to get the type of a mapped column when multiple types are allowed. We
+// get it via the metadata tables instead. There is no good way to know when a column's type is
+// changed, so we skip that for now.
+// TODO: Drop all this once the API can tell us column info.
+class ColTypesFetcher {
+  // Returns array of types for the array of colIds.
+  static async getTypes(tableId, colIds) {
+    const tables = await grist.docApi.fetchTable('_grist_Tables');
+    const columns = await grist.docApi.fetchTable('_grist_Tables_column');
+    const tableRef = tables.id[tables.tableId.indexOf(tableId)];
+    return colIds.map(colId => {
+      const index = columns.id.findIndex((id, i) => (columns.parentId[i] === tableRef && columns.colId[i] === colId));
+      return columns.type[index];
+    });
+  }
+
+  constructor() {
+    this._tableId = null;
+    this._colIds = null;
+    this._colTypesPromise = Promise.resolve([null, null]);;
+    this._accessLevel = 'full';
+  }
+  setAccessLevel(accessLevel) {
+    this._accessLevel = accessLevel;
+  }
+  gotMappings(mappings) {
+    // Can't fetch metadata when no full access.
+    if (this._accessLevel !== 'full') { return; }
+    if (!this._colIds || !(mappings.startDate === this._colIds[0] && mappings.endDate === this._colIds[1])) {
+      this._colIds = [mappings.startDate, mappings.endDate];
+      if (this._tableId) {
+        this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
+      }
+    }
+  }
+  gotNewMappings(tableId) {
+    // Can't fetch metadata when no full access.
+    if (this._accessLevel !== 'full') { return; }
+    this._tableId = tableId;
+    if (this._colIds) {
+      this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
+    }
+  }
+  async getColTypes() {
+    return this._colTypesPromise;
+  }
+}
+
+const colTypesFetcher = new ColTypesFetcher();
 
 function testGetCalendarEvent(eventId) {
   const calendarObject = calendarHandler.calendar.getEvent(eventId, CALENDAR_NAME);
