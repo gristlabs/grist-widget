@@ -219,29 +219,40 @@ class CalendarHandler {
     });
   }
 
+  _isMultidayInMonthViewEvent(rec)  {
+    const startDate = rec.start.toDate();
+    const endDate = rec.end.toDate();
+    const isItMonthView = this.calendar.getViewName() === 'month';
+    const isEventMultiDay = startDate.getDate() !== endDate.getDate() ||
+      startDate.getMonth() !== endDate.getMonth() ||
+      startDate.getFullYear() !== endDate.getFullYear();
+    return isItMonthView &&  !isEventMultiDay
+  }
+
   selectRecord(record) {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
-    grist.setCursorPos({rowId: record.id});
-
     if (this._selectedRecordId) {
-      this.calendar.updateEvent(this._selectedRecordId, CALENDAR_NAME, {borderColor: this._mainColor});
+      this._colorCalendarEvent(this._selectedRecordId, this._mainColor);
     }
-    this.calendar.updateEvent(record.id, CALENDAR_NAME, {borderColor: this._selectedColor});
     this._selectedRecordId = record.id;
     this.calendar.setDate(record.startDate);
     updateUIAfterNavigation();
 
     // If the view has a vertical timeline, scroll to the start of the event.
-    if (!record.isAllDay && this.calendar.getViewName() !== 'month') {
-      const dom = document.querySelector('.toastui-calendar-time');
-      const start = record.startDate;
-      const minutesInDayUntilStart = (start.getHours() * 60) + start.getMinutes();
-      const totalMinutesInDay = 24 * 60;
-      const top = ((dom.scrollHeight / totalMinutesInDay) * minutesInDayUntilStart);
-      dom.scrollTo({top, behavior: 'smooth'});
+    if (!record.isAllday && this.calendar.getViewName() !== 'month') {
+      setTimeout(() => {
+        const event = document.querySelector(`[data-event-id="${record.id}"]`);
+        if (event) { event.scrollIntoView({behavior: 'smooth'}); }
+      }, 0);
     }
+  }
+
+  _colorCalendarEvent(eventId, color) {
+    const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
+    const shouldPaintBackground = this._isMultidayInMonthViewEvent(event);
+    this.calendar.updateEvent(eventId, CALENDAR_NAME, {borderColor: color, backgroundColor: shouldPaintBackground?color:this._mainColor});
   }
 
   // change calendar perspective between week, month and day.
@@ -266,6 +277,12 @@ class CalendarHandler {
   calendarToday() {
     this.calendar.today();
     updateUIAfterNavigation();
+  }
+
+  refreshSelectedRecord(){
+    if (this._selectedRecordId) {
+      this._colorCalendarEvent(this._selectedRecordId, this._selectedColor);
+    }
   }
 
   // update calendar events based on the collection of records from the grist table.
@@ -352,6 +369,8 @@ function getGristOptions() {
 function updateUIAfterNavigation(){
   // update name of the month and year displayed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
+  // refresh colors of selected event (in month view it's different from in other views)
+  calendarHandler.refreshSelectedRecord();
 }
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
@@ -399,6 +418,7 @@ let onGristSettingsChanged = function(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
+  calendarHandler.setTheme(settings.theme);
 };
 
 function changeCalendarView(view) {
@@ -594,7 +614,7 @@ function testGetCalendarEvent(eventId) {
       startDate: calendarObject?.start.d.d,
       endDate: calendarObject?.end.d.d,
       isAllDay: calendarObject?.isAllday ?? false,
-      selected: calendarObject?.backgroundColor === CalendarHandler._selectedColor
+      selected: calendarObject?.borderColor === calendarHandler._selectedColor
     };
     return JSON.stringify(eventData);
   } else {

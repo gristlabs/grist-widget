@@ -261,8 +261,8 @@ body {
 
 /*** END popup-related styling ***/
 
-.calendar-button-previous,
-.calendar-button-next {
+#calendar-button-previous,
+#calendar-button-next {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -284,7 +284,6 @@ input:checked + label {
 }
 
 #calendar {
-  height: 100%;
   flex-grow: 1;
   overflow: auto;
 }
@@ -296,8 +295,8 @@ input:checked + label {
 }
 
 /*Overriding some Toast UI styles that cannot be configured via theme*/
-.toastui-calendar-panel.toastui-calendar-time {
-  overflow-y: inherit;
+.toastui-calendar-panel {
+  scrollbar-gutter: stable;
 }
 
 .toastui-calendar-timegrid-time {
