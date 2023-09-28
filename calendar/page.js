@@ -234,7 +234,7 @@ class CalendarHandler {
       return;
     }
     if (this._selectedRecordId) {
-      this._colorCalendarEvent(this._selectedRecordId, this._mainColor);
+      this._clearHighlightEvent(this._selectedRecordId, );
     }
     this._selectedRecordId = record.id;
     this.calendar.setDate(record.startDate);
@@ -249,10 +249,24 @@ class CalendarHandler {
     }
   }
 
-  _colorCalendarEvent(eventId, color) {
+  _highlightEvent(eventId) {
     const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
+    // If this event is shown on month view as a dot.
     const shouldPaintBackground = this._isMultidayInMonthViewEvent(event);
-    this.calendar.updateEvent(eventId, CALENDAR_NAME, {borderColor: color, backgroundColor: shouldPaintBackground?color:this._mainColor});
+    // We will highlight it by changing the background color. Otherwise wi will change the border color.
+    const partToColor = shouldPaintBackground ? 'background' : 'border';
+    const previousColor = event[partToColor] ?? this._mainColor;
+    this.calendar.updateEvent(eventId, CALENDAR_NAME, { [partToColor]: this._selectedColor});
+  }
+
+  _clearHighlightEvent(eventId) {
+    const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
+    // If this event is shown on month view as a dot.
+    const shouldPaintBackground = this._isMultidayInMonthViewEvent(event);
+    // We will highlight it by changing the background color. Otherwise wi will change the border color.
+    const partToColor = shouldPaintBackground ? 'background' : 'border';
+    const previousColor = event[partToColor] ?? this._mainColor;
+    this.calendar.updateEvent(eventId, CALENDAR_NAME, {[partToColor]: previousColor});
   }
 
   // change calendar perspective between week, month and day.
@@ -281,7 +295,7 @@ class CalendarHandler {
 
   refreshSelectedRecord(){
     if (this._selectedRecordId) {
-      this._colorCalendarEvent(this._selectedRecordId, this._selectedColor);
+      this._highlightEvent(this._selectedRecordId);
     }
   }
 
