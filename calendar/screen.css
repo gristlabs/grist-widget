@@ -19,7 +19,7 @@ body {
   gap: 10px 15px;
   flex-wrap: wrap;
   padding: 10px;
-  align-items: baseline;
+  align-items: center;
 }
 
 /*overriding bootstrap button colors*/
