@@ -190,7 +190,6 @@ class CalendarHandler {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
-    grist.setCursorPos({rowId: record.id});
     if (this._selectedRecordId) {
       this._colorCalendarEvent(this._selectedRecordId, this._mainColor);
     }
