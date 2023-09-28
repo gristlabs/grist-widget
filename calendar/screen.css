@@ -92,6 +92,8 @@ body {
   height: 100%;
 }
 
+/*** BEGIN popup-related styling ***/
+
 /* On an event-view card, hide "detail" sections, since we have nothing to show there */
 .toastui-calendar-section-detail {
   display: none;
@@ -142,32 +144,7 @@ body {
   margin: 8px 0;
 }
 
-.calendar-button{
-  font-family: inherit;
-  font-size: 1em;
-  border: none;
-  border-top: 1px solid #11B683;
-  border-bottom: 1px solid #11B683;
-  /*   border-radius: 4px; */
-  letter-spacing: -0.08px;
-  padding: 4px 8px;
-  background:transparent;
-}
-
-.calendar-button:last-of-type {
-  border-right: 1px solid #11B683;
-  border-radius: 0 5px 5px 0;
-}
-
-.calendar-button:first-of-type {
-  border-left: 1px solid #11B683;
-  border-radius: 5px 0 0 5px;
-}
-
-.calendar-button:hover {
-  color: #009058;
-  border-color: #009058;
-}
+/*** END popup-related styling ***/
 
 .calendar-button-previous,
 .calendar-button-next {
