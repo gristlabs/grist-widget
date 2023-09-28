@@ -229,7 +229,7 @@ class CalendarHandler {
     return isItMonthView &&  !isEventMultiDay
   }
 
-  selectRecord(record) {
+  async selectRecord(record) {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
@@ -237,7 +237,9 @@ class CalendarHandler {
       this._colorCalendarEvent(this._selectedRecordId, this._mainColor);
     }
     this._selectedRecordId = record.id;
-    this.calendar.setDate(record.startDate);
+    const [startType] = await colTypesFetcher.getColTypes();
+    const startDate = getAdjustedDate(record.startDate, startType);
+    this.calendar.setDate(startDate);
     updateUIAfterNavigation();
 
     // If the view has a vertical timeline, scroll to the start of the event.
@@ -395,12 +397,10 @@ async function configureGristSettings() {
 }
 
 // When a user selects a record in the table, we want to select it on the calendar.
-// This method must be run after updateCalendar method, so we need to wait for the same promise to resolve.
 async function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
   if (mappedRecord && calendarHandler) {
-    await colTypesFetcher.getColTypes();
-    calendarHandler.selectRecord(mappedRecord);
+    await calendarHandler.selectRecord(mappedRecord);
   }
 }
 
@@ -509,13 +509,31 @@ function selectRadioButton(value) {
   }
 }
 
+/**
+ * Returns a new date that's shifted towards UTC+0 if `colType` is `Date`.
+ * 
+ * Returns `date` unchanged if `colType` is `DateTime`.
+ */
+function getAdjustedDate(date, colType) {
+  if (colType !== 'Date') { return date; }
+
+  // Like date.tz('UTC'), but accounts for DST differences.
+  const ms = date.valueOf() + (date.getTimezoneOffset() * 60000);
+  return new Date(ms);
+}
+
 // helper function to build a calendar event object from grist flat record
 function buildCalendarEventObject(record, colTypes) {
   let {startDate: start, endDate: end, isAllDay: isAllday} = record;
   let [startType, endType] = colTypes;
   endType = endType || startType;
-  start = new calendarHandler.TZDate(start).tz(startType === 'Date' ? 'UTC' : 'Local');
-  end = end ? new calendarHandler.TZDate(end).tz(endType === 'Date' ? 'UTC' : 'Local') : start;
+  start = getAdjustedDate(start, startType);
+  end = end ? getAdjustedDate(end, endType) : start
+
+  // Normalize records with invalid start/end times so that they're visible
+  // in the calendar.
+  if (end < start) { end = start; }
+
   if (startType === 'Date' && endType === 'Date') {
     isAllday = true;
   }
@@ -551,10 +569,6 @@ async function updateCalendar(records, mappings) {
 
 function focusWidget() {
   window.focus();
-}
-
-function thirtyMinutesFrom(date) {
-  return new Date(date.getTime() + 30 * 60 * 1000);
 }
 
 function isZeroTime(date) {
