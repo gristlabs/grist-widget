@@ -107,8 +107,8 @@ body {
   border-color: #009058;
 }
 
-.calendar-button-previous,
-.calendar-button-next {
+#calendar-button-previous,
+#calendar-button-next {
   display: flex;
   justify-content: center;
   align-items: center;
