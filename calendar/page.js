@@ -166,51 +166,51 @@ class CalendarHandler {
     const options = this._getCalendarOptions();
     this.previousIds = new Set();
     this.calendar = new tui.Calendar(container, options);
-    this.calendar.on('beforeUpdateEvent', onCalendarEventBeingUpdated);
     this.calendar.on('clickEvent', async (info) => {
       focusWidget();
       await grist.setCursorPos({rowId: info.event.id});
     });
+
     this.calendar.on('selectDateTime', async (info) => {
       focusWidget();
-
-      setTimeout(() => {
-        const title = container.querySelector('input[name=title]');
-        if (title) {
-          title.focus();
-        }
-      }, 0);
       this.calendar.clearGridSelections();
+
+      // If this click results in the form popup, focus the title field in it.
+      setTimeout(() => container.querySelector('input[name=title]')?.focus(), 0);
     });
-    this.calendar.on('beforeUpdateEvent', async (e) => {
-      const info = {...e.event, ...e.changes};
-      const gristEvent = buildGristFlatFormatFromEventObject(info);
-      await upsertGristRecord(gristEvent);
-    });
-    this.calendar.on('beforeCreateEvent', async (e) => {
-      const gristEvent = buildGristFlatFormatFromEventObject(e);
-      await upsertGristRecord(gristEvent);
-    });
+
+    // Creation happens via the event-edit form.
+    this.calendar.on('beforeCreateEvent', (eventInfo) => upsertEvent(eventInfo));
+
+    // Updates happen via the form or when dragging the event or its end-time.
+    this.calendar.on('beforeUpdateEvent', (update) => upsertEvent({id: update.event.id, ...update.changes}));
 
     container.addEventListener('mousedown', () => {
-      // Follows the suggested workaround in
+      // Clear existing selection; this follows the suggested workaround in
       // https://github.com/nhn/tui.calendar/issues/1300#issuecomment-1273902472
       this.calendar.clearGridSelections();
     });
 
     container.addEventListener('mouseup', () => {
+      // Fix dragging after a tap, when 'mouseup' follows the 'mousedown' so quickly that ToastUI
+      // misses adding a handler, and doesn't stop the drag. If ToastUI handles it, it will stop
+      // the drag or switch to a popup open. If on the next tick, the drag is still on, cancel it.
       setTimeout(() => {
         if (this.calendar.getStoreState('dnd').draggingState !== 0) {
           this.calendar.getStoreDispatchers('dnd').cancelDrag();
         }
       }, 0);
     });
+
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape') {
         this.calendar.getStoreDispatchers('popup').hideFormPopup();
         this.calendar.getStoreDispatchers('popup').hideDetailPopup();
       } else if (ev.key === 'Enter') {
-        container.querySelector('button[type=submit]').click();
+        // On a view popup, click "Edit"; on the edit popup, click "Save". Just try both to keep
+        // it simple, since only one button will be present in practice.
+        container.querySelector('button.toastui-calendar-edit-button')?.click();
+        container.querySelector('button.toastui-calendar-popup-confirm')?.click();
       }
     });
   }
@@ -379,7 +379,7 @@ function gristSelectedRecordChanged(record, mappings) {
 async function calendarViewChanges(radiobutton) {
   changeCalendarView(radiobutton.value);
   if (!isReadOnly) {
-    await grist.setOption('calendarViewPerspective', radiobutton.value);    
+    await grist.setOption('calendarViewPerspective', radiobutton.value);
   }
 }
 
@@ -398,25 +398,6 @@ function changeCalendarView(view) {
   calendarHandler.changeView(view);
 }
 
-// when user moves or resizes event on the calendar, we want to update the record in the table
-const onCalendarEventBeingUpdated = async (info) => {
-  if (isReadOnly) { return; }
-  focusWidget();
-
-
-  if (info.changes?.start || info.changes?.end) {
-    let gristEvent = {};
-    gristEvent.id = info.event.id;
-    if (info.changes.start) {
-      gristEvent.startDate = roundEpochDateToSeconds(info.changes.start.valueOf());
-    }
-    if (info.changes.end) {
-      gristEvent.endDate = roundEpochDateToSeconds(info.changes.end.valueOf());
-    }
-    await upsertGristRecord(gristEvent);
-  }
-};
-
 // saving events to the table or updating existing one - basing on if ID is present or not in the send event
 async function upsertGristRecord(gristEvent) {
   try {
@@ -427,9 +408,14 @@ async function upsertGristRecord(gristEvent) {
 
     // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
     delete mappedRecord.id;
-    //mapColumnNamesBack is returning undefined for all absent fields, so we need to remove them as well
+    // mapColumnNamesBack returns undefined for all absent fields, so we need to remove them as well
+    // (we also use undefined for updates when a field hasn't changed).
     const filteredRecord = Object.fromEntries(Object.entries(mappedRecord)
       .filter(([key, value]) => value !== undefined));
+
+    // Send nothing if there are no changes.
+    if (Object.keys(filteredRecord).length === 0) { return; }
+
     const eventInValidFormat =  { id: gristEvent.id, fields: filteredRecord };
     const table = await grist.getTable();
     if (gristEvent.id) {
@@ -452,22 +438,16 @@ function roundEpochDateToSeconds(date) {
 
 // conversion between calendar event object and grist flat format (so the one that is returned in onRecords event
 // and can be mapped by grist.mapColumnNamesBack)
-function buildGristFlatFormatFromEventObject(tuiEvent) {
-  const gristEvent = {
-    startDate: roundEpochDateToSeconds(tuiEvent.start?.valueOf()),
-    endDate: roundEpochDateToSeconds(tuiEvent.end?.valueOf()),
-    isAllDay: tuiEvent.isAllday ? 1 : 0,
-    title: tuiEvent.title??"New Event"
-  }
-  if (tuiEvent.id) { gristEvent.id = tuiEvent.id; }
-  return gristEvent;
-}
-
-// when user selects new date range on the calendar, we want to create a new record in the table
-async function onNewDateBeingSelectedOnCalendar(info) {
-  if (isReadOnly) { return; }
-  const gristEvent = buildGristFlatFormatFromEventObject(info);
-  await upsertGristRecord(gristEvent);
+// tuiEvent can be partial: only the fields present will be updated in Grist.
+function upsertEvent(tuiEvent) {
+  upsertGristRecord({
+    id: tuiEvent.id,
+    // undefined values will be removed from the fields sent to Grist.
+    startDate: tuiEvent.start ? roundEpochDateToSeconds(tuiEvent.start.valueOf()) : undefined,
+    endDate: tuiEvent.end ? roundEpochDateToSeconds(tuiEvent.end.valueOf()) : undefined,
+    isAllDay: tuiEvent.isAllday !== undefined ? (tuiEvent.isAllday ? 1 : 0) : undefined,
+    title: tuiEvent.title !== undefined ? (tuiEvent.title || "New Event") : undefined,
+  });
 }
 
 //helper function to select radio button in the GUI
