@@ -102,11 +102,44 @@ body {
   margin: 0;
 }
 
+.toastui-calendar-popup-container {
+  max-width: 100%;
+  font-weight: unset;
+}
+
+.toastui-calendar-popup-container .toastui-calendar-template-popupDetailDate {
+  color: var(--grist-theme-text-light);
+}
+
+.toastui-calendar-detail-container,
+.toastui-calendar-form-container {
+  max-width: 100%;
+  min-width: 200px;
+  border-radius: 4px;
+  border: none;
+  box-shadow: 0 2px 20px 0 var(--grist-theme-menu-shadow, rgba(38, 38, 51, 0.6));
+}
+
 /* On an event-edit card, hide those detail sections for which we have nothing to show */
 .toastui-calendar-form-container .toastui-calendar-popup-section:nth-child(1),
 .toastui-calendar-form-container .toastui-calendar-popup-section:nth-child(3),
-.toastui-calendar-form-container .toastui-calendar-popup-section:nth-child(5) {
+.toastui-calendar-form-container .toastui-calendar-popup-section:nth-child(5),
+.toastui-calendar-form-container .toastui-calendar-popup-section-private {
   display: none;
+}
+
+.toastui-calendar-form-container .toastui-calendar-popup-section-title {
+  width: calc(100% - 16px);
+}
+.toastui-calendar-form-container input.toastui-calendar-content {
+  width: calc(100% - 16px);
+}
+.toastui-calendar-popup-button.toastui-calendar-popup-confirm {
+  background-color: var(--grist-theme-control-primary-bg);
+  color: var(--grist-theme-control-primary-fg);
+  border: var(--grist-theme-control-border);
+  border-radius: 4px;
+  margin: 8px 0;
 }
 
 .calendar-button{
