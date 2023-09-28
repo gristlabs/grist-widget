@@ -467,11 +467,16 @@ function roundEpochDateToSeconds(date) {
 const secondsPerDay = 24 * 60 * 60;
 
 function makeGristDateTime(tzDate, colType) {
-  const secondsSinceEpoch = tzDate.valueOf() / 1000;
   if (colType === 'Date') {
+    const localMidnight = new calendarHandler.TZDate(tzDate);
+    localMidnight.setHours(0);
+    localMidnight.setMinutes(0);
+    localMidnight.setSeconds(0);
+    const secondsSinceEpoch = localMidnight.valueOf() / 1000;
+    // Round down to UTC midnight.
     return Math.floor(secondsSinceEpoch / secondsPerDay) * secondsPerDay;
   } else {
-    return secondsSinceEpoch;
+    return tzDate.valueOf() / 1000;
   }
 }
 
@@ -480,14 +485,15 @@ async function upsertEvent(tuiEvent) {
   // and can be mapped by grist.mapColumnNamesBack)
   // tuiEvent can be partial: only the fields present will be updated in Grist.
   const [startType, endType] = await colTypesFetcher.getColTypes();
-  upsertGristRecord({
+  const gristEvent = {
     id: tuiEvent.id,
     // undefined values will be removed from the fields sent to Grist.
     startDate: tuiEvent.start ? makeGristDateTime(tuiEvent.start, startType) : undefined,
     endDate: tuiEvent.end ? makeGristDateTime(tuiEvent.end, endType) : undefined,
     isAllDay: tuiEvent.isAllday !== undefined ? (tuiEvent.isAllday ? 1 : 0) : undefined,
     title: tuiEvent.title !== undefined ? (tuiEvent.title || "New Event") : undefined,
-  });
+  }
+  upsertGristRecord(gristEvent);
 }
 
 //helper function to select radio button in the GUI
