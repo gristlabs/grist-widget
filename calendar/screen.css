@@ -333,6 +333,11 @@ input:checked + label {
   padding: 0px;
 }
 
+.toastui-calendar-week-view .toastui-calendar-holiday-sun,
+.toastui-calendar-day-view .toastui-calendar-holiday-sun {
+  color: var(--grist-theme-accent-text) !important;
+}
+
 @media (max-width: 575.98px) {
   /* CSS hacks to make days of week more responsive in week view. */
   .toastui-calendar-week-view .toastui-calendar-day-name__date,
