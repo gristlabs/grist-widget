@@ -517,6 +517,7 @@ function selectRadioButton(value) {
 function getAdjustedDate(date, colType) {
   if (colType !== 'Date') { return date; }
 
+  // Like date.tz('UTC'), but accounts for DST differences.
   const ms = date.valueOf() + (date.getTimezoneOffset() * 60000);
   return new Date(ms);
 }
