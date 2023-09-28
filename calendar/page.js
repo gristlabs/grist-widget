@@ -468,11 +468,8 @@ const secondsPerDay = 24 * 60 * 60;
 
 function makeGristDateTime(tzDate, colType) {
   if (colType === 'Date') {
-    const localMidnight = new calendarHandler.TZDate(tzDate);
-    localMidnight.setHours(0);
-    localMidnight.setMinutes(0);
-    localMidnight.setSeconds(0);
-    const secondsSinceEpoch = localMidnight.valueOf() / 1000;
+    // Reinterpret the time as UTC. Note: timezone offset is in minutes.
+    const secondsSinceEpoch = tzDate.valueOf() / 1000 - tzDate.getTimezoneOffset() * 60;
     // Round down to UTC midnight.
     return Math.floor(secondsSinceEpoch / secondsPerDay) * secondsPerDay;
   } else {
