@@ -106,7 +106,7 @@ class CalendarHandler {
         backgroundColor: 'var(--grist-theme-accent-text)',
       },
       nowIndicatorToday: {
-        border: '1px solid var(--grist-theme-accent-border',
+        border: '1px solid var(--grist-theme-accent-border)',
       },
       today: {
         color: this._textColor,
@@ -200,12 +200,10 @@ class CalendarHandler {
 
     // If the view has a vertical timeline, scroll to the start of the event.
     if (!record.isAllday && this.calendar.getViewName() !== 'month') {
-      const dom = document.querySelector('.toastui-calendar-time');
-      const start = record.startDate;
-      const minutesInDayUntilStart = (start.getHours() * 60) + start.getMinutes();
-      const totalMinutesInDay = 24 * 60;
-      const top = ((dom.scrollHeight / totalMinutesInDay) * minutesInDayUntilStart);
-      dom.scrollTo({top, behavior: 'smooth'});
+      setTimeout(() => {
+        const event = document.querySelector(`[data-event-id="${record.id}"]`);
+        if (event) { event.scrollIntoView({behavior: 'smooth'}); }
+      }, 0);
     }
   }
 

@@ -1,3 +1,8 @@
+:root {
+  --icon-ArrowLeft: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTSA4Ljc4NDkzNDYsMTQuNjcwNzUzIDIuNzg0NjI5Niw4LjYyMTMyMjUgYyAtMC4zNjgyMDg0LC0wLjM3MTIzIC0wLjM2ODIwODQsLTAuOTczMSAwLC0xLjM0NDMyIGwgNi4wMDAzMDUsLTYuMDQ5NDI0IGMgMC4zNjgyMSwtMC4zNzEyMjI3NiAwLjk2NTE5LC0wLjM3MTIyMjc2IDEuMzMzNDAwNCwwIDAuMzY4MjEsMC4zNzEyMjMgMC4zNjgyMSwwLjk3MzA5NCAwLDEuMzQ0MzE0IGwgLTQuMzkwNzUwNCw0LjQyNjY5IGggNy43ODA4OTA0IHYgMS45MDExNSBIIDUuNzI3NTg0NiBsIDQuMzkwNzUwNCw0LjQyNjcyMDUgYyAwLjM2ODIxLDAuMzcxMiAwLjM2ODIxLDAuOTczMSAwLDEuMzQ0MyAtMC4zNjgyMTA0LDAuMzcxMiAtMC45NjUxOTA0LDAuMzcxMiAtMS4zMzM0MDA0LDAgeiIgY2xpcC1ydWxlPSJldmVub2RkIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=');
+  --icon-ArrowRight: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTSA3LjIzMjAxMzcsMTQuNjcwNzUzIDEzLjIzMjMxOSw4LjYyMTMyMjUgYyAwLjM2ODIwOCwtMC4zNzEyMyAwLjM2ODIwOCwtMC45NzMxIDAsLTEuMzQ0MzIgTCA3LjIzMjAxMzcsMS4yMjc1Nzg1IGMgLTAuMzY4MjEsLTAuMzcxMjIyNzYgLTAuOTY1MTksLTAuMzcxMjIyNzYgLTEuMzMzNDAwNCwwIC0wLjM2ODIxLDAuMzcxMjIzIC0wLjM2ODIxLDAuOTczMDk0IDAsMS4zNDQzMTQgbCA0LjM5MDc1MDcsNC40MjY2OSBIIDIuNTA4NDczMyB2IDEuOTAxMTUgSCAxMC4yODkzNjQgTCA1Ljg5ODYxMzMsMTMuMzI2NDUzIGMgLTAuMzY4MjEsMC4zNzEyIC0wLjM2ODIxLDAuOTczMSAwLDEuMzQ0MyAwLjM2ODIxMDQsMC4zNzEyIDAuOTY1MTkwNCwwLjM3MTIgMS4zMzM0MDA0LDAgeiIgY2xpcC1ydWxlPSJldmVub2RkIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=');
+}
+
 html, body {
   height: 100%;
 }
@@ -23,6 +28,35 @@ body {
   border-color: var(--grist-theme-button-group-border);
   padding: 4px 10px;
   outline: none;
+}
+
+#calendar-options .btn:active {
+  box-shadow: unset;
+}
+
+.icon {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  width: 13px;
+  height: 13px;
+  background-color: var(--icon-color, var(--grist-theme-text, black));
+}
+
+.icon-arrow-left {
+  mask-image: var(--icon-ArrowLeft);
+  -webkit-mask-image: var(--icon-ArrowLeft);
+}
+
+.icon-arrow-right {
+  mask-image: var(--icon-ArrowRight);
+  -webkit-mask-image: var(--icon-ArrowRight);
 }
 
 #calendar-options .btn:hover {
@@ -73,6 +107,13 @@ body {
   border-color: #009058;
 }
 
+.calendar-button-previous,
+.calendar-button-next {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 input:checked + label {
   color: var(--grist-theme-control-primary-fg);
 }
@@ -89,7 +130,6 @@ input:checked + label {
 }
 
 #calendar {
-  height: 100%;
   flex-grow: 1;
   overflow: auto;
 }
@@ -101,8 +141,8 @@ input:checked + label {
 }
 
 /*Overriding some Toast UI styles that cannot be configured via theme*/
-.toastui-calendar-panel.toastui-calendar-time {
-  overflow-y: inherit;
+.toastui-calendar-panel {
+  scrollbar-gutter: stable;
 }
 
 .toastui-calendar-timegrid-time {
@@ -137,4 +177,35 @@ input:checked + label {
 
 .toastui-calendar-day-names.toastui-calendar-month{
   padding: 0px;
+}
+
+@media (max-width: 575.98px) {
+  /* CSS hacks to make days of week more responsive in week view. */
+  .toastui-calendar-week-view .toastui-calendar-day-name__date,
+  .toastui-calendar-week-view .toastui-calendar-day-name__name {
+    font-size: 11px;
+    line-height: 11px;
+  }
+
+  .toastui-calendar-week-view .toastui-calendar-day-name-item.toastui-calendar-week {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toastui-calendar-week-view .toastui-calendar-day-name-item > span {
+    /* Collapse the &nbsp characters by shrinking the font and line-height to 0px. */
+    font-size: 0px;
+    line-height: 0px;
+
+    display: flex;
+    flex-direction: column-reverse;
+    row-gap: 4px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toastui-calendar-week-view .toastui-calendar-day-name-item {
+    padding: 0 4px;
+  }
 }
