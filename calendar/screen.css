@@ -251,6 +251,10 @@ body {
   display: none;    /* no easy way to adjust color for dark mode */
 }
 
+.toastui-calendar-detail-container .toastui-calendar-section-button {
+  border-top: 1px solid var(--grist-theme-menu-border);
+}
+
 .toastui-calendar-form-container input::placeholder {
   color: var(--grist-theme-input-placeholder-fg);
 }
