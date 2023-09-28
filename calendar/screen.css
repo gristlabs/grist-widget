@@ -1,6 +1,7 @@
 :root {
   --icon-ArrowLeft: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTSA4Ljc4NDkzNDYsMTQuNjcwNzUzIDIuNzg0NjI5Niw4LjYyMTMyMjUgYyAtMC4zNjgyMDg0LC0wLjM3MTIzIC0wLjM2ODIwODQsLTAuOTczMSAwLC0xLjM0NDMyIGwgNi4wMDAzMDUsLTYuMDQ5NDI0IGMgMC4zNjgyMSwtMC4zNzEyMjI3NiAwLjk2NTE5LC0wLjM3MTIyMjc2IDEuMzMzNDAwNCwwIDAuMzY4MjEsMC4zNzEyMjMgMC4zNjgyMSwwLjk3MzA5NCAwLDEuMzQ0MzE0IGwgLTQuMzkwNzUwNCw0LjQyNjY5IGggNy43ODA4OTA0IHYgMS45MDExNSBIIDUuNzI3NTg0NiBsIDQuMzkwNzUwNCw0LjQyNjcyMDUgYyAwLjM2ODIxLDAuMzcxMiAwLjM2ODIxLDAuOTczMSAwLDEuMzQ0MyAtMC4zNjgyMTA0LDAuMzcxMiAtMC45NjUxOTA0LDAuMzcxMiAtMS4zMzM0MDA0LDAgeiIgY2xpcC1ydWxlPSJldmVub2RkIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=');
   --icon-ArrowRight: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTSA3LjIzMjAxMzcsMTQuNjcwNzUzIDEzLjIzMjMxOSw4LjYyMTMyMjUgYyAwLjM2ODIwOCwtMC4zNzEyMyAwLjM2ODIwOCwtMC45NzMxIDAsLTEuMzQ0MzIgTCA3LjIzMjAxMzcsMS4yMjc1Nzg1IGMgLTAuMzY4MjEsLTAuMzcxMjIyNzYgLTAuOTY1MTksLTAuMzcxMjIyNzYgLTEuMzMzNDAwNCwwIC0wLjM2ODIxLDAuMzcxMjIzIC0wLjM2ODIxLDAuOTczMDk0IDAsMS4zNDQzMTQgbCA0LjM5MDc1MDcsNC40MjY2OSBIIDIuNTA4NDczMyB2IDEuOTAxMTUgSCAxMC4yODkzNjQgTCA1Ljg5ODYxMzMsMTMuMzI2NDUzIGMgLTAuMzY4MjEsMC4zNzEyIC0wLjM2ODIxLDAuOTczMSAwLDEuMzQ0MyAwLjM2ODIxMDQsMC4zNzEyIDAuOTY1MTkwNCwwLjM3MTIgMS4zMzM0MDA0LDAgeiIgY2xpcC1ydWxlPSJldmVub2RkIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=');
+  --icon-Tick: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTExLjYxODMwNjksNC42NzcwMjg0NyBDMTEuNzk2Njc4OSw0LjQ2NjIyNTE3IDEyLjExMjE2NzgsNC40Mzk5MzQ0MyAxMi4zMjI5NzExLDQuNjE4MzA2NDUgQzEyLjUzMzc3NDQsNC43OTY2Nzg0OCAxMi41NjAwNjUyLDUuMTEyMTY3NDEgMTIuMzgxNjkzMSw1LjMyMjk3MDcxIEw2LjUzMDY4ODI3LDEyLjIzNzc5NDYgTDMuNjQ2NDQ2NjEsOS4zNTM1NTI5OCBDMy40NTExODQ0Niw5LjE1ODI5MDg0IDMuNDUxMTg0NDYsOC44NDE3MDgzNSAzLjY0NjQ0NjYxLDguNjQ2NDQ2MiBDMy44NDE3MDg3Niw4LjQ1MTE4NDA2IDQuMTU4MjkxMjQsOC40NTExODQwNiA0LjM1MzU1MzM5LDguNjQ2NDQ2MiBMNi40NjkzMTE3MywxMC43NjIyMDQ1IEwxMS42MTgzMDY5LDQuNjc3MDI4NDcgWiIgZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJub256ZXJvIi8+PC9zdmc+');
 }
 
 html, body {
@@ -120,6 +121,8 @@ body {
   border-radius: 4px;
   border: none;
   box-shadow: 0 2px 20px 0 var(--grist-theme-menu-shadow, rgba(38, 38, 51, 0.6));
+  background-color: var(--grist-theme-popup-bg);
+  color: var(--grist-theme-text);
 }
 
 /* On an event-edit card, hide those detail sections for which we have nothing to show */
@@ -130,19 +133,124 @@ body {
   display: none;
 }
 
-.toastui-calendar-form-container .toastui-calendar-popup-section-title {
+.toastui-calendar-popup-section-item {
+  border: 1px solid var(--grist-theme-input-border);
+  background-color: var(--grist-theme-input-bg);
+}
+.toastui-calendar-popup-section-item input {
+  background-color: var(--grist-theme-input-bg);
+}
+.toastui-calendar-popup-section-allday {
+  border: none;
+}
+.toastui-calendar-popup-section-title {
   width: calc(100% - 16px);
 }
 .toastui-calendar-form-container input.toastui-calendar-content {
   width: calc(100% - 16px);
 }
+.toastui-calendar-popup-arrow.toastui-calendar-right .toastui-calendar-popup-arrow-border {
+  border-left-color: var(--grist-theme-modal-border-dark);
+}
+.toastui-calendar-popup-arrow.toastui-calendar-right .toastui-calendar-popup-arrow-fill {
+  border-left-color: var(--grist-theme-popup-bg);
+}
+.toastui-calendar-popup-arrow.toastui-calendar-left .toastui-calendar-popup-arrow-border {
+  border-right-color: var(--grist-theme-modal-border-dark);
+}
+.toastui-calendar-popup-arrow.toastui-calendar-left .toastui-calendar-popup-arrow-fill {
+  border-right-color: var(--grist-theme-popup-bg);
+}
+.toastui-calendar-popup-arrow.toastui-calendar-top .toastui-calendar-popup-arrow-border {
+  border-bottom-color: var(--grist-theme-modal-border-dark);
+}
+.toastui-calendar-popup-arrow.toastui-calendar-top .toastui-calendar-popup-arrow-fill {
+  border-bottom-color: var(--grist-theme-popup-bg);
+}
+.toastui-calendar-popup-arrow.toastui-calendar-bottom .toastui-calendar-popup-arrow-border {
+  border-top-color: var(--grist-theme-modal-border-dark);
+}
+.toastui-calendar-popup-arrow.toastui-calendar-bottom .toastui-calendar-popup-arrow-fill {
+  border-top-color: var(--grist-theme-popup-bg);
+}
 .toastui-calendar-popup-button.toastui-calendar-popup-confirm {
+  /* match grist primary button style */
   background-color: var(--grist-theme-control-primary-bg);
   color: var(--grist-theme-control-primary-fg);
-  border: var(--grist-theme-control-border);
+  border: none;
   border-radius: 4px;
-  margin: 8px 0;
+  margin: 4px 0;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 10px 24px;
+  min-height: 40px;
+  height: unset;
+  width: unset;
 }
+.toastui-calendar-popup-button.toastui-calendar-popup-close {
+  background-color: transparent;
+  padding: 4px;
+  margin: -4px;
+  font-style: normal;
+  font-size: 16px;
+  color: var(--grist-theme-modal-close-button-fg);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+.toastui-calendar-popup-button.toastui-calendar-popup-close:hover {
+  background-color: var(--grist-theme-hover);
+}
+.toastui-calendar-popup-button.toastui-calendar-popup-close::before {
+  content: "✕";
+}
+.toastui-calendar-icon.toastui-calendar-ic-close {
+  display: none;
+}
+
+.toastui-calendar-popup-section-allday .toastui-calendar-ic-checkbox-normal,
+.toastui-calendar-icon.toastui-calendar-ic-checkbox-checked {
+  background: none;
+  position: relative;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+}
+.toastui-calendar-popup-section-allday .toastui-calendar-ic-checkbox-normal::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 16px;
+  width: 16px;
+  border: 1px solid var(--grist-theme-checkbox-border);
+  border-radius: 3px;
+}
+.toastui-calendar-icon.toastui-calendar-ic-checkbox-checked {
+  background-color: var(--grist-theme-control-primary-bg);
+  border-radius: 3px;
+}
+.toastui-calendar-icon.toastui-calendar-ic-checkbox-checked::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 16px;
+  width: 16px;
+  -webkit-mask-image: var(--icon-Tick);
+  -webkit-mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  background-color: var(--grist-theme-control-primary-fg);
+}
+.toastui-calendar-edit-button .toastui-calendar-icon,
+.toastui-calendar-delete-button .toastui-calendar-icon {
+  display: none;    /* no easy way to adjust color for dark mode */
+}
+
 
 /*** END popup-related styling ***/
 
