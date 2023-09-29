@@ -141,11 +141,11 @@ class CalendarHandler {
       template: {
         time(event) {
           const {title} = event;
-          return `<span>${title}</span>`;
+          return `<div><span title="${title}">${title}</span>`;
         },
         allday(event) {
           const {title} = event;
-          return `<span>${title}</span>`;
+          return `<span title="${title}">${title}</span>`;
         },
       },
       calendars: [
