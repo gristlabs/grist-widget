@@ -141,7 +141,7 @@ class CalendarHandler {
       template: {
         time(event) {
           const {title} = event;
-          return `<div><span title="${title}">${title}</span>`;
+          return `<span title="${title}">${title}</span>`;
         },
         allday(event) {
           const {title} = event;
