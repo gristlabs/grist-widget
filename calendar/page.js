@@ -168,7 +168,6 @@ class CalendarHandler {
       container.classList.add('readonly')
     }
     const options = this._getCalendarOptions();
-    this.previousIds = new Set();
     this.calendar = new tui.Calendar(container, options);
 
     // Not sure how to get a reference to this constructor, so doing it in a roundabout way.
@@ -223,6 +222,12 @@ class CalendarHandler {
         container.querySelector('button.toastui-calendar-popup-confirm')?.click();
       }
     });
+
+    // All events, indexed by id.
+    this.allEvents = new Map();
+
+    // Visible events that fall within the current date range, indexed by id. */
+    this.visibleEvents = new Map();
   }
 
   _isMultidayInMonthViewEvent(rec)  {
@@ -239,6 +244,7 @@ class CalendarHandler {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
+
     if (this._selectedRecordId) {
       this._colorCalendarEvent(this._selectedRecordId, this._mainColor);
     }
@@ -270,6 +276,8 @@ class CalendarHandler {
 
   _colorCalendarEvent(eventId, color) {
     const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
+    if (!event) { return; }
+
     const shouldPaintBackground = this._isMultidayInMonthViewEvent(event);
     this.calendar.updateEvent(eventId, CALENDAR_NAME, {borderColor: color, backgroundColor: shouldPaintBackground?color:this._mainColor});
   }
@@ -304,31 +312,40 @@ class CalendarHandler {
     }
   }
 
-  // update calendar events based on the collection of records from the grist table.
-  async updateCalendarEvents(calendarEvents) {
-    // we need to keep track the ids of the events that are currently in the calendar to compare it
-    // with the new set of events when they come.
-    const currentIds = new Set();
-    for (const record of calendarEvents) {
-      // check if an event already exists in the calendar - update it if so, create new otherwise
-      const event = this.calendar.getEvent(record.id, CALENDAR_NAME);
-      const eventData = record;
-      if (!event) {
-        this.calendar.createEvents([eventData]);
+  setEvents(events) {
+    this.allEvents = events;
+  }
+
+  /**
+   * Adds/updates events that fall within the current date range, and removes
+   * events that do not.
+   */
+  renderVisibleEvents() {
+    const newVisibleEvents = new Map();
+    const dateRangeStart = this.calendar.getDateRangeStart();
+    const dateRangeEnd = this.calendar.getDateRangeEnd();
+
+    // Add or update events that are now visible.
+    for (const event of this.allEvents) {
+      if (event.start < dateRangeStart || event.end > dateRangeEnd) { continue; }
+  
+      const calendarEvent = this.calendar.getEvent(event.id, CALENDAR_NAME);
+      if (!calendarEvent) {
+        this.calendar.createEvents([event]);
       } else {
-        this.calendar.updateEvent(record.id, CALENDAR_NAME, eventData);
+        this.calendar.updateEvent(event.id, CALENDAR_NAME, event);
       }
-      currentIds.add(record.id);
+      newVisibleEvents.set(event.id, event);
     }
-    // if some events are not in the new set of events, we need to remove them from the calendar
-    if (this.previousIds) {
-      for (const id of this.previousIds) {
-        if (!currentIds.has(id)) {
-          this.calendar.deleteEvent(id, CALENDAR_NAME);
-        }
+
+    // Remove events that are no longer visible.
+    for (const eventId of this.visibleEvents.keys()) {
+      if (!newVisibleEvents.has(eventId)) {
+        this.calendar.deleteEvent(eventId, CALENDAR_NAME);
       }
     }
-    this.previousIds = currentIds;
+
+    this.visibleEvents = newVisibleEvents;
   }
 
   setTheme(gristThemeConfiguration) {
@@ -386,6 +403,7 @@ function getGristOptions() {
 
 
 function updateUIAfterNavigation(){
+  calendarHandler.renderVisibleEvents();
   // update name of the month and year displayed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
   // refresh colors of selected event (in month view it's different from in other views)
@@ -521,11 +539,11 @@ function selectRadioButton(value) {
   for (const element of document.getElementsByName('calendar-options')) {
     if (element.value === value) {
       element.checked = true;
-      element.parentElement.classList.add('active')
+      element.parentElement.classList.add('active');
     }
     else{
       element.checked = false;
-      element.parentElement.classList.remove('active')
+      element.parentElement.classList.remove('active');
     }
   }
 }
@@ -549,7 +567,7 @@ function buildCalendarEventObject(record, colTypes) {
   let [startType, endType] = colTypes;
   endType = endType || startType;
   start = getAdjustedDate(start, startType);
-  end = end ? getAdjustedDate(end, endType) : start
+  end = end ? getAdjustedDate(end, endType) : start;
 
   // Normalize records with invalid start/end times so that they're visible
   // in the calendar.
@@ -582,8 +600,9 @@ async function updateCalendar(records, mappings) {
   // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
     const colTypes = await colTypesFetcher.getColTypes();
-    const CalendarEventObjects = mappedRecords.filter(isRecordValid).map(r => buildCalendarEventObject(r, colTypes));
-    await calendarHandler.updateCalendarEvents(CalendarEventObjects);
+    const events = mappedRecords.filter(isRecordValid).map(r => buildCalendarEventObject(r, colTypes));
+    calendarHandler.setEvents(events);
+    calendarHandler.renderVisibleEvents();
   }
   dataVersion = Date.now();
 }
