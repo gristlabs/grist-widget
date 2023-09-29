@@ -250,19 +250,21 @@ class CalendarHandler {
 
     // If the view has a vertical timeline, scroll to the start of the event.
     if (!record.isAllday && this.calendar.getViewName() !== 'month') {
-      const event = this.calendar.getElement(record.id, CALENDAR_NAME);
-      if (!event) { return; }
-
-      // Only scroll into view if the event is not fully on-screen.
-      const container = event.closest('.toastui-calendar-time');
-      const containerTop = container.scrollTop;
-      const containerBottom = containerTop + container.clientHeight;
-      const eventTop = event.offsetTop;
-      const eventBottom = eventTop + event.clientHeight;
-      const isOnscreen = eventTop >= containerTop && eventBottom <= containerBottom;
-      if (!isOnscreen) {
-        event.scrollIntoView({behavior: 'smooth'});
-      }
+      setTimeout(() => {
+        const event = this.calendar.getElement(record.id, CALENDAR_NAME);
+        if (!event) { return; }
+  
+        // Only scroll into view if the event is not fully on-screen.
+        const container = event.closest('.toastui-calendar-time');
+        const containerTop = container.scrollTop;
+        const containerBottom = containerTop + container.clientHeight;
+        const eventTop = event.offsetTop;
+        const eventBottom = eventTop + event.clientHeight;
+        const isOnscreen = eventTop >= containerTop && eventBottom <= containerBottom;
+        if (!isOnscreen) {
+          event.scrollIntoView({behavior: 'smooth'});
+        }
+      }, 0);
     }
   }
 
@@ -408,7 +410,7 @@ async function configureGristSettings() {
 
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
-  grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions, allowSelectBy: true });
+  grist.ready({ requiredAccess: 'full', columns: columnsMappingOptions, allowSelectBy: true });
 }
 
 // When a user selects a record in the table, we want to select it on the calendar.
