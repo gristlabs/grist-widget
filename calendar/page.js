@@ -157,13 +157,16 @@ class CalendarHandler {
           borderColor: this._mainColor,
         },
       ],
-      useFormPopup: true,
+      useFormPopup: !isReadOnly,
       useDetailPopup: true,
     };
   }
 
   constructor() {
     const container = document.getElementById('calendar');
+    if (isReadOnly) {
+      container.classList.add('readonly')
+    }
     const options = this._getCalendarOptions();
     this.previousIds = new Set();
     this.calendar = new tui.Calendar(container, options);
@@ -187,6 +190,9 @@ class CalendarHandler {
 
     // Updates happen via the form or when dragging the event or its end-time.
     this.calendar.on('beforeUpdateEvent', (update) => upsertEvent({id: update.event.id, ...update.changes}));
+
+    // Deletion happens via the event-edit form.
+    this.calendar.on('beforeDeleteEvent', (eventInfo) => deleteEvent(eventInfo));
 
     container.addEventListener('mousedown', () => {
       focusWidget();
@@ -245,8 +251,19 @@ class CalendarHandler {
     // If the view has a vertical timeline, scroll to the start of the event.
     if (!record.isAllday && this.calendar.getViewName() !== 'month') {
       setTimeout(() => {
-        const event = document.querySelector(`[data-event-id="${record.id}"]`);
-        if (event) { event.scrollIntoView({behavior: 'smooth'}); }
+        const event = this.calendar.getElement(record.id, CALENDAR_NAME);
+        if (!event) { return; }
+  
+        // Only scroll into view if the event is not fully on-screen.
+        const container = event.closest('.toastui-calendar-time');
+        const containerTop = container.scrollTop;
+        const containerBottom = containerTop + container.clientHeight;
+        const eventTop = event.offsetTop;
+        const eventBottom = eventTop + event.clientHeight;
+        const isOnscreen = eventTop >= containerTop && eventBottom <= containerBottom;
+        if (!isOnscreen) {
+          event.scrollIntoView({behavior: 'smooth'});
+        }
       }, 0);
     }
   }
@@ -393,7 +410,7 @@ async function configureGristSettings() {
 
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
-  grist.ready({ requiredAccess: 'read table', columns: columnsMappingOptions, allowSelectBy: true });
+  grist.ready({ requiredAccess: 'full', columns: columnsMappingOptions, allowSelectBy: true });
 }
 
 // When a user selects a record in the table, we want to select it on the calendar.
@@ -461,11 +478,6 @@ async function upsertGristRecord(gristEvent) {
   }
 }
 
-// grist expects date in seconds, but the calendar is returning it in milliseconds, so we need to convert it
-function roundEpochDateToSeconds(date) {
-  return date/1000;
-}
-
 const secondsPerDay = 24 * 60 * 60;
 
 function makeGristDateTime(tzDate, colType) {
@@ -493,6 +505,15 @@ async function upsertEvent(tuiEvent) {
     title: tuiEvent.title !== undefined ? (tuiEvent.title || "New Event") : undefined,
   }
   upsertGristRecord(gristEvent);
+}
+
+async function deleteEvent(event) {
+  try {
+    const table = await grist.getTable();
+    await table.destroy(event.id);
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 //helper function to select radio button in the GUI

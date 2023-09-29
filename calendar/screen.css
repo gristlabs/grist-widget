@@ -133,6 +133,13 @@ body {
   display: none;
 }
 
+.readonly .toastui-calendar-detail-container .toastui-calendar-edit-button,
+.readonly .toastui-calendar-detail-container .toastui-calendar-delete-button {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
 .toastui-calendar-popup-section-item {
   border: 1px solid var(--grist-theme-input-border);
   background-color: var(--grist-theme-input-bg);
@@ -187,6 +194,9 @@ body {
   height: unset;
   width: unset;
 }
+.toastui-calendar-popup-button.toastui-calendar-popup-confirm:hover {
+  background-color: var(--grist-theme-control-primary-hover-bg);
+}
 .toastui-calendar-popup-button.toastui-calendar-popup-close {
   background-color: transparent;
   padding: 4px;
@@ -199,7 +209,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-
 }
 .toastui-calendar-popup-button.toastui-calendar-popup-close:hover {
   background-color: var(--grist-theme-hover);
@@ -260,6 +269,117 @@ body {
 }
 
 /*** END popup-related styling ***/
+
+/*** BEGIN datepicker-related styling ***/
+
+.tui-datepicker {
+  color: var(--grist-theme-text);
+  border: none;
+  box-shadow: 0 2px 20px 0 var(--grist-theme-menu-shadow, rgba(38, 38, 51, 0.6));
+}
+
+.tui-datepicker-footer .tui-timepicker {
+  border-top: 1px solid var(--grist-theme-menu-border);
+}
+
+.tui-calendar,
+.tui-datepicker,
+.tui-timepicker,
+.tui-calendar-btn,
+.tui-calendar-header-inner {
+  background-color: var(--grist-theme-popup-bg);
+}
+
+.tui-calendar .tui-calendar-header {
+  border-bottom: 1px solid var(--grist-theme-menu-border);
+}
+
+.tui-timepicker .tui-timepicker-select {
+  appearance: auto;
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+  -o-appearance: auto;
+}
+
+.tui-timepicker-select {
+  border: 1px solid var(--grist-theme-input-border);
+  padding: 0px;
+  background: unset;
+}
+
+.tui-datepicker .tui-is-selectable.tui-is-selected,
+.tui-datepicker.tui-rangepicker .tui-is-selectable.tui-is-selected {
+  color: var(--grist-theme-text);
+  background-color: var(--grist-theme-date-picker-range-start-end-bg);
+}
+
+.tui-calendar .tui-calendar-today {
+  color: var(--grist-theme-datepicker-today-bg);
+}
+
+.tui-datepicker.tui-rangepicker .tui-is-selected-range {
+  color: var(--grist-theme-text);
+  background-color: var(--grist-theme-date-picker-range-bg);
+}
+
+.tui-datepicker .tui-is-blocked {
+  color: var(--grist-theme-text-light);
+}
+
+.tui-calendar th,
+.tui-calendar td,
+.tui-calendar .tui-calendar-body-header th,
+.tui-datepicker .tui-calendar-title {
+  color: var(--grist-theme-text);
+}
+
+.tui-datepicker .tui-is-selectable:hover {
+  background-color: var(--grist-theme-date-picker-range-start-end-bg);
+}
+
+.tui-calendar .tui-calendar-btn-prev-month:after,
+.tui-calendar .tui-calendar-btn-next-month:after,
+.tui-calendar.tui-calendar-month .tui-calendar-btn-prev-year:after,
+.tui-calendar.tui-calendar-month .tui-calendar-btn-next-year:after,
+.tui-calendar.tui-calendar-year .tui-calendar-btn-prev-year:after,
+.tui-calendar.tui-calendar-year .tui-calendar-btn-next-year:after {
+  background: unset;
+  margin: 0px;
+  top: 18px;
+  width: 16px;
+  height: 16px;
+  background-color: var(--grist-theme-text);
+}
+
+.tui-calendar-btn {
+  width: 40px;
+}
+
+.tui-calendar .tui-calendar-btn-prev-month:after,
+.tui-calendar .tui-calendar-btn-prev-year:after {
+  margin-left: -8px;
+  mask-image: var(--icon-ArrowLeft);
+  -webkit-mask-image: var(--icon-ArrowLeft);
+}
+
+.tui-calendar .tui-calendar-btn-next-month:after,
+.tui-calendar .tui-calendar-btn-next-year:after {
+  margin-right: -8px;
+  mask-image: var(--icon-ArrowRight);
+  -webkit-mask-image: var(--icon-ArrowRight);
+}
+
+.tui-calendar .tui-calendar-title-today {
+  color: var(--grist-theme-text);
+  background-color: var(--grist-theme-date-picker-range-bg);
+}
+
+.tui-calendar .tui-calendar-title-today:hover {
+  color: var(--grist-theme-text);
+  background-color: var(--grist-theme-date-picker-range-bg-hover);
+}
+
+/*** END datepicker-related styling ***/
 
 #calendar-button-previous,
 #calendar-button-next {
@@ -336,6 +456,14 @@ input:checked + label {
 .toastui-calendar-week-view .toastui-calendar-holiday-sun,
 .toastui-calendar-day-view .toastui-calendar-holiday-sun {
   color: var(--grist-theme-accent-text) !important;
+}
+
+.toastui-calendar-template-popupDetailTitle {
+  word-break: keep-all;
+}
+
+.toastui-calendar-vertical-line {
+  background: var(--grist-theme-menu-border);
 }
 
 @media (max-width: 575.98px) {
