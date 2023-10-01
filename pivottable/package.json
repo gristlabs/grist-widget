@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/pivottable/index.html",
     "widgetId": "@gristlabs/widget-pivottable",
     "published": true,
-    "accessLevel": "read table"
+    "accessLevel": "read table",
+    "renderAfterReady": true
   }
 }

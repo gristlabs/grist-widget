@@ -9,7 +9,8 @@
       "url": "https://gristlabs.github.io/grist-widget/map/index.html",
       "widgetId": "@gristlabs/widget-map#map",
       "published": true,
-      "accessLevel": "read table"
+      "accessLevel": "read table",
+      "renderAfterReady": true
     }
   ]
 }

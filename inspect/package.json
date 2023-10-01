@@ -9,31 +9,36 @@
       "url": "https://gristlabs.github.io/grist-widget/inspect/onRecord.html",
       "widgetId": "@gristlabs/widget-inspect#onRecord",
       "published": true,
-      "accessLevel": "read table"
+      "accessLevel": "read table",
+      "renderAfterReady": true
     },
     {
       "name": "Inspect Table",
       "url": "https://gristlabs.github.io/grist-widget/inspect/onRecords.html",
       "widgetId": "@gristlabs/widget-inspect#onRecords",
       "published": true,
-      "accessLevel": "read table"
+      "accessLevel": "read table",
+      "renderAfterReady": true
     },
     {
       "name": "Inspect Options",
       "url": "https://gristlabs.github.io/grist-widget/inspect/onOptions.html",
       "widgetId": "@gristlabs/widget-inspect#onOptions",
-      "published": true
+      "published": true,
+      "renderAfterReady": true
     },
     {
       "name": "Inspect Columns",
       "url": "https://gristlabs.github.io/grist-widget/inspect/columns.html",
-      "widgetId": "@gristlabs/widget-inspect#columns"
+      "widgetId": "@gristlabs/widget-inspect#columns",
+      "renderAfterReady": true
     }, 
     {
       "name": "Inspect API",
       "url": "https://gristlabs.github.io/grist-widget/inspect/api.html",
       "widgetId": "@gristlabs/widget-inspect#api",
-      "published": true
+      "published": true,
+      "renderAfterReady": true
     }
   ]
 }
