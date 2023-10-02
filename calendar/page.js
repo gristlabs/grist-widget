@@ -333,7 +333,7 @@ class CalendarHandler {
     const dateRangeEnd = this.calendar.getDateRangeEnd().setHours(23, 99, 99, 999);
 
     // Add or update events that are now visible.
-    for (const event of this._allEvents) {
+    for (const event of this._allEvents.values()) {
       const isEventInRange = (
         (event.start >= dateRangeStart && event.start <= dateRangeEnd) ||
         (event.end >= dateRangeStart && event.end <= dateRangeEnd) ||
@@ -614,7 +614,7 @@ async function updateCalendar(records, mappings) {
   if (mappedRecords) {
     const colTypes = await colTypesFetcher.getColTypes();
     const events = mappedRecords.filter(isRecordValid).map(r => buildCalendarEventObject(r, colTypes));
-    calendarHandler.setEvents(events);
+    calendarHandler.setEvents(new Map(events.map(event => ([event.id, event]))));
     calendarHandler.renderVisibleEvents();
   }
   dataVersion = Date.now();
@@ -680,27 +680,29 @@ const colTypesFetcher = new ColTypesFetcher();
 
 function testGetCalendarEvent(eventId) {
   const event = calendarHandler.getEvents().get(eventId);
-  return testGetEventAsJSON(event);
+  if (!event) { return null; }
+
+  const eventData = {
+    title: event.title,
+    startDate: event.start,
+    endDate: event.end,
+    isAllDay: event.isAllday,
+  };
+  return JSON.stringify(eventData);
 }
 
 function testGetVisibleCalendarEvent(eventId) {
   const event = calendarHandler.calendar.getEvent(eventId, CALENDAR_NAME);
-  return testGetEventAsJSON(event);
-}
+  if (!event) { return null; }
 
-function testGetEventAsJSON(event) {
-  if (event) {
-    const eventData = {
-      title: calendarObject?.title,
-      startDate: calendarObject?.start.d.d,
-      endDate: calendarObject?.end.d.d,
-      isAllDay: calendarObject?.isAllday ?? false,
-      selected: calendarObject?.borderColor === calendarHandler._selectedColor,
-    };
-    return JSON.stringify(eventData);
-  } else {
-    return null;
-  }
+  const eventData = {
+    title: event?.title,
+    startDate: event?.start.d.d,
+    endDate: event?.end.d.d,
+    isAllDay: event?.isAllday ?? false,
+    selected: event?.borderColor === calendarHandler._selectedColor,
+  };
+  return JSON.stringify(eventData);
 }
 
 function testGetCalendarViewName(){
