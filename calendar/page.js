@@ -163,6 +163,11 @@ class CalendarHandler {
   }
 
   constructor() {
+    this.renderVisibleEvents = _.debounce(this._renderVisibleEvents, 1000, {
+      leading: true,
+      trailing: true
+    });
+
     const container = document.getElementById('calendar');
     if (isReadOnly) {
       container.classList.add('readonly')
@@ -226,8 +231,8 @@ class CalendarHandler {
     // All events, indexed by id.
     this.allEvents = new Map();
 
-    // Visible events that fall within the current date range, indexed by id. */
-    this.visibleEvents = new Map();
+    // Ids of visible events that fall within the current date range. */
+    this.visibleEventIds = new Set();
   }
 
   _isMultidayInMonthViewEvent(rec)  {
@@ -248,10 +253,10 @@ class CalendarHandler {
     if (this._selectedRecordId) {
       this._colorCalendarEvent(this._selectedRecordId, this._mainColor);
     }
-    this._selectedRecordId = record.id;
     const [startType] = await colTypesFetcher.getColTypes();
     const startDate = getAdjustedDate(record.startDate, startType);
     this.calendar.setDate(startDate);
+    this._selectedRecordId = record.id;
     updateUIAfterNavigation();
 
     // If the view has a vertical timeline, scroll to the start of the event.
@@ -279,7 +284,10 @@ class CalendarHandler {
     if (!event) { return; }
 
     const shouldPaintBackground = this._isMultidayInMonthViewEvent(event);
-    this.calendar.updateEvent(eventId, CALENDAR_NAME, {borderColor: color, backgroundColor: shouldPaintBackground?color:this._mainColor});
+    this.calendar.updateEvent(eventId, CALENDAR_NAME, {
+      borderColor: color,
+      backgroundColor: shouldPaintBackground ? color : this._mainColor,
+    });
   }
 
   // change calendar perspective between week, month and day.
@@ -320,14 +328,20 @@ class CalendarHandler {
    * Adds/updates events that fall within the current date range, and removes
    * events that do not.
    */
-  renderVisibleEvents() {
-    const newVisibleEvents = new Map();
+  _renderVisibleEvents() {
+    const newVisibleEventIds = new Set();
     const dateRangeStart = this.calendar.getDateRangeStart();
-    const dateRangeEnd = this.calendar.getDateRangeEnd();
+    const dateRangeEnd = this.calendar.getDateRangeEnd().setHours(23, 99, 99, 999);
 
     // Add or update events that are now visible.
     for (const event of this.allEvents) {
-      if (event.start < dateRangeStart || event.end > dateRangeEnd) { continue; }
+      const isEventInRange = (
+        (event.start >= dateRangeStart && event.start <= dateRangeEnd) ||
+        (event.end >= dateRangeStart && event.end <= dateRangeEnd) ||
+        (event.start >= dateRangeStart && event.start <= dateRangeEnd) ||
+        (event.start < dateRangeStart && event.end > dateRangeEnd)
+      );
+      if (!isEventInRange) { continue; }
   
       const calendarEvent = this.calendar.getEvent(event.id, CALENDAR_NAME);
       if (!calendarEvent) {
@@ -335,17 +349,17 @@ class CalendarHandler {
       } else {
         this.calendar.updateEvent(event.id, CALENDAR_NAME, event);
       }
-      newVisibleEvents.set(event.id, event);
+      newVisibleEventIds.add(event.id);
     }
 
     // Remove events that are no longer visible.
-    for (const eventId of this.visibleEvents.keys()) {
-      if (!newVisibleEvents.has(eventId)) {
+    for (const eventId of this.visibleEventIds) {
+      if (!newVisibleEventIds.has(eventId)) {
         this.calendar.deleteEvent(eventId, CALENDAR_NAME);
       }
     }
 
-    this.visibleEvents = newVisibleEvents;
+    this.visibleEventIds = newVisibleEventIds;
   }
 
   setTheme(gristThemeConfiguration) {
