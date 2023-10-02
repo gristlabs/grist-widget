@@ -224,10 +224,10 @@ class CalendarHandler {
     });
 
     // All events, indexed by id.
-    this.allEvents = new Map();
+    this._allEvents = new Map();
 
     // Ids of visible events that fall within the current date range. */
-    this.visibleEventIds = new Set();
+    this._visibleEventIds = new Set();
   }
 
   _isMultidayInMonthViewEvent(rec)  {
@@ -315,8 +315,12 @@ class CalendarHandler {
     }
   }
 
+  getEvents() {
+    return this._allEvents;
+  }
+
   setEvents(events) {
-    this.allEvents = events;
+    this._allEvents = events;
   }
 
   /**
@@ -329,7 +333,7 @@ class CalendarHandler {
     const dateRangeEnd = this.calendar.getDateRangeEnd().setHours(23, 99, 99, 999);
 
     // Add or update events that are now visible.
-    for (const event of this.allEvents) {
+    for (const event of this._allEvents) {
       const isEventInRange = (
         (event.start >= dateRangeStart && event.start <= dateRangeEnd) ||
         (event.end >= dateRangeStart && event.end <= dateRangeEnd) ||
@@ -348,13 +352,13 @@ class CalendarHandler {
     }
 
     // Remove events that are no longer visible.
-    for (const eventId of this.visibleEventIds) {
+    for (const eventId of this._visibleEventIds) {
       if (!newVisibleEventIds.has(eventId)) {
         this.calendar.deleteEvent(eventId, CALENDAR_NAME);
       }
     }
 
-    this.visibleEventIds = newVisibleEventIds;
+    this._visibleEventIds = newVisibleEventIds;
   }
 
   setTheme(gristThemeConfiguration) {
@@ -675,7 +679,7 @@ class ColTypesFetcher {
 const colTypesFetcher = new ColTypesFetcher();
 
 function testGetCalendarEvent(eventId) {
-  const event = calendarHandler.calendar.allEvents.get(eventId);
+  const event = calendarHandler.getEvents().get(eventId);
   return testGetEventAsJSON(event);
 }
 
