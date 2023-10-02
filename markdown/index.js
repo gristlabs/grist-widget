@@ -6,6 +6,7 @@ var cachedData = null;
 var txt = null;  // EasyMDE instance
 var editable = null;
 var isEditMode = Observable.create(null, false);
+let isNewRecord = Observable.create(null, true);
 
 window.addEventListener('keypress', (ev) => {
   // If user pressed Enter or Space
@@ -152,10 +153,12 @@ ready(() => {
         dom.update(document.querySelector(".save-action"), dom.show(isEditMode));
         dom.update(txt.toolbar_div, dom.cls('toolbar-read-mode', use => !use(isEditMode)));
       }
+      toggle(false);
     }
   });
 
   grist.onRecord(function(record, mappings) {
+    isNewRecord.set(false);
     save();
     var nextRowId = record.id;
     delete record.id;
@@ -192,4 +195,24 @@ ready(() => {
     cachedData = data;
     rowId = nextRowId;
   });
+
+  isNewRecord.addListener(isNew => {
+    toggle(!isNew);
+  });
+
+  grist.onNewRecord(() => {
+    save();
+    isNewRecord.set(true);
+    txt.value('');
+    rowId = null;
+    cachedData = data = null;
+    colId = null;
+    readMode();
+  })
+  
 });
+
+function toggle(show) {
+  txt.element.style.visibility = show ? 'visible' : 'hidden';
+  txt.toolbar_div.style.visibility = show ? 'visible' : 'hidden';
+}

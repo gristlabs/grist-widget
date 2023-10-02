@@ -193,6 +193,9 @@ function getInfo(rec) {
   return result;
 }
 
+// Function to clear last added markers. Used to clear the map when new record is selected.
+let clearMakers = () => {};
+
 function updateMap(data) {
   data = data || selectedRecords;
   selectedRecords = data;
@@ -282,6 +285,8 @@ function updateMap(data) {
   }
   map.addLayer(markers);
 
+  clearMakers = () => map.removeLayer(markers);
+
   try {
     map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
   } catch (err) {
@@ -358,6 +363,11 @@ grist.onRecords((data, mappings) => {
     scanOnNeed(defaultMapping(data[0], mappings));
   }
 });
+
+grist.onNewRecord(() => {
+  clearMakers();
+  clearMakers = () => {};
+})
 
 function updateMode() {
   if (mode === 'single') {
