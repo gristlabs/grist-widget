@@ -163,11 +163,6 @@ class CalendarHandler {
   }
 
   constructor() {
-    this.renderVisibleEvents = _.debounce(this._renderVisibleEvents, 1000, {
-      leading: true,
-      trailing: true
-    });
-
     const container = document.getElementById('calendar');
     if (isReadOnly) {
       container.classList.add('readonly')
@@ -328,7 +323,7 @@ class CalendarHandler {
    * Adds/updates events that fall within the current date range, and removes
    * events that do not.
    */
-  _renderVisibleEvents() {
+  renderVisibleEvents() {
     const newVisibleEventIds = new Set();
     const dateRangeStart = this.calendar.getDateRangeStart();
     const dateRangeEnd = this.calendar.getDateRangeEnd().setHours(23, 99, 99, 999);
