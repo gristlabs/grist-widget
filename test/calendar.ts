@@ -1,11 +1,6 @@
 import {Key, assert, driver} from 'mocha-webdriver';
 import {getGrist} from "./getGrist";
 
-//not a pretty way to get events from currently used calendar control. but it's working.
-function buildGetCalendarObjectScript(eventId: number) {
-  return `return testGetCalendarEvent(${eventId});`
-}
-
 describe('calendar', function () {
   this.timeout('30s');
   const grist = getGrist();
@@ -20,14 +15,26 @@ describe('calendar', function () {
     });
   }
 
-  //wait until the event is loaded on the calendar
-  async function getCalendarEvent(eventId: number): Promise<any> {
-    let mappedObject: any;
-    mappedObject = await grist.executeScriptOnCustomWidget(buildGetCalendarObjectScript(eventId));
-    return JSON.parse(mappedObject);
+  // Not a pretty way to get events from currently used calendar control. but it's working.
+  function buildGetVisibleCalendarEvent(eventId: number) {
+    return `return testGetVisibleCalendarEvent(${eventId});`
   }
 
-  async function getCalendarSettings(): Promise<string> {
+  async function getVisibleCalendarEvent(eventId: number): Promise<any> {
+    const event = await grist.executeScriptOnCustomWidget(buildGetVisibleCalendarEvent(eventId));
+    return JSON.parse(event as any);
+  }
+
+  function buildGetCalendarEvent(eventId: number) {
+    return `return testGetCalendarEvent(${eventId});`
+  }
+
+  async function getCalendarEvent(eventId: number): Promise<any> {
+    const event = await grist.executeScriptOnCustomWidget(buildGetCalendarEvent(eventId));
+    return JSON.parse(event as any);
+  }
+
+  async function getCalendarViewName(): Promise<string> {
     return await grist.executeScriptOnCustomWidget('return testGetCalendarViewName()');
   }
 
@@ -118,17 +125,17 @@ describe('calendar', function () {
     await grist.inCustomWidget(async () => {
       await driver.findWait('#calendar-day-label', 200).click();
     });
-    let viewType = await getCalendarSettings();
+    let viewType = await getCalendarViewName();
     assert.equal(viewType, 'day');
     await grist.inCustomWidget(async () => {
       await driver.findWait('#calendar-month-label', 200).click();
     });
-    viewType = await getCalendarSettings();
+    viewType = await getCalendarViewName();
     assert.equal(viewType, 'month');
     await grist.inCustomWidget(async () => {
       await driver.findWait('#calendar-week-label', 200).click();
     });
-    viewType = await getCalendarSettings();
+    viewType = await getCalendarViewName();
     assert.equal(viewType, 'week');
   })
 
@@ -250,12 +257,12 @@ describe('calendar', function () {
     assert.equal(await selectedRow(), 2);
 
     // Calendar should be focused on 3rd event.
-    assert.isTrue(await getCalendarEvent(3).then(c => c.selected));
+    assert.isTrue(await getVisibleCalendarEvent(3).then(c => c.selected));
 
     // Click 4th row
     await clickRow(3);
     assert.equal(await selectedRow(), 3);
-    assert.isTrue(await getCalendarEvent(4).then(c => c.selected));
+    assert.isTrue(await getVisibleCalendarEvent(4).then(c => c.selected));
 
     // Now click on the last visible event
     await grist.inCustomWidget(async () => {

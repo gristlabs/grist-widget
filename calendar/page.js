@@ -680,14 +680,23 @@ class ColTypesFetcher {
 const colTypesFetcher = new ColTypesFetcher();
 
 function testGetCalendarEvent(eventId) {
-  const calendarObject = calendarHandler.calendar.getEvent(eventId, CALENDAR_NAME);
-  if (calendarObject) {
+  const event = calendarHandler.calendar.allEvents.get(eventId);
+  return testGetEventAsJSON(event);
+}
+
+function testGetVisibleCalendarEvent(eventId) {
+  const event = calendarHandler.calendar.getEvent(eventId, CALENDAR_NAME);
+  return testGetEventAsJSON(event);
+}
+
+function testGetEventAsJSON(event) {
+  if (event) {
     const eventData = {
       title: calendarObject?.title,
       startDate: calendarObject?.start.d.d,
       endDate: calendarObject?.end.d.d,
       isAllDay: calendarObject?.isAllday ?? false,
-      selected: calendarObject?.borderColor === calendarHandler._selectedColor
+      selected: calendarObject?.borderColor === calendarHandler._selectedColor,
     };
     return JSON.stringify(eventData);
   } else {
@@ -696,6 +705,5 @@ function testGetCalendarEvent(eventId) {
 }
 
 function testGetCalendarViewName(){
-  // noinspection JSUnresolvedReference
   return calendarHandler.calendar.getViewName();
 }
