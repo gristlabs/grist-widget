@@ -500,7 +500,8 @@ async function upsertGristRecord(gristEvent) {
   // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
   delete mappedRecord.id;
   //mapColumnNamesBack returns undefined for all absent fields, so we need to remove them as well
-  // (we also use undefined for updates when a field hasn't changed).const filteredRecord = Object.fromEntries(Object.entries(mappedRecord)
+  // (we also use undefined for updates when a field hasn't changed).
+    const filteredRecord = Object.fromEntries(Object.entries(mappedRecord)
     .filter(([key, value]) => value !== undefined));
 // Send nothing if there are no changes.
     if (Object.keys(filteredRecord).length === 0) { return; }  const eventInValidFormat = {id: gristEvent.id, fields: filteredRecord};
