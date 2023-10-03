@@ -11,6 +11,7 @@
   "Start Date": "Data rozpoczęcia",
   "End Date": "Data zakończenia",
   "Is All Day": "zdarzenie całodniowe?",
+  "All Day": "zdarzenie całodniowe",
   "starting point of event": "początek wydarzenia",
   "ending point of event": "koniec wydarzenia",
   "title of event": "Co będzie widoczne na wpisie w kalendarzu.",
@@ -21,5 +22,9 @@
   "Wed": "Śr",
   "Thu": "Czw",
   "Fri": "Pt",
-  "Sat": "Sob"
+  "Sat": "Sob",
+  "Delete": "Usuń",
+  "Save": "Zapisz",
+  "Edit": "Edytuj",
+  "Update": "Aktualizuj"
 }

@@ -161,9 +161,25 @@ class CalendarHandler {
           const {title} = event;
           return `<span>${title}</span>`;
         },
+        popupDelete(){
+          return t('Delete')
+        },
+        poupSave(){
+          return t('Save')
+        },
+        popupEdit(){
+          return t('Edit')
+        },
+        popupUpdate(){
+          return t('Update')
+        },
         allDayTitle() {
           return t('All Day')
+        },
+        popupIsAllday() {
+          return t('All Day')
         }
+
       },
       calendars: [
         {
@@ -655,7 +671,7 @@ class ColTypesFetcher {
   constructor() {
     this._tableId = null;
     this._colIds = null;
-    this._colTypesPromise = Promise.resolve([null, null]);;
+    this._colTypesPromise = Promise.resolve([null, null]);
     this._accessLevel = 'full';
   }
   setAccessLevel(accessLevel) {

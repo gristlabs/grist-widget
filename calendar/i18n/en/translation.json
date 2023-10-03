@@ -11,6 +11,7 @@
   "Start Date": "start date",
   "End Date": "end date",
   "Is All Day": "Is all day?",
+  "All Day": "All day",
   "starting point of event": "starting point of event",
   "ending point of event": "ending point of event",
   "title of event": "title of event",
@@ -21,5 +22,9 @@
   "Wed": "Wed",
   "Thu": "Thu",
   "Fri": "Fri",
-  "Sat": "Sat"
+  "Sat": "Sat",
+  "Delete": "Delete",
+  "Save": "Save",
+  "Edit": "Edit",
+  "Update": "Update"
 }
