@@ -1,0 +1,15 @@
+{
+  "name": "@gristlabs/widget-jupyterlite",
+  "description": "Widget for a JupyterLite notebook",
+  "homePage": "https://github.com/gristlabs/jupyterlite-widget",
+  "version": "0.0.1",
+  "grist": [
+    {
+      "name": "Chart",
+      "url": "https://gristlabs.github.io/jupyterlite-widget/lab/index.html",
+      "widgetId": "@gristlabs/widget-jupyterlite",
+      "published": true,
+      "accessLevel": "full"
+    }
+  ]
+}
