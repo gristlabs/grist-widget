@@ -330,14 +330,6 @@ class CalendarHandler {
     }
     this.previousIds = currentIds;
   }
-
-  setTheme(gristThemeConfiguration) {
-    this._gristTheme = gristThemeConfiguration;
-    const options = this._getCalendarOptions();
-    this.calendar.setTheme(options.theme);
-    this.calendar.setCalendars(options.calendars);
-    this.calendar.render();
-  }
 }
 
 // when a document is ready, register the calendar and subscribe to grist events
@@ -437,7 +429,6 @@ let onGristSettingsChanged = function(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
-  calendarHandler.setTheme(settings.theme);
 };
 
 function changeCalendarView(view) {
@@ -571,6 +562,9 @@ function buildCalendarEventObject(record, colTypes) {
     isAllday,
     category: 'time',
     state: 'Free',
+    color: this._textColor,
+    backgroundColor: this._mainColor,
+    dragBackgroundColor: 'var(--grist-theme-hover)',
   };
 }
 

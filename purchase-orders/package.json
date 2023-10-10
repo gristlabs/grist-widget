@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/purchase-orders",
     "widgetId": "@gristlabs/widget-purchase-orders",
     "published": true,
-    "accessLevel": "read table"
+    "accessLevel": "read table",
+    "renderAfterReady": true
   }
 }

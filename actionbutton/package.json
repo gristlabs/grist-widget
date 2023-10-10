@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/actionbutton/index.html",
     "widgetId": "@gristlabs/widget-actionbutton",
     "published": true,
-    "accessLevel": "full"
+    "accessLevel": "full",
+    "renderAfterReady": true
   }
 }

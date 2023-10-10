@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/flashcards/index.html",
     "widgetId": "@gristlabs/flashcards",
     "published": true,
-    "accessLevel": "read table"
+    "accessLevel": "read table",
+    "renderAfterReady": true
   }
 }

@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/printlabels/index.html",
     "widgetId": "@gristlabs/widget-printlabels",
     "published": true,
-    "accessLevel": "read table"
+    "accessLevel": "read table",
+    "renderAfterReady": true
   }
 }

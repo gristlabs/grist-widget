@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/invoices",
     "widgetId": "@gristlabs/widget-invoices",
     "published": true,
-    "accessLevel": "read table"
+    "accessLevel": "read table",
+    "renderAfterReady": true
   }
 }
