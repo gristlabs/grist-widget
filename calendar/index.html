@@ -28,20 +28,20 @@
             </button>
         </div>
         <div id="calendar-perspective-buttons" class="btn-group btn-group-sm" data-toggle="buttons">
-            <label id="calendar-day-label" class="btn" for="calendar-day" data-i18n="day">
+            <label id="calendar-day-label" class="btn" for="calendar-day" >
                 <input type="radio" id="calendar-day" class="btn-check" name="calendar-options" value="day"
                        onchange="calendarViewChanges(this)" >
-                Day
+                <span data-i18n="day">Day</span>
             </label>
-            <label id="calendar-week-label" class="btn" for="calendar-week" data-i18n="week">
+            <label id="calendar-week-label" class="btn" for="calendar-week" >
                 <input type="radio" id="calendar-week" class="btn-check" name="calendar-options" value="week"
                        onchange="calendarViewChanges(this)">
-                Week
+                <span data-i18n="week">Week</span>
             </label>
-            <label id="calendar-month-label" class="btn" for="calendar-month" data-i18n="month">
+            <label id="calendar-month-label" class="btn" for="calendar-month" >
                 <input type="radio" id="calendar-month" class="btn-check" name="calendar-options" value="month"
                        onchange="calendarViewChanges(this)" >
-                Month
+                <span data-i18n="month">Month</span>
             </label>
         </div>
         <time id="calendar-title"></time>

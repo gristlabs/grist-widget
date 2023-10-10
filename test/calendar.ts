@@ -191,11 +191,14 @@ describe('calendar', function () {
 
   it("should respect non full access", async function () {
     await grist.setCustomWidgetAccess('none');
+    await grist.rejectAccess();
     await grist.waitForServer();
     await grist.waitForFrame();
 
     // Now try to add a record. It should fail.
     await clickDay(10);
+    await grist.rejects(setSubject('new event'));
+
     await grist.waitForServer();
     assert.equal(await eventsCount(), 0);
 
@@ -203,11 +206,13 @@ describe('calendar', function () {
 
     // Now with read access.
     await grist.setCustomWidgetAccess('read table');
+    await grist.rejectAccess();
     await grist.waitForServer();
     await grist.waitForFrame();
 
     // Now try to add a record. It should fail.
     await clickDay(11);
+    await grist.rejects(setSubject('new event'));
     await grist.waitForServer();
     assert.equal(await eventsCount(), 0);
 
@@ -216,7 +221,7 @@ describe('calendar', function () {
     await grist.waitForServer();
     await grist.waitForFrame();
 
-    await clickDay(12);
+    await addEvent(12);
     await grist.waitForServer();
 
     await grist.waitToPass(async () => {
@@ -239,10 +244,10 @@ describe('calendar', function () {
     ]);
 
     // Add 4 events in the calendar.
-    await clickDay(14);
-    await clickDay(15);
-    await clickDay(16);
-    await clickDay(17);
+    await addEvent(14);
+    await addEvent(15);
+    await addEvent(16);
+    await addEvent(17);
 
     // Now test if bi-directional mapping works.
     await grist.waitToPass(async () => {
@@ -250,7 +255,7 @@ describe('calendar', function () {
     });
 
     // Select 2 row in grid view.
-    await clickRow(2);
+    await selectRow(2);
 
     assert.equal(await selectedRow(), 2);
 
@@ -258,7 +263,7 @@ describe('calendar', function () {
     assert.isTrue(await getCalendarEvent(3).then(c => c.selected));
 
     // Click 4th row
-    await clickRow(3);
+    await selectRow(3);
     assert.equal(await selectedRow(), 3);
     assert.isTrue(await getCalendarEvent(4).then(c => c.selected));
 
@@ -316,7 +321,7 @@ describe('calendar', function () {
     //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimized for drag and drop tests in mocha and i cannot yet make it working correctly./**
    /* Clicks on a day in a month view.
    */
-  async function clickDay(which: number) {
+   async function clickDay(which: number) {
     await grist.inCustomWidget(async () => {
       await driver.withActions(ac =>
         ac.move({origin: driver.findContentWait(`.toastui-calendar-template-monthGridHeader`, String(which), 200)})
@@ -335,11 +340,33 @@ describe('calendar', function () {
     });
   }
 
-  async function clickRow(rowIndex: number) {
+  async function selectRow(rowIndex: number) {
     await driver.findContentWait('.gridview_data_row_num', String(rowIndex), 200).click();
   }
 
   async function selectedRow() {
     return Number(await driver.findWait('.gridview_data_row_num.selected', 200).then(e => e.getText()));
+  }
+
+  async function setSubject(subject: string) {
+    await grist.inCustomWidget(async () => {
+      // The element to set is <input name="title" class="toastui-calendar-content" placeholder="Subject" required="">
+      await driver.findWait(`.toastui-calendar-popup-container input[name="title"]`, 600).click();
+      await driver.find(`.toastui-calendar-popup-container input[name="title"]`).sendKeys(subject);
+    });
+  }
+
+  async function pressSave() {
+    await grist.inCustomWidget(async () => {
+      // Element: <button type="submit" class="toastui-calendar-popup-button toastui-calendar-popup-confirm">
+      await driver.findWait(`.toastui-calendar-popup-container button[type="submit"]`, 200).click();
+    });
+  }
+
+  // A combination, click a day, set subject, press save.
+  async function addEvent(day: number, subject: string = 'new event') {
+    await clickDay(day);
+    await setSubject(subject);
+    await pressSave();
   }
 });
