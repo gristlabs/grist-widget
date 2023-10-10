@@ -17,27 +17,48 @@ describe('calendar', function () {
 
   async function getVisibleCalendarEvent(eventId: number): Promise<any> {
     const eventJSON = await grist.executeScriptInCustomWidget<any>((id: number) => {
-      return (window as any).testGetVisibleCalendarEvent(id);
+      const calendarName = (window as any).CALENDAR_NAME;
+      const calendarHandler = (window as any).calendarHandler;
+      const event = calendarHandler.calendar.getEvent(id, calendarName);
+      if (!event) { return null; }
+    
+      const eventData = {
+        title: event?.title,
+        startDate: event?.start.d.d,
+        endDate: event?.end.d.d,
+        isAllDay: event?.isAllday ?? false,
+        selected: event?.borderColor === calendarHandler._selectedColor,
+      };
+      return JSON.stringify(eventData);
     }, eventId);
     return JSON.parse(eventJSON);
   }
 
   async function getCalendarEvent(eventId: number): Promise<any> {
     const eventJSON = await grist.executeScriptInCustomWidget<any>((id: number) => {
-      return (window as any).testGetCalendarEvent(id);
+      const event = (window as any).calendarHandler.getEvents().get(id);
+      if (!event) { return null; }
+    
+      const eventData = {
+        title: event.title,
+        startDate: event.start,
+        endDate: event.end,
+        isAllDay: event.isAllday,
+      };
+      return JSON.stringify(eventData);
     }, eventId);
     return JSON.parse(eventJSON);
   }
 
   async function getCalendarViewName(): Promise<string> {
     return grist.executeScriptInCustomWidget(() => {
-      return (window as any).testGetCalendarViewName();
+      return (window as any).calendarHandler.calendar.getViewName();
     });
   }
 
   async function getDateVersion(): Promise<Date> {
     return grist.executeScriptInCustomWidget(() => {
-      return (window as any).testGetDataVersion();
+      return (window as any).dataVersion;
     });
   }
 

@@ -2,18 +2,16 @@
 var grist;
 
 // to keep all calendar related logic;
-let calendarHandler;
-const CALENDAR_NAME = 'standardCalendar';
+var calendarHandler;
+
+var CALENDAR_NAME = 'standardCalendar';
 
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('readonly') === 'true' ||
   (urlParams.has('access') && urlParams.get('access') !== 'full');
 
-//for tests
+// for tests
 let dataVersion = Date.now();
-function testGetDataVersion(){
-  return dataVersion;
-}
 
 //registering code to run when a document is ready
 function ready(fn) {
@@ -676,34 +674,3 @@ class ColTypesFetcher {
 }
 
 const colTypesFetcher = new ColTypesFetcher();
-
-function testGetCalendarEvent(eventId) {
-  const event = calendarHandler.getEvents().get(eventId);
-  if (!event) { return null; }
-
-  const eventData = {
-    title: event.title,
-    startDate: event.start,
-    endDate: event.end,
-    isAllDay: event.isAllday,
-  };
-  return JSON.stringify(eventData);
-}
-
-function testGetVisibleCalendarEvent(eventId) {
-  const event = calendarHandler.calendar.getEvent(eventId, CALENDAR_NAME);
-  if (!event) { return null; }
-
-  const eventData = {
-    title: event?.title,
-    startDate: event?.start.d.d,
-    endDate: event?.end.d.d,
-    isAllDay: event?.isAllday ?? false,
-    selected: event?.borderColor === calendarHandler._selectedColor,
-  };
-  return JSON.stringify(eventData);
-}
-
-function testGetCalendarViewName(){
-  return calendarHandler.calendar.getViewName();
-}
