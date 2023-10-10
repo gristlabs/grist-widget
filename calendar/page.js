@@ -8,6 +8,7 @@ const t = i18next.t;
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('readonly') === 'true' ||
   (urlParams.has('access') && urlParams.get('access') !== 'full');
+const docTimeZone = urlParams.get('timeZone');
 
 // Expose a few test variables on `window`.
 window.gristCalendar = {
@@ -141,6 +142,15 @@ class CalendarHandler {
   }
 
   _getCalendarOptions() {
+    let timezone = null;
+    // If doc is passing a default timezone, use it, otherwise dates will be in local time.
+    if (docTimeZone) {
+      timezone = {
+        zones: [
+          {timezoneName: docTimeZone},
+        ]
+      };
+    }
     return {
       week: {
         taskView: false,
@@ -200,6 +210,7 @@ class CalendarHandler {
         enableDblClick: true,
         enableClick: false,
       },
+      timezone,
     };
   }
 
@@ -589,13 +600,23 @@ async function upsertGristRecord(gristEvent) {
 const secondsPerDay = 24 * 60 * 60;
 
 function makeGristDateTime(tzDate, colType) {
+  // tzDate is a date in local's (current browser's) timezone.
+  // So if user is in UTC+1 and calendar shows dates in UTC-1 (doc's timezone), and user
+  // picks 5pm, it will be 5pm in UTC+1, not 5pm in UTC-1. So we need reinterpret the date
+  // as UTC-1.
+
+  if (docTimeZone) {
+    // If we are showing calendar in doc's timezone, convert the date to that timezone.
+    tzDate = tzDate.tz(docTimeZone);
+  }
+  const secondsSinceEpoch = tzDate.valueOf() / 1000 - tzDate.getTimezoneOffset() * 60;
   if (colType === 'Date') {
     // Reinterpret the time as UTC. Note: timezone offset is in minutes.
-    const secondsSinceEpoch = tzDate.valueOf() / 1000 - tzDate.getTimezoneOffset() * 60;
     // Round down to UTC midnight.
     return Math.floor(secondsSinceEpoch / secondsPerDay) * secondsPerDay;
   } else {
-    return tzDate.valueOf() / 1000;}
+    return Math.floor(secondsSinceEpoch);
+  }
 }
 
 async function upsertEvent(tuiEvent) {
@@ -667,7 +688,8 @@ function buildCalendarEventObject(record, colTypes, colOptions) {
     isAllday = true;
   }
   // Workaround for midnight zero-length events not showing up.
-  if (!isAllday && end.valueOf() === start.valueOf() && isZeroTime(end) && isZeroTime(start)) {
+  if (!isAllday && end.valueOf() === start.valueOf()
+      && isZeroTime(new calendarHandler.TZDate(end)) && isZeroTime(new calendarHandler.TZDate(start))) {
     end = new calendarHandler.TZDate(end).addHours(1);
   }
 
@@ -729,6 +751,9 @@ function focusWidget() {
 }
 
 function isZeroTime(date) {
+  if (docTimeZone) {
+    date = date.tz(docTimeZone)
+  }
   return date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0;
 }
 
