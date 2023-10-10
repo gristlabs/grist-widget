@@ -153,7 +153,7 @@ ready(() => {
         dom.update(document.querySelector(".save-action"), dom.show(isEditMode));
         dom.update(txt.toolbar_div, dom.cls('toolbar-read-mode', use => !use(isEditMode)));
       }
-      show(false);
+      toggle(false);
     }
   });
 
