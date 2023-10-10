@@ -687,7 +687,7 @@ function testGetCalendarEvent(eventId) {
     endDate: event.end,
     isAllDay: event.isAllday,
   };
-  return eventData;
+  return JSON.stringify(eventData);
 }
 
 function testGetVisibleCalendarEvent(eventId) {
@@ -701,7 +701,7 @@ function testGetVisibleCalendarEvent(eventId) {
     isAllDay: event?.isAllday ?? false,
     selected: event?.borderColor === calendarHandler._selectedColor,
   };
-  return eventData;
+  return JSON.stringify(eventData);
 }
 
 function testGetCalendarViewName(){
