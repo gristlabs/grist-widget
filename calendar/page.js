@@ -11,7 +11,7 @@ const isReadOnly = urlParams.get('readonly') === 'true' ||
   (urlParams.has('access') && urlParams.get('access') !== 'full');
 
 // for tests
-let dataVersion = Date.now();
+var dataVersion = Date.now();
 
 //registering code to run when a document is ready
 function ready(fn) {
