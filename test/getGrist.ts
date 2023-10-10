@@ -263,28 +263,6 @@ export class GristUtils extends GristWebDriverUtils {
     await clickOption(value);
   }
 
-  // Crude, assumes a single iframe. Should elaborate.
-  public async getCustomWidgetBody(selector: string = 'html'): Promise<string> {
-    const iframe = this.driver.find('iframe');
-    try {
-      await this.driver.switchTo().frame(iframe);
-      return await this.driver.find(selector).getText();
-    } finally {
-      await this.driver.switchTo().defaultContent();
-    }
-  }
-
-  public async executeScriptOnCustomWidget<T>(script: string | Function): Promise<T> {
-    const iframe = this.driver.find('iframe');
-    try {
-      await this.driver.switchTo().frame(iframe);
-      const jsValue = await this.driver.executeScript(script);
-      return jsValue as T;
-    } finally {
-      await this.driver.switchTo().defaultContent();
-    }
-  }
-
   public async inCustomWidget<T>(op: () => Promise<T>): Promise<T> {
     const iframe = driver.find('iframe');
     try {
@@ -293,5 +271,10 @@ export class GristUtils extends GristWebDriverUtils {
     } finally {
       await driver.switchTo().defaultContent();
     }
+  }
+
+  // Crude, assumes a single iframe. Should elaborate.
+  public async getCustomWidgetBody(selector: string = 'html'): Promise<string> {
+    return this.inCustomWidget(() => this.driver.find(selector).getText());
   }
 }

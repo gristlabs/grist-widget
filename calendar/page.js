@@ -337,7 +337,6 @@ class CalendarHandler {
       const isEventInRange = (
         (event.start >= dateRangeStart && event.start <= dateRangeEnd) ||
         (event.end >= dateRangeStart && event.end <= dateRangeEnd) ||
-        (event.start >= dateRangeStart && event.start <= dateRangeEnd) ||
         (event.start < dateRangeStart && event.end > dateRangeEnd)
       );
       if (!isEventInRange) { continue; }
@@ -688,7 +687,7 @@ function testGetCalendarEvent(eventId) {
     endDate: event.end,
     isAllDay: event.isAllday,
   };
-  return JSON.stringify(eventData);
+  return eventData;
 }
 
 function testGetVisibleCalendarEvent(eventId) {
@@ -702,7 +701,7 @@ function testGetVisibleCalendarEvent(eventId) {
     isAllDay: event?.isAllday ?? false,
     selected: event?.borderColor === calendarHandler._selectedColor,
   };
-  return JSON.stringify(eventData);
+  return eventData;
 }
 
 function testGetCalendarViewName(){

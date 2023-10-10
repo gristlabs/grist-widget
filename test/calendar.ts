@@ -15,31 +15,28 @@ describe('calendar', function () {
     });
   }
 
-  // Not a pretty way to get events from currently used calendar control. but it's working.
-  function buildGetVisibleCalendarEvent(eventId: number) {
-    return `return testGetVisibleCalendarEvent(${eventId});`
-  }
-
   async function getVisibleCalendarEvent(eventId: number): Promise<any> {
-    const event = await grist.executeScriptOnCustomWidget(buildGetVisibleCalendarEvent(eventId));
-    return JSON.parse(event as any);
-  }
-
-  function buildGetCalendarEvent(eventId: number) {
-    return `return testGetCalendarEvent(${eventId});`
+    return grist.inCustomWidget(() => {
+      return (window as any).testGetVisibleCalendarEvent(eventId);
+    });
   }
 
   async function getCalendarEvent(eventId: number): Promise<any> {
-    const event = await grist.executeScriptOnCustomWidget(buildGetCalendarEvent(eventId));
-    return JSON.parse(event as any);
+    return grist.inCustomWidget(() => {
+      return (window as any).testGetCalendarEvent(eventId);
+    });
   }
 
   async function getCalendarViewName(): Promise<string> {
-    return await grist.executeScriptOnCustomWidget('return testGetCalendarViewName()');
+    return grist.inCustomWidget(() => {
+      return (window as any).testGetCalendarViewName();
+    });
   }
 
   async function getDateVersion(): Promise<Date> {
-    return await grist.executeScriptOnCustomWidget('return testGetDataVersion()');
+    return grist.inCustomWidget(() => {
+      return (window as any).testGetDataVersion();
+    });
   }
 
   before(async function () {
@@ -140,9 +137,9 @@ describe('calendar', function () {
   it('should navigate to appropriate time periods when button is pressed', async function () {
     const today = new Date();
     const validateDate = async (daysToAdd: number) => {
-      const newDate = await grist.executeScriptOnCustomWidget(
-        'return calendarHandler.calendar.getDate().d.toDate().toDateString()'
-      );
+      const newDate = await grist.inCustomWidget(() => {
+        return (window as any).calendarHandler.calendar.getDate().d.toDate().toDateString();
+      });
 
       const expectedDate = new Date(today);
       expectedDate.setDate(today.getDate() + daysToAdd);
