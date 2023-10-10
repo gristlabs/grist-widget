@@ -278,7 +278,7 @@ export class GristUtils extends GristWebDriverUtils {
     return this.inCustomWidget(() => this.driver.find(selector).getText());
   }
 
-  public async executeScriptInCustomWidget<T>(script: () => Promise<T>, ...args: any[]): Promise<T> {
+  public async executeScriptInCustomWidget<T>(script: Function, ...args: any[]): Promise<T> {
     return this.inCustomWidget(() => {
       return driver.executeScript(script, ...args);
     })

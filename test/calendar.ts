@@ -16,15 +16,15 @@ describe('calendar', function () {
   }
 
   async function getVisibleCalendarEvent(eventId: number): Promise<any> {
-    return grist.executeScriptInCustomWidget(() => {
-      return (window as any).testGetVisibleCalendarEvent(eventId);
-    });
+    return grist.executeScriptInCustomWidget((id: number) => {
+      return (window as any).testGetVisibleCalendarEvent(id);
+    }, eventId);
   }
 
   async function getCalendarEvent(eventId: number): Promise<any> {
-    return grist.executeScriptInCustomWidget(() => {
-      return (window as any).testGetCalendarEvent(eventId);
-    });
+    return grist.executeScriptInCustomWidget((id: number) => {
+      return (window as any).testGetCalendarEvent(id);
+    }, eventId);
   }
 
   async function getCalendarViewName(): Promise<string> {
