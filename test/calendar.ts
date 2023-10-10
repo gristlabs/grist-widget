@@ -16,25 +16,25 @@ describe('calendar', function () {
   }
 
   async function getVisibleCalendarEvent(eventId: number): Promise<any> {
-    return grist.inCustomWidget(() => {
+    return grist.executeScriptInCustomWidget(() => {
       return (window as any).testGetVisibleCalendarEvent(eventId);
     });
   }
 
   async function getCalendarEvent(eventId: number): Promise<any> {
-    return grist.inCustomWidget(() => {
+    return grist.executeScriptInCustomWidget(() => {
       return (window as any).testGetCalendarEvent(eventId);
     });
   }
 
   async function getCalendarViewName(): Promise<string> {
-    return grist.inCustomWidget(() => {
+    return grist.executeScriptInCustomWidget(() => {
       return (window as any).testGetCalendarViewName();
     });
   }
 
   async function getDateVersion(): Promise<Date> {
-    return grist.inCustomWidget(() => {
+    return grist.executeScriptInCustomWidget(() => {
       return (window as any).testGetDataVersion();
     });
   }
@@ -137,7 +137,7 @@ describe('calendar', function () {
   it('should navigate to appropriate time periods when button is pressed', async function () {
     const today = new Date();
     const validateDate = async (daysToAdd: number) => {
-      const newDate = await grist.inCustomWidget(() => {
+      const newDate = await grist.executeScriptInCustomWidget(() => {
         return (window as any).calendarHandler.calendar.getDate().d.toDate().toDateString();
       });
 
