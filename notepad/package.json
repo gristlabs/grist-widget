@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/notepad",
     "widgetId": "@gristlabs/widget-notepad",
     "published": true,
-    "accessLevel": "full"
+    "accessLevel": "full",
+    "renderAfterReady": true
   }
 }
