@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/rendervideo/index.html",
     "widgetId": "@gristlabs/widget-rendervideo",
     "published": true,
-    "accessLevel": "read table"
+    "accessLevel": "read table",
+    "renderAfterReady": true
   }
 }

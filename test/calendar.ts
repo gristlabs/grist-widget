@@ -1,4 +1,4 @@
-import {assert, driver} from 'mocha-webdriver';
+import {Key, assert, driver} from 'mocha-webdriver';
 import {getGrist} from "./getGrist";
 
 //not a pretty way to get events from currently used calendar control. but it's working.
@@ -117,8 +117,10 @@ describe('calendar', function () {
   });
 
   it('should change calendar perspective when button is pressed', async function () {
-    await grist.inCustomWidget(async () => {
-      await driver.findWait('#calendar-day-label', 200).click();
+    await grist.waitToPass(async () => {
+      await grist.inCustomWidget(async () => {
+        await driver.findWait('#calendar-day-label', 200).click();
+      });
     });
     let viewType = await getCalendarSettings();
     assert.equal(viewType, 'day');
@@ -199,10 +201,9 @@ describe('calendar', function () {
     await clickDay(10);
     await grist.rejects(setSubject('new event'));
 
-    await grist.waitForServer();
-    assert.equal(await eventsCount(), 0);
+    await assertNewEventPopupDisplayed(false);
 
-    // We don't have a good way of checking it. So we just check at the end that we have only one event..
+    // We don't have a good way of checking it. So we just check at the end that we have only one event.
 
     // Now with read access.
     await grist.setCustomWidgetAccess('read table');
@@ -210,20 +211,18 @@ describe('calendar', function () {
     await grist.waitForServer();
     await grist.waitForFrame();
 
-    // Now try to add a record. It should fail.
+    // Try to add a record again. It should still fail.
     await clickDay(11);
     await grist.rejects(setSubject('new event'));
-    await grist.waitForServer();
-    assert.equal(await eventsCount(), 0);
+    await assertNewEventPopupDisplayed(false);
 
     // Now with full access.
     await grist.setCustomWidgetAccess('full');
     await grist.waitForServer();
     await grist.waitForFrame();
 
-    await addEvent(12);
+    await createCalendarEvent(12, 'Test1');
     await grist.waitForServer();
-
     await grist.waitToPass(async () => {
       assert.equal(await eventsCount(), 1);
     });
@@ -244,10 +243,10 @@ describe('calendar', function () {
     ]);
 
     // Add 4 events in the calendar.
-    await addEvent(14);
-    await addEvent(15);
-    await addEvent(16);
-    await addEvent(17);
+    await createCalendarEvent(14, 'Test2');
+    await createCalendarEvent(15, 'Test3');
+    await createCalendarEvent(16, 'Test4');
+    await createCalendarEvent(17, 'Test5');
 
     // Now test if bi-directional mapping works.
     await grist.waitToPass(async () => {
@@ -259,7 +258,7 @@ describe('calendar', function () {
 
     assert.equal(await selectedRow(), 2);
 
-    // Calendar should be focues on 3rd event.
+    // Calendar should be focused on 3rd event.
     assert.isTrue(await getCalendarEvent(3).then(c => c.selected));
 
     // Click 4th row
@@ -319,16 +318,34 @@ describe('calendar', function () {
         }
     });
     //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimized for drag and drop tests in mocha and i cannot yet make it working correctly./**
-   /* Clicks on a day in a month view.
+   /* Clicks the cell for `day` in the calendar.
    */
-   async function clickDay(which: number) {
+   async function clickDay(day: number) {
     await grist.inCustomWidget(async () => {
+      const cell = driver.findContentWait(`.toastui-calendar-template-monthGridHeader`, String(day), 200);
       await driver.withActions(ac =>
-        ac.move({origin: driver.findContentWait(`.toastui-calendar-template-monthGridHeader`, String(which), 200)})
-          .press().pause(100).release()
+        // doubleClick doesn't work here, so we do two clicks instead.
+        ac.move({origin: cell}).press().pause(100).release().pause(100).press().pause(100).release()
       );
     });
+  }
+
+  /**
+   * Creates an event in the calendar with title `eventTitle` for the specified `day`.
+   */
+  async function createCalendarEvent(day: number, eventTitle: string) {
+    await clickDay(day);
+    await grist.inCustomWidget(async () => {
+      await driver.findWait('.toastui-calendar-popup-container', 1000);
+      await driver.sendKeys(eventTitle, Key.ENTER);
+    });
     await grist.waitForServer();
+  }
+
+  async function assertNewEventPopupDisplayed(expected: boolean) {
+    await grist.inCustomWidget(async () => {
+      assert.equal(await driver.find('.toastui-calendar-popup-container').isPresent(), expected);
+    });
   }
 
   function eventsCount() {

@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/renderhtml/index.html",
     "widgetId": "@gristlabs/widget-renderhtml",
     "published": true,
-    "accessLevel": "read table"
+    "accessLevel": "read table",
+    "renderAfterReady": true
   }
 }

@@ -304,7 +304,8 @@ body {
 .tui-timepicker-select {
   border: 1px solid var(--grist-theme-input-border);
   padding: 0px;
-  background: unset;
+  color: var(--grist-theme-select-button-fg);
+  background: var(--grist-theme-select-button-bg);
 }
 
 .tui-datepicker .tui-is-selectable.tui-is-selected,
@@ -427,9 +428,12 @@ input:checked + label {
   color: var(--grist-theme-text);
 }
 
-.toastui-calendar-template-time,
 .toastui-calendar-template-monthDayName{
   color: var(--grist-theme-text);
+}
+
+.toastui-calendar-weekday-event-dot + .toastui-calendar-weekday-event-title  {
+  color: var(--grist-theme-text) !important;
 }
 
 .toastui-calendar-week-view-day-names {
@@ -466,6 +470,25 @@ input:checked + label {
   background: var(--grist-theme-menu-border);
 }
 
+.toastui-calendar-popup-date-dash {
+  color: var(--grist-theme-input-border);
+}
+
+.toastui-calendar-grid-selection-label {
+  color: var(--grist-theme-text);
+}
+
+.toastui-calendar-see-more {
+  border: unset !important;
+  background-color: var(--grist-theme-popup-bg) !important;
+  box-shadow: 0 2px 20px 0 var(--grist-theme-menu-shadow, rgba(38, 38, 51, 0.6)) !important;
+}
+
+.toastui-calendar-more-title-date,
+.toastui-calendar-more-title-day {
+  color: var(--grist-theme-text);
+}
+
 @media (max-width: 575.98px) {
   /* CSS hacks to make days of week more responsive in week view. */
   .toastui-calendar-week-view .toastui-calendar-day-name__date,
@@ -495,4 +518,9 @@ input:checked + label {
   .toastui-calendar-week-view .toastui-calendar-day-name-item {
     padding: 0 4px;
   }
+}
+
+/* Toast UI doesn't allow styling dots, we are reverting it here */
+.toastui-calendar-weekday-event-dot+.toastui-calendar-weekday-event-title {
+  color: inherit;
 }

@@ -191,7 +191,12 @@ class CalendarHandler {
         },
       ],
       useFormPopup: !isReadOnly,
-      useDetailPopup: true,
+      useDetailPopup: false, // We use our own logic to show this popup.
+      gridSelection: {
+        // Enable adding only via dbClick.
+        enableDblClick: true,
+        enableClick: false,
+      },
     };
   }
 
@@ -273,7 +278,7 @@ class CalendarHandler {
       return;
     }
     if (this._selectedRecordId) {
-      this._colorCalendarEvent(this._selectedRecordId, this._mainColor);
+      this._clearHighlightEvent(this._selectedRecordId);
     }
     this._selectedRecordId = record.id;
     const [startType] = await colTypesFetcher.getColTypes();
@@ -301,10 +306,30 @@ class CalendarHandler {
     }
   }
 
-  _colorCalendarEvent(eventId, color) {
+  _highlightEvent(eventId) {
     const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
+    if (!event) { return; }
+    // If this event is shown on month view as a dot.
     const shouldPaintBackground = this._isMultidayInMonthViewEvent(event);
-    this.calendar.updateEvent(eventId, CALENDAR_NAME, {borderColor: color, backgroundColor: shouldPaintBackground?color:this._mainColor});
+    // We will highlight it by changing the background color. Otherwise we will change the border color.
+    const partToColor = shouldPaintBackground ? 'backgroundColor' : 'borderColor';
+    this.calendar.updateEvent(eventId, CALENDAR_NAME, {
+      ...{
+        borderColor: event.raw?.['backgroundColor'] ?? this._mainColor,
+        backgroundColor: event.raw?.['backgroundColor'] ?? this._mainColor,
+      },
+      [partToColor]: this._selectedColor
+    });
+  }
+
+  _clearHighlightEvent(eventId) {
+    const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
+    if (!event) { return; }
+    // We will highlight it by changing the background color. Otherwise wi will change the border color.
+    this.calendar.updateEvent(eventId, CALENDAR_NAME, {
+      borderColor: event.raw?.['backgroundColor'] ?? this._mainColor,
+      backgroundColor: event.raw?.['backgroundColor'] ?? this._mainColor,
+    });
   }
 
   // change calendar perspective between week, month and day.
@@ -333,7 +358,7 @@ class CalendarHandler {
 
   refreshSelectedRecord(){
     if (this._selectedRecordId) {
-      this._colorCalendarEvent(this._selectedRecordId, this._selectedColor);
+      this._highlightEvent(this._selectedRecordId);
     }
   }
 
@@ -362,14 +387,6 @@ class CalendarHandler {
       }
     }
     this.previousIds = currentIds;
-  }
-
-  setTheme(gristThemeConfiguration) {
-    this._gristTheme = gristThemeConfiguration;
-    const options = this._getCalendarOptions();
-    this.calendar.setTheme(options.theme);
-    this.calendar.setCalendars(options.calendars);
-    this.calendar.render();
   }
 }
 
@@ -401,6 +418,13 @@ function getGristOptions() {
       allowMultiple: false
     },
     {
+      name: "isAllDay",
+      title: "Is All Day",
+      optional: true,
+      type: "Bool",
+      description: "is event all day long",
+    },
+    {
       name: "title",
       title: t("Title"),
       optional: false,
@@ -414,6 +438,14 @@ function getGristOptions() {
       optional: true,
       type: "Bool",
       description: t("is event all day long"),
+    },
+    {
+      name: "type",
+      title: t("Type"),
+      optional: true,
+      type: "Choice,ChoiceList",
+      description: t("event category and style"),
+      allowMultiple: false
     }
   ];
 }
@@ -477,10 +509,10 @@ async function translatePage() {
 }
 
 // When a user selects a record in the table, we want to select it on the calendar.
-async function gristSelectedRecordChanged(record, mappings) {
+function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
   if (mappedRecord && calendarHandler) {
-    await calendarHandler.selectRecord(mappedRecord);
+    calendarHandler.selectRecord(mappedRecord);
   }
 }
 
@@ -500,7 +532,6 @@ let onGristSettingsChanged = function (options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
-  calendarHandler.setTheme(settings.theme);
 };
 
 function changeCalendarView(view) {
@@ -600,9 +631,10 @@ function getAdjustedDate(date, colType) {
 }
 
 // helper function to build a calendar event object from grist flat record
-function buildCalendarEventObject(record, colTypes) {
+function buildCalendarEventObject(record, colTypes, colOptions) {
   let {startDate: start, endDate: end, isAllDay: isAllday} = record;
   let [startType, endType] = colTypes;
+  let [,,type] = colOptions;
   endType = endType || startType;
   start = getAdjustedDate(start, startType);
   end = end ? getAdjustedDate(end, endType) : start
@@ -618,6 +650,19 @@ function buildCalendarEventObject(record, colTypes) {
   if (!isAllday && end.valueOf() === start.valueOf() && isZeroTime(end) && isZeroTime(start)) {
     end = new calendarHandler.TZDate(end).addHours(1);
   }
+
+  // Apply colors from the type column.
+  const selected = (Array.isArray(record.type) ? record.type[0] : record.type) ?? '';
+  const raw = clean({
+    backgroundColor: type?.choiceOptions?.[selected]?.fillColor,
+    color: type?.choiceOptions?.[selected]?.textColor,
+  });
+  const fontWeight = type?.choiceOptions?.[selected]?.fontBold ? '800' : 'normal';
+  const fontStyle = type?.choiceOptions?.[selected]?.fontItalic ? 'italic' : 'normal';
+  let textDecoration = type?.choiceOptions?.[selected]?.fontUnderline ? 'underline' : 'none';
+  if (type?.choiceOptions?.[selected]?.fontStrikethrough) {
+    textDecoration = textDecoration === 'underline' ? 'line-through underline' : 'line-through';
+  }
   return {
     id: record.id,
     calendarId: CALENDAR_NAME,
@@ -627,6 +672,17 @@ function buildCalendarEventObject(record, colTypes) {
     isAllday,
     category: 'time',
     state: 'Free',
+    color: this._textColor,
+    backgroundColor: this._mainColor,
+    dragBackgroundColor: 'var(--grist-theme-hover)',
+    raw, // Store it as an custom property. It will be used to revert any highlighting that might be done.
+    ...raw, // And now paint the event with the color.
+    borderColor: raw.backgroundColor, // We don't have a border color, so use the background color.
+    customStyle: {
+      fontStyle,
+      fontWeight,
+      textDecoration,
+    }
   };
 }
 
@@ -638,8 +694,11 @@ async function updateCalendar(records, mappings) {
   // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
     const colTypes = await colTypesFetcher.getColTypes();
-    const CalendarEventObjects = mappedRecords.filter(isRecordValid).map(r => buildCalendarEventObject(r, colTypes));
+    const colOptions = await colTypesFetcher.getColOptions();
+    const CalendarEventObjects = mappedRecords.filter(isRecordValid)
+                                              .map(r => buildCalendarEventObject(r, colTypes, colOptions));
     await calendarHandler.updateCalendarEvents(CalendarEventObjects);
+    updateUIAfterNavigation();
   }
   dataVersion = Date.now();
 }
@@ -657,14 +716,16 @@ function isZeroTime(date) {
 // changed, so we skip that for now.
 // TODO: Drop all this once the API can tell us column info.
 class ColTypesFetcher {
-  // Returns array of types for the array of colIds.
+  // Returns array of column records for the array of colIds.
   static async getTypes(tableId, colIds) {
     const tables = await grist.docApi.fetchTable('_grist_Tables');
     const columns = await grist.docApi.fetchTable('_grist_Tables_column');
+    const fields = Object.keys(columns);
     const tableRef = tables.id[tables.tableId.indexOf(tableId)];
     return colIds.map(colId => {
       const index = columns.id.findIndex((id, i) => (columns.parentId[i] === tableRef && columns.colId[i] === colId));
-      return columns.type[index];
+      if (index === -1) { return null; }
+      return Object.fromEntries(fields.map(f => [f, columns[f][index]]));
     });
   }
 
@@ -680,8 +741,12 @@ class ColTypesFetcher {
   gotMappings(mappings) {
     // Can't fetch metadata when no full access.
     if (this._accessLevel !== 'full') { return; }
-    if (!this._colIds || !(mappings.startDate === this._colIds[0] && mappings.endDate === this._colIds[1])) {
-      this._colIds = [mappings.startDate, mappings.endDate];
+    if (!this._colIds || !(
+        mappings.startDate === this._colIds[0] &&
+        mappings.endDate === this._colIds[1] &&
+        mappings.type === this._colIds[2]
+      )) {
+      this._colIds = [mappings.startDate, mappings.endDate, mappings.type];
       if (this._tableId) {
         this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
       }
@@ -695,8 +760,13 @@ class ColTypesFetcher {
       this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
     }
   }
+
   async getColTypes() {
-    return this._colTypesPromise;
+    return this._colTypesPromise.then(types => types.map(t => t?.type));
+  }
+
+  async getColOptions() {
+    return this._colTypesPromise.then(types => types.map(t => safeParse(t?.widgetOptions)));
   }
 }
 
@@ -710,7 +780,8 @@ function testGetCalendarEvent(eventId) {
       startDate: calendarObject?.start.d.d,
       endDate: calendarObject?.end.d.d,
       isAllDay: calendarObject?.isAllday ?? false,
-      selected: calendarObject?.borderColor === calendarHandler._selectedColor
+      selected: calendarObject?.borderColor === calendarHandler._selectedColor ||
+                calendarObject?.backgroundColor === calendarHandler._selectedColor,
     };
     return JSON.stringify(eventData);
   } else {
@@ -722,3 +793,55 @@ function testGetCalendarViewName() {
   // noinspection JSUnresolvedReference
   return calendarHandler.calendar.getViewName();
 }
+
+function safeParse(value) {
+  try {
+    return JSON.parse(value);
+  } catch (err) {
+    return null;
+  }
+}
+
+function clean(obj) {
+  return Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
+}
+
+// HACK: show detail popup on dblclick instead of single click.
+document.addEventListener('dblclick', (ev) => {
+  // tui calendar shows this popup on mouseup, so there is no way to customize it.
+  // So we turn it off (by leaving useDetailPopup to false), and show this popup ourselves.
+
+  // Code that I read to make it happen:
+  //
+  // https://github.com/nhn/tui.calendar/blob/b53e765e8d896ab7c63d9b9b9515904119a72f46/apps/calendar/src/components/events/timeEvent.tsx#L233
+  // if (isClick && useDetailPopup && eventContainerRef.current) {
+  //   showDetailPopup(
+  //     {
+  //       event: uiModel.model,
+  //       eventRect: eventContainerRef.current.getBoundingClientRect(),
+  //     },
+  //     false // this is flat parameter
+  //   );
+  // }
+
+  // First some sanity checks.
+  if (!ev.target || !calendarHandler.calendar) { return; }
+
+  // Now find the uiModel.model parameter. This is typed as EventModel|null in the tui code.
+
+  // First get the id of the event at hand.
+  const eventDom = ev.target.closest("[data-event-id]");
+  if (!eventDom) { return; }
+  const eventId = Number(eventDom.dataset.eventId);
+  if (!eventId || Number.isNaN(eventId)) { return; }
+
+  // Now get the model from the calendar.
+  const event = calendarHandler.calendar.getEventModel(eventId, CALENDAR_NAME);
+  if (!event) { return; }
+
+  // Now show the popup the same way as in the code above.
+  const store = calendarHandler.calendar.getStoreDispatchers('popup');
+  // This parameter was picked by hand (with try and fail method).
+  const eventRect = eventDom.getBoundingClientRect();
+  store.showDetailPopup({event, eventRect}, false);
+});
