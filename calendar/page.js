@@ -418,13 +418,6 @@ function getGristOptions() {
       allowMultiple: false
     },
     {
-      name: "isAllDay",
-      title: "Is All Day",
-      optional: true,
-      type: "Bool",
-      description: "is event all day long",
-    },
-    {
       name: "title",
       title: t("Title"),
       optional: false,
@@ -478,8 +471,6 @@ async function configureGristSettings() {
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
   grist.ready({requiredAccess: 'full', columns: columnsMappingOptions, allowSelectBy: true});
-  // table selection should change when another event is selected
-  await grist.allowSelectBy();
 }
 
 async function translatePage() {

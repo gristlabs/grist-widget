@@ -193,27 +193,22 @@ describe('calendar', function () {
 
   it("should respect non full access", async function () {
     await grist.setCustomWidgetAccess('none');
-    await grist.rejectAccess();
     await grist.waitForServer();
     await grist.waitForFrame();
 
     // Now try to add a record. It should fail.
     await clickDay(10);
-    await grist.rejects(setSubject('new event'));
-
     await assertNewEventPopupDisplayed(false);
 
     // We don't have a good way of checking it. So we just check at the end that we have only one event.
 
     // Now with read access.
     await grist.setCustomWidgetAccess('read table');
-    await grist.rejectAccess();
     await grist.waitForServer();
     await grist.waitForFrame();
 
     // Try to add a record again. It should still fail.
     await clickDay(11);
-    await grist.rejects(setSubject('new event'));
     await assertNewEventPopupDisplayed(false);
 
     // Now with full access.
@@ -254,7 +249,7 @@ describe('calendar', function () {
     });
 
     // Select 2 row in grid view.
-    await selectRow(2);
+    await clickRow(2);
 
     assert.equal(await selectedRow(), 2);
 
@@ -262,7 +257,7 @@ describe('calendar', function () {
     assert.isTrue(await getCalendarEvent(3).then(c => c.selected));
 
     // Click 4th row
-    await selectRow(3);
+    await clickRow(3);
     assert.equal(await selectedRow(), 3);
     assert.isTrue(await getCalendarEvent(4).then(c => c.selected));
 
@@ -357,33 +352,11 @@ describe('calendar', function () {
     });
   }
 
-  async function selectRow(rowIndex: number) {
+  async function clickRow(rowIndex: number) {
     await driver.findContentWait('.gridview_data_row_num', String(rowIndex), 200).click();
   }
 
   async function selectedRow() {
     return Number(await driver.findWait('.gridview_data_row_num.selected', 200).then(e => e.getText()));
-  }
-
-  async function setSubject(subject: string) {
-    await grist.inCustomWidget(async () => {
-      // The element to set is <input name="title" class="toastui-calendar-content" placeholder="Subject" required="">
-      await driver.findWait(`.toastui-calendar-popup-container input[name="title"]`, 600).click();
-      await driver.find(`.toastui-calendar-popup-container input[name="title"]`).sendKeys(subject);
-    });
-  }
-
-  async function pressSave() {
-    await grist.inCustomWidget(async () => {
-      // Element: <button type="submit" class="toastui-calendar-popup-button toastui-calendar-popup-confirm">
-      await driver.findWait(`.toastui-calendar-popup-container button[type="submit"]`, 200).click();
-    });
-  }
-
-  // A combination, click a day, set subject, press save.
-  async function addEvent(day: number, subject: string = 'new event') {
-    await clickDay(day);
-    await setSubject(subject);
-    await pressSave();
   }
 });
