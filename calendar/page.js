@@ -158,7 +158,12 @@ class CalendarHandler {
         },
       ],
       useFormPopup: !isReadOnly,
-      useDetailPopup: true,
+      useDetailPopup: false, // We use our own logic to show this popup.
+      gridSelection: {
+        // Enable adding only via dbClick.
+        enableDblClick: true,
+        enableClick: false,
+      },
     };
   }
 
@@ -737,3 +742,43 @@ function safeParse(value) {
 function clean(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
 }
+
+// HACK: show detail popup on dblclick instead of single click.
+document.addEventListener('dblclick', (ev) => {
+  // tui calendar shows this popup on mouseup, so there is no way to customize it.
+  // So we turn it off (by leaving useDetailPopup to false), and show this popup ourselves.
+  
+  // Code that I read to make it happen:
+  // 
+  // https://github.com/nhn/tui.calendar/blob/b53e765e8d896ab7c63d9b9b9515904119a72f46/apps/calendar/src/components/events/timeEvent.tsx#L233
+  // if (isClick && useDetailPopup && eventContainerRef.current) {
+  //   showDetailPopup(
+  //     {
+  //       event: uiModel.model,
+  //       eventRect: eventContainerRef.current.getBoundingClientRect(),
+  //     },
+  //     false // this is flat parameter
+  //   );
+  // }
+
+  // First some sanity checks.
+  if (!ev.target || !calendarHandler.calendar) { return; }
+
+  // Now find the uiModel.model parameter. This is typed as EventModel|null in the tui code.
+
+  // First get the id of the event at hand.
+  const eventDom = ev.target.closest("[data-event-id]");
+  if (!eventDom) { return; }
+  const eventId = Number(eventDom.dataset.eventId);
+  if (!eventId || Number.isNaN(eventId)) { return; }
+
+  // Now get the model from the calendar.
+  const event = calendarHandler.calendar.getEventModel(eventId, CALENDAR_NAME);
+  if (!event) { return; }
+
+  // Now show the popup the same way as in the code above.
+  const store = calendarHandler.calendar.getStoreDispatchers('popup');
+  // This parameter was picked by hand (with try and fail method).
+  const eventRect = eventDom.getBoundingClientRect();
+  store.showDetailPopup({event, eventRect}, false);
+});
