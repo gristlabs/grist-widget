@@ -349,7 +349,7 @@ describe('calendar', function () {
       const cell = driver.findContentWait(`.toastui-calendar-template-monthGridHeader`, String(day), 200);
       await driver.withActions(ac =>
         // doubleClick doesn't work here, so we do two clicks instead.
-        ac.move({ origin: cell }).press().pause(100).release().pause(100).press().pause(100).release()
+        ac.move({origin: cell}).press().pause(100).release().pause(100).press().pause(100).release()
       );
     });
   }

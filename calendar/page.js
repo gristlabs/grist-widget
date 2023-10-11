@@ -710,9 +710,10 @@ async function updateCalendar(records, mappings) {
   if (mappedRecords) {
     const colTypes = await colTypesFetcher.getColTypes();
     const colOptions = await colTypesFetcher.getColOptions();
-    const events = mappedRecords.filter(isRecordValid).map(r => buildCalendarEventObject(r, colTypes, colOptions));
+    const events = mappedRecords
+      .filter(isRecordValid)
+      .map(r => buildCalendarEventObject(r, colTypes, colOptions));
     calendarHandler.setEvents(new Map(events.map(event => ([event.id, event]))));
-    calendarHandler.renderVisibleEvents();
     updateUIAfterNavigation();
   }
   dataVersion = Date.now();
