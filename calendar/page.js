@@ -605,17 +605,27 @@ function makeGristDateTime(tzDate, colType) {
   // picks 5pm, it will be 5pm in UTC+1, not 5pm in UTC-1. So we need reinterpret the date
   // as UTC-1.
 
-  if (docTimeZone) {
-    // If we are showing calendar in doc's timezone, convert the date to that timezone.
-    tzDate = tzDate.tz(docTimeZone);
-  }
-  const secondsSinceEpoch = tzDate.valueOf() / 1000 - tzDate.getTimezoneOffset() * 60;
+  let unixTime = Math.floor(tzDate.valueOf() / 1000);
+  // Get this date timezone (local one). NOTE: it has opposite sign to what will
+  // be returned from a tzDate with a timezone marker (which will be the absolute one).
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset
+
+  const localOffset = -tzDate.getTimezoneOffset();
+  // If we set timezone, it will have a correct sign.
+  const docOffset = !docTimeZone ? localOffset : tzDate.tz(docTimeZone).getTimezoneOffset();
+
+  // If local is +4 and doc is -5, then we need to shift by 9 hours.
+  // If we have 14:00 +4 and we want to have 14:00 -5, we need to shift by 9 hours (subtract 9 hours).
+  const toShift = (localOffset - docOffset) * 60 /* offsets are in minutes */;
+  unixTime += toShift;
+
   if (colType === 'Date') {
     // Reinterpret the time as UTC. Note: timezone offset is in minutes.
+    const secondsSinceEpoch = unixTime - docOffset * 60;
     // Round down to UTC midnight.
     return Math.floor(secondsSinceEpoch / secondsPerDay) * secondsPerDay;
   } else {
-    return Math.floor(secondsSinceEpoch);
+    return Math.floor(unixTime);
   }
 }
 
