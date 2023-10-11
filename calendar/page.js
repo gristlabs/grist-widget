@@ -418,19 +418,19 @@ function getGristOptions() {
       allowMultiple: false
     },
     {
+      name: "isAllDay",
+      title: t("Is All Day"),
+      optional: true,
+      type: "Bool",
+      description: t("is event all day long"),
+    },
+    {
       name: "title",
       title: t("Title"),
       optional: false,
       type: "Text",
       description: t("title of event"),
       allowMultiple: false
-    },
-    {
-      name: "isAllDay",
-      title: t("Is All Day"),
-      optional: true,
-      type: "Bool",
-      description: t("is event all day long"),
     },
     {
       name: "type",
