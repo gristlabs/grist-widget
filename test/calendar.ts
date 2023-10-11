@@ -115,8 +115,10 @@ describe('calendar', function () {
   });
 
   it('should change calendar perspective when button is pressed', async function () {
-    await grist.inCustomWidget(async () => {
-      await driver.findWait('#calendar-day-label', 200).click();
+    await grist.waitToPass(async () => {
+      await grist.inCustomWidget(async () => {
+        await driver.findWait('#calendar-day-label', 200).click();
+      });
     });
     let viewType = await getCalendarSettings();
     assert.equal(viewType, 'day');
@@ -293,9 +295,10 @@ describe('calendar', function () {
    */
   async function clickDay(day: number) {
     await grist.inCustomWidget(async () => {
+      const cell = driver.findContentWait(`.toastui-calendar-template-monthGridHeader`, String(day), 200);
       await driver.withActions(ac =>
-        ac.move({origin: driver.findContentWait(`.toastui-calendar-template-monthGridHeader`, String(day), 200)})
-          .press().pause(100).release()
+        // doubleClick doesn't work here, so we do two clicks instead.
+        ac.move({origin: cell}).press().pause(100).release().pause(100).press().pause(100).release()
       );
     });
   }
@@ -304,11 +307,8 @@ describe('calendar', function () {
    * Creates an event in the calendar with title `eventTitle` for the specified `day`.
    */
   async function createCalendarEvent(day: number, eventTitle: string) {
+    await clickDay(day);
     await grist.inCustomWidget(async () => {
-      await driver.withActions(ac =>
-        ac.move({origin: driver.findContentWait(`.toastui-calendar-template-monthGridHeader`, String(day), 200)})
-          .press().pause(100).release()
-      );
       await driver.findWait('.toastui-calendar-popup-container', 1000);
       await driver.sendKeys(eventTitle, Key.ENTER);
     });
