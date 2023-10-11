@@ -155,11 +155,13 @@ class CalendarHandler {
       template: {
         time(event) {
           const {title} = event;
-          return `<span>${title}</span>`;
+          const sanitizedTitle = title.replace('"','&quot;').trim();
+          return `<span title="${sanitizedTitle}">${title}</span>`;
         },
         allday(event) {
           const {title} = event;
-          return `<span>${title}</span>`;
+          const sanitizedTitle = title.replace('"','&quot;').trim();
+          return `<span title="${sanitizedTitle}">${title}</span>`;
         },
         popupDelete(){
           return t('Delete')
