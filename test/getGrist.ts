@@ -155,7 +155,9 @@ export class GristUtils extends GristWebDriverUtils {
       }
       try {
         const resp = await fetch(this.server.assetUrl);
-        if (resp.status === 200) { break; }
+        if (resp.status === 200) {
+          break;
+        }
       } catch (e) {
         // we expect fetch failures initially.
       }
@@ -193,12 +195,6 @@ export class GristUtils extends GristWebDriverUtils {
     await driver.get(this.url + `/doc/${docId}`);
     await driver.findWait('.viewsection_title', 10000);
     await this.waitForServer();
-  }
-
-  public async closeDoc(): Promise<void> {
-    await driver.get(this.url);
-    await this.waitForServer();
-
   }
 
   public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number = 2000) {

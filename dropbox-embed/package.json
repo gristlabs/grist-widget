@@ -8,6 +8,7 @@
     "url": "https://gristlabs.github.io/grist-widget/dropbox-embed/index.html",
     "widgetId": "@gristlabs/dropbox-embed",
     "published": true,
-    "accessLevel": "read table"
+    "accessLevel": "read table",
+    "renderAfterReady": true
   }
 }

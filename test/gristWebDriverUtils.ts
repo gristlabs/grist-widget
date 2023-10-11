@@ -37,6 +37,17 @@ export class GristWebDriverUtils {
     ));
   }
 
+
+  public async login(){
+    //just click log in to get example account.
+    const menu = await this.driver.findWait('.test-dm-account', 1000);
+    await menu.click();
+    if(await this.isAlertShown){
+      await this.acceptAlert();
+    }
+    await this.waitForServer();
+  }
+
   public async waitForSidePanel() {
     // 0.4 is the duration of the transition setup in app/client/ui/PagePanels.ts for opening the
   // side panes
@@ -204,6 +215,29 @@ export class GristWebDriverUtils {
     }
   }
 
+  public async openAccountMenu() {
+    const menu = await this.driver.findWait('.test-dm-account', 1000)
+    await menu.click();
+    // Since the AccountWidget loads orgs and the user data asynchronously, the menu
+    // can expand itself causing the click to land on a wrong button.
+    await this.waitForServer();
+    await this.driver.findWait('.test-dm-account-settings', 1000);
+    await this.driver.sleep(250);  // There's still some jitter (scroll-bar? other user accounts?)
+  }
+
+  public async openProfileSettingsPage(): Promise<ProfileSettingsPage> {
+    await this.openAccountMenu();
+    await this.driver.find('.grist-floating-menu .test-dm-account-settings').click();
+    //close alert if it is shown
+    if(await this.isAlertShown()){
+      await this.acceptAlert();
+    };
+    await this.driver.findWait('.test-account-page-login-method', 5000);
+    await this.waitForServer();
+    return new ProfileSettingsPage(this);
+  }
+
+
   /**
    * Refresh browser and dismiss alert that is shown (for refreshing during edits).
    */
@@ -271,6 +305,22 @@ export class GristWebDriverUtils {
     after(async () => {
       await this.driver.manage().window().setRect(oldDimensions);
     });
+  }
+}
+
+class ProfileSettingsPage {
+  private driver: WebDriver;
+  private gu: GristWebDriverUtils;
+
+  constructor(gu: GristWebDriverUtils) {
+    this.gu = gu;
+    this.driver = gu.driver;
+  }
+
+  public async setLanguage(language: string) {
+    await this.driver.findWait('.test-account-page-language .test-select-open',100).click();
+    await this.driver.findContentWait('.test-select-menu li', language, 100).click();
+    await this.gu.waitForServer();
   }
 }
 
