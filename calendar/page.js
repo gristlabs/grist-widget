@@ -1,9 +1,7 @@
-// let's assume that it's imported in an html file
-var grist;
-
 // to keep all calendar related logic;
 let calendarHandler;
 const CALENDAR_NAME = 'standardCalendar';
+const t = i18next.t;
 
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('readonly') === 'true' ||
@@ -11,8 +9,21 @@ const isReadOnly = urlParams.get('readonly') === 'true' ||
 
 //for tests
 let dataVersion = Date.now();
-function testGetDataVersion(){
+
+function testGetDataVersion() {
   return dataVersion;
+}
+
+
+function getLanguage() {
+  if (this._lang) {
+    return this._lang;
+  } else {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    this._lang = urlParams.get('language') ?? 'en'
+    return this._lang;
+  }
 }
 
 //registering code to run when a document is ready
@@ -28,20 +39,20 @@ function isRecordValid(record) {
   const hasStartDate = record.startDate instanceof Date;
   const maybeHasEndDate = record.endDate === undefined ||
     record.endDate === null ||
-    record.endDate instanceof Date;
-  const hasTitle = typeof record.title === 'string';
+    record.endDate instanceof Date ;
+    const hasTitle = typeof record.title === 'string';
   const maybeHasIsAllDay = record.isAllDay === undefined || typeof record.isAllDay === 'boolean';
   return hasStartDate && maybeHasEndDate && hasTitle && maybeHasIsAllDay;
 }
 
 function getMonthName() {
-  return calendarHandler.calendar.getDate().toDate().toLocaleString('en-us', { month: 'long', year: 'numeric' })
+  return calendarHandler.calendar.getDate().toDate().toLocaleString(getLanguage(), {month: 'long', year: 'numeric'})
 }
 
 class CalendarHandler {
   //TODO: switch to new variables once they are published.
   _mainColor =  'var(--grist-theme-input-readonly-border)';
-  _calendarBackgroundColor =  'var(--grist-theme-page-panels-main-panel-bg)';
+    _calendarBackgroundColor =  'var(--grist-theme-page-panels-main-panel-bg)';
   _selectedColor = 'var(--grist-theme-top-bar-button-primary-fg)';
   _borderStyle =  '1px solid var(--grist-theme-table-body-border)';
   _accentColor =  'var(--grist-theme-accent-text)';
@@ -96,7 +107,7 @@ class CalendarHandler {
       },
       futureTime:{
         color: this._textColor,
-      },
+    },
       nowIndicatorLabel: {
         color: 'var(--grist-theme-accent-text)',
       },
@@ -132,8 +143,11 @@ class CalendarHandler {
     return {
       week: {
         taskView: false,
+        dayNames: [t('Sun'), t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat')],
       },
-      month: {},
+      month: {
+        dayNames: [t('Sun'), t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat')],
+      },
       usageStatistics: false,
       theme: this._calendarTheme(),
       defaultView: 'week',
@@ -147,10 +161,29 @@ class CalendarHandler {
           const {title} = event;
           return `<span>${title}</span>`;
         },
+        popupDelete(){
+          return t('Delete')
+        },
+        poupSave(){
+          return t('Save')
+        },
+        popupEdit(){
+          return t('Edit')
+        },
+        popupUpdate(){
+          return t('Update')
+        },
+        allDayTitle() {
+          return t('All Day')
+        },
+        popupIsAllday() {
+          return t('All Day')
+        }
+
       },
       calendars: [
         {
-          id:  CALENDAR_NAME,
+          id: CALENDAR_NAME,
           name: 'Personal',
           backgroundColor: this._mainColor,
           color: this._textColor,
@@ -258,7 +291,7 @@ class CalendarHandler {
       setTimeout(() => {
         const event = this.calendar.getElement(record.id, CALENDAR_NAME);
         if (!event) { return; }
-  
+
         // Only scroll into view if the event is not fully on-screen.
         const container = event.closest('.toastui-calendar-time');
         const containerTop = container.scrollTop;
@@ -359,6 +392,7 @@ class CalendarHandler {
 
 // when a document is ready, register the calendar and subscribe to grist events
 ready(async () => {
+  await translatePage();
   calendarHandler = new CalendarHandler();
   await configureGristSettings();
 
@@ -369,53 +403,54 @@ function getGristOptions() {
   return [
     {
       name: "startDate",
-      title: "Start Date",
+      title: t("Start Date"),
       optional: false,
       type: "Date,DateTime",
-      description: "starting point of event",
+      description: t("starting point of event"),
       allowMultiple: false
     },
     {
       name: "endDate",
-      title: "End Date",
+      title: t("End Date"),
       optional: true,
       type: "Date,DateTime",
-      description: "ending point of event",
+      description: t("ending point of event"),
       allowMultiple: false
     },
     {
       name: "isAllDay",
-      title: "Is All Day",
+      title: t("Is All Day"),
       optional: true,
       type: "Bool",
-      description: "is event all day long",
+      description: t("is event all day long"),
     },
     {
       name: "title",
-      title: "Title",
+      title: t("Title"),
       optional: false,
       type: "Text",
-      description: "title of event",
+      description: t("title of event"),
       allowMultiple: false
     },
     {
       name: "type",
-      title: "Type",
+      title: t("Type"),
       optional: true,
       type: "Choice,ChoiceList",
-      description: "event category and style",
+      description: t("event category and style"),
       allowMultiple: false
-    },
+    }
   ];
 }
 
 
-function updateUIAfterNavigation(){
+function updateUIAfterNavigation() {
   // update name of the month and year displayed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
   // refresh colors of selected event (in month view it's different from in other views)
   calendarHandler.refreshSelectedRecord();
 }
+
 // let's subscribe to all the events that we need
 async function configureGristSettings() {
   // CRUD operations on records in table
@@ -435,7 +470,33 @@ async function configureGristSettings() {
 
   // bind columns mapping options to the GUI
   const columnsMappingOptions = getGristOptions();
-  grist.ready({ requiredAccess: 'full', columns: columnsMappingOptions, allowSelectBy: true });
+  grist.ready({requiredAccess: 'full', columns: columnsMappingOptions, allowSelectBy: true});
+}
+
+async function translatePage() {
+
+  const backendOptions = {
+
+    loadPath: 'i18n/{{lng}}/{{ns}}.json',
+    addPath: 'i18n/add/{{lng}}/{{ns}}',
+    // don't allow cross domain requests
+    crossDomain: false,
+    // don't include credentials on cross domain requests
+    withCredentials: false,
+    // overrideMimeType sets request.overrideMimeType("application/json")
+    overrideMimeType: false,
+  }
+  await i18next.use(i18nextHttpBackend).init({
+    lng: getLanguage(),
+    debug: false,
+    saveMissing: true,
+    returnNull: false,
+    backend: backendOptions,
+  }, function (err, t) {
+    document.body.querySelectorAll('[data-i18n]').forEach(function (elem) {
+      elem.textContent = t(elem.dataset.i18n);
+    });
+  });
 }
 
 // When a user selects a record in the table, we want to select it on the calendar.
@@ -458,42 +519,36 @@ async function calendarViewChanges(radiobutton) {
 // When a user changes a perspective of calendar, we want this to be persisted in grist options between sessions.
 // this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
-let onGristSettingsChanged = function(options, settings) {
+let onGristSettingsChanged = function (options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
 };
 
 function changeCalendarView(view) {
-  selectRadioButton(view);
-  calendarHandler.changeView(view);
+    selectRadioButton(view);
+    calendarHandler.changeView(view);
 }
 
 // saving events to the table or updating existing one - basing on if ID is present or not in the send event
 async function upsertGristRecord(gristEvent) {
-  try {
-    //to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
-    // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
-    const mappedRecord = grist.mapColumnNamesBack(gristEvent);
-    if (!mappedRecord) { return; }
-
-    // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
-    delete mappedRecord.id;
-    // mapColumnNamesBack returns undefined for all absent fields, so we need to remove them as well
-    // (we also use undefined for updates when a field hasn't changed).
+  try {//to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
+  // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
+  const mappedRecord = grist.mapColumnNamesBack(gristEvent);if (!mappedRecord) { return; }
+  // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
+  delete mappedRecord.id;
+  //mapColumnNamesBack returns undefined for all absent fields, so we need to remove them as well
+  // (we also use undefined for updates when a field hasn't changed).
     const filteredRecord = Object.fromEntries(Object.entries(mappedRecord)
-      .filter(([key, value]) => value !== undefined));
-
-    // Send nothing if there are no changes.
-    if (Object.keys(filteredRecord).length === 0) { return; }
-
-    const eventInValidFormat =  { id: gristEvent.id, fields: filteredRecord };
-    const table = await grist.getTable();
-    if (gristEvent.id) {
-      await table.update(eventInValidFormat);
-    } else {
-      const {id} = await table.create(eventInValidFormat);
-      await grist.setCursorPos({rowId: id});
+    .filter(([key, value]) => value !== undefined));
+// Send nothing if there are no changes.
+    if (Object.keys(filteredRecord).length === 0) { return; }  const eventInValidFormat = {id: gristEvent.id, fields: filteredRecord};
+  const table = await grist.getTable();
+  if (gristEvent.id) {
+    await table.update(eventInValidFormat);
+  } else {
+    const {id} =await table.create(eventInValidFormat);
+  await grist.setCursorPos({rowId: id});
     }
   } catch (err) {
     // Nothing clever we can do here, just log the error.
@@ -511,8 +566,7 @@ function makeGristDateTime(tzDate, colType) {
     // Round down to UTC midnight.
     return Math.floor(secondsSinceEpoch / secondsPerDay) * secondsPerDay;
   } else {
-    return tzDate.valueOf() / 1000;
-  }
+    return tzDate.valueOf() / 1000;}
 }
 
 async function upsertEvent(tuiEvent) {
@@ -556,7 +610,7 @@ function selectRadioButton(value) {
 
 /**
  * Returns a new date that's shifted towards UTC+0 if `colType` is `Date`.
- * 
+ *
  * Returns `date` unchanged if `colType` is `DateTime`.
  */
 function getAdjustedDate(date, colType) {
@@ -669,7 +723,7 @@ class ColTypesFetcher {
   constructor() {
     this._tableId = null;
     this._colIds = null;
-    this._colTypesPromise = Promise.resolve([null, null]);;
+    this._colTypesPromise = Promise.resolve([null, null]);
     this._accessLevel = 'full';
   }
   setAccessLevel(accessLevel) {
@@ -726,7 +780,7 @@ function testGetCalendarEvent(eventId) {
   }
 }
 
-function testGetCalendarViewName(){
+function testGetCalendarViewName() {
   // noinspection JSUnresolvedReference
   return calendarHandler.calendar.getViewName();
 }
@@ -747,9 +801,9 @@ function clean(obj) {
 document.addEventListener('dblclick', (ev) => {
   // tui calendar shows this popup on mouseup, so there is no way to customize it.
   // So we turn it off (by leaving useDetailPopup to false), and show this popup ourselves.
-  
+
   // Code that I read to make it happen:
-  // 
+  //
   // https://github.com/nhn/tui.calendar/blob/b53e765e8d896ab7c63d9b9b9515904119a72f46/apps/calendar/src/components/events/timeEvent.tsx#L233
   // if (isClick && useDetailPopup && eventContainerRef.current) {
   //   showDetailPopup(

@@ -24,24 +24,24 @@
             <button id="calendar-button-next" class="btn btn-sm" onclick="calendarHandler.calendarNext()">
                 <div class="icon icon-arrow-right"></div>
             </button>
-            <button id="calendar-button-today" class="btn btn-sm" onclick="calendarHandler.calendarToday()">Today
+            <button id="calendar-button-today" class="btn btn-sm" data-i18n="today" onclick="calendarHandler.calendarToday()">Today
             </button>
         </div>
         <div id="calendar-perspective-buttons" class="btn-group btn-group-sm" data-toggle="buttons">
-            <label id="calendar-day-label" class="btn" for="calendar-day">
+            <label id="calendar-day-label" class="btn" for="calendar-day" >
                 <input type="radio" id="calendar-day" class="btn-check" name="calendar-options" value="day"
-                       onchange="calendarViewChanges(this)">
-                Day
+                       onchange="calendarViewChanges(this)" >
+                <span data-i18n="day">Day</span>
             </label>
-            <label id="calendar-week-label" class="btn" for="calendar-week">
+            <label id="calendar-week-label" class="btn" for="calendar-week" >
                 <input type="radio" id="calendar-week" class="btn-check" name="calendar-options" value="week"
                        onchange="calendarViewChanges(this)">
-                Week
+                <span data-i18n="week">Week</span>
             </label>
-            <label id="calendar-month-label" class="btn" for="calendar-month">
+            <label id="calendar-month-label" class="btn" for="calendar-month" >
                 <input type="radio" id="calendar-month" class="btn-check" name="calendar-options" value="month"
-                       onchange="calendarViewChanges(this)">
-                Month
+                       onchange="calendarViewChanges(this)" >
+                <span data-i18n="month">Month</span>
             </label>
         </div>
         <time id="calendar-title"></time>
@@ -69,6 +69,9 @@
 </script>
 <script src="https://uicdn.toast.com/tui.date-picker/latest/tui-date-picker.js"></script>
 <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+<script src="https://unpkg.com/i18next@23.5.1/dist/umd/i18next.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@1.3.1/i18nextHttpBackend.min.js"></script>
+
 <script src="page.js"></script>
 </body>
 </html>
