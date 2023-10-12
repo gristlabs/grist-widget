@@ -193,6 +193,8 @@ function getInfo(rec) {
 // Function to clear last added markers. Used to clear the map when new record is selected.
 let clearMakers = () => {};
 
+let markers = [];
+
 function updateMap(data) {
   data = data || selectedRecords;
   selectedRecords = data;
@@ -244,7 +246,7 @@ function updateMap(data) {
   // Make this before markerClusterGroup so iconCreateFunction
   // can fetch the currently selected marker from popups by function closure
 
-  const markers = L.markerClusterGroup({
+  markers = L.markerClusterGroup({
     disableClusteringAtZoom: 18,
     //If markers are very close together, they'd stay clustered even at max zoom
     //This disables that behavior explicitly for max zoom (18)
@@ -257,27 +259,8 @@ function updateMap(data) {
   });
 
   markers.on('click', (e) => {
-    // Reset the options from the previously selected marker.
-    const previouslyClicked = popups[selectedRowId];
-    if (previouslyClicked) {
-      previouslyClicked.setIcon(defaultIcon);
-      previouslyClicked.pane = 'otherMarkers';
-    }
-    const marker = e.layer;
-    const id = marker.options.id;
-
-    // Remember the new selected marker.
-    selectedRowId = id;
-
-    // Set the options for the newly selected marker.
-    marker.setIcon(selectedIcon);
-    previouslyClicked.pane = 'selectedMarker';
-
-    // Rerender markers in this cluster
-    markers.refreshClusters();
-
-    // Update the selected row in Grist.
-    grist.setCursorPos?.({rowId: id}).catch(() => {});
+    const id = e.layer.options.id;
+    selectMaker(id);
   });
 
   for (const rec of data) {
@@ -327,6 +310,31 @@ function updateMap(data) {
   makeSureSelectedMarkerIsShown();
 }
 
+function selectMaker(id) {
+   // Reset the options from the previously selected marker.
+   const previouslyClicked = popups[selectedRowId];
+   if (previouslyClicked) {
+     previouslyClicked.setIcon(defaultIcon);
+     previouslyClicked.pane = 'otherMarkers';
+   }
+   const marker = popups[id];
+
+   // Remember the new selected marker.
+   selectedRowId = id;
+
+   // Set the options for the newly selected marker.
+   marker.setIcon(selectedIcon);
+   previouslyClicked.pane = 'selectedMarker';
+
+   // Rerender markers in this cluster
+   markers.refreshClusters();
+
+   // Update the selected row in Grist.
+   grist.setCursorPos?.({rowId: id}).catch(() => {});
+
+   return marker;
+}
+
 
 grist.on('message', (e) => {
   if (e.tableId) { selectedTableId = e.tableId; }
@@ -363,13 +371,17 @@ function selectOnMap(rec) {
 }
 
 grist.onRecord((record, mappings) => {
-  // If mappings are not done, we will assume that table has correct columns.
-  // This is done to support existing widgets which where configured by
-  // renaming column names.
-  lastRecord = grist.mapColumnNames(record) || record;
-  selectOnMap(lastRecord);
   if (mode === 'single') {
+    // If mappings are not done, we will assume that table has correct columns.
+    // This is done to support existing widgets which where configured by
+    // renaming column names.
+    lastRecord = grist.mapColumnNames(record) || record;
+    selectOnMap(lastRecord);
     scanOnNeed(defaultMapping(record, mappings));
+  } else {
+    const marker = selectMaker(record.id);
+    markers.zoomToShowLayer(marker);
+    marker.openPopup();
   }
 });
 grist.onRecords((data, mappings) => {
