@@ -318,6 +318,7 @@ function selectMaker(id) {
      previouslyClicked.pane = 'otherMarkers';
    }
    const marker = popups[id];
+   if (!marker) { return null; }
 
    // Remember the new selected marker.
    selectedRowId = id;
@@ -380,6 +381,7 @@ grist.onRecord((record, mappings) => {
     scanOnNeed(defaultMapping(record, mappings));
   } else {
     const marker = selectMaker(record.id);
+    if (!marker) { return; }
     markers.zoomToShowLayer(marker);
     marker.openPopup();
   }
