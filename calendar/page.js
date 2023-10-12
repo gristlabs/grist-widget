@@ -17,6 +17,8 @@ window.gristCalendar = {
   dataVersion: Date.now(),
 };
 
+let TZDate = null;
+
 function getLanguage() {
   if (this._lang) {
     return this._lang;
@@ -223,7 +225,7 @@ class CalendarHandler {
     this.calendar = new tui.Calendar(container, options);
 
     // Not sure how to get a reference to this constructor, so doing it in a roundabout way.
-    this.TZDate = this.calendar.getDate().constructor;
+    TZDate = this.calendar.getDate().constructor;
 
     this.calendar.on('clickEvent', async (info) => {
       await grist.setCursorPos({rowId: info.event.id});
@@ -607,25 +609,28 @@ function makeGristDateTime(tzDate, colType) {
 
   let unixTime = Math.floor(tzDate.valueOf() / 1000);
   // Get this date timezone (local one). NOTE: it has opposite sign to what will
-  // be returned from a tzDate with a timezone marker (which will be the absolute one).
+  // be returned from a tzDate with a timezone marker
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset
 
   const localOffset = -tzDate.getTimezoneOffset();
+
   // If we set timezone, it will have a correct sign.
   const docOffset = !docTimeZone ? localOffset : tzDate.tz(docTimeZone).getTimezoneOffset();
 
-  // If local is +4 and doc is -5, then we need to shift by 9 hours.
-  // If we have 14:00 +4 and we want to have 14:00 -5, we need to shift by 9 hours (subtract 9 hours).
-  const toShift = (localOffset - docOffset) * 60 /* offsets are in minutes */;
-  unixTime += toShift;
-
   if (colType === 'Date') {
     // Reinterpret the time as UTC. Note: timezone offset is in minutes.
-    const secondsSinceEpoch = unixTime - docOffset * 60;
+    const secondsSinceEpoch = unixTime + localOffset * 60;
     // Round down to UTC midnight.
     return Math.floor(secondsSinceEpoch / secondsPerDay) * secondsPerDay;
   } else {
-    return Math.floor(unixTime);
+
+    // If local is +4 and doc is -5, then we need to shift by 9 hours.
+    // If we have 14:00 +4 and we want to have 14:00 -5, we need to shift by 9 hours (add 9 hours)
+    // so that we will end up with 23:00 +4, which is 14:00 -5.
+    const toShift = (localOffset - docOffset) * 60 /* offsets are in minutes */;
+    unixTime += toShift;
+
+    return unixTime;
   }
 }
 
@@ -676,6 +681,10 @@ function selectRadioButton(value) {
 function getAdjustedDate(date, colType) {
   if (colType !== 'Date') { return date; }
 
+  if (date.timezone) {
+    return new TZDate(date).tz(date.timezone);
+  }
+
   // Like date.tz('UTC'), but accounts for DST differences.
   const ms = date.valueOf() + (date.getTimezoneOffset() * 60000);
   return new Date(ms);
@@ -698,9 +707,8 @@ function buildCalendarEventObject(record, colTypes, colOptions) {
     isAllday = true;
   }
   // Workaround for midnight zero-length events not showing up.
-  if (!isAllday && end.valueOf() === start.valueOf()
-      && isZeroTime(new calendarHandler.TZDate(end)) && isZeroTime(new calendarHandler.TZDate(start))) {
-    end = new calendarHandler.TZDate(end).addHours(1);
+  if (!isAllday && end.valueOf() === start.valueOf() && isZeroTime(end) && isZeroTime(start)) {
+    end = new TZDate(end).addHours(1);
   }
 
   // Apply colors from the type column.
@@ -762,7 +770,7 @@ function focusWidget() {
 
 function isZeroTime(date) {
   if (docTimeZone) {
-    date = date.tz(docTimeZone)
+    date = new TZDate(date).tz(docTimeZone)
   }
   return date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0;
 }
