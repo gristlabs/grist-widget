@@ -1,7 +1,7 @@
 // to keep all calendar related logic;
-var calendarHandler;
+let calendarHandler;
 
-var CALENDAR_NAME = 'standardCalendar';
+const CALENDAR_NAME = 'standardCalendar';
 
 const t = i18next.t;
 
@@ -9,8 +9,12 @@ const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('readonly') === 'true' ||
   (urlParams.has('access') && urlParams.get('access') !== 'full');
 
-// for tests
-var dataVersion = Date.now();
+// Expose a few test variables on `window`.
+window.gristCalendar = {
+  calendarHandler,
+  CALENDAR_NAME,
+  dataVersion: Date.now(),
+};
 
 function getLanguage() {
   if (this._lang) {
@@ -417,6 +421,7 @@ class CalendarHandler {
 ready(async () => {
   await translatePage();
   calendarHandler = new CalendarHandler();
+  window.gristCalendar.calendarHandler = calendarHandler;
   await configureGristSettings();
 
 });
@@ -716,7 +721,7 @@ async function updateCalendar(records, mappings) {
     calendarHandler.setEvents(new Map(events.map(event => ([event.id, event]))));
     updateUIAfterNavigation();
   }
-  dataVersion = Date.now();
+  window.gristCalendar.dataVersion = Date.now();
 }
 
 function focusWidget() {

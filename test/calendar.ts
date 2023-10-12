@@ -17,8 +17,8 @@ describe('calendar', function () {
 
   async function getVisibleCalendarEvent(eventId: number): Promise<any> {
     const eventJSON = await grist.executeScriptInCustomWidget<any>((id: number) => {
-      const calendarName = (window as any).CALENDAR_NAME;
-      const calendarHandler = (window as any).calendarHandler;
+      const calendarName = (window as any).gristCalendar.CALENDAR_NAME;
+      const calendarHandler = (window as any).gristCalendar.calendarHandler;
       const event = calendarHandler.calendar.getEvent(id, calendarName);
       if (!event) { return null; }
     
@@ -37,7 +37,7 @@ describe('calendar', function () {
 
   async function getCalendarEvent(eventId: number): Promise<any> {
     const eventJSON = await grist.executeScriptInCustomWidget<any>((id: number) => {
-      const event = (window as any).calendarHandler.getEvents().get(id);
+      const event = (window as any).gristCalendar.calendarHandler.getEvents().get(id);
       if (!event) { return null; }
     
       const eventData = {
@@ -53,13 +53,13 @@ describe('calendar', function () {
 
   async function getCalendarViewName(): Promise<string> {
     return grist.executeScriptInCustomWidget(() => {
-      return (window as any).calendarHandler.calendar.getViewName();
+      return (window as any).gristCalendar.calendarHandler.calendar.getViewName();
     });
   }
 
   async function getDataVersion(): Promise<Date> {
     return grist.executeScriptInCustomWidget(() => {
-      return (window as any).dataVersion;
+      return (window as any).gristCalendar.dataVersion;
     });
   }
 
@@ -166,7 +166,7 @@ describe('calendar', function () {
     const today = new Date();
     const validateDate = async (daysToAdd: number) => {
       const newDate = await grist.executeScriptInCustomWidget(() => {
-        return (window as any).calendarHandler.calendar.getDate().d.toDate().toDateString();
+        return (window as any).gristCalendar.calendarHandler.calendar.getDate().d.toDate().toDateString();
       });
 
       const expectedDate = new Date(today);
