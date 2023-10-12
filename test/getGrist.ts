@@ -63,10 +63,10 @@ export class GristTestServer {
     await this.stop();
     const {gristContainerName, gristImage, gristPort, contentPort} = serverSettings;
     const cmd = `docker run -d --rm --name ${gristContainerName}` +
-      ` --network="host"` +
+      ' --add-host=host.docker.internal:host-gateway' +
       ` -e PORT=${gristPort} -p ${gristPort}:${gristPort}` +
       ` -e GRIST_SINGLE_ORG=${serverSettings.site}` +
-      ` -e GRIST_WIDGET_LIST_URL=http://localhost:${contentPort}/manifest.json` +
+      ` -e GRIST_WIDGET_LIST_URL=http://host.docker.internal:${contentPort}/manifest.json` +
       ` ${gristImage}`;
     try {
       execSync(cmd, {
@@ -117,7 +117,8 @@ export class GristTestServer {
 
   public get assetUrl() {
     const {contentPort} = serverSettings;
-    return `http://localhost:${contentPort}`;
+    // localhost doesn't work on Node 18 (see https://github.com/node-fetch/node-fetch/issues/1624)
+    return `http://127.0.0.1:${contentPort}`;
   }
 }
 

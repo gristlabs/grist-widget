@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.9]
-        node-version: [16.x]
+        node-version: [18.x]
     steps:
       - uses: actions/checkout@v3
 
@@ -35,6 +35,9 @@ jobs:
 
       - name: Prepare for tests
         run: yarn run pretest
+
+      - name: Install chromedriver
+        run: ./node_modules/selenium-webdriver/bin/linux/selenium-manager --driver chromedriver
 
       - name: Run tests
         run: MOCHA_WEBDRIVER_HEADLESS=1 yarn run test

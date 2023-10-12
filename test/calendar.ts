@@ -7,10 +7,10 @@ describe('calendar', function () {
   grist.bigScreen();
 
   async function executeAndWaitForCalendar(action: () => Promise<void>) {
-    const oldDataVersion = await getDateVersion();
+    const oldDataVersion = await getDataVersion();
     await action();
     await driver.wait(async () => {
-      const dataVersion = await getDateVersion();
+      const dataVersion = await getDataVersion();
       return dataVersion > oldDataVersion;
     });
   }
@@ -27,7 +27,8 @@ describe('calendar', function () {
         startDate: event?.start.d.d,
         endDate: event?.end.d.d,
         isAllDay: event?.isAllday ?? false,
-        selected: event?.borderColor === calendarHandler._selectedColor,
+        selected: event?.borderColor === calendarHandler._selectedColor ||
+          event?.backgroundColor === calendarHandler._selectedColor,
       };
       return JSON.stringify(eventData);
     }, eventId);
@@ -56,27 +57,27 @@ describe('calendar', function () {
     });
   }
 
-  async function getDateVersion(): Promise<Date> {
+  async function getDataVersion(): Promise<Date> {
     return grist.executeScriptInCustomWidget(() => {
       return (window as any).dataVersion;
     });
   }
 
-    before(async function () {
-        const docId = await grist.upload('test/fixtures/docs/Calendar.grist');
-        await grist.openDoc(docId);
-        await grist.toggleSidePanel('right', 'open');
-        await grist.addNewSection(/Custom/, /Table1/);
-        await grist.clickWidgetPane();
-        await grist.selectCustomWidget(/Calendar/);
-        await grist.setCustomWidgetAccess('full');
-        await grist.setCustomWidgetMapping('startDate', /From/);
-        await grist.setCustomWidgetMapping('endDate', /To/);
-        await grist.setCustomWidgetMapping('title', /Label/);
-        await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
-        //sign in to grist
-        await grist.login();
-    });
+  before(async function () {
+      const docId = await grist.upload('test/fixtures/docs/Calendar.grist');
+      await grist.openDoc(docId);
+      await grist.toggleSidePanel('right', 'open');
+      await grist.addNewSection(/Custom/, /Table1/);
+      await grist.clickWidgetPane();
+      await grist.selectCustomWidget(/Calendar/);
+      await grist.setCustomWidgetAccess('full');
+      await grist.setCustomWidgetMapping('startDate', /From/);
+      await grist.setCustomWidgetMapping('endDate', /To/);
+      await grist.setCustomWidgetMapping('title', /Label/);
+      await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
+      //sign in to grist
+      await grist.login();
+  });
 
   it('should create new event when new row is added', async function () {
     await executeAndWaitForCalendar(async () => {

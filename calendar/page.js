@@ -788,6 +788,14 @@ class ColTypesFetcher {
 
 const colTypesFetcher = new ColTypesFetcher();
 
+function safeParse(value) {
+  try {
+    return JSON.parse(value);
+  } catch (err) {
+    return null;
+  }
+}
+
 function clean(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
 }
