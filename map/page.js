@@ -87,9 +87,6 @@ const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
   }
 };
 
-
-
-
 const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
 if (URLSearchParams && location.search && geocoder) {
   const c = new URLSearchParams(location.search).get('geocoder');
@@ -210,16 +207,14 @@ function updateMap(data) {
   }
 
 
-// Map tile source:
-//    https://leaflet-extras.github.io/leaflet-providers/preview/
-//    Old source was natgeo world map, but that only has data up to zoom 16
-//    (can't zoom in tighter than about 10 city blocks across)
-//
+  // Map tile source:
+  //    https://leaflet-extras.github.io/leaflet-providers/preview/
+  //    Old source was natgeo world map, but that only has data up to zoom 16
+  //    (can't zoom in tighter than about 10 city blocks across)
+  //
   const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
   attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
   });
-
-
 
   const error = document.querySelector('.error');
   if (error) { error.remove(); }
@@ -237,8 +232,8 @@ function updateMap(data) {
     wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
   });
 
-  //Make sure clusters always show up above points
-  //Default z-index for markers is 600, 650 is where tooltipPane z-index starts
+  // Make sure clusters always show up above points
+  // Default z-index for markers is 600, 650 is where tooltipPane z-index starts
   map.createPane('selectedMarker').style.zIndex = 620;
   map.createPane('clusters'      ).style.zIndex = 610;
   map.createPane('otherMarkers'  ).style.zIndex = 600;
@@ -261,9 +256,33 @@ function updateMap(data) {
     iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
   });
 
+  markers.on('click', (e) => {
+    // Reset the options from the previously selected marker.
+    const previouslyClicked = popups[selectedRowId];
+    if (previouslyClicked) {
+      previouslyClicked.setIcon(defaultIcon);
+      previouslyClicked.pane = 'otherMarkers';
+    }
+    const marker = e.layer;
+    const id = marker.options.id;
+
+    // Remember the new selected marker.
+    selectedRowId = id;
+
+    // Set the options for the newly selected marker.
+    marker.setIcon(selectedIcon);
+    previouslyClicked.pane = 'selectedMarker';
+
+    // Rerender markers in this cluster
+    markers.refreshClusters();
+
+    // Update the selected row in Grist.
+    grist.setCursorPos?.({rowId: id}).catch(() => {});
+  });
 
   for (const rec of data) {
     const {id, name, lng, lat} = getInfo(rec);
+    // If the record is in the middle of geocoding, skip it.
     if (String(lng) === '...') { continue; }
     if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
       // Stuff at 0,0 usually indicates bad imports/geocoding.
@@ -274,6 +293,7 @@ function updateMap(data) {
 
     const marker = L.marker(pt, {
       title: name,
+      id: id,
       icon: (id == selectedRowId) ?  selectedIcon    :  defaultIcon,
       pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
     });
@@ -331,6 +351,9 @@ function defaultMapping(record, mappings) {
 }
 
 function selectOnMap(rec) {
+  // If this is already selected row, do nothing (to avoid flickering)
+  if (selectedRowId === rec.id) { return; }
+
   selectedRowId = rec.id;
   if (mode === 'single') {
     updateMap([rec]);
@@ -405,6 +428,7 @@ grist.ready({
     { name: "Address", type: 'Text', optional, optional},
     { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
   ],
+  allowSelectBy: true,
   onEditOptions
 });
 
