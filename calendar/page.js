@@ -1,19 +1,20 @@
 // to keep all calendar related logic;
 let calendarHandler;
+
 const CALENDAR_NAME = 'standardCalendar';
+
 const t = i18next.t;
 
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('readonly') === 'true' ||
   (urlParams.has('access') && urlParams.get('access') !== 'full');
 
-//for tests
-let dataVersion = Date.now();
-
-function testGetDataVersion() {
-  return dataVersion;
-}
-
+// Expose a few test variables on `window`.
+window.gristCalendar = {
+  calendarHandler,
+  CALENDAR_NAME,
+  dataVersion: Date.now(),
+};
 
 function getLanguage() {
   if (this._lang) {
@@ -208,7 +209,6 @@ class CalendarHandler {
       container.classList.add('readonly')
     }
     const options = this._getCalendarOptions();
-    this.previousIds = new Set();
     this.calendar = new tui.Calendar(container, options);
 
     // Not sure how to get a reference to this constructor, so doing it in a roundabout way.
@@ -263,6 +263,12 @@ class CalendarHandler {
         container.querySelector('button.toastui-calendar-popup-confirm')?.click();
       }
     });
+
+    // All events, indexed by id.
+    this._allEvents = new Map();
+
+    // Ids of visible events that fall within the current date range. */
+    this._visibleEventIds = new Set();
   }
 
   _isMultidayInMonthViewEvent(rec)  {
@@ -279,13 +285,14 @@ class CalendarHandler {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
+
     if (this._selectedRecordId) {
       this._clearHighlightEvent(this._selectedRecordId);
     }
-    this._selectedRecordId = record.id;
     const [startType] = await colTypesFetcher.getColTypes();
     const startDate = getAdjustedDate(record.startDate, startType);
     this.calendar.setDate(startDate);
+    this._selectedRecordId = record.id;
     updateUIAfterNavigation();
 
     // If the view has a vertical timeline, scroll to the start of the event.
@@ -327,7 +334,7 @@ class CalendarHandler {
   _clearHighlightEvent(eventId) {
     const event = this.calendar.getEvent(eventId, CALENDAR_NAME);
     if (!event) { return; }
-    // We will highlight it by changing the background color. Otherwise wi will change the border color.
+    // We will highlight it by changing the background color. Otherwise we will change the border color.
     this.calendar.updateEvent(eventId, CALENDAR_NAME, {
       borderColor: event.raw?.['backgroundColor'] ?? this._mainColor,
       backgroundColor: event.raw?.['backgroundColor'] ?? this._mainColor,
@@ -364,31 +371,49 @@ class CalendarHandler {
     }
   }
 
-  // update calendar events based on the collection of records from the grist table.
-  async updateCalendarEvents(calendarEvents) {
-    // we need to keep track the ids of the events that are currently in the calendar to compare it
-    // with the new set of events when they come.
-    const currentIds = new Set();
-    for (const record of calendarEvents) {
-      // check if an event already exists in the calendar - update it if so, create new otherwise
-      const event = this.calendar.getEvent(record.id, CALENDAR_NAME);
-      const eventData = record;
-      if (!event) {
-        this.calendar.createEvents([eventData]);
+  getEvents() {
+    return this._allEvents;
+  }
+
+  setEvents(events) {
+    this._allEvents = events;
+  }
+
+  /**
+   * Adds/updates events that fall within the current date range, and removes
+   * events that do not.
+   */
+  renderVisibleEvents() {
+    const newVisibleEventIds = new Set();
+    const dateRangeStart = this.calendar.getDateRangeStart();
+    const dateRangeEnd = this.calendar.getDateRangeEnd().setHours(23, 99, 99, 999);
+
+    // Add or update events that are now visible.
+    for (const event of this._allEvents.values()) {
+      const isEventInRange = (
+        (event.start >= dateRangeStart && event.start <= dateRangeEnd) ||
+        (event.end >= dateRangeStart && event.end <= dateRangeEnd) ||
+        (event.start < dateRangeStart && event.end > dateRangeEnd)
+      );
+      if (!isEventInRange) { continue; }
+  
+      const calendarEvent = this.calendar.getEvent(event.id, CALENDAR_NAME);
+      if (!calendarEvent) {
+        this.calendar.createEvents([event]);
       } else {
-        this.calendar.updateEvent(record.id, CALENDAR_NAME, eventData);
+        this.calendar.updateEvent(event.id, CALENDAR_NAME, event);
       }
-      currentIds.add(record.id);
+      newVisibleEventIds.add(event.id);
     }
-    // if some events are not in the new set of events, we need to remove them from the calendar
-    if (this.previousIds) {
-      for (const id of this.previousIds) {
-        if (!currentIds.has(id)) {
-          this.calendar.deleteEvent(id, CALENDAR_NAME);
-        }
+
+    // Remove events that are no longer visible.
+    for (const eventId of this._visibleEventIds) {
+      if (!newVisibleEventIds.has(eventId)) {
+        this.calendar.deleteEvent(eventId, CALENDAR_NAME);
       }
     }
-    this.previousIds = currentIds;
+
+    this._visibleEventIds = newVisibleEventIds;
   }
 }
 
@@ -396,6 +421,7 @@ class CalendarHandler {
 ready(async () => {
   await translatePage();
   calendarHandler = new CalendarHandler();
+  window.gristCalendar.calendarHandler = calendarHandler;
   await configureGristSettings();
 
 });
@@ -447,6 +473,7 @@ function getGristOptions() {
 
 
 function updateUIAfterNavigation() {
+  calendarHandler.renderVisibleEvents();
   // update name of the month and year displayed on the top of the widget
   document.getElementById('calendar-title').innerText = getMonthName();
   // refresh colors of selected event (in month view it's different from in other views)
@@ -601,11 +628,11 @@ function selectRadioButton(value) {
   for (const element of document.getElementsByName('calendar-options')) {
     if (element.value === value) {
       element.checked = true;
-      element.parentElement.classList.add('active')
+      element.parentElement.classList.add('active');
     }
     else{
       element.checked = false;
-      element.parentElement.classList.remove('active')
+      element.parentElement.classList.remove('active');
     }
   }
 }
@@ -630,7 +657,7 @@ function buildCalendarEventObject(record, colTypes, colOptions) {
   let [,,type] = colOptions;
   endType = endType || startType;
   start = getAdjustedDate(start, startType);
-  end = end ? getAdjustedDate(end, endType) : start
+  end = end ? getAdjustedDate(end, endType) : start;
 
   // Normalize records with invalid start/end times so that they're visible
   // in the calendar.
@@ -688,12 +715,13 @@ async function updateCalendar(records, mappings) {
   if (mappedRecords) {
     const colTypes = await colTypesFetcher.getColTypes();
     const colOptions = await colTypesFetcher.getColOptions();
-    const CalendarEventObjects = mappedRecords.filter(isRecordValid)
-                                              .map(r => buildCalendarEventObject(r, colTypes, colOptions));
-    await calendarHandler.updateCalendarEvents(CalendarEventObjects);
+    const events = mappedRecords
+      .filter(isRecordValid)
+      .map(r => buildCalendarEventObject(r, colTypes, colOptions));
+    calendarHandler.setEvents(new Map(events.map(event => ([event.id, event]))));
     updateUIAfterNavigation();
   }
-  dataVersion = Date.now();
+  window.gristCalendar.dataVersion = Date.now();
 }
 
 function focusWidget() {
@@ -764,28 +792,6 @@ class ColTypesFetcher {
 }
 
 const colTypesFetcher = new ColTypesFetcher();
-
-function testGetCalendarEvent(eventId) {
-  const calendarObject = calendarHandler.calendar.getEvent(eventId, CALENDAR_NAME);
-  if (calendarObject) {
-    const eventData = {
-      title: calendarObject?.title,
-      startDate: calendarObject?.start.d.d,
-      endDate: calendarObject?.end.d.d,
-      isAllDay: calendarObject?.isAllday ?? false,
-      selected: calendarObject?.borderColor === calendarHandler._selectedColor ||
-                calendarObject?.backgroundColor === calendarHandler._selectedColor,
-    };
-    return JSON.stringify(eventData);
-  } else {
-    return null;
-  }
-}
-
-function testGetCalendarViewName() {
-  // noinspection JSUnresolvedReference
-  return calendarHandler.calendar.getViewName();
-}
 
 function safeParse(value) {
   try {

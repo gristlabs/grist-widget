@@ -63,10 +63,10 @@ export class GristTestServer {
     await this.stop();
     const {gristContainerName, gristImage, gristPort, contentPort} = serverSettings;
     const cmd = `docker run -d --rm --name ${gristContainerName}` +
-      ` --network="host"` +
+      ' --add-host=host.docker.internal:host-gateway' +
       ` -e PORT=${gristPort} -p ${gristPort}:${gristPort}` +
       ` -e GRIST_SINGLE_ORG=${serverSettings.site}` +
-      ` -e GRIST_WIDGET_LIST_URL=http://localhost:${contentPort}/manifest.json` +
+      ` -e GRIST_WIDGET_LIST_URL=http://host.docker.internal:${contentPort}/manifest.json` +
       ` ${gristImage}`;
     try {
       execSync(cmd, {
@@ -117,7 +117,8 @@ export class GristTestServer {
 
   public get assetUrl() {
     const {contentPort} = serverSettings;
-    return `http://localhost:${contentPort}`;
+    // localhost doesn't work on Node 18 (see https://github.com/node-fetch/node-fetch/issues/1624)
+    return `http://127.0.0.1:${contentPort}`;
   }
 }
 
@@ -259,28 +260,6 @@ export class GristUtils extends GristWebDriverUtils {
     await clickOption(value);
   }
 
-  // Crude, assumes a single iframe. Should elaborate.
-  public async getCustomWidgetBody(selector: string = 'html'): Promise<string> {
-    const iframe = this.driver.find('iframe');
-    try {
-      await this.driver.switchTo().frame(iframe);
-      return await this.driver.find(selector).getText();
-    } finally {
-      await this.driver.switchTo().defaultContent();
-    }
-  }
-
-  public async executeScriptOnCustomWidget<T>(script: string | Function): Promise<T> {
-    const iframe = this.driver.find('iframe');
-    try {
-      await this.driver.switchTo().frame(iframe);
-      const jsValue = await this.driver.executeScript(script);
-      return jsValue as T;
-    } finally {
-      await this.driver.switchTo().defaultContent();
-    }
-  }
-
   public async inCustomWidget<T>(op: () => Promise<T>): Promise<T> {
     const iframe = driver.find('iframe');
     try {
@@ -289,5 +268,16 @@ export class GristUtils extends GristWebDriverUtils {
     } finally {
       await driver.switchTo().defaultContent();
     }
+  }
+
+  // Crude, assumes a single iframe. Should elaborate.
+  public async getCustomWidgetBody(selector: string = 'html'): Promise<string> {
+    return this.inCustomWidget(() => this.driver.find(selector).getText());
+  }
+
+  public async executeScriptInCustomWidget<T>(script: Function, ...args: any[]): Promise<T> {
+    return this.inCustomWidget(() => {
+      return driver.executeScript(script, ...args);
+    })
   }
 }

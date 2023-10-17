@@ -1,55 +1,83 @@
 import {Key, assert, driver} from 'mocha-webdriver';
 import {getGrist} from "./getGrist";
 
-//not a pretty way to get events from currently used calendar control. but it's working.
-function buildGetCalendarObjectScript(eventId: number) {
-  return `return testGetCalendarEvent(${eventId});`
-}
-
 describe('calendar', function () {
   this.timeout('30s');
   const grist = getGrist();
   grist.bigScreen();
 
   async function executeAndWaitForCalendar(action: () => Promise<void>) {
-    const oldDataVersion = await getDateVersion();
+    const oldDataVersion = await getDataVersion();
     await action();
     await driver.wait(async () => {
-      const dataVersion = await getDateVersion();
+      const dataVersion = await getDataVersion();
       return dataVersion > oldDataVersion;
     });
   }
 
-  //wait until the event is loaded on the calendar
+  async function getVisibleCalendarEvent(eventId: number): Promise<any> {
+    const eventJSON = await grist.executeScriptInCustomWidget<any>((id: number) => {
+      const calendarName = (window as any).gristCalendar.CALENDAR_NAME;
+      const calendarHandler = (window as any).gristCalendar.calendarHandler;
+      const event = calendarHandler.calendar.getEvent(id, calendarName);
+      if (!event) { return null; }
+    
+      const eventData = {
+        title: event?.title,
+        startDate: event?.start.d.d,
+        endDate: event?.end.d.d,
+        isAllDay: event?.isAllday ?? false,
+        selected: event?.borderColor === calendarHandler._selectedColor ||
+          event?.backgroundColor === calendarHandler._selectedColor,
+      };
+      return JSON.stringify(eventData);
+    }, eventId);
+    return JSON.parse(eventJSON);
+  }
+
   async function getCalendarEvent(eventId: number): Promise<any> {
-    let mappedObject: any;
-    mappedObject = await grist.executeScriptOnCustomWidget(buildGetCalendarObjectScript(eventId));
-    return JSON.parse(mappedObject);
+    const eventJSON = await grist.executeScriptInCustomWidget<any>((id: number) => {
+      const event = (window as any).gristCalendar.calendarHandler.getEvents().get(id);
+      if (!event) { return null; }
+    
+      const eventData = {
+        title: event.title,
+        startDate: event.start,
+        endDate: event.end,
+        isAllDay: event.isAllday,
+      };
+      return JSON.stringify(eventData);
+    }, eventId);
+    return JSON.parse(eventJSON);
   }
 
-  async function getCalendarSettings(): Promise<string> {
-    return await grist.executeScriptOnCustomWidget('return testGetCalendarViewName()');
-  }
-
-  async function getDateVersion(): Promise<Date> {
-    return await grist.executeScriptOnCustomWidget('return testGetDataVersion()');
-  }
-
-    before(async function () {
-        const docId = await grist.upload('test/fixtures/docs/Calendar.grist');
-        await grist.openDoc(docId);
-        await grist.toggleSidePanel('right', 'open');
-        await grist.addNewSection(/Custom/, /Table1/);
-        await grist.clickWidgetPane();
-        await grist.selectCustomWidget(/Calendar/);
-        await grist.setCustomWidgetAccess('full');
-        await grist.setCustomWidgetMapping('startDate', /From/);
-        await grist.setCustomWidgetMapping('endDate', /To/);
-        await grist.setCustomWidgetMapping('title', /Label/);
-        await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
-        //sign in to grist
-        await grist.login();
+  async function getCalendarViewName(): Promise<string> {
+    return grist.executeScriptInCustomWidget(() => {
+      return (window as any).gristCalendar.calendarHandler.calendar.getViewName();
     });
+  }
+
+  async function getDataVersion(): Promise<Date> {
+    return grist.executeScriptInCustomWidget(() => {
+      return (window as any).gristCalendar.dataVersion;
+    });
+  }
+
+  before(async function () {
+      const docId = await grist.upload('test/fixtures/docs/Calendar.grist');
+      await grist.openDoc(docId);
+      await grist.toggleSidePanel('right', 'open');
+      await grist.addNewSection(/Custom/, /Table1/);
+      await grist.clickWidgetPane();
+      await grist.selectCustomWidget(/Calendar/);
+      await grist.setCustomWidgetAccess('full');
+      await grist.setCustomWidgetMapping('startDate', /From/);
+      await grist.setCustomWidgetMapping('endDate', /To/);
+      await grist.setCustomWidgetMapping('title', /Label/);
+      await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
+      //sign in to grist
+      await grist.login();
+  });
 
   it('should create new event when new row is added', async function () {
     await executeAndWaitForCalendar(async () => {
@@ -66,7 +94,6 @@ describe('calendar', function () {
       startDate: new Date('2023-08-03 13:00').toJSON(),
       endDate: new Date('2023-08-03 14:00').toJSON(),
       isAllDay: false,
-      selected: false,
     })
   });
 
@@ -104,7 +131,6 @@ describe('calendar', function () {
       startDate: new Date('2023-08-03 13:00').toJSON(),
       endDate: new Date('2023-08-03 15:00').toJSON(),
       isAllDay: false,
-      selected: false,
     })
   });
 
@@ -122,26 +148,26 @@ describe('calendar', function () {
         await driver.findWait('#calendar-day-label', 200).click();
       });
     });
-    let viewType = await getCalendarSettings();
+    let viewType = await getCalendarViewName();
     assert.equal(viewType, 'day');
     await grist.inCustomWidget(async () => {
       await driver.findWait('#calendar-month-label', 200).click();
     });
-    viewType = await getCalendarSettings();
+    viewType = await getCalendarViewName();
     assert.equal(viewType, 'month');
     await grist.inCustomWidget(async () => {
       await driver.findWait('#calendar-week-label', 200).click();
     });
-    viewType = await getCalendarSettings();
+    viewType = await getCalendarViewName();
     assert.equal(viewType, 'week');
   })
 
   it('should navigate to appropriate time periods when button is pressed', async function () {
     const today = new Date();
     const validateDate = async (daysToAdd: number) => {
-      const newDate = await grist.executeScriptOnCustomWidget(
-        'return calendarHandler.calendar.getDate().d.toDate().toDateString()'
-      );
+      const newDate = await grist.executeScriptInCustomWidget(() => {
+        return (window as any).gristCalendar.calendarHandler.calendar.getDate().d.toDate().toDateString();
+      });
 
       const expectedDate = new Date(today);
       expectedDate.setDate(today.getDate() + daysToAdd);
@@ -254,12 +280,12 @@ describe('calendar', function () {
     assert.equal(await selectedRow(), 2);
 
     // Calendar should be focused on 3rd event.
-    assert.isTrue(await getCalendarEvent(3).then(c => c.selected));
+    assert.isTrue(await getVisibleCalendarEvent(3).then(c => c.selected));
 
     // Click 4th row
     await clickRow(3);
     assert.equal(await selectedRow(), 3);
-    assert.isTrue(await getCalendarEvent(4).then(c => c.selected));
+    assert.isTrue(await getVisibleCalendarEvent(4).then(c => c.selected));
 
     // Now click on the last visible event
     await grist.inCustomWidget(async () => {
@@ -291,31 +317,35 @@ describe('calendar', function () {
   }
 
   it("Switch language to polish, check if text are different", async function () {
-        async function switchLanguage(language: string) {
-            const profileSettings = await grist.openProfileSettingsPage();
-            //Switch language
-            await profileSettings.setLanguage(language);
-            await driver.navigate().back();
-            await grist.waitForServer();
-        }
-        async function assertTodayButtonText(text: string) {
-            await grist.inCustomWidget(async ()=>{
-                const buttontext = await driver.find("#calendar-button-today").getText();
-                assert.equal(buttontext,text)
-            });
-        }
-        try{
-            await switchLanguage('Polski');
-            await assertTodayButtonText('dzisiaj');
-        }finally {
-            await switchLanguage('English');
-            await assertTodayButtonText('today');
-        }
-    });
-    //TODO: test adding new events and moving existing one on the calendar. ToastUI is not best optimized for drag and drop tests in mocha and i cannot yet make it working correctly./**
-   /* Clicks the cell for `day` in the calendar.
+    async function switchLanguage(language: string) {
+      const profileSettings = await grist.openProfileSettingsPage();
+      //Switch language
+      await profileSettings.setLanguage(language);
+      await driver.navigate().back();
+      await grist.waitForServer();
+    }
+    async function assertTodayButtonText(text: string) {
+      await grist.inCustomWidget(async () => {
+        const buttontext = await driver.find("#calendar-button-today").getText();
+        assert.equal(buttontext, text)
+      });
+    }
+    try {
+      await switchLanguage('Polski');
+      await assertTodayButtonText('dzisiaj');
+    } finally {
+      await switchLanguage('English');
+      await assertTodayButtonText('today');
+    }
+  });
+
+  // TODO: test adding new events and moving existing one on the calendar.
+  // ToastUI is not best optimized for drag and drop tests in mocha and I cannot yet make it work correctly.
+
+  /**
+   * Clicks the cell for `day` in the calendar.
    */
-   async function clickDay(day: number) {
+  async function clickDay(day: number) {
     await grist.inCustomWidget(async () => {
       const cell = driver.findContentWait(`.toastui-calendar-template-monthGridHeader`, String(day), 200);
       await driver.withActions(ac =>
