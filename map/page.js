@@ -87,9 +87,6 @@ const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
   }
 };
 
-
-
-
 const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
 if (URLSearchParams && location.search && geocoder) {
   const c = new URLSearchParams(location.search).get('geocoder');
@@ -196,6 +193,8 @@ function getInfo(rec) {
 // Function to clear last added markers. Used to clear the map when new record is selected.
 let clearMakers = () => {};
 
+let markers = [];
+
 function updateMap(data) {
   data = data || selectedRecords;
   selectedRecords = data;
@@ -210,16 +209,14 @@ function updateMap(data) {
   }
 
 
-// Map tile source:
-//    https://leaflet-extras.github.io/leaflet-providers/preview/
-//    Old source was natgeo world map, but that only has data up to zoom 16
-//    (can't zoom in tighter than about 10 city blocks across)
-//
+  // Map tile source:
+  //    https://leaflet-extras.github.io/leaflet-providers/preview/
+  //    Old source was natgeo world map, but that only has data up to zoom 16
+  //    (can't zoom in tighter than about 10 city blocks across)
+  //
   const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
   attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
   });
-
-
 
   const error = document.querySelector('.error');
   if (error) { error.remove(); }
@@ -237,8 +234,8 @@ function updateMap(data) {
     wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
   });
 
-  //Make sure clusters always show up above points
-  //Default z-index for markers is 600, 650 is where tooltipPane z-index starts
+  // Make sure clusters always show up above points
+  // Default z-index for markers is 600, 650 is where tooltipPane z-index starts
   map.createPane('selectedMarker').style.zIndex = 620;
   map.createPane('clusters'      ).style.zIndex = 610;
   map.createPane('otherMarkers'  ).style.zIndex = 600;
@@ -249,7 +246,7 @@ function updateMap(data) {
   // Make this before markerClusterGroup so iconCreateFunction
   // can fetch the currently selected marker from popups by function closure
 
-  const markers = L.markerClusterGroup({
+  markers = L.markerClusterGroup({
     disableClusteringAtZoom: 18,
     //If markers are very close together, they'd stay clustered even at max zoom
     //This disables that behavior explicitly for max zoom (18)
@@ -261,9 +258,14 @@ function updateMap(data) {
     iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
   });
 
+  markers.on('click', (e) => {
+    const id = e.layer.options.id;
+    selectMaker(id);
+  });
 
   for (const rec of data) {
     const {id, name, lng, lat} = getInfo(rec);
+    // If the record is in the middle of geocoding, skip it.
     if (String(lng) === '...') { continue; }
     if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
       // Stuff at 0,0 usually indicates bad imports/geocoding.
@@ -274,6 +276,7 @@ function updateMap(data) {
 
     const marker = L.marker(pt, {
       title: name,
+      id: id,
       icon: (id == selectedRowId) ?  selectedIcon    :  defaultIcon,
       pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
     });
@@ -307,6 +310,32 @@ function updateMap(data) {
   makeSureSelectedMarkerIsShown();
 }
 
+function selectMaker(id) {
+   // Reset the options from the previously selected marker.
+   const previouslyClicked = popups[selectedRowId];
+   if (previouslyClicked) {
+     previouslyClicked.setIcon(defaultIcon);
+     previouslyClicked.pane = 'otherMarkers';
+   }
+   const marker = popups[id];
+   if (!marker) { return null; }
+
+   // Remember the new selected marker.
+   selectedRowId = id;
+
+   // Set the options for the newly selected marker.
+   marker.setIcon(selectedIcon);
+   previouslyClicked.pane = 'selectedMarker';
+
+   // Rerender markers in this cluster
+   markers.refreshClusters();
+
+   // Update the selected row in Grist.
+   grist.setCursorPos?.({rowId: id}).catch(() => {});
+
+   return marker;
+}
+
 
 grist.on('message', (e) => {
   if (e.tableId) { selectedTableId = e.tableId; }
@@ -331,6 +360,9 @@ function defaultMapping(record, mappings) {
 }
 
 function selectOnMap(rec) {
+  // If this is already selected row, do nothing (to avoid flickering)
+  if (selectedRowId === rec.id) { return; }
+
   selectedRowId = rec.id;
   if (mode === 'single') {
     updateMap([rec]);
@@ -340,13 +372,18 @@ function selectOnMap(rec) {
 }
 
 grist.onRecord((record, mappings) => {
-  // If mappings are not done, we will assume that table has correct columns.
-  // This is done to support existing widgets which where configured by
-  // renaming column names.
-  lastRecord = grist.mapColumnNames(record) || record;
-  selectOnMap(lastRecord);
   if (mode === 'single') {
+    // If mappings are not done, we will assume that table has correct columns.
+    // This is done to support existing widgets which where configured by
+    // renaming column names.
+    lastRecord = grist.mapColumnNames(record) || record;
+    selectOnMap(lastRecord);
     scanOnNeed(defaultMapping(record, mappings));
+  } else {
+    const marker = selectMaker(record.id);
+    if (!marker) { return; }
+    markers.zoomToShowLayer(marker);
+    marker.openPopup();
   }
 });
 grist.onRecords((data, mappings) => {
@@ -405,6 +442,7 @@ grist.ready({
     { name: "Address", type: 'Text', optional, optional},
     { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
   ],
+  allowSelectBy: true,
   onEditOptions
 });
 
