@@ -144,15 +144,6 @@ class CalendarHandler {
   }
 
   _getCalendarOptions() {
-    let timezone = null;
-    // If doc is passing a default timezone, use it, otherwise dates will be in local time.
-    if (docTimeZone) {
-      timezone = {
-        zones: [
-          {timezoneName: docTimeZone},
-        ]
-      };
-    }
     return {
       week: {
         taskView: false,
@@ -212,7 +203,6 @@ class CalendarHandler {
         enableDblClick: true,
         enableClick: false,
       },
-      timezone,
     };
   }
 
@@ -561,36 +551,38 @@ async function calendarViewChanges(radiobutton) {
 // When a user changes a perspective of calendar, we want this to be persisted in grist options between sessions.
 // this is the place where we can react to this change and update calendar view, or when new session is started
 // (so we are loading previous settings)
-let onGristSettingsChanged = function (options, settings) {
+function onGristSettingsChanged(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
 };
 
 function changeCalendarView(view) {
-    selectRadioButton(view);
-    calendarHandler.changeView(view);
+  selectRadioButton(view);
+  calendarHandler.changeView(view);
 }
 
 // saving events to the table or updating existing one - basing on if ID is present or not in the send event
 async function upsertGristRecord(gristEvent) {
-  try {//to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
-  // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
-  const mappedRecord = grist.mapColumnNamesBack(gristEvent);if (!mappedRecord) { return; }
-  // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
-  delete mappedRecord.id;
-  //mapColumnNamesBack returns undefined for all absent fields, so we need to remove them as well
-  // (we also use undefined for updates when a field hasn't changed).
+  try {
+    //to update the table, grist requires another format that it is returning by grist in onRecords event (it's flat is
+    // onRecords event and nested ({id:..., fields:{}}) in grist table), so it needs to be converted
+    const mappedRecord = grist.mapColumnNamesBack(gristEvent);if (!mappedRecord) { return; }
+    // we cannot save record is some unexpected columns are defined in fields, so we need to remove them
+    delete mappedRecord.id;
+    // mapColumnNamesBack returns undefined for all absent fields, so we need to remove them as well
+    // (we also use undefined for updates when a field hasn't changed).
     const filteredRecord = Object.fromEntries(Object.entries(mappedRecord)
-    .filter(([key, value]) => value !== undefined));
-// Send nothing if there are no changes.
-    if (Object.keys(filteredRecord).length === 0) { return; }  const eventInValidFormat = {id: gristEvent.id, fields: filteredRecord};
-  const table = await grist.getTable();
-  if (gristEvent.id) {
-    await table.update(eventInValidFormat);
-  } else {
-    const {id} =await table.create(eventInValidFormat);
-  await grist.setCursorPos({rowId: id});
+                                 .filter(([key, value]) => value !== undefined));
+    // Send nothing if there are no changes.
+    if (Object.keys(filteredRecord).length === 0) { return; }
+    const eventInValidFormat = {id: gristEvent.id, fields: filteredRecord};
+    const table = await grist.getTable();
+    if (gristEvent.id) {
+      await table.update(eventInValidFormat);
+    } else {
+      const {id} =await table.create(eventInValidFormat);
+      await grist.setCursorPos({rowId: id});
     }
   } catch (err) {
     // Nothing clever we can do here, just log the error.
@@ -603,33 +595,35 @@ const secondsPerDay = 24 * 60 * 60;
 
 function makeGristDateTime(tzDate, colType) {
   // tzDate is a date in local's (current browser's) timezone.
-  // So if user is in UTC+1 and calendar shows dates in UTC-1 (doc's timezone), and user
-  // picks 5pm, it will be 5pm in UTC+1, not 5pm in UTC-1. So we need reinterpret the date
-  // as UTC-1.
+  // So if user is in UTC-5 and document is in UTC+2, we need to adjust the time by 7 hours (in minutes it's 420
+  // and in seconds it's 25200). So basically reinterpret the time as UTC+2.
 
+  // Here is the math. If we were to store the current time as it is, the document would see it as
+  // 7 hours later. So we need to subtract 7 hours from the time that user picked.
+
+  // For example: If user is in UTC-5 and document is in UTC+2, and user picked his current time 10:00, for a document
+  // perspective it is 17:00 (as the current time for document is 7h ahead of user's time). So we need to subtract
+  // 7 hours from 10:00 to get 3:00, which is 10:00 for document (in UTC+2) as it is 7 hours ahead.
+  
   let unixTime = Math.floor(tzDate.valueOf() / 1000);
+
   // Get this date timezone (local one). NOTE: it has opposite sign to what will
   // be returned from a tzDate with a timezone marker
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset
-
-  const localOffset = -tzDate.getTimezoneOffset();
+  const localOffsetMin = -tzDate.getTimezoneOffset();
 
   // If we set timezone, it will have a correct sign.
-  const docOffset = !docTimeZone ? localOffset : tzDate.tz(docTimeZone).getTimezoneOffset();
+  const docOffsetMin = !docTimeZone ? localOffsetMin : tzDate.tz(docTimeZone).getTimezoneOffset();
 
   if (colType === 'Date') {
     // Reinterpret the time as UTC. Note: timezone offset is in minutes.
-    const secondsSinceEpoch = unixTime + localOffset * 60;
+    const secondsSinceEpoch = unixTime + localOffsetMin * 60;
     // Round down to UTC midnight.
     return Math.floor(secondsSinceEpoch / secondsPerDay) * secondsPerDay;
   } else {
-
-    // If local is +4 and doc is -5, then we need to shift by 9 hours.
-    // If we have 14:00 +4 and we want to have 14:00 -5, we need to shift by 9 hours (add 9 hours)
-    // so that we will end up with 23:00 +4, which is 14:00 -5.
-    const toShift = (localOffset - docOffset) * 60 /* offsets are in minutes */;
+    // So if user is in UTC-5 (local) and document is in UTC+2 (doc) the result is -7h = -5h - 2h
+    const toShift = (localOffsetMin - docOffsetMin) * 60 /* offsets are in minutes */;
     unixTime += toShift;
-
     return unixTime;
   }
 }
@@ -679,11 +673,11 @@ function selectRadioButton(value) {
  * Returns `date` unchanged if `colType` is `DateTime`.
  */
 function getAdjustedDate(date, colType) {
-  if (colType !== 'Date') { return date; }
-
-  if (date.timezone) {
+  // If we know the timezone, we need to adjust it so that it looks the same.
+  if (date.timezone && colType.startsWith('DateTime')) {
     return new TZDate(date).tz(date.timezone);
   }
+  if (colType !== 'Date') { return date; }
 
   // Like date.tz('UTC'), but accounts for DST differences.
   const ms = date.valueOf() + (date.getTimezoneOffset() * 60000);
@@ -769,9 +763,6 @@ function focusWidget() {
 }
 
 function isZeroTime(date) {
-  if (docTimeZone) {
-    date = new TZDate(date).tz(docTimeZone)
-  }
   return date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0;
 }
 
