@@ -1,13 +1,4 @@
 const {dom, Observable, styled} = grainjs;
-
-function ready(fn) {
-  if (document.readyState !== 'loading'){
-    fn();
-  } else {
-    document.addEventListener('DOMContentLoaded', fn);
-  }
-}
-
 const isBuilderMode = Observable.create(null, false);
 
 let builderPromise = null;
@@ -18,43 +9,41 @@ function saveForm(builder) {
   return grist.setOption('formJson', builder.form);
 }
 
-ready(() => {
-  grist.ready({
-    columns: [],
-    requiredAccess: 'none',
-    onEditOptions: () => isBuilderMode.set(true),
-  });
+grist.ready({
+  columns: [],
+  requiredAccess: 'none',
+  onEditOptions: () => isBuilderMode.set(true),
+});
 
-  grist.onOptions((options, settings) => {
-    console.warn("OPTIONS", options, "SETTINGS", settings);
-    if (!rendererPromise) {
-      const builderElem = dom('div');
-      builderPromise = Formio.builder(builderElem, {}, {});
-      const rendererElem = dom('div');
-      rendererPromise = Formio.createForm(rendererElem, {});
-      document.body.innerHTML = '';
-      dom.update(document.body,
-        cssButton(
-          dom.text(use => use(isBuilderMode) ? 'View' : 'Build'),
-          dom.on('click', () => { save(); isBuilderMode.set(!isBuilderMode.get()); }),
-        ),
-        cssWrap(dom.show(isBuilderMode), builderElem),
-        cssWrap(dom.hide(isBuilderMode), rendererElem),
-      );
+grist.onOptions((options, settings) => {
+  console.warn("OPTIONS", options, "SETTINGS", settings);
+  if (!rendererPromise) {
+    const builderElem = dom('div');
+    builderPromise = Formio.builder(builderElem, {}, {});
+    const rendererElem = dom('div');
+    rendererPromise = Formio.createForm(rendererElem, {});
+    document.body.innerHTML = '';
+    dom.update(document.body,
+      cssButton(
+        dom.text(use => use(isBuilderMode) ? 'View' : 'Build'),
+        dom.on('click', () => { save(); isBuilderMode.set(!isBuilderMode.get()); }),
+      ),
+      cssWrap(dom.show(isBuilderMode), builderElem),
+      cssWrap(dom.hide(isBuilderMode), rendererElem),
+    );
 
-      function save() { builderPromise.then(builder => saveForm(builder)); }
+    function save() { builderPromise.then(builder => saveForm(builder)); }
 
-      builderPromise.then(builder => {
-        builder.on('addComponent', () => saveForm(builder));
-        builder.on('removeComponent', () => saveForm(builder));
-        builder.on('updateComponent', () => saveForm(builder));
-      });
-    }
+    builderPromise.then(builder => {
+      builder.on('addComponent', () => saveForm(builder));
+      builder.on('removeComponent', () => saveForm(builder));
+      builder.on('updateComponent', () => saveForm(builder));
+    });
+  }
 
-    const formJson = options?.formJson || {};
-    rendererPromise.then(form => form.setForm(formJson));
-    builderPromise.then(builder => builder.setForm(formJson));
-  });
+  const formJson = options?.formJson || {};
+  rendererPromise.then(form => form.setForm(formJson));
+  builderPromise.then(builder => builder.setForm(formJson));
 });
 
 const cssWrap = styled('div', `
