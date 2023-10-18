@@ -674,8 +674,9 @@ function selectRadioButton(value) {
  */
 function getAdjustedDate(date, colType) {
   // If we know the timezone, we need to adjust it so that it looks the same.
-  if (date.timezone && colType.startsWith('DateTime')) {
-    return new TZDate(date).tz(date.timezone);
+  // So be default we pretend that calendar renders document timezone.
+  if (docTimeZone && colType.startsWith('DateTime')) {
+    return new TZDate(date).tz(docTimeZone);
   }
   if (colType !== 'Date') { return date; }
 
