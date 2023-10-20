@@ -1,84 +1,225 @@
-import {cssWrap, cssEditMode, cssEditWrap} from './ui.mjs';
+import {cssWrap, cssEditMode, cssEditWrap, col, row, SAMPLE_FORM} from './ui.mjs';
 const {dom, observable, computed, styled} = grainjs;
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('readonly') === 'true' ||
   (urlParams.has('access') && urlParams.get('access') !== 'full');
 
-// Inform grist we are ready, this is async work, so we can do it right away.
+// We are in module, so dom is already loaded.
 grist.ready({
-  requiredAccess: 'none',
-  onEditOptions: () => editMode.set(true),
+  requiredAccess: 'full',
+  onEditOptions: () => showEditor(),
 });
 
-function saveForm(form) {
-  return grist.setOption('formJson', form);
-}
 
 // We will change to true when user clicks "Open configuration" button.
 const editMode = observable(false);
 
-async function main() {
-  const loaded = observable(false);
-  // Here we will store the form data.
-  const formJson = observable();
-  // And update it whenever the form changes.
-  listen('Options', (options, settings) => {
-    console.error(settings);
-    formJson.set(options?.formJson ?? null);
-    if (!loaded.get()) {loaded.set(true);}
-  });
+const selectedRow = observable(null);
+const selectedRowId = computed(use => use(selectedRow)?.id);
+
+// Prebuild renderer UI.
+const rendererElem = dom('div');
+let renderer = null;
+Formio.createForm(rendererElem, {}).then((r) => renderer = r);
+
+// Builder will be built lazily, when needed.
+let builder = null;
+const builderElem = dom('div.overflow');
+async function loadBuilder() {
+  if (builder) {return builder;}
+  builder = await Formio.builder(builderElem, {}, {noNewEdit: true});
+  return Object.assign(builder, {elem: builderElem});
+}
 
 
-  let rendererPromise = null;
-  let builderPromise = null;
 
-  listen('Options', (options) => {
-    if (rendererPromise && loaded.get()) {
-      rendererPromise.then(renderer => renderer.setForm(options?.formJson ?? {}));
-      builderPromise.then(builder => builder.setForm(options?.formJson ?? {}));
-    }
-  });
+// We will wait for the initial settings to be loaded.
+once('Options', (options, settings) => {
+  main(options, settings);
+});
 
-  document.body.innerHTML = '';
-  // Now update body.
+const records = observable(null);
+listen('Records', (recs) => {
+  records.set(recs);
+});
+
+listen('Record', (rec) => selectedRow.set(rec));
+
+// And when we are loaded, we will show the editor.
+
+async function main(options, settings) {
+
+  const deferEditMode = observable(false);
+
+  // We have two UI's, one for editing, and one for viewing.
   dom.update(document.body,
-    dom.maybe(loaded, () => {
-      const rendererElem = dom('div');
-      rendererPromise = Formio.createForm(rendererElem, formJson.get() || {});
+    dom.update(viewUI(), dom.hide(editMode)),
+    dom.update(editUI(), dom.show(deferEditMode)),
+  );
 
-      const builderElem = dom('div');
-      builderPromise = Formio.builder(builderElem, formJson.get() || {}, {noNewEdit: true});
-      builderPromise.then(builder => {
+  // Create editor UI.
+  editMode.addListener(async (on) => {
+    if (!builder && on) {
+      await loadBuilder();
+      loadBuilder().then(builder => {
         builder.on('addComponent', () => saveForm(builder.form));
         builder.on('removeComponent', () => saveForm(builder.form));
         builder.on('updateComponent', () => saveForm(builder.form));
       });
-      return [
-        cssWrap(dom.hide(editMode), rendererElem),
-        cssEditWrap(dom.show(editMode), builderElem),
-      ];
-    }),
-    cssEditMode('Edit mode',
-      dom.show(editMode),
-      dom.on('click', () => closeEditMode()),
-      dom('span', 'X', dom.style('margin-left', '8px')),
-    )
-  );
+    }
+    if (on) {
+      builder.setForm(renderer.form);
+    }
+    deferEditMode.set(on);
+  });
 
-  async function closeEditMode() {
-    const builder = await builderPromise;
-    const renderer = await rendererPromise;
-    renderer.setForm(builder.form);
-    editMode.set(false);
+  editMode.set(true);
+
+  renderer.setForm(options?.formJson || {});
+
+  function editUI() {
+    const noRecords = computed(use => use(records)?.length == 0);
+    const haveRecords = computed(use => use(records)?.length > 0);
+
+    return cssWrapper(
+      dom.hide(use => use(records) === null),
+      dom.maybe(noRecords, () => [
+        dom('div', 'There are no forms created yet.'),
+        dom('button.btn btn-primary', 'Create new form', click(createNewForm)),
+      ]),
+      cssEditor(
+        cssTopMenu(
+          cssLogo(
+            dom('button.btn.btn-primary.btn-sm.btn-block', 'New form', click(createNewForm)),
+          ),
+          cssGrow(),
+          dom('div.nav.nav-pills.p-3',
+            dom('a.nav-link.active.btn-sm',
+              'Edit'
+            ),
+            dom('a.nav-link.btn-sm.cursor',
+              'Preview'
+            ),
+            dom('a.nav-link.btn-sm.cursor',
+              'Data'
+            ),
+            dom('a.nav-link.btn-sm.cursor',
+              'Share'
+            ),
+            dom('a.nav-link.btn-sm.cursor',
+              click(() => editMode.set(false)),
+              'Close editor'
+            ),
+          )
+        ),
+        cssEditorContent(
+          dom.maybe(records, () => [
+            cssNavigation(
+              dom.forEach(records, rec => cssRecord(
+                rec.Name,
+                dom.on('click', () => grist.setCursorPos({rowId: rec.id})),
+                cssRecord.cls('-selected', computed(use => rec.id === use(selectedRowId))),
+              ))
+            ),
+          ]),
+          cssBody(
+            builderElem,
+          )
+        )
+      )
+    );
+  }
+  function viewUI() {
+    return rendererElem;
+  }
+
+  async function createNewForm() {
+    const table = grist.getTable(grist.getSelectedTableIdSync());
+    const {id} = await table.create({
+      fields: {
+        Name: 'First form',
+      }
+    });
+    await grist.setCursorPos({rowId: id});
   }
 }
 
+const cssWrapper = styled('div', `
+  height: 100%;
+`);
+
+const cssRecord = styled('div', `
+  padding: 8px;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+
+  &:hover {
+    background: #eee;
+  }
+  &-selected {
+    background: #333;
+    color: white; 
+  }
+  &-selected:hover {
+    background: #333;
+    color: white; 
+  }
+`);
+
+const cssLogo = styled('div.bg-light.left-width', `
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+`);
+
+const cssEditor = styled('div', `
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+`);
+
+const cssTopMenu = styled('div', `
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  gap:8px;
+`);
+
+const cssEditorContent = styled('div', `
+  display: flex;
+  gap: 8px;
+  flex: 1;
+`);
+
+const cssNavigation = styled('div.bg-light.left-width', `
+  padding-top: 8px;
+  border-right: 1px solid #ccc;
+`);
+
+const cssBody = styled('div', `
+  flex: 1;
+  padding-top: 8px;
+`);
+
+const cssGrow = styled('div', `
+  flex: 1;
+`);
 
 
 // #####################################################
 // Fix some shortcoming of JavaScript and Grist library.
 
+function click(callback) {
+  return dom.on('click', callback);
+}
 
+function saveForm(form) {
+  return grist.setOption('formJson', form);
+}
+
+function showEditor() {
+  editMode.set(true);
+}
 
 function haveFullAccess() {
   return urlParams.get('access') === 'full';
@@ -145,65 +286,6 @@ function once(event, handler) {
   return remove;
 }
 
-
-const SAMPLE_FORM = {
-  components: [
-    {
-      type: 'textfield',
-      key: 'firstName',
-      label: 'First Name',
-      placeholder: 'Enter your first name.',
-      input: true,
-      tooltip: 'Enter your <strong>First Name</strong>',
-      description: 'Enter your <strong>First Name</strong>'
-    },
-    {
-      type: 'textfield',
-      key: 'lastName',
-      label: 'Last Name',
-      placeholder: 'Enter your last name',
-      input: true,
-      tooltip: 'Enter your <strong>Last Name</strong>',
-      description: 'Enter your <strong>Last Name</strong>'
-    },
-    {
-      type: "select",
-      label: "Favorite Things",
-      key: "favoriteThings",
-      placeholder: "These are a few of your favorite things...",
-      data: {
-        values: [
-          {
-            value: "raindropsOnRoses",
-            label: "Raindrops on roses"
-          },
-          {
-            value: "whiskersOnKittens",
-            label: "Whiskers on Kittens"
-          },
-          {
-            value: "brightCopperKettles",
-            label: "Bright Copper Kettles"
-          },
-          {
-            value: "warmWoolenMittens",
-            label: "Warm Woolen Mittens"
-          }
-        ]
-      },
-      dataSrc: "values",
-      template: "<span>{{ item.label }}</span>",
-      multiple: true,
-      input: true
-    },
-    {
-      type: 'button',
-      action: 'submit',
-      label: 'Submit',
-      theme: 'primary'
-    }
-  ]
-};
-
-
-main();
+function style(style) {
+  return {style};
+}
