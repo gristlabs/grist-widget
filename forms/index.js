@@ -1,199 +1,88 @@
-import { cssWrap, SaveEditDialog } from './ui.mjs';
-const {dom, Observable, styled} = grainjs;
-
-
-function saveForm(builder) {
-  return grist.setOption('formJson', builder.form);
-}
-
-// Inform grist we are ready, this is async work, so we can do it right away.
-grist.ready({
-  requiredAccess: 'none',
-  onEditOptions: () => isBuilderMode.set(true),
-});
-
-let tableId = null;
-let options = null;
-
-
-// When we are loaded we need to decide what to do. Here are options we have:
-// 1. We are loaded for the first time ever (no form saved yet, no options saved ond so on).
-// -  In that case, we want to build a sample form for user to see and allow him to edit or use it.
-// 2. We may have already saved some form (either the default one or user's version)
-// -  In that case, we want to render this form. User can edit it if he wants. He just need 
-//    press the "Open configuration" button in the panel.
-const firstEverLoad = defer();
-const savedForm = defer();
-
-// If we are loaded for the first time ever, we need to build a sample form and show it to the user.
-// but only if we have full ready access to the document.
-firstEverLoad.then(async () => {
-  if (haveFullAccess()) {
-    // Great! We can start building sample form and show it to the user.
-    const sampleForm = await buildSampleForm();
-    sampleForm.show();
-
-    // User can now edit the form or save it, we will show him those two options.
-    const decision = buildUserOptions();
-    decision.show();
-
-    // When user saves this form, we will install it here
-    decision.onSave(async () => {
-      await grist.setOption('version', Date.now());
-      await grist.setOption('formJson', sampleForm.getForm());
-      decision.hide();
-
-      // Now when user saves, it is ok, but when he reverts, we need to show him the builder again.
-      const stop = listen('Options', (options) => {
-        if (!options?.version) {
-          decision.show();
-          stop();
-        }
-      });
-    });
-
-    // User wants to edit the form, we will show him the builder.
-    decision.onEdit(showBuilder);
-
-    async function showBuilder() {
-      const form = sampleForm.getForm();
-      const builder = await buildTheBuilder(form);
-      sampleForm.destroy();
-      builder.show();
-    }
-
-  } else {
-    // Damn, we don't have access and we don't have a form saved. We can't do anything really.
-    // Let's just show a message to the user that he needs to give us access.
-  }
-});
-
-// We have some form already saved, let's render it.
-savedForm.then(async form => {
-  const renderer = await buildTheRenderer(form);
-  renderer.show();
-
-  let builder = null;
-
-  // User might have want to edit it somehow, let's show him the builder.
-  isBuilderMode.addListener(async isEdit => {
-    // If user wants to edit the form.
-    if (isEdit) {
-      // If we don't have the builder yet, let's build it.
-      if (!builder) {
-        builder = await buildTheBuilder(form);
-      } else {
-        // Otherwise, just update the form that user wants to edit.
-        builder.setForm(form);
-      }
-      // Now switch the views.
-      renderer.hide();
-      builder.show();
-
-      // User might want to save it or cancel it.
-      // We will allow him to save it using regular Save button in the document. BUt first we are going to trigger
-      // it.
-      await grist.setOption('version', Date.now());
-
-      // Now user has this save button, where he can save the form or just cancel the edit all together.
-      // When he cancels, we will get new options with a previous version of the form.
-      const listener = onVersionChange(() => {
-        // User has cancelled the edit, let's switch back to the renderer.
-        builder.hide();
-        renderer.show();
-        listener.remove();
-      });
-    } else {
-      // Ignore, we cancel using the save options dialog.
-    }
-  });
-});
-
-// Ok, so we know what to do when we are loaded, Grist knows that we are ready to go.
-
-// Let's figure out what we need to do.
-once('Options', (options) => {
-  // We have options, let's see if we have a form saved.
-  if (options?.formJson) {
-    // We have a form saved, let's render it.
-    savedForm.resolve(options.formJson);
-  } else {
-    // We don't have a form saved, let's build a sample form.
-    firstEverLoad.resolve();
-  }
-});
-
-
-// #####################################################
-// Now lets define all the methods used above.
-function buildTheBuilder(formJson) {
-  const elem = dom('div');
-  const builderPromise = Formio.builder(elem, {}, {noNewEdit: true});
-  builderPromise.then(builder => builder.setForm(formJson));
-  const visible = Observable.create(null, false);
-  dom.domDispose(document.body);
-  document.body.innerHTML = '';
-  dom.update(document.body,
-    cssWrap(dom.show(visible), elem),
-  );
-  return {
-    show() { visible.set(true); },
-    hide() { visible.set(false); },
-    destroy() { elem.remove(); },
-    getForm() { return SAMPLE_FORM; },
-  };
-}
-
-/**
- * Functions that builds sample form based on the columns we have.
- */
-async function buildSampleForm() {
-  const rendererElem = dom('div');
-  const visible = Observable.create(null, false);
-  const rendererPromise = Formio.createForm(rendererElem, SAMPLE_FORM);
-  dom.domDispose(document.body);
-  document.body.innerHTML = '';
-  dom.update(document.body,
-    cssWrap(dom.show(visible), rendererElem),
-  );
-  return {
-    show() { visible.set(true); },
-    hide() { visible.set(false); },
-    destroy() { rendererElem.remove(); },
-    getForm() { return SAMPLE_FORM; },
-  };
-}
-
-function buildUserOptions() {
-  const save = event();
-  const edit = event();
-  const element = SaveEditDialog({
-    save: save.trigger,
-    edit: edit.trigger,
-  });
-  return {
-    show() {
-      document.body.appendChild(element);
-    },
-    hide() {
-      element.remove();
-    },
-    onSave: save,
-    onEdit: edit,
-  }
-}
-
+import {cssWrap, cssEditMode, cssEditWrap} from './ui.mjs';
+const {dom, observable, computed, styled} = grainjs;
 const urlParams = new URLSearchParams(window.location.search);
 const isReadOnly = urlParams.get('readonly') === 'true' ||
   (urlParams.has('access') && urlParams.get('access') !== 'full');
 
-function haveFullAccess() {
-  return urlParams.get('access') === 'full';
+// Inform grist we are ready, this is async work, so we can do it right away.
+grist.ready({
+  requiredAccess: 'none',
+  onEditOptions: () => editMode.set(true),
+});
+
+function saveForm(form) {
+  return grist.setOption('formJson', form);
 }
+
+// We will change to true when user clicks "Open configuration" button.
+const editMode = observable(false);
+
+async function main() {
+  const loaded = observable(false);
+  // Here we will store the form data.
+  const formJson = observable();
+  // And update it whenever the form changes.
+  listen('Options', (options, settings) => {
+    console.error(settings);
+    formJson.set(options?.formJson ?? null);
+    if (!loaded.get()) {loaded.set(true);}
+  });
+
+
+  let rendererPromise = null;
+  let builderPromise = null;
+
+  listen('Options', (options) => {
+    if (rendererPromise && loaded.get()) {
+      rendererPromise.then(renderer => renderer.setForm(options?.formJson ?? {}));
+      builderPromise.then(builder => builder.setForm(options?.formJson ?? {}));
+    }
+  });
+
+  document.body.innerHTML = '';
+  // Now update body.
+  dom.update(document.body,
+    dom.maybe(loaded, () => {
+      const rendererElem = dom('div');
+      rendererPromise = Formio.createForm(rendererElem, formJson.get() || {});
+
+      const builderElem = dom('div');
+      builderPromise = Formio.builder(builderElem, formJson.get() || {}, {noNewEdit: true});
+      builderPromise.then(builder => {
+        builder.on('addComponent', () => saveForm(builder.form));
+        builder.on('removeComponent', () => saveForm(builder.form));
+        builder.on('updateComponent', () => saveForm(builder.form));
+      });
+      return [
+        cssWrap(dom.hide(editMode), rendererElem),
+        cssEditWrap(dom.show(editMode), builderElem),
+      ];
+    }),
+    cssEditMode('Edit mode',
+      dom.show(editMode),
+      dom.on('click', () => closeEditMode()),
+      dom('span', 'X', dom.style('margin-left', '8px')),
+    )
+  );
+
+  async function closeEditMode() {
+    const builder = await builderPromise;
+    const renderer = await rendererPromise;
+    renderer.setForm(builder.form);
+    editMode.set(false);
+  }
+}
+
+
 
 // #####################################################
 // Fix some shortcoming of JavaScript and Grist library.
 
+
+
+function haveFullAccess() {
+  return urlParams.get('access') === 'full';
+}
 
 // First is the method to actually return a column info.
 async function getColumns() {
@@ -205,7 +94,7 @@ async function getColumns() {
   const tableRef = tables.id[tables.tableId.indexOf(tableId)];
   return colIds.map(colId => {
     const index = columns.id.findIndex((_, i) => (columns.parentId[i] === tableRef && columns.colId[i] === colId));
-    if (index === -1) { return null; }
+    if (index === -1) {return null;}
     return Object.fromEntries(fields.map(f => [f, columns[f][index]]));
   });
 }
@@ -234,6 +123,7 @@ function event() {
       await callback(...args);
     }
   }
+  obj.click = dom.on('click', () => obj.trigger());
   return obj;
 }
 
@@ -314,3 +204,6 @@ const SAMPLE_FORM = {
     }
   ]
 };
+
+
+main();

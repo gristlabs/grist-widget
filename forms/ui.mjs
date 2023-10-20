@@ -8,6 +8,11 @@ export const cssWrap = styled('div', `
   padding: 16px;
 `);
 
+export const cssEditWrap = styled('div', `
+  padding: 16px;
+  margin-top: 34px;
+`);
+
 export const cssButton = styled('button', `
   appearance: none;
   position: absolute;
@@ -74,3 +79,22 @@ export function SaveEditDialog(options) {
     ),
   ));
 }
+
+export const cssEditMode = styled('div', `
+  position: fixed;
+  top: 0px;
+  right: 10px;
+  padding: 4px 8px;
+  background: #16b378;
+  color: white;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  &:hover {
+    background: /* darker */ #0f8f63;
+  }
+`);
