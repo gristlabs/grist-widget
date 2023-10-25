@@ -1,0 +1,17 @@
+<html>
+<head>
+  <title>GM_Widget</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+</head>
+<body>
+<div id="channel"></div>
+<div id="group"></div>
+<script>
+  grist.ready({requiredAccess: 'read table'});
+  grist.onRecord(function (record) {
+    document.getElementById('channel').innerText = record.Channel;
+    document.getElementById('group').innerText = record.Telegram_Group;
+  });
+</script>
+</body
+</html>
