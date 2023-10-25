@@ -42,7 +42,7 @@ export class GristWebDriverUtils {
     //just click log in to get example account.
     const menu = await this.driver.findWait('.test-dm-account', 1000);
     await menu.click();
-    if(await this.isAlertShown()){
+    if (await this.isAlertShown()) {
       await this.acceptAlert();
     }
     await this.waitForServer();

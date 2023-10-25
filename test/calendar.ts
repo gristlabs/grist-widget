@@ -39,11 +39,13 @@ describe('calendar', function () {
     const eventJSON = await grist.executeScriptInCustomWidget<any>((id: number) => {
       const event = (window as any).gristCalendar.calendarHandler.getEvents().get(id);
       if (!event) { return null; }
+
+      const toDate = (date: any) => date?.toDate ? date.local().toDate() : date;
     
       const eventData = {
         title: event.title,
-        startDate: event.start,
-        endDate: event.end,
+        startDate: toDate(event.start),
+        endDate: toDate(event.end),
         isAllDay: event.isAllday,
       };
       return JSON.stringify(eventData);
@@ -63,7 +65,7 @@ describe('calendar', function () {
     });
   }
 
-  before(async function () {
+  it('should show calendar', async function () {
       const docId = await grist.upload('test/fixtures/docs/Calendar.grist');
       await grist.openDoc(docId);
       await grist.toggleSidePanel('right', 'open');
