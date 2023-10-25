@@ -438,7 +438,8 @@ function getGristOptions() {
       optional: false,
       type: "Date,DateTime",
       description: t("starting point of event"),
-      allowMultiple: false
+      allowMultiple: false,
+      strictType: true
     },
     {
       name: "endDate",
@@ -446,7 +447,8 @@ function getGristOptions() {
       optional: true,
       type: "Date,DateTime",
       description: t("ending point of event"),
-      allowMultiple: false
+      allowMultiple: false,
+      strictType: true
     },
     {
       name: "isAllDay",
@@ -454,6 +456,7 @@ function getGristOptions() {
       optional: true,
       type: "Bool",
       description: t("is event all day long"),
+      strictType: true
     },
     {
       name: "title",
