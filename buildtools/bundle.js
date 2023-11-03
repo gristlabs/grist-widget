@@ -187,7 +187,7 @@ class Bundler {
     cmd += '--no-parent --level=5 --convert-links ';
     const domains = (archive?.domains || [])
           .map(domain => this._safeDomain(domain));
-    // domains.push('getgrist.com');
+    domains.push('getgrist.com');
     domains.push('localhost');
     cmd += '--span-hosts --domains ' + domains.join(',') + ' ';
     cmd += `--directory-prefix=${this.bundleRoot} ${url}`;
