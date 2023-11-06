@@ -70,7 +70,7 @@ class Bundler {
 
   // Start a widget server.
   start() {
-    this.localServer = spawn('python', [
+    this.localServer = spawn('python3', [
       '-m', 'http.server', this.port,
     ], {
       cwd: process.cwd(),
