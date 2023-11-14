@@ -23,7 +23,6 @@ body {
 }
 
 .info .meta::after {
-  color: black;
   content: " :";
 }
 
@@ -54,7 +53,7 @@ body {
 
 .client .details, .summary .details {
   padding: 4px;
-  background: #fff;
+  background-color: var(--grist-theme-page-panels-main-panel-bg, white);
 }
 
 table.items {
@@ -72,7 +71,7 @@ table.items th {
 }
 
 table.items td {
-  background: #fff;
+  background-color: var(--grist-theme-page-panels-main-panel-bg, white);
   padding: 4px;
 }
 
