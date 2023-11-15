@@ -1,12 +1,22 @@
 #!/usr/bin/env node
 
-// Creates a global manifest with all published widgets.
+// Creates a global manifest with all published widgets. Call as:
+//   node ./buildtools/publish.js manifest.json
+// or:
+//   node ./buildtools/publish.js manifest.json http://localhost:8585
 
 const fs = require('fs');
 const path = require('path');
 
 const rootDir = path.join(__dirname, '..');
 const folders = fs.readdirSync(rootDir);
+
+const manifestFile = process.argv[2];
+const replacementUrl = process.argv[3]
+
+if (!manifestFile) {
+  throw new Error('please call with the file to build');
+}
 
 function isWidgetDir(folder) {
   const indexHtmlFile = path.join(rootDir, folder, 'index.html');
@@ -42,15 +52,26 @@ for (const folder of folders) {
       console.log('Publishing ' + config.widgetId);
       // If we have custom server url as a first argument for local testing,
       // replace widget url.
-      if (process.argv[2] && config.url) {
-        config.url = config.url.replace(
-          'https://gristlabs.github.io/grist-widget',
-          process.argv[2]
-        );
+      if (replacementUrl) {
+        if (config.url) {
+          config.url = replaceUrl(replacementUrl, config.url);
+        }
+        if (config.archive?.entrypoints) {
+          config.archive.entrypoints = config.archive.entrypoints.map(
+            e => replaceUrl(replacementUrl, e)
+          );
+        }
       }
       widgets.push(config);
     }
   }
 }
 
-fs.writeFileSync(path.join(rootDir, 'manifest.json'), JSON.stringify(widgets, null, 2));
+fs.writeFileSync(manifestFile, JSON.stringify(widgets, null, 2));
+
+function replaceUrl(replacementUrl, configUrl) {
+  return configUrl.replace(
+    'https://gristlabs.github.io/grist-widget',
+    replacementUrl
+  );
+}
