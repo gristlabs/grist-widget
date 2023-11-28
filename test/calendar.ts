@@ -261,8 +261,8 @@ describe('calendar', function () {
 
     // Now configure bi-directional mapping.
     await grist.sendActionsAndWaitForServer([
-      ['UpdateRecord', '_grist_Views_section', 1, {linkSrcSectionRef: 3}],
-      ['UpdateRecord', '_grist_Views_section', 3, {linkSrcSectionRef: 1}],
+      ['UpdateRecord', '_grist_Views_section', 1, {linkSrcSectionRef: 4}],
+      ['UpdateRecord', '_grist_Views_section', 4, {linkSrcSectionRef: 1}],
     ]);
 
     // Add 4 events in the calendar.
