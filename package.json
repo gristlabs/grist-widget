@@ -1,6 +1,6 @@
 {
-  "name": "grist-widget",
-  "version": "0.0.2",
+  "name": "@gristlabs/grist-widget",
+  "version": "0.0.4",
   "description": "A repository of grist custom widgets that have no back-end requirements.",
   "scripts": {
     "build": "tsc --build && node ./buildtools/publish.js manifest.json",
@@ -12,7 +12,7 @@
     "test": "docker image inspect gristlabs/grist --format 'gristlabs/grist image present' && NODE_PATH=_build SELENIUM_BROWSER=chrome mocha -g \"${GREP_TESTS}\" _build/test/*.js",
     "test:ci": "MOCHA_WEBDRIVER_HEADLESS=1 npm run test",
     "pretest": "docker pull gristlabs/grist && tsc --build && node ./buildtools/publish.js manifest.json http://localhost:9998",
-    "bundle": "node ./buildtools/bundle.js"
+    "prepack": "node ./buildtools/bundle.js --name grist-bundled --unlisted"
   },
   "devDependencies": {
     "@types/chai": "^4.3.5",
@@ -20,6 +20,7 @@
     "@types/node": "18.11.9",
     "@types/node-fetch": "^2.6.4",
     "@types/selenium-webdriver": "^4.1.15",
+    "commander": "^11.1.0",
     "live-server": "^1.2.1",
     "mocha": "^10.2.0",
     "mocha-webdriver": "0.3.1",
@@ -33,5 +34,10 @@
     "require": [
       "_build/test/init-mocha-webdriver"
     ]
-  }
+  },
+  "files": [
+    "dist/plugins",
+    "LICENSE",
+    "README.md"
+  ]
 }

@@ -9,7 +9,7 @@ describe('inspect', function() {
     const docId = await grist.upload('test/fixtures/docs/SchoolsSample.grist');
     await grist.openDoc(docId);
     await grist.toggleSidePanel('right', 'open');
-    await grist.addNewSection(/Custom/, /School/);
+    await grist.addNewSection(/Custom/, /School/, {dismissTips: true});
     await grist.clickWidgetPane();
     await grist.selectCustomWidget('Inspect Record');
     await grist.setCustomWidgetAccess('full');

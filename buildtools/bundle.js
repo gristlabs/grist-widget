@@ -30,9 +30,14 @@
  * describe the widgets as a plugin to Grist. The
  * clash in file names is a little unfortunate.
  *
- * Call without any arguments. Run from the root of the
- * repository. Places results in:
- *    dist/grist-widget-bundle
+ * Run from the root of the repository. Places results
+ * the dist/plugins directory. Call as:
+ *   node buildtools/bundle.js
+ * To make all widgets unlisted in the UI when bundled
+ * with Grist do:
+ *   node buildtools/bundle.js --unlisted
+ * To set the name of the bundle directory, do:
+ *   node buildtools/bundle.js --name the-bundle-name
  *
  * Will run a temporary server on port 9990.
  *
@@ -41,12 +46,20 @@
  */
 
 const { spawn, spawnSync } = require('child_process');
+const { program } = require('commander');
 const fs = require('fs');
 const fetch = require('node-fetch');
 const path = require('path');
 
+program
+  .option('--unlisted')
+  .option('-n, --name <string>');
+
+program.parse();
+const { unlisted, name } = program.opts();
+
 // This is where we will place our output.
-const TARGET_DIR = 'dist/grist-widget-bundle';
+const TARGET_DIR = `dist/plugins/${ name ?? 'grist-widget-bundle' }`;
 
 // This is a temporary port number.
 const TMP_PORT = 9990;
@@ -136,6 +149,27 @@ class Bundler {
       for (const url of (widget.archive.entrypoints || [])) {
         this.downloadUrl(url, widget);
       }
+      // Fix up the URL in the manifest to be relative to where
+      // the widget material will be moved to.
+      widget.url = widget.url.replace(
+        this.assetUrl,
+        './' + this.renamedHost
+      );
+      // Do same for entrypoint URLs - not really necessary, but feels
+      // a bit cleaner to keep consistent.
+      if (widget.archive?.entrypoints) {
+        widget.archive.entrypoints = widget.archive.entrypoints.map(
+          e => e.replace(
+            this.assetUrl,
+            './' + this.renamedHost
+          )
+        );
+      }
+      // Set a timestamp.
+      widget.bundledAt = this.bundledAt.toISOString();
+      if (unlisted) {
+        widget.published = false;
+      }
       this.widgets.push(widget);
     }
 
@@ -152,7 +186,7 @@ class Bundler {
     this.reviseManifest();
 
     fs.writeFileSync(path.join(targetDir, 'manifest.yml'),
-                     'name: Grist Widget Bundle\n' +
+                     `name: ${name}\n` +
                      'components:\n' +
                      '  widgets: archive/manifest.json\n');
   }
@@ -195,18 +229,8 @@ class Bundler {
     // Run the wget command.
     const result = spawnSync(cmd, {shell: true, stdio: 'inherit'});
     if (result.status !== 0) {
-      throw new Error('failure');
+      throw new Error(`failure running: ${cmd}`);
     }
-
-    // Fix up the URL in the manifest to be relative to where
-    // the widget material will be moved to.
-    widget.url = widget.url.replace(
-      this.assetUrl,
-      './' + this.renamedHost
-    );
-
-    // Set a timestamp.
-    widget.bundledAt = this.bundledAt.toISOString();
   }
 
   // Quick sanity check on domains, since we'll be inserting
