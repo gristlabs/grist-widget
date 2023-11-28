@@ -16,7 +16,6 @@
   },
   "devDependencies": {
     "@types/chai": "^4.3.5",
-    "@types/lodash": "^4.14.202",
     "@types/lodash.escaperegexp": "^4.1.9",
     "@types/mocha": "^10.0.1",
     "@types/node": "18.11.9",
