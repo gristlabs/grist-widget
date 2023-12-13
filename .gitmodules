@@ -1,4 +1,4 @@
 [submodule "chart"]
 	path = chart
-	url = git@github.com:gristlabs/custom-charts-widget.git
+	url = https://github.com/gristlabs/custom-charts-widget
 	branch = gh-pages
