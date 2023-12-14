@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "grist": {
     "name": "Pedigree",
-    "url": "https://gristlabs.github.io/grist-widget/pedigree",
+    "url": "https://gristlabs.github.io/grist-widget/pedigree/index.html",
     "widgetId": "@gristlabs/widget-pedigree",
     "published": false,
     "accessLevel": "read table",
