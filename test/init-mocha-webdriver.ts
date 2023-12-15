@@ -26,6 +26,7 @@ exports.mochaHooks = getMochaHooks();
 
 let server: GristTestServer;
 exports.mochaGlobalSetup = async function() {
+  
   server = new GristTestServer();
   await server.start();
 };

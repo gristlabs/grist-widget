@@ -127,7 +127,6 @@ grist.onRecord(function (record) {
     // New widgets should only check if mapped object is truthy.
     const data = mapped ? mapped.ImageUrl : singleColumn(record);
     delete record.id;
-    var keys = Object.keys(record);
     if (data === undefined) {
         showError("Please choose a column to show in the Creator Panel.");
     } else {
