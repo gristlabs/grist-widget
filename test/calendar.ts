@@ -341,6 +341,24 @@ describe('calendar', function () {
     }
   });
 
+  it("should show Record Card popup on double click", async function () {
+    await selectPerspective('month');
+    await navigateCalendar('today');
+    await createCalendarEvent(18, 'TestRecordCard');
+    await grist.inCustomWidget(async () => {
+      const event = driver.findWait(`div[data-event-id="3"] .toastui-calendar-weekday-event-title`, 200);
+      await driver.withActions(ac =>
+        ac.move({origin: event}).press().pause(100).release().pause(100).press().pause(100).release()
+      );
+    });
+    assert.isTrue(await driver.findWait('.test-record-card-popup-overlay', 100).isDisplayed());
+    assert.equal(
+      await driver.find('.test-record-card-popup-wrapper .test-widget-title-text').getText(),
+      'TABLE1 Card'
+    );
+    assert.isTrue(await driver.findContent('.g_record_detail_value', 'TestRecordCard').isPresent());
+  });
+
   // TODO: test adding new events and moving existing one on the calendar.
   // ToastUI is not best optimized for drag and drop tests in mocha and I cannot yet make it work correctly.
 
