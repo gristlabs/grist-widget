@@ -1,0 +1,8 @@
+[submodule "chart"]
+	path = chart
+	url = https://github.com/gristlabs/custom-charts-widget
+	branch = gh-pages
+[submodule "jupyterlite"]
+	path = jupyterlite
+	url = https://github.com/gristlabs/jupyterlite-widget
+	branch = gh-pages
