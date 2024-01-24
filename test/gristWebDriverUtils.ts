@@ -12,6 +12,7 @@ import {Key, WebDriver, WebElement, WebElementPromise} from 'mocha-webdriver';
 import escapeRegExp =  require('lodash/escapeRegExp');
 
 type SectionTypes = 'Table'|'Card'|'Card List'|'Chart'|'Custom';
+type UserAction = Array<string | number | object | boolean | null | undefined>;
 
 export class GristWebDriverUtils {
   public constructor(public driver: WebDriver) {
@@ -37,6 +38,36 @@ export class GristWebDriverUtils {
       "Timed out waiting for server requests to complete"
     ));
   }
+
+  public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number = 2000) {
+    const result = await this.driver.executeAsyncScript(async (actions: any, done: Function) => {
+      try {
+        await (window as any).gristDocPageModel.gristDoc.get().docModel.docData.sendActions(actions);
+        done(null);
+      } catch (err) {
+        done(String(err?.message || err));
+      }
+    }, actions);
+    if (result) {
+      throw new Error(result as string);
+    }
+    await this.waitForServer(optTimeout);
+  }
+
+  /**
+ * Runs a Grist command in the browser window.
+ */
+public async sendCommand(name: string, argument: any = null) {
+  await this.driver.executeAsyncScript((name: any, argument: any, done: any) => {
+    const result = (window as any).gristApp.allCommands[name].run(argument);
+    if (result?.finally) {
+      result.finally(done);
+    } else {
+      done();
+    }
+  }, name, argument);
+  await this.waitForServer();
+}
 
 
   public async login(){
@@ -288,7 +319,8 @@ export class GristWebDriverUtils {
    */
   public async undo(optCount: number = 1, optTimeout?: number) {
     for (let i = 0; i < optCount; ++i) {
-      await this.driver.find('.test-undo').doClick();
+        const undoButton = await this.driver.find('.test-undo');
+        await undoButton.doClick();
     }
     await this.waitForServer(optTimeout);
   }
@@ -314,6 +346,26 @@ export class GristWebDriverUtils {
     await this.driver.sendKeys(value)
     await this.driver.sendKeys(Key.ENTER);
   }
+
+  public async addColumn(table:string, type: string, name: string) {
+    // focus on table
+    await this.focusOnWidget(table);
+    // add new column using a shortcut
+    await this.driver.actions().keyDown(Key.ALT).sendKeys('=').keyUp(Key.ALT).perform();
+    // wait for rename panel to show up 
+    await this.driver.findWait('.test-column-title-popup', 1000);
+    // rename and accept
+    await this.driver.sendKeys(name);
+    await this.driver.sendKeys(Key.ENTER);
+    await this.waitForServer();
+  }
+
+  public async focusOnWidget(widgetName: string|RegExp) {
+      await this.driver.findContentWait('.test-widget-title-text', widgetName, 5000).click();
+      await this.driver.findWait(".test-widget-title-cancel", 1000).click();
+      await this.waitForServer();
+  }
+
 
   /**
    * Returns a visible GridView cell. Options may be given as arguments directly, or as an object.

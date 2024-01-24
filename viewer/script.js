@@ -106,7 +106,7 @@ function toggleNavigationButtons(show = false) {
 
 grist.ready({
     columns: [{name: "ImageUrl", title: 'Image URL', type: 'Text'}],
-    requiredAccess: 'read table'
+    requiredAccess: 'read table',
 });
 
 // Helper function that reads first value from a table with a single column.
