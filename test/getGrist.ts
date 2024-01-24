@@ -224,13 +224,11 @@ export class GristUtils extends GristWebDriverUtils {
     await this.addNewSection(/Custom/, dataSource);
     await this.clickWidgetPane();
     await this.selectCustomWidget(type);
-    //accept permissions
-    await this.acceptCustomWidgetPermissions();
-    await this.waitForServer();
-  }
 
-  public async acceptCustomWidgetPermissions() {
-    await this.driver.findWait('.test-config-widget-access-accept',500).click();
+
+
+
+    await this.waitForServer();
   }
 
   public async setCustomWidgetAccess(option: "none" | "read table" | "full") {

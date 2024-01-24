@@ -44,21 +44,20 @@ describe('viewer', function () {
         await grist.addColumn('DATA','Text','description');
         //add widget again
         await grist.addCustomSection("Image",'Image viewer',/Data/);
+        await grist.setCustomWidgetAccess('full');
         //test if error is displayed
         await testIfErrorIsDisplayed()
         //undo create column 
       });
 
 
-
       it('multiple columns, with mapping, should load image from mapped column', async function () {
-        //remove custom widget 
-        await grist.removeWidget(/Image/);
-        //add new column
-        await grist.addColumn('DATA','Text','description');
-        //add custom widget again 
-        await grist.addCustomSection("Image",'Image Viewer');
-        //check if error is displayed
+        //select image widget
+        await grist.clickWidgetPane();
+        //add mappiing 
+        await grist.setCustomWidgetMapping('ImageUrl',/Image/);
+        // check if image is showed 
+        await testIfImageIsDispalyed(TEST_IMAGE);
       });
   });
   describe('navigation', function () {
