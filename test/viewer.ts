@@ -61,11 +61,16 @@ describe('viewer', function () {
       });
   });
   describe('navigation', function () {
+    before(async function () {
+      //remove all cells from image table 
+      await grist.sendActionsAndWaitForServer([['RemoveRecord', 'Data',1]],1000);
+    });
     describe('no image', function (){
       it('should have navigation buttons hidden', async function () {
-
+          assert.isFalse(await areNavigationButtonsVisible(), 'navigation buttons are visible');
       });
       it('should have no image', async function () {
+        assert.isFalse(await isImageVisible(), 'image is visible');
 
       });
     })
@@ -109,4 +114,12 @@ describe('viewer', function () {
     });
   }
 
+  async function areNavigationButtonsVisible() {
+    return await grist.inCustomWidget(async ()=>await driver.find('#navigation-buttons').isDisplayed());
+  }
+  
+  async function isImageVisible(){
+    return await grist.inCustomWidget(async ()=>await driver.find('#viewer').isDisplayed());
+  }
 });
+
