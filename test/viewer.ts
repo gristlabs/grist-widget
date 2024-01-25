@@ -1,9 +1,9 @@
 import {assert, driver} from 'mocha-webdriver';
 import {getGrist} from "./getGrist";
 
-const TEST_IMAGE = 'https://www.testimage.com/image.jpg'
-const TEST_IMAGE2 = 'https://www.testimage.com/image2.jpg'
-const TEST_IMAGE3 = 'https://www.testimage.com/image3.jpg'
+const TEST_IMAGE = 'http://localhost:9998/test/fixtures/images/image1.jpg'
+const TEST_IMAGE2 = 'http://localhost:9998/test/fixtures/images/image2.jpg'
+const TEST_IMAGE3 = 'http://localhost:9998/test/fixtures/images/image3.jpg'
 
 
 describe('viewer', function () {
@@ -99,7 +99,9 @@ describe('viewer', function () {
       before(async function () {
         await grist.focusOnWidget(/DATA/);
         //input 3 images in the same cell, separated by space
-        await grist.fillCell('Image', 1,`${TEST_IMAGE} ${TEST_IMAGE2} ${TEST_IMAGE3}`);
+        await grist.fillCell('Image', 1,`${TEST_IMAGE} this is some garbage content `+
+        `${TEST_IMAGE2} and event more garbage `+
+        `${TEST_IMAGE3}`);
       });
       it('should have navigation buttons visible', async function () {
         assert.isTrue(await areNavigationButtonsVisible(), 'navigation buttons should be visible when there is more than one image');
@@ -139,14 +141,17 @@ describe('viewer', function () {
       });
 
       it('should navigate to next image by swipe left', async function () {
-
+        await swipeLeft('#viewer')
+        await testIfImageIsDispalyed(TEST_IMAGE2);
+        await swipeLeft('#viewer')
+        await testIfImageIsDispalyed(TEST_IMAGE3);
       });
+
       it('should navigate to previous image by swipe right', async function () {
-
-      });
-
-      it ('should filter garbage', async function () {
-
+        await swipeRight('#viewer')
+        await testIfImageIsDispalyed(TEST_IMAGE2);
+        await swipeRight('#viewer')
+        await testIfImageIsDispalyed(TEST_IMAGE);
       });
 
       after(async function () {
@@ -156,10 +161,54 @@ describe('viewer', function () {
     })
   });
 
+  async function swipeLeft(element: string | RegExp) {
+    grist.executeScriptInCustomWidget(swipeScript, element,'left')
+  }
+
+  async function swipeRight(element: string | RegExp) {
+    grist.executeScriptInCustomWidget(swipeScript, element,'right')
+  }
+
+  function swipeScript(elementTag: string , direction: 'left' | 'right') {
+      let mode = direction;
+      let element = document.querySelector(elementTag);
+      
+      if (!element) {
+          console.error("Element was not found.");
+      }
+      else {
+
+      let touch = new Touch({
+          identifier: Date.now(),
+          target: element,
+          clientX: 0,
+      });
+
+      let touchStart = new TouchEvent('touchstart', {
+          touches: [touch],
+      });
+
+      element.dispatchEvent(touchStart);
+
+      let clientX = (mode === "left") ? -200 : 200;
+      touch = new Touch({
+        identifier: Date.now(),
+        target: element,
+        clientX: clientX,
+      });
+
+      let touchEnd = new TouchEvent('touchend', {
+          changedTouches: [touch]
+      });
+
+      element.dispatchEvent(touchEnd);
+    }
+  }
+
   async function testIfImageIsDispalyed(url: string) {
     await grist.waitToPass(async () => {
       const img = await grist.getCustomWidgetElementParameter('img','src');
-      assert.equal(img, 'https://www.testimage.com/image.jpg');
+      assert.equal(img, url);
     });
   }
 
