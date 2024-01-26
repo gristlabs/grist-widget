@@ -204,7 +204,6 @@ export class GristUtils extends GristWebDriverUtils {
     const elem = this.driver.find('.test-config-widget-select .test-select-open');
     if (await elem.isPresent()) {
       await elem.click();
-      // if not present, may just be already selected.
     }
   }
 
@@ -224,10 +223,6 @@ export class GristUtils extends GristWebDriverUtils {
     await this.addNewSection(/Custom/, dataSource);
     await this.clickWidgetPane();
     await this.selectCustomWidget(type);
-
-
-
-
     await this.waitForServer();
   }
 

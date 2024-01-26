@@ -27,12 +27,14 @@ class ImageRotator {
     }
 
     showImage() {
-        let url = urls[this._urlIndex];
-        if (!url) {
+        let url = this._urls[this._urlIndex];
+        if (!url || url === null || url === undefined) {
             this.viewer.style.display = 'none';
+        } else {
+            this.viewer.src = url;
+            this.viewer.alt = `URL: ${url}`; // Set alt parameter to show the URL of the picture
+            this.viewer.style.display = 'block';
         }
-        this.viewer.src = url;
-        this.viewer.style.display = 'block';
     }
 
     constructor(element) {
