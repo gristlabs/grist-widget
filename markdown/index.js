@@ -42,6 +42,13 @@ window.addEventListener('keydown', (ev) => {
   }
 })
 
+window.addEventListener('blur', () => {
+  if (txt.isPreviewActive()) { return; }
+
+  save();
+  readMode();
+});
+
 function editMode() {
   isEditMode.set(true);
   if (txt.isPreviewActive()) {
@@ -107,8 +114,10 @@ function ready(fn) {
 
 var isMac = /Mac/.test(navigator.platform);
 var toolbar = [
+  "bold", "italic", "heading", "quote", "|", "link", "guide",
   {
     name: 'save',
+    text: 'Save',
     action: function(editor) {
       save();
       readMode();
@@ -118,13 +127,13 @@ var toolbar = [
   },
   {
     name: 'edit',
+    text: 'Edit',
     action: function(editor) {
       editMode();
     },
     className: 'fa fa-pencil edit-action',
     title: 'Edit (Enter or Space)'
   },
-  "|", "bold", "italic", "heading", "quote", "|", "link", "guide",
 ];
 
 ready(() => {

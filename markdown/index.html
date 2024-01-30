@@ -9,6 +9,13 @@
     <script src="https://cdn.jsdelivr.net/npm/grainjs@1.0.2/dist/grain-full.min.js"></script>
     <script src="index.js"></script>
     <style>
+      :root {
+        --border-radius: 4px;
+        --medium-font-size: 13px;
+        --primary-bg: #FFFFFF;
+        --primary-fg-hover: #009058;
+        --primary-fg: #16B378;
+      }
       html, body, textarea {
         width: 100%;
         height: 100vh;
@@ -84,20 +91,52 @@
       }
       .toolbar-read-mode {
         position: absolute;
-        top: 4px;
-        right: 4px;
+        top: 9px;
+        right: 10px;
         z-index: 100;
         background-color: #ffffff80;
-        border: 1px solid #16b378;
         margin: 0;
         padding: 0;
-        border-radius: 4px;
+        border-radius: var(--border-radius);
       }
       .toolbar-read-mode > :not(.edit-action) {
         display: none !important;
       }
       .editor-preview {
         background: white;
+      }
+      .edit-action,
+      .save-action {
+        float: right;
+        margin: 0 8px 0 0;
+
+        font-weight: 500 !important;
+        padding: 4px 8px !important;
+
+        position: relative;
+        outline: none;
+        line-height: normal;
+        height: auto !important;
+        font-size: var(--medium-font-size);
+        letter-spacing: -0.08px;
+        color: var(--grist-theme-control-primary-fg, var(--primary-bg));
+        background: var(--grist-theme-control-primary-bg, var(--primary-fg)) !important;
+        border: 1px solid var(--grist-theme-control-primary-bg, var(--primary-fg)) !important;
+        border-radius: var(--border-radius) !important;
+        cursor: pointer;
+
+        appearance: button;
+        -webkit-appearance: button;
+      }
+      .edit-action:hover,
+      .save-action:hover {
+        color: var(--grist-theme-control-primary-fg, var(--primary-bg));
+        background: var(--grist-theme-control-primary-hover-bg, var(--primary-fg-hover)) !important;
+        border: 1px solid var(--grist-theme-control-primary-hover-bg, var(--primary-fg-hover)) !important;
+      }
+      .edit-action > i,
+      .save-action > i {
+        display: none;
       }
       @media print {
         html, body, textarea {
