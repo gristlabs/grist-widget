@@ -95,6 +95,15 @@ swipeHandler = new SwipeHandler();
 swipeHandler.onSwipeLeft = () => imageRotator.NextImage();
 swipeHandler.onSwipeRight = () => imageRotator.PreviousImage();
 
+window.onload = function() {
+    if ('ontouchstart' in window) {
+      var btns = document.getElementsByClassName('btn');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].style.display = 'none';
+      }
+    }
+  };
+
 function showError(msg) {
     let el = document.getElementById('error')
     if (!msg) {
