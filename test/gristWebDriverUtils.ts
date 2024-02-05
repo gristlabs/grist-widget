@@ -319,8 +319,7 @@ public async sendCommand(name: string, argument: any = null) {
    */
   public async undo(optCount: number = 1, optTimeout?: number) {
     for (let i = 0; i < optCount; ++i) {
-        const undoButton = await this.driver.find('.test-undo');
-        await undoButton.doClick();
+        await this.driver.find('.test-undo').doClick();
     }
     await this.waitForServer(optTimeout);
   }
