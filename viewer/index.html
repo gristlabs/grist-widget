@@ -64,11 +64,40 @@
       }
       .btn{
         width: 50%;
+        color: var(--grist-theme-text);
+        background-color: var(--grist-theme-button-group-bg);
+        padding: 4px 10px;
+        outline: none;
+        display: inline-block;
+        margin-bottom: 0;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.42857143;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        -ms-touch-action: manipulation;
+        touch-action: manipulation;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        border: 1px solid var(--grist-theme-button-group-border);
+        border-radius: 4px;
+        border-top: none;
+        
       }
+
+      .btn:hover {
+        background-color: var(--grist-theme-hover);
+        border-color: var(--grist-theme-button-group-border-hover);  
+      }      
 
       body{
         display: flex;
         flex-direction: column;
+        overflow: hidden;
       }
 
     </style>
