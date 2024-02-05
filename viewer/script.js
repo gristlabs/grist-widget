@@ -2,6 +2,15 @@ class ImageRotator {
     _urls = [];
     _urlIndex = 0;
 
+    _getElement(){
+        if(this.element === undefined || this.element === null || this.element === '')
+        {
+            this.viewer = document.getElementById(this.elementCssTag);
+        
+        }
+        return this.viewer;
+    }
+
     PreviousImage() {
         if (this._urlIndex > 0) {
             this._urlIndex--;
@@ -27,18 +36,19 @@ class ImageRotator {
     }
 
     showImage() {
-        let url = this._urls[this._urlIndex];
+        const url = this._urls[this._urlIndex];
+        const viewer = this._getElement();
         if (!url || url === null || url === undefined) {
-            this.viewer.style.display = 'none';
+            viewer.style.display = 'none';
         } else {
-            this.viewer.src = url;
-            this.viewer.alt = `URL: ${url}`; // Set alt parameter to show the URL of the picture
-            this.viewer.style.display = 'block';
+            viewer.src = url;
+            viewer.alt = `URL: ${url}`; // When url does not point to an image, the url itslef is shown as alt text.
+            viewer.style.display = 'block';
         }
     }
 
     constructor(element) {
-        this.viewer = element;
+        this.elementCssTag = element;
     }
 }
 
@@ -80,15 +90,13 @@ class SwipeHandler {
 
 let imageRotator
 let swipeHandler
-window.onload = function () {
-    imageRotator = new ImageRotator(document.getElementById('viewer'));
-    swipeHandler = new SwipeHandler();
-    swipeHandler.onSwipeLeft = () => imageRotator.NextImage();
-    swipeHandler.onSwipeRight = () => imageRotator.PreviousImage();
-}
+imageRotator = new ImageRotator('viewer');
+swipeHandler = new SwipeHandler();
+swipeHandler.onSwipeLeft = () => imageRotator.NextImage();
+swipeHandler.onSwipeRight = () => imageRotator.PreviousImage();
 
 function showError(msg) {
-    var el = document.getElementById('error')
+    let el = document.getElementById('error')
     if (!msg) {
         el.style.display = 'none';
     } else {
@@ -98,7 +106,7 @@ function showError(msg) {
 }
 
 function toggleNavigationButtons(show = false) {
-    let buttons = document.getElementById('navigation-buttons');
+    const buttons = document.getElementById('navigation-buttons');
     if (show) {
         buttons.style.display = 'flex'
     } else {

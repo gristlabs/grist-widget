@@ -25,8 +25,7 @@ if (process.env.MOCHA_WEBDRIVER_NO_CONTROL_BANNER === undefined) {
 exports.mochaHooks = getMochaHooks();
 
 let server: GristTestServer;
-exports.mochaGlobalSetup = async function() {
-  
+exports.mochaGlobalSetup = async function() {  
   server = new GristTestServer();
   await server.start();
 };
