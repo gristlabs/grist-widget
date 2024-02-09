@@ -35,7 +35,7 @@ window.addEventListener('keydown', (ev) => {
   } else if (ev.keyCode === 27) {
     if (!txt.isPreviewActive()) {
       // If user pressed Escape, cancel edit
-      txt.value("" + cachedData);
+      cancel();
       readMode();
       ev.preventDefault();
     }
@@ -104,6 +104,10 @@ function save() {
   });
 }
 
+function cancel() {
+  txt.value("" + cachedData);
+}
+
 function ready(fn) {
   if (document.readyState !== 'loading'){
     fn();
@@ -124,6 +128,16 @@ var toolbar = [
     },
     className: 'fa fa-save save-action',
     title: `Save (${isMac ? 'Cmd' : 'Ctrl'} + S)`
+  },
+  {
+    name: 'cancel',
+    text: 'Cancel',
+    action: function(editor) {
+      cancel();
+      readMode();
+    },
+    className: 'fa fa-cancel cancel-action',
+    title: `Cancel (Escape)`
   },
   {
     name: 'edit',
