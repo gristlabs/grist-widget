@@ -347,11 +347,9 @@ describe('calendar', function () {
     await createCalendarEvent(18, 'TestRecordCard');
     await grist.inCustomWidget(async () => {
       const event = driver.findWait(`div[data-event-id="3"] .toastui-calendar-weekday-event-title`, 200);
-      await driver.withActions(ac =>
-        ac.move({origin: event}).press().pause(100).release().pause(100).press().pause(100).release()
-      );
+      await driver.withActions(a => a.doubleClick(event));
     });
-    assert.isTrue(await driver.findWait('.test-record-card-popup-overlay', 100).isDisplayed());
+    assert.isTrue(await driver.findWait('.test-record-card-popup-overlay', 200).isDisplayed());
     assert.equal(
       await driver.find('.test-record-card-popup-wrapper .test-widget-title-text').getText(),
       'TABLE1 Card'
