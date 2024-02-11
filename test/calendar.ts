@@ -345,7 +345,7 @@ describe('calendar', function () {
     await navigateCalendar('today');
     await createCalendarEvent(18, 'TestRecordCard');
     await grist.inCustomWidget(async () => {
-      const event = driver.findWait(`div[data-event-id="3"] .toastui-calendar-weekday-event-title`, 1000);
+      const event = driver.findContentWait('.toastui-calendar-weekday-event-title', /TestRecordCard/, 1000);
       await driver.withActions(a => a.doubleClick(event));
     });
     assert.isTrue(await driver.findWait('.test-record-card-popup-overlay', 1000).isDisplayed());
