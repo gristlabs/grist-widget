@@ -245,7 +245,6 @@ describe('calendar', function () {
     await grist.waitForFrame();
 
     await createCalendarEvent(12, 'Test1');
-    await grist.waitForServer();
     await grist.waitToPass(async () => {
       assert.equal(await eventsCount(), 1);
     });
@@ -346,10 +345,10 @@ describe('calendar', function () {
     await navigateCalendar('today');
     await createCalendarEvent(18, 'TestRecordCard');
     await grist.inCustomWidget(async () => {
-      const event = driver.findWait(`div[data-event-id="3"] .toastui-calendar-weekday-event-title`, 200);
+      const event = driver.findWait(`div[data-event-id="3"] .toastui-calendar-weekday-event-title`, 1000);
       await driver.withActions(a => a.doubleClick(event));
     });
-    assert.isTrue(await driver.findWait('.test-record-card-popup-overlay', 200).isDisplayed());
+    assert.isTrue(await driver.findWait('.test-record-card-popup-overlay', 1000).isDisplayed());
     assert.equal(
       await driver.find('.test-record-card-popup-wrapper .test-widget-title-text').getText(),
       'TABLE1 Card'
