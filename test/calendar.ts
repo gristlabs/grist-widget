@@ -304,6 +304,22 @@ describe('calendar', function () {
     await grist.undo(1);
   });
 
+  it("should show Record Card popup on double click", async function () {
+    await createCalendarEvent(18, 'TestRecordCard');
+    await grist.inCustomWidget(async () => {
+      const event = driver.findContentWait('.toastui-calendar-weekday-event-title', /TestRecordCard/, 1000);
+      await driver.withActions(a => a.doubleClick(event));
+    });
+    assert.isTrue(await driver.findWait('.test-record-card-popup-overlay', 1000).isDisplayed());
+    assert.equal(
+      await driver.find('.test-record-card-popup-wrapper .test-widget-title-text').getText(),
+      'TABLE1 Card'
+    );
+    assert.isTrue(await driver.findContent('.g_record_detail_value', 'TestRecordCard').isPresent());
+    await driver.sendKeys(Key.ESCAPE);
+    assert.isFalse(await driver.find('.test-record-card-popup-overlay').isPresent());
+  });
+
   //Helpers
   async function selectPerspective(perspective: 'month' | 'week' | 'day') {
     await grist.inCustomWidget(async () => {
@@ -338,22 +354,6 @@ describe('calendar', function () {
       await switchLanguage('English');
       await assertTodayButtonText('today');
     }
-  });
-
-  it("should show Record Card popup on double click", async function () {
-    await selectPerspective('month');
-    await navigateCalendar('today');
-    await createCalendarEvent(18, 'TestRecordCard');
-    await grist.inCustomWidget(async () => {
-      const event = driver.findContentWait('.toastui-calendar-weekday-event-title', /TestRecordCard/, 1000);
-      await driver.withActions(a => a.doubleClick(event));
-    });
-    assert.isTrue(await driver.findWait('.test-record-card-popup-overlay', 1000).isDisplayed());
-    assert.equal(
-      await driver.find('.test-record-card-popup-wrapper .test-widget-title-text').getText(),
-      'TABLE1 Card'
-    );
-    assert.isTrue(await driver.findContent('.g_record_detail_value', 'TestRecordCard').isPresent());
   });
 
   // TODO: test adding new events and moving existing one on the calendar.
