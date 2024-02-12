@@ -35,12 +35,19 @@ window.addEventListener('keydown', (ev) => {
   } else if (ev.keyCode === 27) {
     if (!txt.isPreviewActive()) {
       // If user pressed Escape, cancel edit
-      txt.value("" + cachedData);
+      cancel();
       readMode();
       ev.preventDefault();
     }
   }
 })
+
+window.addEventListener('blur', () => {
+  if (txt.isPreviewActive()) { return; }
+
+  save();
+  readMode();
+});
 
 function editMode() {
   isEditMode.set(true);
@@ -97,6 +104,10 @@ function save() {
   });
 }
 
+function cancel() {
+  txt.value("" + cachedData);
+}
+
 function ready(fn) {
   if (document.readyState !== 'loading'){
     fn();
@@ -107,8 +118,10 @@ function ready(fn) {
 
 var isMac = /Mac/.test(navigator.platform);
 var toolbar = [
+  "bold", "italic", "heading", "quote", "|", "link", "guide",
   {
     name: 'save',
+    text: 'Save',
     action: function(editor) {
       save();
       readMode();
@@ -117,14 +130,24 @@ var toolbar = [
     title: `Save (${isMac ? 'Cmd' : 'Ctrl'} + S)`
   },
   {
+    name: 'cancel',
+    text: 'Cancel',
+    action: function(editor) {
+      cancel();
+      readMode();
+    },
+    className: 'fa fa-cancel cancel-action',
+    title: `Cancel (Escape)`
+  },
+  {
     name: 'edit',
+    text: 'Edit',
     action: function(editor) {
       editMode();
     },
     className: 'fa fa-pencil edit-action',
     title: 'Edit (Enter or Space)'
   },
-  "|", "bold", "italic", "heading", "quote", "|", "link", "guide",
 ];
 
 ready(() => {

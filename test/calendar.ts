@@ -201,9 +201,19 @@ describe('calendar', function () {
     // find a way to mock a date both in the system (by using TimeShift) and in the TUI Calendar to get rid of this
     // data builder here.
     const monthNameOf = (date: Date) => date.toLocaleString('en-us', {month: 'long', year: 'numeric'});
-    const shiftMonth = (date: Date, months: number) => {
+    const shiftMonth = (date: Date, months: 1 | -1) => {
       const newDate = new Date(date);
-      newDate.setMonth(date.getMonth() + months);
+      newDate.setDate(1);
+      const currentMonth = date.getMonth();
+      if (currentMonth === 0 && months === -1) {
+        newDate.setMonth(11);
+        newDate.setFullYear(newDate.getFullYear() - 1);
+      } else if (currentMonth === 11 && months === 1) {
+        newDate.setMonth(0);
+        newDate.setFullYear(newDate.getFullYear() + 1);
+      } else {
+        newDate.setMonth(currentMonth + months);
+      }
       return newDate;
     };
     const now = new Date(Date.now());
