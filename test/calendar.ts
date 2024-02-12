@@ -255,7 +255,6 @@ describe('calendar', function () {
     await grist.waitForFrame();
 
     await createCalendarEvent(12, 'Test1');
-    await grist.waitForServer();
     await grist.waitToPass(async () => {
       assert.equal(await eventsCount(), 1);
     });
@@ -313,6 +312,22 @@ describe('calendar', function () {
     });
     await grist.undo(4); // Revert both changes to the view and events.
     await grist.undo(1);
+  });
+
+  it("should show Record Card popup on double click", async function () {
+    await createCalendarEvent(18, 'TestRecordCard');
+    await grist.inCustomWidget(async () => {
+      const event = driver.findContentWait('.toastui-calendar-weekday-event-title', /TestRecordCard/, 1000);
+      await driver.withActions(a => a.doubleClick(event));
+    });
+    assert.isTrue(await driver.findWait('.test-record-card-popup-overlay', 1000).isDisplayed());
+    assert.equal(
+      await driver.find('.test-record-card-popup-wrapper .test-widget-title-text').getText(),
+      'TABLE1 Card'
+    );
+    assert.isTrue(await driver.findContent('.g_record_detail_value', 'TestRecordCard').isPresent());
+    await driver.sendKeys(Key.ESCAPE);
+    assert.isFalse(await driver.find('.test-record-card-popup-overlay').isPresent());
   });
 
   //Helpers

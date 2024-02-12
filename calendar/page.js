@@ -218,6 +218,7 @@ class CalendarHandler {
     TZDate = this.calendar.getDate().constructor;
 
     this.calendar.on('clickEvent', async (info) => {
+      focusWidget();
       await grist.setCursorPos({rowId: info.event.id});
     });
 
@@ -843,10 +844,11 @@ function clean(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
 }
 
-// HACK: show detail popup on dblclick instead of single click.
-document.addEventListener('dblclick', (ev) => {
-  // tui calendar shows this popup on mouseup, so there is no way to customize it.
-  // So we turn it off (by leaving useDetailPopup to false), and show this popup ourselves.
+// HACK: show Record Card popup on dblclick.
+document.addEventListener('dblclick', async (ev) => {
+  // tui calendar shows a popup on mouseup, and there is no way to customize it.
+  // So we turn it off (by leaving useDetailPopup to false), and show the Record Card
+  // popup ourselves.
 
   // Code that I read to make it happen:
   //
@@ -876,9 +878,7 @@ document.addEventListener('dblclick', (ev) => {
   const event = calendarHandler.calendar.getEventModel(eventId, CALENDAR_NAME);
   if (!event) { return; }
 
-  // Now show the popup the same way as in the code above.
-  const store = calendarHandler.calendar.getStoreDispatchers('popup');
-  // This parameter was picked by hand (with try and fail method).
-  const eventRect = eventDom.getBoundingClientRect();
-  store.showDetailPopup({event, eventRect}, false);
+  // Now show the Record Card popup.
+  await grist.setCursorPos({rowId: event.id});
+  await grist.commandApi.run('viewAsCard');
 });
