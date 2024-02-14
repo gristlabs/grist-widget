@@ -138,7 +138,7 @@ describe('viewer', function () {
     // that means - if there were more that one column in the momnet of creation, error will be displayed. In other case, widget will still use first column
     it('multiple columns - column added after widget, no mapping, should work based on first column', async function () {
       //add new column
-      await grist.addColumn('DATA', 'Text', 'description');
+      await grist.addColumn('DATA', 'description');
       //because widget was displayed, no error should be shown, and data from first column should be displayed
       await assertIfImageIsDisplayed(TEST_IMAGE)
 
@@ -150,7 +150,7 @@ describe('viewer', function () {
       // remove custom widget
       await grist.removeWidget(/Image/);
       //add new column
-      await grist.addColumn('DATA', 'Text', 'description');
+      await grist.addColumn('DATA', 'description');
       //add widget again
       await grist.addCustomSection("Image", 'Image viewer', /Data/);
       await grist.setCustomWidgetAccess('full');

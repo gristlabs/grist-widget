@@ -5,7 +5,6 @@ class ImageRotator {
   _getElement() {
     if (this.element === undefined || this.element === null || this.element === '') {
       this.viewer = document.getElementById(this.elementCssTag);
-
     }
     return this.viewer;
   }
@@ -41,7 +40,7 @@ class ImageRotator {
       viewer.style.display = 'none';
     } else {
       viewer.src = url;
-      viewer.alt = `URL: ${url}`; // When url does not point to an image, the url itslef is shown as alt text.
+      viewer.alt = `URL: ${url}`; // When url does not point to an image, the url itself is shown as alt text.
       viewer.style.display = 'block';
     }
   }
@@ -61,7 +60,7 @@ class SwipeHandler {
 
   //Function to handle swipes
   _handleTouch() {
-    //calculate the distance on x-axis and o y-axis. Check wheter had the great moving ratio.
+    //calculate the distance on x-axis and o y-axis. Check whether had the great moving ratio.
     const xDist = this._endX - this._startX;
     if (Math.abs(xDist) > this._treshold) {
       if (xDist > 0) {
@@ -76,11 +75,11 @@ class SwipeHandler {
     const viewer = document.getElementById('viewer');
     viewer.addEventListener('touchstart', (event) => {
       this._startX = event.touches[0].clientX;
-    })
+    });
     viewer.addEventListener('touchend', (event) => {
       this._endX = event.changedTouches[0].clientX;
       this._handleTouch();
-    })
+    });
   }
 }
 
@@ -101,7 +100,7 @@ window.onload = function () {
 };
 
 function showError(msg) {
-  let el = document.getElementById('error')
+  let el = document.getElementById('error');
   if (!msg) {
     el.style.display = 'none';
   } else {
@@ -113,9 +112,9 @@ function showError(msg) {
 function toggleNavigationButtons(show = false) {
   const buttons = document.getElementById('navigation-buttons');
   if (show) {
-    buttons.style.display = 'flex'
+    buttons.style.display = 'flex';
   } else {
-    buttons.style.display = 'none'
+    buttons.style.display = 'none';
   }
 }
 
@@ -151,8 +150,8 @@ grist.onRecord(function (record) {
     } else {
       const imageUrlRegex = /(https?:\/\/[^\s]+)/g;
       urls = data.match(imageUrlRegex) || [];
-      toggleNavigationButtons(urls.length > 1)
-      imageRotator.setImages(urls)
+      toggleNavigationButtons(urls.length > 1);
+      imageRotator.setImages(urls);
     }
   }
 });
