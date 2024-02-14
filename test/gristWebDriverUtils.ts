@@ -339,9 +339,12 @@ public async sendCommand(name: string, argument: any = null) {
     });
   }
 
-  public async fillCell(columnName: string, row: number, value: string) {
+  public async focusOnCell(columnName: string, row: number) {
     const cell =  await this.getCell({col: columnName, rowNum: row});
     await cell.click();
+  }
+  public async fillCell(columnName: string, row: number, value: string) {
+    await this.focusOnCell(columnName, row);
     await this.driver.sendKeys(value)
     await this.driver.sendKeys(Key.ENTER);
   }
@@ -360,9 +363,15 @@ public async sendCommand(name: string, argument: any = null) {
   }
 
   public async focusOnWidget(widgetName: string|RegExp) {
-      await this.driver.findContentWait('.test-widget-title-text', widgetName, 5000).click();
-      await this.driver.findWait(".test-widget-title-cancel", 1000).click();
-      await this.waitForServer();
+    //assuming less than 20 widgets
+    for(let i = 0; i < 20; i++){
+    const element = this.driver.findContent('.active_section  .test-widget-title-text', widgetName);
+    if(await element.isPresent()){
+      return;
+    }else {
+      await this.driver.actions().keyDown(Key.CONTROL).sendKeys('O').keyUp(Key.CONTROL).perform();
+    }
+  }
   }
 
 
