@@ -141,6 +141,7 @@ grist.onRecord(function (record) {
   // New widgets should only check if mapped object is truthy.
   const data = mapped ? mapped.ImageUrl : singleColumn(record);
   delete record.id;
+  let showNavigation = false;
   if (data === undefined) {
     showError("Please choose a column to show in the Creator Panel.");
   } else {
@@ -150,8 +151,9 @@ grist.onRecord(function (record) {
     } else {
       const imageUrlRegex = /(https?:\/\/[^\s]+)/g;
       urls = data.match(imageUrlRegex) || [];
-      toggleNavigationButtons(urls.length > 1);
       imageRotator.setImages(urls);
+      showNavigation = urls.length > 1;
     }
+    toggleNavigationButtons(showNavigation);
   }
 });
