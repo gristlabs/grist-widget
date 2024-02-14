@@ -131,7 +131,7 @@ describe('viewer', function () {
   describe('loading images', function () {
       it('single column, should load image from that column without mapping', async function () {
          await grist.fillCell('Image', 1,TEST_IMAGE);
-         await testIfImageIsDisplayed(TEST_IMAGE);
+         await assertIfImageIsDisplayed(TEST_IMAGE);
       });
 
       //in the moment of writing this test, widget has default access only to unmapped columns that was in table at the moment of widget creation
@@ -140,7 +140,7 @@ describe('viewer', function () {
         //add new column
         await grist.addColumn('DATA','Text','description');
         //because widget was displayed, no error should be shown, and data from first column should be displayed
-        await testIfImageIsDisplayed(TEST_IMAGE)
+        await assertIfImageIsDisplayed(TEST_IMAGE)
 
         await grist.undo(2);
 
@@ -166,7 +166,7 @@ describe('viewer', function () {
         //add mappiing 
         await grist.setCustomWidgetMapping('ImageUrl',/Image/);
         // check if image is showed 
-        await testIfImageIsDisplayed(TEST_IMAGE);
+        await assertIfImageIsDisplayed(TEST_IMAGE);
       });
 
       after(async function () {
@@ -183,11 +183,10 @@ describe('viewer', function () {
     });
     describe('no image', function (){
       it('should have navigation buttons hidden', async function () {
-          assert.isFalse(await areNavigationButtonsVisible(), 'navigation buttons should not be visible when there is no image');
+          await assertNavigationButtonsVisible(false);
       });
       it('should have no image', async function () {
-        assert.isFalse(await isImageElementVisible(), 'image element should not be visible when there is no image to be shown');
-
+        await assertImageElementVisible(false);
       });
     })
     describe('single image', function (){
@@ -197,10 +196,10 @@ describe('viewer', function () {
         await grist.fillCell('Image', 1,TEST_IMAGE);
       });
       it('should have navigation buttons hidden', async function () {
-        assert.isFalse(await areNavigationButtonsVisible(), 'navigation buttons should not be visible when there is only one image');
+        await assertNavigationButtonsVisible(false);
       });
       it('should have image', async function () {
-        assert.isTrue(await isImageElementVisible(), 'image element should be visible when there is image to be shown');
+        await assertImageElementVisible(true);
       });
       after(async function () {
         //remove setted cell
@@ -217,55 +216,58 @@ describe('viewer', function () {
         `${TEST_IMAGE2} and event more garbage `+
         `${TEST_IMAGE3}`);
       });
+      
       it('should have navigation buttons visible', async function () {
-        assert.isTrue(await areNavigationButtonsVisible(), 'navigation buttons should be visible when there is more than one image');
+        await assertNavigationButtonsVisible(true);
       });
+
       it('should have image', async function () {
-        assert.isTrue(await isImageElementVisible(), 'image element should be visible when there is image to be shown');
+        await assertImageElementVisible(true);
       });
+
       it('should navigate to next image by button', async function () {
         await grist.inCustomWidget(async ()=>await driver.find(nextButtonId).click());
-        await testIfImageIsDisplayed(TEST_IMAGE2);
+        await assertIfImageIsDisplayed(TEST_IMAGE2);
         await grist.inCustomWidget(async ()=>await driver.find(nextButtonId).click());
-        await testIfImageIsDisplayed(TEST_IMAGE3);
+        await assertIfImageIsDisplayed(TEST_IMAGE3);
       });
       it('should navigate to previous image by button', async function () {
         await grist.inCustomWidget(async ()=>await driver.find(previousButtonId).click());
-        await testIfImageIsDisplayed(TEST_IMAGE2);
+        await assertIfImageIsDisplayed(TEST_IMAGE2);
         await grist.inCustomWidget(async ()=>await driver.find(previousButtonId).click());
-        await testIfImageIsDisplayed(TEST_IMAGE);
+        await assertIfImageIsDisplayed(TEST_IMAGE);
       });
 
       it('should navigate to last image by click next button right on last image', async function () {
       // verify if first image is displayed
-      await testIfImageIsDisplayed(TEST_IMAGE);
+      await assertIfImageIsDisplayed(TEST_IMAGE);
       // click previous button one time 
       await grist.inCustomWidget(async ()=>await driver.find(previousButtonId).click());
       // verify if first image is displayed
-      await testIfImageIsDisplayed(TEST_IMAGE3);
+      await assertIfImageIsDisplayed(TEST_IMAGE3);
       });
 
       it('should navigate to first image by click previous button right on first image', async function () {
       // verify if last image is displayed
-      await testIfImageIsDisplayed(TEST_IMAGE3);
+      await assertIfImageIsDisplayed(TEST_IMAGE3);
       // click next button one more time 
       await grist.inCustomWidget(async ()=>await driver.find(nextButtonId).click());
       // verify if first image is displayed
-      await testIfImageIsDisplayed(TEST_IMAGE);
+      await assertIfImageIsDisplayed(TEST_IMAGE);
       });
 
       it('should navigate to next image by swipe left', async function () {
         await swipeLeft('#viewer')
-        await testIfImageIsDisplayed(TEST_IMAGE2);
+        await assertIfImageIsDisplayed(TEST_IMAGE2);
         await swipeLeft('#viewer')
-        await testIfImageIsDisplayed(TEST_IMAGE3);
+        await assertIfImageIsDisplayed(TEST_IMAGE3);
       });
 
       it('should navigate to previous image by swipe right', async function () {
         await swipeRight('#viewer')
-        await testIfImageIsDisplayed(TEST_IMAGE2);
+        await assertIfImageIsDisplayed(TEST_IMAGE2);
         await swipeRight('#viewer')
-        await testIfImageIsDisplayed(TEST_IMAGE);
+        await assertIfImageIsDisplayed(TEST_IMAGE);
       });
 
       after(async function () {
@@ -329,7 +331,7 @@ describe('viewer', function () {
     assert.equal(isVisible, expected, `Navigation buttons were expected to be ${expected ? 'visible' : 'not visible'} but they were not.`);
   }
 
-  async function testIfImageIsDisplayed(url: string) {
+  async function assertIfImageIsDisplayed(url: string) {
     await grist.waitToPass(async () => {
       const img = await grist.getCustomWidgetElementParameter('img','src');
       assert.equal(img, url);
