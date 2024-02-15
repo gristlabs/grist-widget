@@ -22,8 +22,12 @@
         </template>
       </div>
       <template v-else>
-        <div class="description">{{ input.description }}</div>
-        <button class="button" v-on:click="applyActions">{{ input.button }}</button>
+        <div class="container">
+          <button class="button" v-for="(input, idx) in inputs" v-on:click="applyActions(input.actions)" v-on:mouseover="desc = idx" v-on:mouseleave="desc = null">
+            {{ input.button }}
+          </button>
+        </div>
+        <div class="description" v-for="(input, idx) in inputs" v-if="desc === idx">{{ input.description }}</div>
         <div class="result" v-if="result">{{ input.result }}</div>
       </template>
     </div>
