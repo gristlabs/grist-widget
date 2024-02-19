@@ -192,7 +192,7 @@ describe('viewer', function () {
     describe('single image', function () {
       before(async function () {
         //go to data table 
-        await grist.focusOnWidget(/^DATA$/);
+        await grist.selectSectionByTitle(/^DATA$/);
         await grist.fillCell('Image', 1, TEST_IMAGE);
       });
       it('should have navigation buttons hidden', async function () {
@@ -210,7 +210,7 @@ describe('viewer', function () {
       const nextButtonId = '#calendar-button-next';
       const previousButtonId = '#calendar-button-previous';
       before(async function () {
-        await grist.focusOnWidget(/^DATA$/);
+        await grist.selectSectionByTitle(/^DATA$/);
         //input 3 images in the same cell, separated by space
         await grist.fillCell('Image', 1, `${TEST_IMAGE} this is some garbage content ` +
           `${TEST_IMAGE2} and event more garbage ` +
@@ -347,7 +347,7 @@ describe('viewer', function () {
   }
 
   async function selectDataRow(row: number) {
-    await grist.focusOnWidget(/^DATA$/);
+    await grist.selectSectionByTitle(/^DATA$/);
     await grist.focusOnCell('Image', row);
   }
 });

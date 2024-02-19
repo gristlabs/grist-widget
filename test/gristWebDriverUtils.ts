@@ -263,7 +263,7 @@ export class GristWebDriverUtils {
     //close alert if it is shown
     if (await this.isAlertShown()) {
       await this.acceptAlert();
-    };
+    }
     await this.driver.findWait('.test-account-page-login-method', 5000);
     await this.waitForServer();
     return new ProfileSettingsPage(this);
@@ -351,7 +351,7 @@ export class GristWebDriverUtils {
 
   public async addColumn(table: string, name: string) {
     // focus on table
-    await this.focusOnWidget(table);
+    await this.selectSectionByTitle(table);
     // add new column using a shortcut
     await this.driver.actions().keyDown(Key.ALT).sendKeys('=').keyUp(Key.ALT).perform();
     // wait for rename panel to show up 
@@ -362,15 +362,19 @@ export class GristWebDriverUtils {
     await this.waitForServer();
   }
 
-  public async focusOnWidget(widgetName: string | RegExp) {
-    //assuming less than 20 widgets
-    for (let i = 0; i < 20; i++) {
-      const element = this.driver.findContent('.active_section  .test-widget-title-text', widgetName);
-      if (await element.isPresent()) {
-        return;
-      } else {
-        await this.driver.actions().keyDown(Key.CONTROL).sendKeys('O').keyUp(Key.CONTROL).perform();
+  /**
+   * Click into a section without disrupting cursor positions.
+   */
+  public async selectSectionByTitle(title: string|RegExp) {
+    try {
+      if (typeof title === 'string') {
+        title = new RegExp("^" + escapeRegExp(title) + "$", 'i');
       }
+      // .test-viewsection is a special 1px width element added for tests only.
+      await this.driver.findContent(`.test-viewsection-title`, title).find(".test-viewsection-blank").click();
+    } catch (e) {
+      // We might be in mobile view.
+      await this.driver.findContent(`.test-viewsection-title`, title).findClosest(".view_leaf").click();
     }
   }
 

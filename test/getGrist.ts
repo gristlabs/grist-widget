@@ -213,7 +213,7 @@ export class GristUtils extends GristWebDriverUtils {
   }
 
   public async removeWidget(name: string|RegExp) {
-    await this.focusOnWidget(name);
+    await this.selectSectionByTitle(name);
     await this.sendCommand('deleteSection');
     await this.waitForServer();
   }
