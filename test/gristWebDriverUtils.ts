@@ -8,15 +8,17 @@
  * easily.
  */
 
-import { WebDriver, WebElement } from 'mocha-webdriver';
+import { Key, WebDriver, WebElement, WebElementPromise } from 'mocha-webdriver';
+import escapeRegExp = require('lodash/escapeRegExp');
 
-type SectionTypes = 'Table'|'Card'|'Card List'|'Chart'|'Custom';
+type SectionTypes = 'Table' | 'Card' | 'Card List' | 'Chart' | 'Custom';
+type UserAction = Array<string | number | object | boolean | null | undefined>;
 
 export class GristWebDriverUtils {
   public constructor(public driver: WebDriver) {
   }
 
-  public isSidePanelOpen(which: 'right'|'left'): Promise<boolean> {
+  public isSidePanelOpen(which: 'right' | 'left'): Promise<boolean> {
     return this.driver.find(`.test-${which}-panel`).matches('[class*=-open]');
   }
 
@@ -31,14 +33,44 @@ export class GristWebDriverUtils {
   public async waitForServer(optTimeout: number = 2000) {
     await this.driver.wait(() => this.driver.executeScript(
       "return window.gristApp && (!window.gristApp.comm || !window.gristApp.comm.hasActiveRequests())"
-        + " && window.gristApp.testNumPendingApiRequests() === 0",
+      + " && window.gristApp.testNumPendingApiRequests() === 0",
       optTimeout,
       "Timed out waiting for server requests to complete"
     ));
   }
 
+  public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number = 2000) {
+    const result = await this.driver.executeAsyncScript(async (actions: any, done: Function) => {
+      try {
+        await (window as any).gristDocPageModel.gristDoc.get().docModel.docData.sendActions(actions);
+        done(null);
+      } catch (err) {
+        done(String(err?.message || err));
+      }
+    }, actions);
+    if (result) {
+      throw new Error(result as string);
+    }
+    await this.waitForServer(optTimeout);
+  }
 
-  public async login(){
+  /**
+ * Runs a Grist command in the browser window.
+ */
+  public async sendCommand(name: string, argument: any = null) {
+    await this.driver.executeAsyncScript((name: any, argument: any, done: any) => {
+      const result = (window as any).gristApp.allCommands[name].run(argument);
+      if (result?.finally) {
+        result.finally(done);
+      } else {
+        done();
+      }
+    }, name, argument);
+    await this.waitForServer();
+  }
+
+
+  public async login() {
     //just click log in to get example account.
     const menu = await this.driver.findWait('.test-dm-account', 1000);
     await menu.click();
@@ -50,7 +82,7 @@ export class GristWebDriverUtils {
 
   public async waitForSidePanel() {
     // 0.4 is the duration of the transition setup in app/client/ui/PagePanels.ts for opening the
-  // side panes
+    // side panes
     const transitionDuration = 0.4;
 
     // let's add an extra delay of 0.1 for even more robustness
@@ -62,7 +94,7 @@ export class GristWebDriverUtils {
    * Toggles (opens or closes) the right or left panel and wait for the transition to complete. An optional
    * argument can specify the desired state.
    */
-  public async toggleSidePanel(which: 'right'|'left', goal: 'open'|'close'|'toggle' = 'toggle') {
+  public async toggleSidePanel(which: 'right' | 'left', goal: 'open' | 'close' | 'toggle' = 'toggle') {
     if ((goal === 'open' && await this.isSidePanelOpen(which)) ||
       (goal === 'close' && !await this.isSidePanelOpen(which))) {
       return;
@@ -80,14 +112,14 @@ export class GristWebDriverUtils {
    * Gets browser window dimensions.
    */
   public async getWindowDimensions(): Promise<WindowDimensions> {
-    const {width, height} = await this.driver.manage().window().getRect();
-    return {width, height};
+    const { width, height } = await this.driver.manage().window().getRect();
+    return { width, height };
   }
 
 
   // Add a new widget to the current page using the 'Add New' menu.
   public async addNewSection(
-    typeRe: RegExp|SectionTypes, tableRe: RegExp|string, options?: PageWidgetPickerOptions
+    typeRe: RegExp | SectionTypes, tableRe: RegExp | string, options?: PageWidgetPickerOptions
   ) {
     // Click the 'Add widget to page' entry in the 'Add New' menu
     await this.driver.findWait('.test-dp-add-new', 2000).doClick();
@@ -100,8 +132,8 @@ export class GristWebDriverUtils {
   // Select type and table that matches respectively typeRe and tableRe and save. The widget picker
   // must be already opened when calling this function.
   public async selectWidget(
-    typeRe: RegExp|string,
-    tableRe: RegExp|string = '',
+    typeRe: RegExp | string,
+    tableRe: RegExp | string = '',
     options: PageWidgetPickerOptions = {}
   ) {
     const driver = this.driver;
@@ -229,9 +261,9 @@ export class GristWebDriverUtils {
     await this.openAccountMenu();
     await this.driver.find('.grist-floating-menu .test-dm-account-settings').click();
     //close alert if it is shown
-    if(await this.isAlertShown()){
+    if (await this.isAlertShown()) {
       await this.acceptAlert();
-    };
+    }
     await this.driver.findWait('.test-account-page-login-method', 5000);
     await this.waitForServer();
     return new ProfileSettingsPage(this);
@@ -300,11 +332,121 @@ export class GristWebDriverUtils {
     let oldDimensions: WindowDimensions;
     before(async () => {
       oldDimensions = await this.driver.manage().window().getRect();
-      await this.driver.manage().window().setRect({width: 1920, height: 1080});
+      await this.driver.manage().window().setRect({ width: 1920, height: 1080 });
     });
     after(async () => {
       await this.driver.manage().window().setRect(oldDimensions);
     });
+  }
+
+  public async focusOnCell(columnName: string, row: number) {
+    const cell = await this.getCell({ col: columnName, rowNum: row });
+    await cell.click();
+  }
+  public async fillCell(columnName: string, row: number, value: string) {
+    await this.focusOnCell(columnName, row);
+    await this.driver.sendKeys(value)
+    await this.driver.sendKeys(Key.ENTER);
+  }
+
+  public async addColumn(table: string, name: string) {
+    // focus on table
+    await this.selectSectionByTitle(table);
+    // add new column using a shortcut
+    await this.driver.actions().keyDown(Key.ALT).sendKeys('=').keyUp(Key.ALT).perform();
+    // wait for rename panel to show up 
+    await this.driver.findWait('.test-column-title-popup', 1000);
+    // rename and accept
+    await this.driver.sendKeys(name);
+    await this.driver.sendKeys(Key.ENTER);
+    await this.waitForServer();
+  }
+
+  /**
+   * Click into a section without disrupting cursor positions.
+   */
+  public async selectSectionByTitle(title: string|RegExp) {
+    try {
+      if (typeof title === 'string') {
+        title = new RegExp("^" + escapeRegExp(title) + "$", 'i');
+      }
+      // .test-viewsection is a special 1px width element added for tests only.
+      await this.driver.findContent(`.test-viewsection-title`, title).find(".test-viewsection-blank").click();
+    } catch (e) {
+      // We might be in mobile view.
+      await this.driver.findContent(`.test-viewsection-title`, title).findClosest(".view_leaf").click();
+    }
+  }
+
+
+  /**
+   * Returns a visible GridView cell. Options may be given as arguments directly, or as an object.
+   * - col: column name, or 0-based column index
+   * - rowNum: 1-based row numbers, as visible in the row headers on the left of the grid.
+   * - section: optional name of the section to use; will use active section if omitted.
+   */
+  public getCell(col: number | string, rowNum: number, section?: string): WebElementPromise;
+  public getCell(options: ICellSelect): WebElementPromise;
+  public getCell(colOrOptions: number | string | ICellSelect, rowNum?: number, section?: string): WebElementPromise {
+    const mapper = async (el: WebElement) => el;
+    const options: IColSelect<WebElement> = (typeof colOrOptions === 'object' ?
+      { col: colOrOptions.col, rowNums: [colOrOptions.rowNum], section: colOrOptions.section, mapper } :
+      { col: colOrOptions, rowNums: [rowNum!], section, mapper });
+    return new WebElementPromise(this.driver, this.getVisibleGridCells(options).then((elems) => elems[0]));
+  }
+
+  /**
+   * Returns visible cells of the GridView from a single column and one or more rows. Options may be
+   * given as arguments directly, or as an object.
+   * - col: column name, or 0-based column index
+   * - rowNums: array of 1-based row numbers, as visible in the row headers on the left of the grid.
+   * - section: optional name of the section to use; will use active section if omitted.
+   *
+   * If given by an object, then an array of columns is also supported. In this case, the return
+   * value is still a single array, listing all values from the first row, then the second, etc.
+   *
+   * Returns cell text by default. Mapper may be `identity` to return the cell objects.
+   */
+  public async getVisibleGridCells(col: number | string, rows: number[], section?: string): Promise<string[]>;
+  public async getVisibleGridCells<T = string>(options: IColSelect<T> | IColsSelect<T>): Promise<T[]>;
+  public async getVisibleGridCells<T>(
+    colOrOptions: number | string | IColSelect<T> | IColsSelect<T>, _rowNums?: number[], _section?: string
+  ): Promise<T[]> {
+
+    if (typeof colOrOptions === 'object' && 'cols' in colOrOptions) {
+      const { rowNums, section, mapper } = colOrOptions;    // tslint:disable-line:no-shadowed-variable
+      const columns = await Promise.all(colOrOptions.cols.map((oneCol) =>
+        this.getVisibleGridCells({ col: oneCol, rowNums, section, mapper })));
+      // This zips column-wise data into a flat row-wise array of values.
+      return ([] as T[]).concat(...rowNums.map((r, i) => columns.map((c) => c[i])));
+    }
+
+    const { col, rowNums, section, mapper = el => el.getText() }: IColSelect<any> = (
+      typeof colOrOptions === 'object' ? colOrOptions :
+        { col: colOrOptions, rowNums: _rowNums!, section: _section }
+    );
+
+    if (rowNums.includes(0)) {
+      // Row-numbers should be what the users sees: 0 is a mistake, so fail with a helpful message.
+      throw new Error('rowNum must not be 0');
+    }
+
+    const sectionElem = section ? await this.getSection(section) : await this.driver.findWait('.active_section', 4000);
+    const colIndex = (typeof col === 'number' ? col :
+      await sectionElem.findContent('.column_name', exactMatch(col)).index());
+
+    const visibleRowNums: number[] = await sectionElem.findAll('.gridview_data_row_num',
+      async (el) => parseInt(await el.getText(), 10));
+
+    const selector = `.gridview_data_scroll .record:not(.column_names) .field:nth-child(${colIndex + 1})`;
+    const fields = mapper ? await sectionElem.findAll(selector, mapper) : await sectionElem.findAll(selector);
+    return rowNums.map((n) => fields[visibleRowNums.indexOf(n)]);
+  }
+
+  public getSection(sectionOrTitle: string | WebElement): WebElement | WebElementPromise {
+    if (typeof sectionOrTitle !== 'string') { return sectionOrTitle; }
+    return this.driver.findContent(`.test-viewsection-title`, new RegExp("^" + escapeRegExp(sectionOrTitle) + "$", 'i'))
+      .findClosest('.viewsection_content');
   }
 }
 
@@ -318,7 +460,7 @@ class ProfileSettingsPage {
   }
 
   public async setLanguage(language: string) {
-    await this.driver.findWait('.test-account-page-language .test-select-open',100).click();
+    await this.driver.findWait('.test-account-page-language .test-select-open', 100).click();
     await this.driver.findContentWait('.test-select-menu li', language, 100).click();
     await this.gu.waitForServer();
   }
@@ -332,11 +474,35 @@ export interface WindowDimensions {
 export interface PageWidgetPickerOptions {
   tableName?: string;
   /** Optional pattern of SELECT BY option to pick. */
-  selectBy?: RegExp|string;
+  selectBy?: RegExp | string;
   /** Optional list of patterns to match Group By columns. */
-  summarize?: (RegExp|string)[];
+  summarize?: (RegExp | string)[];
   /** If true, configure the widget selection without actually adding to the page. */
   dontAdd?: boolean;
   /** If true, dismiss any tooltips that are shown. */
   dismissTips?: boolean;
+}
+
+export interface IColsSelect<T = WebElement> {
+  cols: Array<number | string>;
+  rowNums: number[];
+  section?: string | WebElement;
+  mapper?: (e: WebElement) => Promise<T>;
+}
+
+export interface IColSelect<T = WebElement> {
+  col: number | string;
+  rowNums: number[];
+  section?: string | WebElement;
+  mapper?: (e: WebElement) => Promise<T>;
+}
+
+export interface ICellSelect {
+  col: number | string;
+  rowNum: number;
+  section?: string | WebElement;
+}
+
+export function exactMatch(value: string, flags?: string): RegExp {
+  return new RegExp(`^${escapeRegExp(value)}$`, flags);
 }

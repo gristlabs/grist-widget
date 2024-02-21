@@ -7,7 +7,7 @@ import fetch from 'node-fetch';
 import {GristWebDriverUtils} from 'test/gristWebDriverUtils';
 
 
-type UserAction = Array<string | number | object | boolean | null | undefined>;
+
 
 /**
  * Set up mocha hooks for starting and stopping Grist. Return
@@ -198,31 +198,31 @@ export class GristUtils extends GristWebDriverUtils {
     await this.waitForServer();
   }
 
-  public async sendActionsAndWaitForServer(actions: UserAction[], optTimeout: number = 2000) {
-    const result = await driver.executeAsyncScript(async (actions: any, done: Function) => {
-      try {
-        await (window as any).gristDocPageModel.gristDoc.get().docModel.docData.sendActions(actions);
-        done(null);
-      } catch (err) {
-        done(String(err?.message || err));
-      }
-    }, actions);
-    if (result) {
-      throw new Error(result as string);
-    }
-    await this.waitForServer(optTimeout);
-  }
+
 
   public async clickWidgetPane() {
     const elem = this.driver.find('.test-config-widget-select .test-select-open');
     if (await elem.isPresent()) {
       await elem.click();
-      // if not present, may just be already selected.
     }
   }
 
   public async selectCustomWidget(text: string | RegExp) {
     await this.driver.findContent('.test-select-menu li', text).click();
+    await this.waitForServer();
+  }
+
+  public async removeWidget(name: string|RegExp) {
+    await this.selectSectionByTitle(name);
+    await this.sendCommand('deleteSection');
+    await this.waitForServer();
+  }
+
+  public async addCustomSection(name: string, type: string, dataSource: string|RegExp= /Table1/) {
+    await this.toggleSidePanel('right', 'open');
+    await this.addNewSection(/Custom/, dataSource);
+    await this.clickWidgetPane();
+    await this.selectCustomWidget(type);
     await this.waitForServer();
   }
 
@@ -273,6 +273,10 @@ export class GristUtils extends GristWebDriverUtils {
   // Crude, assumes a single iframe. Should elaborate.
   public async getCustomWidgetBody(selector: string = 'html'): Promise<string> {
     return this.inCustomWidget(() => this.driver.find(selector).getText());
+  }
+
+  public async getCustomWidgetElementParameter(selector: string, parameter: string): Promise<string> {
+    return this.inCustomWidget(() => this.driver.find(selector).getAttribute(parameter));
   }
 
   public async executeScriptInCustomWidget<T>(script: Function, ...args: any[]): Promise<T> {

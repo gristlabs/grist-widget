@@ -1,84 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>A cheap and cheerful image viewer</title>
-    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <style>
-      html, body, textarea {
-          width: 100%;
-          height: 100vh;
-          padding: 0;
-          margin: 0;
-      }
-      #error {
-          display: none;
-          background: red;
-          color: white;
-          padding: 20px;
-          text-align: center;
-      }
-      #viewer {
-          display: none;
-          text-align: center;
-      }
-      img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="error"></div>
-    <img id="viewer" />
-    <script>
-      var viewer = document.getElementById('viewer');
-      function showError(msg) {
-        var el = document.getElementById('error')
-        if (!msg) {
-          el.style.display = 'none';
-        } else {
-          el.innerHTML = msg;
-          el.style.display = 'block';
-        }
-      }
-      grist.ready({
-        columns: [{ name: "ImageUrl", title: 'Image URL', type: 'Text'}],
-        requiredAccess: 'read table'
-      });
-      // Helper function that reads first value from a table with a single column.
-      function singleColumn(record) {
-        const columns = Object.keys(record || {}).filter(k => k !== 'id');
-        return columns.length === 1 ? record[columns[0]] : undefined;
-      }
-      grist.onNewRecord(() => {
-        showError("");
-        viewer.style.display = 'none';
-      });
-      grist.onRecord(function(record) {
-        // If user picked all columns, this helper function will return a mapped record.
-        const mapped = grist.mapColumnNames(record);
-        // We will fallback to reading a value from a single column to
-        // support old way of mapping (exposing only a single column).
-        // New widgets should only check if mapped object is truthy.
-        const data = mapped ? mapped.ImageUrl : singleColumn(record);
-        delete record.id;
-        var keys = Object.keys(record);
-        if (data === undefined) {
-          showError("Please choose a column to show in the Creator Panel.");
-        } else {
-          showError("");
-          if (!data) {
-            viewer.style.display = 'none';
-          } else {
-            var parts = data.split(' ');
-            var url = parts[parts.length - 1];
-            viewer.src = url;
-            viewer.style.display = 'block';
-          }
-        }
-      });
-    </script>
-  </body>
+
+<head>
+  <meta charset="utf-8">
+  <title>A cheap and cheerful image viewer</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    .icon-arrow-left {
+      mask-image: var(--icon-ArrowLeft);
+      -webkit-mask-image: var(--icon-ArrowLeft);
+    }
+
+    .icon-arrow-right {
+      mask-image: var(--icon-ArrowRight);
+      -webkit-mask-image: var(--icon-ArrowRight);
+    }
+
+
+    .icon {
+      position: relative;
+      display: inline-block;
+      vertical-align: middle;
+      mask-repeat: no-repeat;
+      -webkit-mask-repeat: no-repeat;
+      mask-position: center;
+      -webkit-mask-position: center;
+      mask-size: contain;
+      -webkit-mask-size: contain;
+      width: 100%;
+      height: 0;
+      padding-bottom: 100%;
+      background-color: var(--icon-color, var(--grist-theme-text, black));
+    }
+
+    :root {
+      --icon-ArrowLeft: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTSA4Ljc4NDkzNDYsMTQuNjcwNzUzIDIuNzg0NjI5Niw4LjYyMTMyMjUgYyAtMC4zNjgyMDg0LC0wLjM3MTIzIC0wLjM2ODIwODQsLTAuOTczMSAwLC0xLjM0NDMyIGwgNi4wMDAzMDUsLTYuMDQ5NDI0IGMgMC4zNjgyMSwtMC4zNzEyMjI3NiAwLjk2NTE5LC0wLjM3MTIyMjc2IDEuMzMzNDAwNCwwIDAuMzY4MjEsMC4zNzEyMjMgMC4zNjgyMSwwLjk3MzA5NCAwLDEuMzQ0MzE0IGwgLTQuMzkwNzUwNCw0LjQyNjY5IGggNy43ODA4OTA0IHYgMS45MDExNSBIIDUuNzI3NTg0NiBsIDQuMzkwNzUwNCw0LjQyNjcyMDUgYyAwLjM2ODIxLDAuMzcxMiAwLjM2ODIxLDAuOTczMSAwLDEuMzQ0MyAtMC4zNjgyMTA0LDAuMzcxMiAtMC45NjUxOTA0LDAuMzcxMiAtMS4zMzM0MDA0LDAgeiIgY2xpcC1ydWxlPSJldmVub2RkIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=');
+      --icon-ArrowRight: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiI+PHBhdGggZD0iTSA3LjIzMjAxMzcsMTQuNjcwNzUzIDEzLjIzMjMxOSw4LjYyMTMyMjUgYyAwLjM2ODIwOCwtMC4zNzEyMyAwLjM2ODIwOCwtMC45NzMxIDAsLTEuMzQ0MzIgTCA3LjIzMjAxMzcsMS4yMjc1Nzg1IGMgLTAuMzY4MjEsLTAuMzcxMjIyNzYgLTAuOTY1MTksLTAuMzcxMjIyNzYgLTEuMzMzNDAwNCwwIC0wLjM2ODIxLDAuMzcxMjIzIC0wLjM2ODIxLDAuOTczMDk0IDAsMS4zNDQzMTQgbCA0LjM5MDc1MDcsNC40MjY2OSBIIDIuNTA4NDczMyB2IDEuOTAxMTUgSCAxMC4yODkzNjQgTCA1Ljg5ODYxMzMsMTMuMzI2NDUzIGMgLTAuMzY4MjEsMC4zNzEyIC0wLjM2ODIxLDAuOTczMSAwLDEuMzQ0MyAwLjM2ODIxMDQsMC4zNzEyIDAuOTY1MTkwNCwwLjM3MTIgMS4zMzM0MDA0LDAgeiIgY2xpcC1ydWxlPSJldmVub2RkIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=');
+      --icon-Tick: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTExLjYxODMwNjksNC42NzcwMjg0NyBDMTEuNzk2Njc4OSw0LjQ2NjIyNTE3IDEyLjExMjE2NzgsNC40Mzk5MzQ0MyAxMi4zMjI5NzExLDQuNjE4MzA2NDUgQzEyLjUzMzc3NDQsNC43OTY2Nzg0OCAxMi41NjAwNjUyLDUuMTEyMTY3NDEgMTIuMzgxNjkzMSw1LjMyMjk3MDcxIEw2LjUzMDY4ODI3LDEyLjIzNzc5NDYgTDMuNjQ2NDQ2NjEsOS4zNTM1NTI5OCBDMy40NTExODQ0Niw5LjE1ODI5MDg0IDMuNDUxMTg0NDYsOC44NDE3MDgzNSAzLjY0NjQ0NjYxLDguNjQ2NDQ2MiBDMy44NDE3MDg3Niw4LjQ1MTE4NDA2IDQuMTU4MjkxMjQsOC40NTExODQwNiA0LjM1MzU1MzM5LDguNjQ2NDQ2MiBMNi40NjkzMTE3MywxMC43NjIyMDQ1IEwxMS42MTgzMDY5LDQuNjc3MDI4NDcgWiIgZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJub256ZXJvIi8+PC9zdmc+');
+    }
+
+    html,
+    body,
+    textarea {
+      width: 100%;
+      height: 100vh;
+      padding: 0;
+      margin: 0;
+    }
+
+    #error {
+      display: none;
+      background: red;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    #viewer {
+      display: none;
+      text-align: center;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #navigation-buttons {
+      display: flex;
+      justify-content: space-between;
+      position: absolute;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .btn {
+      pointer-events: auto;
+      cursor: pointer;
+      background-color: transparent;
+      border: none;
+      height: 100%;
+      width: 50px;
+      filter: drop-shadow(0 4px 4px var(--grist-theme-page-bg, black));
+    }
+
+    .btn:hover>.icon {
+      transform: scale(1.2);
+      /* Adjust this value to change the size of the icon on hover */
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+  </style>
+  <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+</head>
+
+<body>
+  <div id="navigation-buttons" style="display: none">
+    <button id="calendar-button-previous" class="btn" onclick="imageRotator.previousImage()">
+      <span class="icon icon-arrow-left"></span>
+    </button>
+    <button id="calendar-button-next" class="btn" onclick="imageRotator.nextImage()">
+      <span class="icon icon-arrow-right"></span>
+    </button>
+  </div>
+  <div id="error"></div>
+  <img id="viewer" alt="image loaded by gris from table" src="" />
+  <script src="script.js"></script>
+</body>
+
 </html>
+ 
