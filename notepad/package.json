@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "grist": {
     "name": "Notepad",
-    "url": "https://gristlabs.github.io/grist-widget/notepad",
+    "url": "https://gristlabs.github.io/grist-widget/notepad/index.html",
     "widgetId": "@gristlabs/widget-notepad",
     "published": true,
     "accessLevel": "full",
