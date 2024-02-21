@@ -45,7 +45,7 @@ function onRecord(row, mappings) {
     }
     let btns = row[column]
     // If only one action button is defined, put it within an Array
-    if (!btns.length) {
+    if (!Array.isArray(btns)) {
       btns = [ btns ]
     }
     const keys = ['button', 'description', 'actions'];
