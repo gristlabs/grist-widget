@@ -1,0 +1,183 @@
+[
+  {
+    "name": "Action button",
+    "url": "https://gristlabs.github.io/grist-widget/actionbutton/index.html",
+    "widgetId": "@gristlabs/widget-actionbutton",
+    "published": true,
+    "accessLevel": "full",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Calendar",
+    "url": "https://gristlabs.github.io/grist-widget/calendar/index.html",
+    "widgetId": "@gristlabs/widget-calendar",
+    "published": true,
+    "accessLevel": "full",
+    "renderAfterReady": true,
+    "archive": {
+      "domains": [
+        "uicdn.toast.com",
+        "maxcdn.bootstrapcdn.com"
+      ],
+      "entrypoints": [
+        "https://gristlabs.github.io/grist-widget/calendar/i18n/"
+      ]
+    }
+  },
+  {
+    "name": "Advanced Charts",
+    "url": "https://gristlabs.github.io/grist-widget/chart/index.html",
+    "widgetId": "@gristlabs/widget-chart",
+    "published": true,
+    "accessLevel": "full"
+  },
+  {
+    "name": "Copy to clipboard",
+    "url": "https://gristlabs.github.io/grist-widget/clipboard/index.html",
+    "widgetId": "@gristlabs/widget-clipboard",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Dropbox Embedder",
+    "url": "https://gristlabs.github.io/grist-widget/dropbox-embed/index.html",
+    "widgetId": "@gristlabs/dropbox-embed",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Flashcards",
+    "url": "https://gristlabs.github.io/grist-widget/flashcards/index.html",
+    "widgetId": "@gristlabs/flashcards",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Inspect Record",
+    "url": "https://gristlabs.github.io/grist-widget/inspect/onRecord.html",
+    "widgetId": "@gristlabs/widget-inspect#onRecord",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Inspect Table",
+    "url": "https://gristlabs.github.io/grist-widget/inspect/onRecords.html",
+    "widgetId": "@gristlabs/widget-inspect#onRecords",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Inspect Options",
+    "url": "https://gristlabs.github.io/grist-widget/inspect/onOptions.html",
+    "widgetId": "@gristlabs/widget-inspect#onOptions",
+    "published": true,
+    "renderAfterReady": true
+  },
+  {
+    "name": "Inspect API",
+    "url": "https://gristlabs.github.io/grist-widget/inspect/api.html",
+    "widgetId": "@gristlabs/widget-inspect#api",
+    "published": true,
+    "renderAfterReady": true
+  },
+  {
+    "name": "Invoices",
+    "url": "https://gristlabs.github.io/grist-widget/invoices",
+    "widgetId": "@gristlabs/widget-invoices",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "JupyterLite Notebook",
+    "url": "https://gristlabs.github.io/grist-widget/jupyterlite/lab/index.html",
+    "widgetId": "@gristlabs/widget-jupyterlite",
+    "published": true,
+    "accessLevel": "read table"
+  },
+  {
+    "name": "Map",
+    "url": "https://gristlabs.github.io/grist-widget/map/index.html",
+    "widgetId": "@gristlabs/widget-map#map",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Markdown",
+    "url": "https://gristlabs.github.io/grist-widget/markdown",
+    "widgetId": "@gristlabs/widget-markdown",
+    "published": true,
+    "accessLevel": "full",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Notepad",
+    "url": "https://gristlabs.github.io/grist-widget/notepad",
+    "widgetId": "@gristlabs/widget-notepad",
+    "published": true,
+    "accessLevel": "full",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Pivot Table",
+    "url": "https://gristlabs.github.io/grist-widget/pivottable/index.html",
+    "widgetId": "@gristlabs/widget-pivottable",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Print labels",
+    "url": "https://gristlabs.github.io/grist-widget/printlabels/index.html",
+    "widgetId": "@gristlabs/widget-printlabels",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Purchase orders",
+    "url": "https://gristlabs.github.io/grist-widget/purchase-orders",
+    "widgetId": "@gristlabs/widget-purchase-orders",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "QR Code",
+    "url": "https://gristlabs.github.io/grist-widget/qrcode/index.html",
+    "widgetId": "@gristlabs/widget-qrcode",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "HTML viewer",
+    "url": "https://gristlabs.github.io/grist-widget/renderhtml/index.html",
+    "widgetId": "@gristlabs/widget-renderhtml",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Grist Video Player",
+    "url": "https://gristlabs.github.io/grist-widget/rendervideo/index.html",
+    "widgetId": "@gristlabs/widget-rendervideo",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  },
+  {
+    "name": "Image viewer",
+    "url": "https://gristlabs.github.io/grist-widget/viewer/index.html",
+    "widgetId": "@gristlabs/widget-viewer",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true
+  }
+]
