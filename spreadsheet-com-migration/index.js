@@ -4,6 +4,10 @@ const baseUrl = 'https://xoeas5cgd7tel4q6bg63zt6wk40qmoxo.lambda-url.us-east-1.o
 const lambdaKey = 'kseviqjhasqmfnxvlgfp';
 const scApiKey = Observable.create(null, "");
 
+// We also have global 'store', which is localStorage, with fallbacks.
+// Prefix all keys with this.
+const storePrefix = 'spreadsheet-com-migration-';
+
 function onReady(fn) {
   if (document.readyState !== 'loading'){
     fn();
@@ -26,7 +30,18 @@ async function myFetch(method, relPath, params) {
   }
   const options = {method, headers: {'Content-Type': 'application/json'}};
   const resp = await fetch(url, options);
-  return await resp.json();
+
+  const text = await resp.text();
+  try {
+    result = JSON.parse(text);
+  } catch (e) {
+    throw new Error(`${resp.statusText}: Invalid JSON: ${text}`);
+  }
+  if (!resp.ok) {
+    console.warn("RESULT", result);
+    throw new Error(`Fetch failed: ${result.message || resp.statusText}`);
+  }
+  return result;
 }
 
 async function getItems(relPath) {
@@ -48,97 +63,34 @@ const setDefault = (map, key, valueFunc) => {
   return map.get(key) || map.set(key, valueFunc()).get(key);
 }
 
-function arrangeWorkbooks(workbooks) {
-  // _id => {name, folders: Map(_id => {name, workbooks: []}}
-  const workspaces = new Map();
-  for (const wb of workbooks) {
-    const ws = setDefault(workspaces, wb.workspace._id,
-      () => ({name: wb.workspace.name, folders: new Map()}));
-    const folder = setDefault(ws.folders, wb.folder._id,
-      () => ({name: wb.folder.name, workbooks: []}));
-    folder.workbooks.push(wb);
-  }
-  return workspaces;
-}
-
 const nameCmp = (a, b) => a.name.localeCompare(b.name);
 
 onReady(() => {
   const workbooksObs = Observable.create(null, []);
-  const arrangedWorkbooks = Computed.create(null, use => arrangeWorkbooks(use(workbooksObs)));
-  const allWorkbooks = Computed.create(null, use => new Map(use(workbooksObs).map(w => [w._id, w])));
-
   const selectedWorkbookId = Observable.create(null, null);
+
+  const allWorkbooks = Computed.create(null, use =>
+    new Map(use(workbooksObs).map(w => [w._id, w])));
   const selectedWorkbook = Computed.create(null, (use) =>
     use(allWorkbooks).get(use(selectedWorkbookId)));
 
-  async function importAllSheets(workbook) {
-    try {
-      await migrate({
-        workbook,
-        scGetItems: getItems,
-      });
-    } catch (e) {
-      console.warn("Error", e);
-      messageObs.set(`Error: ${e}`);
-    }
+  function makeStepper(owner) {
+    const stepsComplete = Observable.create(owner, 0);
+    const stepObservables = [];
+    const makeObs = (i) => Computed.create(owner, use => use(stepsComplete) >= i)
+        .onWrite((isComplete) => { stepsComplete.set(i); });
+    const getObs = (i) => stepObservables[i] || (stepObservables[i] = makeObs(i));
+    return {getObs};
   }
+  const stepper = makeStepper(null);
 
   dom.update(document.body,
     cssRoot(
       dom('h1', `Spreadsheet.com → Grist migration tool`),
-      dom.create(stepConnect, workbooksObs),
-      dom.domComputed(arrangedWorkbooks, aw => {
-        const workspaces = [...aw.values()].sort(nameCmp);
-        return cssUL(
-          workspaces.map(ws => {
-            const folders = [...ws.folders.values()].sort(nameCmp);
-            return cssLI(
-              cssWSName(ws.name),
-              cssUL(
-                folders.map(f => {
-                  const wbs = [...f.workbooks].sort(nameCmp);
-                  return cssLI(
-                    cssWSName(f.name),
-                    cssUL(wbs.map(wb => {
-                      return cssLI(
-                        cssWBItem(
-                          cssWBRadio({type: 'radio', name: 'workbook_select', value: wb._id},
-                            dom.on('change', (ev, elem) => { console.warn("SL", elem.value, selectedWorkbookId, selectedWorkbook, allWorkbooks); selectedWorkbookId.set(elem.value); })
-                          ),
-                          cssWBName(wb.name, {style: 'min-width: 300px'}),
-                          cssLightText(wb.updatedAt),
-                          cssLightText(wb._id),
-                        )
-                      );
-                    }))
-                  );
-                })
-              )
-            );
-          })
-        );
-      }),
-      dom('h2', dom.text(use => use(selectedWorkbook)?.name)),
-      dom.domComputed(selectedWorkbook, wb => {
-        if (!wb) { return; }
-        return [
-          dom('h3', 'Sheets'),
-          cssUL(
-            wb.sheets.map(sheet => {
-              return cssLI(
-                cssWBItem(
-                  cssWBName(sheet.name, {style: 'min-width: 300px'}),
-                  cssLightText(sheet._id),
-                )
-              );
-            })
-          ),
-          cssButton('Import All Sheets',
-            dom.on('click', () => importAllSheets(selectedWorkbook.get()))
-          ),
-        ];
-      }),
+      dom.create(stepConnect, stepper.getObs(1), workbooksObs),
+      dom.maybe(stepper.getObs(1), () => dom.create(stepPickWorkbook, stepper.getObs(2), workbooksObs, selectedWorkbookId)),
+      dom.maybe(stepper.getObs(2), () => dom.create(stepCheckImport, stepper.getObs(3), selectedWorkbook)),
+      dom.maybe(stepper.getObs(3), () => dom.create(stepRunImport, stepper.getObs(4), selectedWorkbook)),
     ),
   );
   grist.ready({
@@ -151,37 +103,58 @@ onReady(() => {
   });
 });
 
+function makeStep({collapsed, isComplete, title}, ...domArgs) {
+  return cssStep(
+    cssStep.cls('-collapsed', collapsed),
+    cssStepHeader(
+      dom.on('click', () => collapsed.set(!collapsed.get())),
+      cssCollapse(cssCollapse.cls('-closed', collapsed)),
+      dom('div', title),
+      cssComplete(dom.show(isComplete)),
+    ),
+    ...domArgs
+  );
+}
 
-function stepConnect(owner, workbooksObs) {
-  const isComplete = Observable.create(owner, false);
-  const collapsed = Observable.create(owner, false);
-  const messageObs = Observable.create(owner, '');
-  const loadingObs = Observable.create(owner, false);
-
-  async function connect() {
+function stepCompleter(completerFunc, {isComplete, collapsed, messageObs, loadingObs}) {
+  return async function(...args) {
     loadingObs.set(true);
     try {
-      const workbooks = await getWorkbooks();
-      workbooksObs.set(workbooks);
+      await completerFunc(...args);
       isComplete.set(true);
       collapsed.set(true);
     } catch (e) {
       console.warn("Error", e);
-      messageObs.set(`Error: ${e}`);
+      messageObs.set(`Error: ${e.message}`);
     } finally {
       loadingObs.set(false);
     }
+  };
+}
+
+function stepConnect(owner, isComplete, workbooksObs) {
+  const collapsed = Observable.create(owner, false);
+  const messageObs = Observable.create(owner, '');
+  const loadingObs = Observable.create(owner, false);
+
+  const cacheKey = storePrefix + 'workbooks';
+
+  async function doConnect() {
+    const workbooks = await getWorkbooks();
+    console.warn("workbooks", workbooks);
+    store.set(cacheKey, workbooks);
+    workbooksObs.set(workbooks);
+  }
+  const connect = stepCompleter(doConnect, {isComplete, collapsed, messageObs, loadingObs});
+
+  const cachedWorkbooks = store.get(cacheKey);
+  if (cachedWorkbooks?.length > 0) {
+    workbooksObs.set(cachedWorkbooks);
+    isComplete.set(true);
+    collapsed.set(true);
   }
 
-  return cssStep(
-    cssStep.cls('-collapsed', collapsed),
-    cssStepHeader(
-      cssCollapse(cssCollapse.cls('-closed', collapsed),
-        dom.on('click', () => collapsed.set(!collapsed.get())),
-      ),
-      dom('div', 'Step 1: Connect '),
-      cssComplete(dom.show(isComplete)),
-    ),
+  return makeStep({collapsed, isComplete, title: 'Step 1: Connect'},
     dom('p', `
 Welcome! Let us help you migrate data from spreadsheet.com to Grist.
 `),
@@ -201,7 +174,7 @@ Paste your API key here.
       cssApiKey(
         {placeholder: 'Your spreadsheet.com API key'},
         dom.prop('value', scApiKey),
-        dom.on('change', (ev, elem) => setKey(elem.value)),
+        dom.on('change', (ev, elem) => setKey(elem.value.trim())),
       ),
       cssButton('Connect', dom.prop('disabled', loadingObs), dom.on('click', () => connect())),
       dom.maybe(loadingObs, () => cssSpinner()),
@@ -210,8 +183,190 @@ Paste your API key here.
   );
 }
 
+function stepPickWorkbook(owner, isComplete, workbooksObs, selectedWorkbookId) {
+  const collapsed = Observable.create(owner, false);
+  const cacheKey = storePrefix + 'workbookId';
 
+  function arrangeWorkbooks(workbooks) {
+    // _id => {name, folders: Map(_id => {name, workbooks: []}}
+    const workspaces = new Map();
+    for (const wb of workbooks) {
+      const ws = setDefault(workspaces, wb.workspace._id,
+        () => ({name: wb.workspace.name, folders: new Map()}));
+      const folder = setDefault(ws.folders, wb.folder._id,
+        () => ({name: wb.folder.name, workbooks: []}));
+      folder.workbooks.push(wb);
+    }
+    return workspaces;
+  }
+  const arrangedWorkbooks = Computed.create(null, use => arrangeWorkbooks(use(workbooksObs)));
 
+  function selectWorkbook(wbId) {
+    selectedWorkbookId.set(wbId);
+    store.set(cacheKey, wbId);
+    isComplete.set(true);
+    collapsed.set(true);
+  }
+
+  const cachedWorkbookId = store.get(cacheKey);
+  if (cachedWorkbookId && workbooksObs.get().some(wb => wb._id === cachedWorkbookId)) {
+    selectWorkbook(cachedWorkbookId);
+    collapsed.set(true);
+  }
+
+  return makeStep({collapsed, isComplete, title: 'Step 2: Pick workbook'},
+    dom.domComputed(arrangedWorkbooks, aw => {
+      const workspaces = [...aw.values()].sort(nameCmp);
+      return cssUL(
+        workspaces.map(ws => {
+          const folders = [...ws.folders.values()].sort(nameCmp);
+          return cssLI(
+            cssWSName(ws.name),
+            cssUL(
+              folders.map(f => {
+                const wbs = [...f.workbooks].sort(nameCmp);
+                return cssLI(
+                  cssWSName(f.name),
+                  cssUL(wbs.map(wb => {
+                    return cssLI(
+                      cssWBItem(
+                        cssWBRadio({type: 'radio', name: 'workbook_select', value: wb._id},
+                          dom.on('change', (ev, elem) => selectWorkbook(elem.value)),
+                        ),
+                        cssWBName(wb.name, {style: 'min-width: 300px'}),
+                        cssLightText(wb.updatedAt),
+                        cssLightText(wb._id),
+                      )
+                    );
+                  }))
+                );
+              })
+            )
+          );
+        })
+      );
+    }),
+  );
+}
+
+function stepCheckImport(owner, isComplete, selectedWorkbook) {
+  const collapsed = Observable.create(owner, false);
+  const messageObs = Observable.create(owner, '');
+  const loadingObs = Observable.create(owner, false);
+
+  const destTablesObs = Observable.create(owner, []);
+  grist.docApi.listTables().then(t => destTablesObs.set(t));
+
+  function toGristTableId(ident, prefix = "T") {
+    const _invalid_ident_char_re = /[^a-zA-Z0-9_]+/g;
+    const _invalid_ident_start_re = /^(?=[0-9_])/;
+    ident = ident.normalize('NFKD').replace(/[\u0300-\u036f]/g, "");
+    ident = ident.replace(_invalid_ident_char_re, '_').replace(/^_+/, '');
+    ident = ident.replace(_invalid_ident_start_re, prefix);
+    ident = ident.charAt(0).toUpperCase() + ident.slice(1);
+    return ident;
+  }
+
+  const conflictNames = Computed.create(owner, use => {
+    const m = new Map();
+    const destTables = new Set(use(destTablesObs));
+    for (const sheet of (use(selectedWorkbook)?.sheets || [])) {
+      const tableId = toGristTableId(sheet.name);
+      if (destTables.has(tableId)) {
+        m.set(sheet.name, tableId);
+      }
+    }
+    return m;
+  });
+
+  async function doRemoveConflicts(conflicts) {
+    for (const tableId of conflicts.values()) {
+      await grist.docApi.applyUserActions([['RemoveTable', tableId]]);
+    }
+    await grist.docApi.listTables().then(t => destTablesObs.set(t));
+    if (conflictNames.get().size > 0) {
+      throw new Error("Unexpected: some conflicts remain");
+    }
+  }
+
+  const removeConflicts = stepCompleter(doRemoveConflicts, {isComplete, collapsed, messageObs, loadingObs});
+
+  return makeStep({
+      collapsed, isComplete,
+      title: dom.text(use => `Step 4: Prepare to import from "${use(selectedWorkbook)?.name}"`)
+    },
+    dom.domComputed(selectedWorkbook, wb => {
+      if (!wb) { return; }
+      return [
+        dom('h3', 'Sheets in the workbook:'),
+        cssUL(
+          wb.sheets.map(sheet => {
+            return cssLI(
+              cssWBItem(
+                cssWBName(sheet.name,
+                  dom.domComputed(use => use(conflictNames).get(sheet.name), tableId => {
+                    if (!tableId) { return null; }
+                    return cssConflict('⚠️ Conflicts with ', cssConflictName(tableId));
+                  }),
+                  {style: 'min-width: 300px'}
+                ),
+              )
+            );
+          })
+        ),
+        dom.domComputed(conflictNames, conflicts => {
+          if (conflicts.size === 0) {
+            return cssActionLine('No conflicts ✅',
+              cssButton('Continue', dom.on('click', () => { removeConflicts(conflicts); })),
+              dom.maybe(loadingObs, () => cssSpinner()),
+            );
+          }
+          return [
+            dom('p', 'To be able to continue, we can remove conflicting tables from Grist.'),
+            cssActionLine(
+              cssButton(`Remove ${conflicts.size} conflicting tables`,
+                dom.on('click', () => { removeConflicts(conflicts); })),
+              dom.maybe(loadingObs, () => cssSpinner()),
+            ),
+          ];
+        }),
+      ];
+    }),
+    cssErrorMessage(dom.text(messageObs)),
+  );
+}
+
+function stepRunImport(owner, isComplete, selectedWorkbook) {
+  const collapsed = Observable.create(owner, false);
+  const messageObs = Observable.create(owner, '');
+  const loadingObs = Observable.create(owner, false);
+
+  async function doImportAllSheets(workbook) {
+    await migrate({ workbook, scGetItems: getItems });
+  }
+  const importAllSheets = stepCompleter(doImportAllSheets, {isComplete, collapsed, messageObs, loadingObs});
+
+  return makeStep({
+      collapsed, isComplete,
+      title: dom.text(use => `Step 3: Import from "${use(selectedWorkbook)?.name}"`)
+    },
+    dom.domComputed(selectedWorkbook, wb => {
+      if (!wb) { return; }
+      return [
+        dom('h3', 'Sheets in the workbook:'),
+        cssUL(
+          wb.sheets.map(sheet => cssLI(cssWBItem(cssWBName(sheet.name, {style: 'min-width: 300px'}))))
+        ),
+        cssActionLine(
+          cssButton(`Import ${wb.sheets.length} sheets`,
+            dom.on('click', () => { importAllSheets(wb); })),
+          dom.maybe(loadingObs, () => cssSpinner()),
+        ),
+      ];
+    }),
+    cssErrorMessage(dom.text(messageObs)),
+  );
+}
 
 const cssRoot = styled('div', `
   font-family: 'Roboto', sans-serif;
@@ -310,6 +465,7 @@ const cssStepHeader = styled('h2', `
   background-color: #eee;
   padding: 16px;
   border-radius: 4px;
+  cursor: pointer;
 `);
 
 const spinnerRotate = keyframes(`
@@ -340,8 +496,23 @@ const cssCollapse = styled('div', `
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
   border-top: 8px solid #8a8a8a;
-  cursor: pointer;
   &-closed {
     transform: rotate(-90deg);
   }
+`);
+
+const cssConflict = styled('span', `
+  color: #ff5400;
+  font-weight: normal;
+  margin-left: 16px;
+`);
+const cssConflictName = styled('span', `
+  font-weight: 700;
+`);
+
+const cssActionLine = styled('div', `
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0;
 `);
