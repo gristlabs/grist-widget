@@ -1,4 +1,4 @@
-const {dom, Computed, Disposable, Observable, styled} = grainjs;
+const {dom, Computed, Disposable, Observable, keyframes, styled} = grainjs;
 
 const baseUrl = 'https://xoeas5cgd7tel4q6bg63zt6wk40qmoxo.lambda-url.us-east-1.on.aws/';
 const lambdaKey = 'kseviqjhasqmfnxvlgfp';
@@ -64,27 +64,13 @@ function arrangeWorkbooks(workbooks) {
 const nameCmp = (a, b) => a.name.localeCompare(b.name);
 
 onReady(() => {
-  const messageObs = Observable.create(null, '');
-  const arrangedWorkbooks = Observable.create(null, new Map());
-  const allWorkbooks = Observable.create(null, new Map());
+  const workbooksObs = Observable.create(null, []);
+  const arrangedWorkbooks = Computed.create(null, use => arrangeWorkbooks(use(workbooksObs)));
+  const allWorkbooks = Computed.create(null, use => new Map(use(workbooksObs).map(w => [w._id, w])));
 
   const selectedWorkbookId = Observable.create(null, null);
   const selectedWorkbook = Computed.create(null, (use) =>
     use(allWorkbooks).get(use(selectedWorkbookId)));
-
-  async function runIt() {
-    messageObs.set("Loading...");
-    try {
-      const workbooks = await getWorkbooks();
-      messageObs.set("");
-      console.warn(JSON.stringify(workbooks));
-      arrangedWorkbooks.set(arrangeWorkbooks(workbooks));
-      allWorkbooks.set(new Map(workbooks.map(w => [w._id, w])));
-    } catch (e) {
-      console.warn("Error", e);
-      messageObs.set(`Error: ${e}`);
-    }
-  }
 
   async function importAllSheets(workbook) {
     try {
@@ -98,17 +84,10 @@ onReady(() => {
     }
   }
 
-
   dom.update(document.body,
     cssRoot(
-      dom('input', dom.prop('value', scApiKey),
-        {placeholder: 'Enter spreadsheet.com API key'},
-        dom.on('change', (ev, elem) => setKey(elem.value)),
-      ),
-      dom('br'),
-      dom('button', 'Run it', dom.on('click', () => runIt())),
-      dom('br'),
-      dom('div', dom.text(messageObs)),
+      dom('h1', `Spreadsheet.com → Grist migration tool`),
+      dom.create(stepConnect, workbooksObs),
       dom.domComputed(arrangedWorkbooks, aw => {
         const workspaces = [...aw.values()].sort(nameCmp);
         return cssUL(
@@ -172,11 +151,74 @@ onReady(() => {
   });
 });
 
+
+function stepConnect(owner, workbooksObs) {
+  const isComplete = Observable.create(owner, false);
+  const collapsed = Observable.create(owner, false);
+  const messageObs = Observable.create(owner, '');
+  const loadingObs = Observable.create(owner, false);
+
+  async function connect() {
+    loadingObs.set(true);
+    try {
+      const workbooks = await getWorkbooks();
+      workbooksObs.set(workbooks);
+      isComplete.set(true);
+      collapsed.set(true);
+    } catch (e) {
+      console.warn("Error", e);
+      messageObs.set(`Error: ${e}`);
+    } finally {
+      loadingObs.set(false);
+    }
+  }
+
+  return cssStep(
+    cssStep.cls('-collapsed', collapsed),
+    cssStepHeader(
+      cssCollapse(cssCollapse.cls('-closed', collapsed),
+        dom.on('click', () => collapsed.set(!collapsed.get())),
+      ),
+      dom('div', 'Step 1: Connect '),
+      cssComplete(dom.show(isComplete)),
+    ),
+    dom('p', `
+Welcome! Let us help you migrate data from spreadsheet.com to Grist.
+`),
+    dom('p', `
+You are looking at a widget that's part of a Grist document. This widget an populate this
+document with the data from one of your spreadsheet.com documents.
+`),
+    dom('p', `
+To start, you need to find your spreadsheet.com API token, which can be obtained from
+`, dom('a', {href: 'https://app.spreadsheet.com/home'}, 'Personal settings'), `
+in Spreadsheet.com. Find it under your user icon > Personal settings > API keys.
+`),
+    dom('p', `
+Paste your API key here.
+`),
+    cssApiKeyBlock(
+      cssApiKey(
+        {placeholder: 'Your spreadsheet.com API key'},
+        dom.prop('value', scApiKey),
+        dom.on('change', (ev, elem) => setKey(elem.value)),
+      ),
+      cssButton('Connect', dom.prop('disabled', loadingObs), dom.on('click', () => connect())),
+      dom.maybe(loadingObs, () => cssSpinner()),
+    ),
+    cssErrorMessage(dom.text(messageObs)),
+  );
+}
+
+
+
+
 const cssRoot = styled('div', `
   font-family: 'Roboto', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   text-rendering: optimizeLegibility;
   -moz-osx-font-smoothing: grayscale;
+  margin: 16px;
 `);
 
 const cssLI = styled('li', `
@@ -228,9 +270,78 @@ const cssButton = styled('button', `
   border-radius: 4px;
   color: white;
   padding: 8px 16px;
-  margin: 16px auto;
+  margin: 0 16px;
   display: block;
-  &:hover {
+  position: relative;
+  &:hover:not(:disabled) {
     background-color: #009058
+  }
+  &:disabled {
+    opacity: 75%;
+  }
+`);
+
+const cssApiKeyBlock = styled('div', `
+  display: flex;
+  align-items: center;
+`);
+
+const cssApiKey = styled('input', `
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 16px;
+  width: 300px;
+`);
+
+const cssErrorMessage = styled('p', `
+  color: red;
+`);
+
+const cssStep = styled('div', `
+  &-collapsed > :not(:first-child) {
+    display: none;
+  }
+`);
+
+const cssStepHeader = styled('h2', `
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #eee;
+  padding: 16px;
+  border-radius: 4px;
+`);
+
+const spinnerRotate = keyframes(`
+ from { transform: rotate(0deg); }
+ to { transform: rotate(360deg); }
+`);
+const cssSpinner = styled('div', `
+  width: 24px;
+  height: 24px;
+  border: 3px solid #aaa;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: ${spinnerRotate} 1s linear infinite;
+`);
+
+const cssComplete = styled('div', `
+  &::before {
+    content: '✅';
+  }
+`);
+
+const cssCollapse = styled('div', `
+  display: inline-block;
+  width: 0px;
+  height: 0px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #8a8a8a;
+  cursor: pointer;
+  &-closed {
+    transform: rotate(-90deg);
   }
 `);
