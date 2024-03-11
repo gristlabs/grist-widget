@@ -16,11 +16,6 @@ function onReady(fn) {
   }
 }
 
-function setKey(key) {
-  grist.setOption('scApiKey', key);
-  scApiKey.set(key);
-};
-
 async function fetchSCAttachment(url) {
   const fullUrl = new URL('/att', baseUrl);
   fullUrl.searchParams.set('key', lambdaKey);
@@ -79,12 +74,10 @@ onReady(async () => {
     requiredAccess: 'full'
   });
 
-  grist.onOptions((options, settings) => {
-    scApiKey.set(options.scApiKey);
-  });
-
   const docId = await grist.docApi.getDocName();
   storePrefix = `spreadsheet-com-migration-${docId}:`;
+
+  scApiKey.set(store.get(storePrefix + 'scApiKey') || '');
 
   const workbooksObs = Observable.create(null, []);
   const selectedWorkbookId = Observable.create(null, null);
@@ -119,7 +112,14 @@ onReady(async () => {
       dom.maybe(stepper.getObs(4), () => [
         dom('p', `Congratulations, the import is done!`),
         dom('p', `
-Some notes. This tool is able to migrate most data types, including relations
+If you see a "Save Copy" button in the top bar, this is a good time to save your copy.
+`),
+        dom('p', `
+To remove the Migration Tool, use the "Remove" option in the menu next to the page name,
+then select "Delete data and this page".
+`),
+        dom('p', `
+Some notes: This tool is able to migrate most data types, including relations
 (known as "references" in Grist), and attachments. Formulas are imported as values.
 Grist supports powerful formulas with a slightly different approach. Read about it at
 `, dom('a', {href: 'https://support.getgrist.com/formulas/'}, 'formulas'),
@@ -177,6 +177,11 @@ function stepConnect(owner, isComplete, workbooksObs, callbacks) {
   const loadingObs = Observable.create(owner, false);
 
   const cacheKey = storePrefix + 'workbooks';
+
+  function setKey(key) {
+    store.set(storePrefix + 'scApiKey', key);
+    scApiKey.set(key);
+  }
 
   async function doConnect() {
     const workbooks = await getWorkbooks();
@@ -336,6 +341,15 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
 
   async function doRemoveConflicts(conflicts) {
     store.set(cacheImportDoneKey, false);
+    // Let's make sure we can make changes to the document; if it's a template or fiddle, we will
+    // fork it now.
+    try {
+      await grist.docApi.applyUserActions([['RemoveTable', '_Dummy_']]);
+    } catch (e) {
+      // Ignore.
+    }
+
+
     for (const tableId of conflicts.values()) {
       await grist.docApi.applyUserActions([['RemoveTable', tableId]]);
     }
@@ -538,7 +552,7 @@ const cssButton = styled('button', `
   }
 `);
 
-const cssApiKeyBlock = styled('div', `
+const cssApiKeyBlock = styled('p', `
   display: flex;
   align-items: center;
 `);
