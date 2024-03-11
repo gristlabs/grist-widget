@@ -78,19 +78,24 @@ onReady(() => {
     const stepsComplete = Observable.create(owner, 0);
     const stepObservables = [];
     const makeObs = (i) => Computed.create(owner, use => use(stepsComplete) >= i)
-        .onWrite((isComplete) => { stepsComplete.set(i); });
+      .onWrite((isComplete) => { stepsComplete.set(isComplete ? i : Math.min(i - 1, stepsComplete.get())); });
     const getObs = (i) => stepObservables[i] || (stepObservables[i] = makeObs(i));
     return {getObs};
   }
   const stepper = makeStepper(null);
 
+  const callbacks = {refreshWorkspaces: null};
+
   dom.update(document.body,
     cssRoot(
       dom('h1', `Spreadsheet.com → Grist migration tool`),
-      dom.create(stepConnect, stepper.getObs(1), workbooksObs),
-      dom.maybe(stepper.getObs(1), () => dom.create(stepPickWorkbook, stepper.getObs(2), workbooksObs, selectedWorkbookId)),
-      dom.maybe(stepper.getObs(2), () => dom.create(stepCheckImport, stepper.getObs(3), selectedWorkbook)),
-      dom.maybe(stepper.getObs(3), () => dom.create(stepRunImport, stepper.getObs(4), selectedWorkbook)),
+      dom.create(stepConnect, stepper.getObs(1), workbooksObs, callbacks),
+      dom.maybe(stepper.getObs(1), () =>
+        dom.create(stepPickWorkbook, stepper.getObs(2), workbooksObs, selectedWorkbookId, callbacks)),
+      dom.maybe(stepper.getObs(2), () =>
+        dom.create(stepCheckImport, stepper.getObs(3), selectedWorkbook)),
+      dom.maybe(stepper.getObs(3), () =>
+        dom.create(stepRunImport, stepper.getObs(4), selectedWorkbook)),
     ),
   );
   grist.ready({
@@ -121,8 +126,8 @@ function stepCompleter(completerFunc, {isComplete, collapsed, messageObs, loadin
     loadingObs.set(true);
     try {
       await completerFunc(...args);
-      isComplete.set(true);
-      collapsed.set(true);
+      isComplete?.set(true);
+      collapsed?.set(true);
     } catch (e) {
       console.warn("Error", e);
       messageObs.set(`Error: ${e.message}`);
@@ -132,7 +137,7 @@ function stepCompleter(completerFunc, {isComplete, collapsed, messageObs, loadin
   };
 }
 
-function stepConnect(owner, isComplete, workbooksObs) {
+function stepConnect(owner, isComplete, workbooksObs, callbacks) {
   const collapsed = Observable.create(owner, false);
   const messageObs = Observable.create(owner, '');
   const loadingObs = Observable.create(owner, false);
@@ -145,6 +150,7 @@ function stepConnect(owner, isComplete, workbooksObs) {
     store.set(cacheKey, workbooks);
     workbooksObs.set(workbooks);
   }
+  callbacks.refreshWorkspaces = doConnect;
   const connect = stepCompleter(doConnect, {isComplete, collapsed, messageObs, loadingObs});
 
   const cachedWorkbooks = store.get(cacheKey);
@@ -183,9 +189,11 @@ Paste your API key here.
   );
 }
 
-function stepPickWorkbook(owner, isComplete, workbooksObs, selectedWorkbookId) {
+function stepPickWorkbook(owner, isComplete, workbooksObs, selectedWorkbookId, callbacks) {
   const collapsed = Observable.create(owner, false);
   const cacheKey = storePrefix + 'workbookId';
+  const messageObs = Observable.create(owner, '');
+  const loadingObs = Observable.create(owner, false);
 
   function arrangeWorkbooks(workbooks) {
     // _id => {name, folders: Map(_id => {name, workbooks: []}}
@@ -208,6 +216,14 @@ function stepPickWorkbook(owner, isComplete, workbooksObs, selectedWorkbookId) {
     collapsed.set(true);
   }
 
+  const refresh = stepCompleter(async () => {
+    selectedWorkbookId.set(null);
+    store.set(cacheKey, null);
+    isComplete.set(false);
+    collapsed.set(false);
+    await callbacks.refreshWorkspaces();
+  }, {messageObs, loadingObs});
+
   const cachedWorkbookId = store.get(cacheKey);
   if (cachedWorkbookId && workbooksObs.get().some(wb => wb._id === cachedWorkbookId)) {
     selectWorkbook(cachedWorkbookId);
@@ -221,7 +237,12 @@ function stepPickWorkbook(owner, isComplete, workbooksObs, selectedWorkbookId) {
         workspaces.map(ws => {
           const folders = [...ws.folders.values()].sort(nameCmp);
           return cssLI(
-            cssWSName(ws.name),
+            cssWSName(ws.name,
+              ' (',
+              cssLinkButton('Refresh', dom.prop('disabled', loadingObs), dom.on('click', () => { refresh(); })),
+              ')',
+              dom.maybe(loadingObs, () => cssSpinner()),
+            ),
             cssUL(
               folders.map(f => {
                 const wbs = [...f.workbooks].sort(nameCmp);
@@ -246,6 +267,7 @@ function stepPickWorkbook(owner, isComplete, workbooksObs, selectedWorkbookId) {
         })
       );
     }),
+    cssErrorMessage(dom.text(messageObs)),
   );
 }
 
@@ -253,6 +275,7 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
   const collapsed = Observable.create(owner, false);
   const messageObs = Observable.create(owner, '');
   const loadingObs = Observable.create(owner, false);
+  const prepLoadingObs = Observable.create(owner, false);
 
   const destTablesObs = Observable.create(owner, []);
   grist.docApi.listTables().then(t => destTablesObs.set(t));
@@ -289,16 +312,27 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
     }
   }
 
+  const refresh = stepCompleter(async () => {
+    isComplete.set(false);
+    collapsed.set(false);
+    destTablesObs.set(await grist.docApi.listTables());
+  }, {messageObs, loadingObs: prepLoadingObs});
+
   const removeConflicts = stepCompleter(doRemoveConflicts, {isComplete, collapsed, messageObs, loadingObs});
 
   return makeStep({
       collapsed, isComplete,
-      title: dom.text(use => `Step 4: Prepare to import from "${use(selectedWorkbook)?.name}"`)
+      title: dom.text(use => `Step 3: Prepare to import from "${use(selectedWorkbook)?.name}"`)
     },
     dom.domComputed(selectedWorkbook, wb => {
       if (!wb) { return; }
       return [
-        dom('h3', 'Sheets in the workbook:'),
+        cssH3Flex('Sheets in the workbook',
+          ' (',
+          cssLinkButton('Refresh', dom.prop('disabled', prepLoadingObs), dom.on('click', () => { refresh(); })),
+          '):',
+          dom.maybe(prepLoadingObs, () => cssSpinner()),
+        ),
         cssUL(
           wb.sheets.map(sheet => {
             return cssLI(
@@ -317,7 +351,7 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
         dom.domComputed(conflictNames, conflicts => {
           if (conflicts.size === 0) {
             return cssActionLine('No conflicts ✅',
-              cssButton('Continue', dom.on('click', () => { removeConflicts(conflicts); })),
+              cssButton('Continue', dom.prop('disabled', loadingObs), dom.on('click', () => { removeConflicts(conflicts); })),
               dom.maybe(loadingObs, () => cssSpinner()),
             );
           }
@@ -325,6 +359,7 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
             dom('p', 'To be able to continue, we can remove conflicting tables from Grist.'),
             cssActionLine(
               cssButton(`Remove ${conflicts.size} conflicting tables`,
+                dom.prop('disabled', loadingObs), 
                 dom.on('click', () => { removeConflicts(conflicts); })),
               dom.maybe(loadingObs, () => cssSpinner()),
             ),
@@ -348,7 +383,7 @@ function stepRunImport(owner, isComplete, selectedWorkbook) {
 
   return makeStep({
       collapsed, isComplete,
-      title: dom.text(use => `Step 3: Import from "${use(selectedWorkbook)?.name}"`)
+      title: dom.text(use => `Step 4: Import from "${use(selectedWorkbook)?.name}"`)
     },
     dom.domComputed(selectedWorkbook, wb => {
       if (!wb) { return; }
@@ -359,6 +394,7 @@ function stepRunImport(owner, isComplete, selectedWorkbook) {
         ),
         cssActionLine(
           cssButton(`Import ${wb.sheets.length} sheets`,
+            dom.prop('disabled', loadingObs),
             dom.on('click', () => { importAllSheets(wb); })),
           dom.maybe(loadingObs, () => cssSpinner()),
         ),
@@ -384,6 +420,8 @@ const cssWSName = styled('div', `
   color: #225fda;
   font-weight: 700;
   padding: 8px 0;
+  display: flex;
+  align-items: center;
 `);
 
 const cssUL = styled('ul', `
@@ -473,6 +511,7 @@ const spinnerRotate = keyframes(`
  to { transform: rotate(360deg); }
 `);
 const cssSpinner = styled('div', `
+  margin: -16px 8px;
   width: 24px;
   height: 24px;
   border: 3px solid #aaa;
@@ -515,4 +554,24 @@ const cssActionLine = styled('div', `
   align-items: center;
   gap: 16px;
   margin: 16px 0;
+`);
+
+const cssLinkButton = styled('button', `
+  background: none;
+  border: none;
+  text-decoration: underline;
+  font-weight: bold;
+  color: #16B378;
+  cursor: pointer;
+  &:hover:not(:disabled) {
+    color: #009058
+  }
+  &:disabled {
+    opacity: 75%;
+  }
+`);
+
+const cssH3Flex = styled('h3', `
+  display: flex;
+  align-items: center;
 `);
