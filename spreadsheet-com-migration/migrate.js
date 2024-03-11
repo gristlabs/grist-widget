@@ -82,10 +82,8 @@ async function migrate(options) {
         let value = cell.data;
         if (col.fields.type === 'Attachments') {
           value = null;
-          console.warn("ATT", cell, cell.data);
           if (Array.isArray(cell.data)) {
             const attIds = await uploadAttachments(cell.data, fetchSCAttachment, dstCli.uploadToGrist);
-            console.warn("ATT IDs", attIds);
             if (attIds) {
               value = ['L', ...attIds];
             }
@@ -106,14 +104,11 @@ async function migrate(options) {
     });
   }
 
-  console.warn("ROW MAPPING", scRowIdToGrist);
-
   // Now fix each reference column.
   for (const {tableId, gristCol, sheetId, scCol} of refCols) {
     const baseType = (scCol.allowMultiple ? 'RefList' : 'Ref');
     // Get values in Grist from the column as (rowId -> value) mapping
     const gristRecords = await grist.docApi.fetchTable(tableId);
-    console.log("COL", gristCol, gristRecords);
     const colValues = gristRecords[gristCol.id];
     const values = new Map(gristRecords.id.map((id, i) => [id, colValues[i]]));
     const refTableIds = new Set();
@@ -137,8 +132,6 @@ async function migrate(options) {
     const refPrimaryCol = tableIdToPrimaryCol.get(refTableId);
     const dstColumns = dstTableMap.get(refTableId).columns;
     const visibleCol = dstColumns.find(c => (c.fields.label === refPrimaryCol?.label));
-    console.warn("VISIBLE COL", visibleCol, "searched in", dstColumns, "for", refPrimaryCol,
-      "which was to be in", tableId, "of", tableIdToPrimaryCol);
     if (!visibleCol) {
       throw new Error(`Didn't find primary column of ${refTableId}`);
     }

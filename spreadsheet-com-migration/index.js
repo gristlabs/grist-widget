@@ -7,6 +7,7 @@ const scApiKey = Observable.create(null, "");
 // We also have global 'store', which is localStorage, with fallbacks.
 // Prefix all keys with this.
 let storePrefix = 'spreadsheet-com-migration-unsetDocId:';
+let contentArea = null;
 
 function onReady(fn) {
   if (document.readyState !== 'loading'){
@@ -41,7 +42,6 @@ async function myFetch(method, relPath, params) {
     throw new Error(`${resp.statusText}: Invalid JSON: ${text}`);
   }
   if (!resp.ok) {
-    console.warn("RESULT", result);
     throw new Error(`Fetch failed: ${result.message || resp.statusText}`);
   }
   return result;
@@ -100,7 +100,7 @@ onReady(async () => {
   const callbacks = {refreshWorkspaces: null};
 
   dom.update(document.body, cssRoot(
-    cssContent(
+    contentArea = cssContent(
       dom('h1', `Spreadsheet.com → Grist migration tool`),
       dom.create(stepConnect, stepper.getObs(1), workbooksObs, callbacks),
       dom.maybe(stepper.getObs(1), () =>
@@ -167,6 +167,10 @@ function stepCompleter(completerFunc, {isComplete, collapsed, messageObs, loadin
       messageObs.set(`Error: ${e.message}`);
     } finally {
       loadingObs.set(false);
+      // Scroll to bottom
+      if (contentArea) {
+        contentArea.scrollTop = contentArea.scrollHeight;
+      }
     }
   };
 }
@@ -346,9 +350,12 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
     try {
       await grist.docApi.applyUserActions([['RemoveTable', '_Dummy_']]);
     } catch (e) {
-      // Ignore.
+      if (/No such table/.test(String(e))) {
+        // Ignore, this is what we expect.
+      } else {
+        throw e;
+      }
     }
-
 
     for (const tableId of conflicts.values()) {
       await grist.docApi.applyUserActions([['RemoveTable', tableId]]);
