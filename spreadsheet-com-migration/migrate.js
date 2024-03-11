@@ -3,13 +3,10 @@ const scTypes = {
   SELECT: (scColumn) => ({type: 'Choice', widgetOptions: JSON.stringify({choices: scColumn.options})}),
   DATE: () => ({type: 'Date'}),
   ATTACHMENT: () => ({type: 'Attachments'}),    // TODO
-  CURRENCY: () => ({type: 'Numeric'}),
+  CURRENCY: () => ({type: 'Numeric', widgetOptions: JSON.stringify({numMode: 'currency'})}),
   TEXT: () => ({type: 'Text'}),
   PHONE: () => ({type: 'Text'}),
 };
-  // AUTOMATIC: () => ({type: 'Any'}),
-  // RELATED_ROW: () => ({type: 'Any'}),   // TODO
-  // COLUMN_FORMULA: () => ({type: 'Any'}),  // TODO
 
 async function migrate(options) {
   const {workbook, scGetItems} = options;
@@ -81,7 +78,15 @@ async function migrate(options) {
       for (const cell of r.cellData) {
         const col = dstColumnByLabel.get(cell.label);
         if (!col) { throw new Error(`Didn't find ${cell.label}`); }
-        const value = (col.fields.type === 'Attachments') ? null : cell.data || null;
+        let value = cell.data;
+        if (col.fields.type === 'Attachments') {
+          // TODO
+          value = null;
+        } else if (typeof cell.data === 'string' && cell.data === cell.formula) {
+          value = cell.display;
+        } else if (typeof cell.data === 'undefined' && cell.display) {
+          value = cell.display;
+        }
         fields[col.id] = value;
       }
       return {fields};
@@ -170,8 +175,9 @@ function columnScToGrist(scColumn) {
   return {
     id: scColumn.label,
     fields: {
-      isFormula: false,
       label: scColumn.label,
+      // Keep Any columns officially "empty" to allow auto-detection.
+      isFormula: (options.type === 'Any'),
       formula: "",
       ...options,
     }
