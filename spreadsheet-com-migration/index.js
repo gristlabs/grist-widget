@@ -6,7 +6,7 @@ const scApiKey = Observable.create(null, "");
 
 // We also have global 'store', which is localStorage, with fallbacks.
 // Prefix all keys with this.
-const storePrefix = 'spreadsheet-com-migration-';
+let storePrefix = 'spreadsheet-com-migration-unsetDocId:';
 
 function onReady(fn) {
   if (document.readyState !== 'loading'){
@@ -73,7 +73,19 @@ const setDefault = (map, key, valueFunc) => {
 
 const nameCmp = (a, b) => a.name.localeCompare(b.name);
 
-onReady(() => {
+onReady(async () => {
+  grist.ready({
+    columns: [],
+    requiredAccess: 'full'
+  });
+
+  grist.onOptions((options, settings) => {
+    scApiKey.set(options.scApiKey);
+  });
+
+  const docId = await grist.docApi.getDocName();
+  storePrefix = `spreadsheet-com-migration-${docId}:`;
+
   const workbooksObs = Observable.create(null, []);
   const selectedWorkbookId = Observable.create(null, null);
 
@@ -94,8 +106,8 @@ onReady(() => {
 
   const callbacks = {refreshWorkspaces: null};
 
-  dom.update(document.body,
-    cssRoot(
+  dom.update(document.body, cssRoot(
+    cssContent(
       dom('h1', `Spreadsheet.com → Grist migration tool`),
       dom.create(stepConnect, stepper.getObs(1), workbooksObs, callbacks),
       dom.maybe(stepper.getObs(1), () =>
@@ -104,16 +116,30 @@ onReady(() => {
         dom.create(stepCheckImport, stepper.getObs(3), selectedWorkbook)),
       dom.maybe(stepper.getObs(3), () =>
         dom.create(stepRunImport, stepper.getObs(4), selectedWorkbook)),
+      dom.maybe(stepper.getObs(4), () => [
+        dom('p', `Congratulations, the import is done!`),
+        dom('p', `
+Some notes. This tool is able to migrate most data types, including relations
+(known as "references" in Grist), and attachments. Formulas are imported as values.
+Grist supports powerful formulas with a slightly different approach. Read about it at
+`, dom('a', {href: 'https://support.getgrist.com/formulas/'}, 'formulas'),
+` and `, dom('a', {href: 'https://support.getgrist.com/summary-tables/'}, 'summary tables'),
+`.`,
+        ),
+        dom('p', '\xa0'),
+      ]),
     ),
-  );
-  grist.ready({
-    columns: [],
-    requiredAccess: 'full'
-  });
-
-  grist.onOptions((options, settings) => {
-    scApiKey.set(options.scApiKey);
-  });
+    cssHelp(dom('p', `
+Questions or problems? Check our
+`, dom('a', {href: 'https://support.getgrist.com/'}, 'Help Center'),
+`, and don't hesitate to reach out at
+`, dom('a', {href: 'mailto:support@getgrist.com'}, 'support@getgrist.com'), `, on our
+`, dom('a', {href: 'https://community.getgrist.com/'}, 'community forum'), `
+or in our
+`, dom('a', {href: 'https://discord.gg/MYKpYQ3fbP'}, `Discord server`), `.
+      `)
+    ),
+  ));
 });
 
 function makeStep({collapsed, isComplete, title}, ...domArgs) {
@@ -173,16 +199,13 @@ function stepConnect(owner, isComplete, workbooksObs, callbacks) {
 Welcome! Let us help you migrate data from spreadsheet.com to Grist.
 `),
     dom('p', `
-You are looking at a widget that's part of a Grist document. This widget an populate this
+You are looking at a widget that's part of a Grist document. This widget can populate this
 document with the data from one of your spreadsheet.com documents.
 `),
     dom('p', `
-To start, you need to find your spreadsheet.com API token, which can be obtained from
+To begin, find your spreadsheet.com API token, which can be obtained from
 `, dom('a', {href: 'https://app.spreadsheet.com/home'}, 'Personal settings'), `
-in Spreadsheet.com. Find it under your user icon > Personal settings > API keys.
-`),
-    dom('p', `
-Paste your API key here.
+in Spreadsheet.com. Find it under your user icon > Personal settings > API keys, and paste here.
 `),
     cssApiKeyBlock(
       cssApiKey(
@@ -284,6 +307,7 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
   const messageObs = Observable.create(owner, '');
   const loadingObs = Observable.create(owner, false);
   const prepLoadingObs = Observable.create(owner, false);
+  const cacheImportDoneKey = storePrefix + 'importDone';
 
   const destTablesObs = Observable.create(owner, []);
   grist.docApi.listTables().then(t => destTablesObs.set(t));
@@ -311,6 +335,7 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
   });
 
   async function doRemoveConflicts(conflicts) {
+    store.set(cacheImportDoneKey, false);
     for (const tableId of conflicts.values()) {
       await grist.docApi.applyUserActions([['RemoveTable', tableId]]);
     }
@@ -321,12 +346,19 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
   }
 
   const refresh = stepCompleter(async () => {
+    store.set(cacheImportDoneKey, false);
     isComplete.set(false);
     collapsed.set(false);
     destTablesObs.set(await grist.docApi.listTables());
   }, {messageObs, loadingObs: prepLoadingObs});
 
   const removeConflicts = stepCompleter(doRemoveConflicts, {isComplete, collapsed, messageObs, loadingObs});
+
+  if (store.get(cacheImportDoneKey)) {
+    isComplete.set(true);
+    collapsed.set(true);
+  }
+
 
   return makeStep({
       collapsed, isComplete,
@@ -383,11 +415,20 @@ function stepRunImport(owner, isComplete, selectedWorkbook) {
   const collapsed = Observable.create(owner, false);
   const messageObs = Observable.create(owner, '');
   const loadingObs = Observable.create(owner, false);
+  const cacheImportDoneKey = storePrefix + 'importDone';
+
+  owner.autoDispose(isComplete.addListener(val => { if (!val) { collapsed.set(false); } }));
 
   async function doImportAllSheets(workbook) {
     await migrate({ workbook, scGetItems: getItems, fetchSCAttachment});
+    store.set(cacheImportDoneKey, true);
   }
   const importAllSheets = stepCompleter(doImportAllSheets, {isComplete, collapsed, messageObs, loadingObs});
+
+  if (store.get(cacheImportDoneKey)) {
+    isComplete.set(true);
+    collapsed.set(true);
+  }
 
   return makeStep({
       collapsed, isComplete,
@@ -418,6 +459,21 @@ const cssRoot = styled('div', `
   text-rendering: optimizeLegibility;
   -moz-osx-font-smoothing: grayscale;
   margin: 16px;
+  height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+
+  & p {
+    font-size: 15px;
+    margin: 16px;
+    line-height: 1.4;
+  }
+`);
+
+const cssContent = styled('div', `
+  overflow: auto;
+  flex: 1;
+  margin-bottom: auto;
 `);
 
 const cssLI = styled('li', `
@@ -582,4 +638,9 @@ const cssLinkButton = styled('button', `
 const cssH3Flex = styled('h3', `
   display: flex;
   align-items: center;
+`);
+
+const cssHelp = styled('div', `
+  background-color: #a4dfc9;
+  padding: 0 16px;
 `);
