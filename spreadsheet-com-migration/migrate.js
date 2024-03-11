@@ -2,14 +2,14 @@
 const scTypes = {
   SELECT: (scColumn) => ({type: 'Choice', widgetOptions: JSON.stringify({choices: scColumn.options})}),
   DATE: () => ({type: 'Date'}),
-  ATTACHMENT: () => ({type: 'Attachments'}),    // TODO
+  ATTACHMENT: () => ({type: 'Attachments'}),
   CURRENCY: () => ({type: 'Numeric', widgetOptions: JSON.stringify({numMode: 'currency'})}),
   TEXT: () => ({type: 'Text'}),
   PHONE: () => ({type: 'Text'}),
 };
 
 async function migrate(options) {
-  const {workbook, scGetItems} = options;
+  const {workbook, scGetItems, fetchSCAttachment} = options;
 
   const token = await grist.docApi.getAccessToken({});
   const dstCli = getGristApiClient(token);
@@ -72,7 +72,8 @@ async function migrate(options) {
     console.log("DST COLS", dstColumnByLabel);
     const rows = await scGetItems(`/worksheets/${ws._id}/rows`);
     console.warn("First row", rows[0]);
-    const records = rows.map(r => {
+    const records = [];
+    for (const r of rows) {
       const fields = {};
       fields.scRowId = r._id;
       for (const cell of r.cellData) {
@@ -80,17 +81,24 @@ async function migrate(options) {
         if (!col) { throw new Error(`Didn't find ${cell.label}`); }
         let value = cell.data;
         if (col.fields.type === 'Attachments') {
-          // TODO
           value = null;
+          console.warn("ATT", cell, cell.data);
+          if (Array.isArray(cell.data)) {
+            const attIds = await uploadAttachments(cell.data, fetchSCAttachment, dstCli.uploadToGrist);
+            console.warn("ATT IDs", attIds);
+            if (attIds) {
+              value = ['L', ...attIds];
+            }
+          }
         } else if (typeof cell.data === 'string' && cell.data === cell.formula) {
-          value = cell.display;
-        } else if (typeof cell.data === 'undefined' && cell.display) {
-          value = cell.display;
+          value = cell.display || null;
+        } else if (typeof cell.data === 'undefined') {
+          value = cell.display || null;
         }
         fields[col.id] = value;
       }
-      return {fields};
-    });
+      records.push({fields});
+    }
 
     const res = await dstCli.addRecords(tableId, records);
     rows.forEach((r, i) => {
@@ -186,14 +194,12 @@ function columnScToGrist(scColumn) {
 
 function getGristApiClient(token) {
   const baseUrl = token.baseUrl;
-  const myFetch = async (method, url, body) => {
+
+  const rawFetch = async (url, options) => {
     const fullUrl = new URL(url);
     fullUrl.searchParams.set('auth', token.token);
-
-    const fullOptions = {method, headers: {'Content-Type': 'application/json'},
-      body: body ? JSON.stringify(body) : undefined,
-    };
-    const resp = await fetch(fullUrl, fullOptions);
+    console.warn("FETCHING", fullUrl, options);
+    const resp = await fetch(fullUrl, options);
     const text = await resp.text();
     let result;
     try {
@@ -205,6 +211,13 @@ function getGristApiClient(token) {
       throw new Error(result.details?.userError || result.error || resp.statusText);
     }
     return result;
+  };
+
+  const myFetch = async (method, url, body) => {
+    const fullOptions = {method, headers: {'Content-Type': 'application/json'},
+      body: body ? JSON.stringify(body) : undefined,
+    };
+    return rawFetch(url, fullOptions);
   };
 
   const getTables = async () => {
@@ -248,6 +261,32 @@ function getGristApiClient(token) {
     const tables = [{id: tableId, columns}];
     return (await myFetch('POST', `${baseUrl}/tables`, {tables})).tables[0];
   };
+
+  const uploadToGrist = async (formData) => {
+    return await rawFetch(`${baseUrl}/attachments`, {
+      method: 'POST', body: formData, //  mode: 'no-cors',
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    });
+  };
+
   return {myFetch, apply, getTables, getColumns, addColumns, getRecords, addRecords,
-    putRecords, updateRecords, addTable};
+    putRecords, updateRecords, addTable, uploadToGrist};
+}
+
+async function uploadAttachments(scAttachments, fetchSCAttachment, uploadToGrist) {
+  const formData = new FormData();
+
+  // Fetch each file and append to FormData
+  let count = 0;
+  for (const att of scAttachments) {
+    const response = await fetchSCAttachment(att.url);
+    if (response.ok) {
+      const blob = await response.blob();
+      formData.append('upload', blob, att.name);
+      count++;
+    } else {
+      console.error('Failed to fetch:', att.url, response.statusText);
+    }
+  }
+  return (count > 0 ? await uploadToGrist(formData) : null);
 }

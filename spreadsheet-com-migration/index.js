@@ -21,6 +21,14 @@ function setKey(key) {
   scApiKey.set(key);
 };
 
+async function fetchSCAttachment(url) {
+  const fullUrl = new URL('/att', baseUrl);
+  fullUrl.searchParams.set('key', lambdaKey);
+  fullUrl.searchParams.set('token', scApiKey.get());
+  fullUrl.searchParams.set('atturl', url);
+  return fetch(fullUrl, {method: 'GET'});
+}
+
 async function myFetch(method, relPath, params) {
   const url = new URL(relPath, baseUrl);
   url.searchParams.set('key', lambdaKey);
@@ -377,7 +385,7 @@ function stepRunImport(owner, isComplete, selectedWorkbook) {
   const loadingObs = Observable.create(owner, false);
 
   async function doImportAllSheets(workbook) {
-    await migrate({ workbook, scGetItems: getItems });
+    await migrate({ workbook, scGetItems: getItems, fetchSCAttachment});
   }
   const importAllSheets = stepCompleter(doImportAllSheets, {isComplete, collapsed, messageObs, loadingObs});
 
