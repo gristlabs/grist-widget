@@ -242,10 +242,11 @@ function stepPickWorkbook(owner, isComplete, workbooksObs, selectedWorkbookId, c
     // _id => {name, folders: Map(_id => {name, workbooks: []}}
     const workspaces = new Map();
     for (const wb of workbooks) {
+      const wbFolder = wb.folder || {_id: null, name: '[No folder]'};
       const ws = setDefault(workspaces, wb.workspace._id,
         () => ({name: wb.workspace.name, folders: new Map()}));
-      const folder = setDefault(ws.folders, wb.folder._id,
-        () => ({name: wb.folder.name, workbooks: []}));
+      const folder = setDefault(ws.folders, wbFolder._id,
+        () => ({name: wbFolder.name, workbooks: []}));
       folder.workbooks.push(wb);
     }
     return workspaces;
