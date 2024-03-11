@@ -215,11 +215,14 @@ function stepConnect(owner, isComplete, workbooksObs, callbacks) {
 
   return makeStep({collapsed, isComplete, title: 'Step 1: Connect'},
     dom('p', `
-Welcome! Let us help you migrate data from spreadsheet.com to Grist.
+Welcome! Let us help you migrate data from Spreadsheet.com to Grist.
+`),
+    dom('p', `
+This migration tool can import data from your Spreadsheet.com document, including attachments and relations, without the need to manually download and upload the files.
 `),
     dom('p', `
 You are looking at a widget that's part of a Grist document. This widget can populate this
-document with the data from one of your spreadsheet.com documents.
+document with the data from one of your Spreadsheet.com documents.
 `),
     dom('p', `
 To begin, find your spreadsheet.com API token, which can be obtained from
