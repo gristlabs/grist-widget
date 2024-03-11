@@ -4,9 +4,6 @@ const baseUrl = 'https://xoeas5cgd7tel4q6bg63zt6wk40qmoxo.lambda-url.us-east-1.o
 const lambdaKey = 'kseviqjhasqmfnxvlgfp';
 const scApiKey = Observable.create(null, "");
 
-// We also have global 'store', which is localStorage, with fallbacks.
-// Prefix all keys with this.
-let storePrefix = 'spreadsheet-com-migration-unsetDocId:';
 let contentArea = null;
 
 function onReady(fn) {
@@ -68,16 +65,25 @@ const setDefault = (map, key, valueFunc) => {
 
 const nameCmp = (a, b) => a.name.localeCompare(b.name);
 
+let docId = 'unsetDocId';
+
+// We use a global 'store', which is localStorage, with fallbacks.
+const storeSet = (key, val) => { store.set(`spreadsheet-com-migration-${docId}:${key}`, val); };
+const storeGet = (key) => {
+  const trunkId = docId.split('~')[0];
+  return (store.get(`spreadsheet-com-migration-${docId}:${key}`) ||
+    store.get(`spreadsheet-com-migration-${trunkId}:${key}`));
+}
+
 onReady(async () => {
   grist.ready({
     columns: [],
     requiredAccess: 'full'
   });
 
-  const docId = await grist.docApi.getDocName();
-  storePrefix = `spreadsheet-com-migration-${docId}:`;
+  docId = await grist.docApi.getDocName();
 
-  scApiKey.set(store.get(storePrefix + 'scApiKey') || '');
+  scApiKey.set(storeGet('scApiKey') || '');
 
   const workbooksObs = Observable.create(null, []);
   const selectedWorkbookId = Observable.create(null, null);
@@ -180,23 +186,21 @@ function stepConnect(owner, isComplete, workbooksObs, callbacks) {
   const messageObs = Observable.create(owner, '');
   const loadingObs = Observable.create(owner, false);
 
-  const cacheKey = storePrefix + 'workbooks';
-
   function setKey(key) {
-    store.set(storePrefix + 'scApiKey', key);
+    storeSet('scApiKey', key);
     scApiKey.set(key);
   }
 
   async function doConnect() {
     const workbooks = await getWorkbooks();
     console.warn("workbooks", workbooks);
-    store.set(cacheKey, workbooks);
+    storeSet('workbooks', workbooks);
     workbooksObs.set(workbooks);
   }
   callbacks.refreshWorkspaces = doConnect;
   const connect = stepCompleter(doConnect, {isComplete, collapsed, messageObs, loadingObs});
 
-  const cachedWorkbooks = store.get(cacheKey);
+  const cachedWorkbooks = storeGet('workbooks');
   if (cachedWorkbooks?.length > 0) {
     workbooksObs.set(cachedWorkbooks);
     isComplete.set(true);
@@ -231,7 +235,6 @@ in Spreadsheet.com. Find it under your user icon > Personal settings > API keys,
 
 function stepPickWorkbook(owner, isComplete, workbooksObs, selectedWorkbookId, callbacks) {
   const collapsed = Observable.create(owner, false);
-  const cacheKey = storePrefix + 'workbookId';
   const messageObs = Observable.create(owner, '');
   const loadingObs = Observable.create(owner, false);
 
@@ -251,20 +254,20 @@ function stepPickWorkbook(owner, isComplete, workbooksObs, selectedWorkbookId, c
 
   function selectWorkbook(wbId) {
     selectedWorkbookId.set(wbId);
-    store.set(cacheKey, wbId);
+    storeSet('workbookId', wbId);
     isComplete.set(true);
     collapsed.set(true);
   }
 
   const refresh = stepCompleter(async () => {
     selectedWorkbookId.set(null);
-    store.set(cacheKey, null);
+    storeSet('workbookId', null);
     isComplete.set(false);
     collapsed.set(false);
     await callbacks.refreshWorkspaces();
   }, {messageObs, loadingObs});
 
-  const cachedWorkbookId = store.get(cacheKey);
+  const cachedWorkbookId = storeGet('workbookId');
   if (cachedWorkbookId && workbooksObs.get().some(wb => wb._id === cachedWorkbookId)) {
     selectWorkbook(cachedWorkbookId);
     collapsed.set(true);
@@ -316,7 +319,6 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
   const messageObs = Observable.create(owner, '');
   const loadingObs = Observable.create(owner, false);
   const prepLoadingObs = Observable.create(owner, false);
-  const cacheImportDoneKey = storePrefix + 'importDone';
 
   const destTablesObs = Observable.create(owner, []);
   grist.docApi.listTables().then(t => destTablesObs.set(t));
@@ -344,7 +346,7 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
   });
 
   async function doRemoveConflicts(conflicts) {
-    store.set(cacheImportDoneKey, false);
+    storeSet('importDone', false);
     // Let's make sure we can make changes to the document; if it's a template or fiddle, we will
     // fork it now.
     try {
@@ -367,7 +369,7 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
   }
 
   const refresh = stepCompleter(async () => {
-    store.set(cacheImportDoneKey, false);
+    storeSet('importDone', false);
     isComplete.set(false);
     collapsed.set(false);
     destTablesObs.set(await grist.docApi.listTables());
@@ -375,7 +377,7 @@ function stepCheckImport(owner, isComplete, selectedWorkbook) {
 
   const removeConflicts = stepCompleter(doRemoveConflicts, {isComplete, collapsed, messageObs, loadingObs});
 
-  if (store.get(cacheImportDoneKey)) {
+  if (storeGet('importDone')) {
     isComplete.set(true);
     collapsed.set(true);
   }
@@ -436,17 +438,16 @@ function stepRunImport(owner, isComplete, selectedWorkbook) {
   const collapsed = Observable.create(owner, false);
   const messageObs = Observable.create(owner, '');
   const loadingObs = Observable.create(owner, false);
-  const cacheImportDoneKey = storePrefix + 'importDone';
 
   owner.autoDispose(isComplete.addListener(val => { if (!val) { collapsed.set(false); } }));
 
   async function doImportAllSheets(workbook) {
     await migrate({ workbook, scGetItems: getItems, fetchSCAttachment});
-    store.set(cacheImportDoneKey, true);
+    storeSet('importDone', true);
   }
   const importAllSheets = stepCompleter(doImportAllSheets, {isComplete, collapsed, messageObs, loadingObs});
 
-  if (store.get(cacheImportDoneKey)) {
+  if (storeGet('importDone')) {
     isComplete.set(true);
     collapsed.set(true);
   }
