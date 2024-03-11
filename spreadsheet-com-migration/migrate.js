@@ -191,7 +191,7 @@ function getGristApiClient(token) {
   const rawFetch = async (url, options) => {
     const fullUrl = new URL(url);
     fullUrl.searchParams.set('auth', token.token);
-    console.warn("FETCHING", fullUrl, options);
+    console.warn("FETCHING", options.method, fullUrl, "body", options.body?.length, "length");
     const resp = await fetch(fullUrl, options);
     const text = await resp.text();
     let result;
@@ -211,6 +211,21 @@ function getGristApiClient(token) {
       body: body ? JSON.stringify(body) : undefined,
     };
     return rawFetch(url, fullOptions);
+  };
+
+  const myFetchChunked = async (method, url, {records}) => {
+    const chunkSize = 500;
+    const results = {records: []};
+    for (let i = 0; i < records.length; i += chunkSize) {
+      const recordsChunk = records.slice(i, i + chunkSize);
+      console.log(`Sending chunk ${i}:${i+chunkSize} ${method} ${url}`);
+      const res = await myFetch(method, url, {records: recordsChunk});
+      if (res.records) {
+        results.records.push(...res.records);
+      }
+      console.log(`Got ${res.records?.length} results; for a total of ${results.records?.length}`);
+    }
+    return results;
   };
 
   const getTables = async () => {
@@ -239,15 +254,15 @@ function getGristApiClient(token) {
   };
 
   const putRecords = async (tableId, records) => {
-    return (await myFetch('PUT', `${baseUrl}/tables/${tableId}/records`, {records}));
+    return (await myFetchChunked('PUT', `${baseUrl}/tables/${tableId}/records`, {records}));
   };
 
   const addRecords = async (tableId, records) => {
-    return (await myFetch('POST', `${baseUrl}/tables/${tableId}/records`, {records}));
+    return (await myFetchChunked('POST', `${baseUrl}/tables/${tableId}/records`, {records}));
   };
 
   const updateRecords = async (tableId, records) => {
-    return (await myFetch('PATCH', `${baseUrl}/tables/${tableId}/records`, {records}));
+    return (await myFetchChunked('PATCH', `${baseUrl}/tables/${tableId}/records`, {records}));
   };
 
   const addTable = async (tableId, columns) => {
