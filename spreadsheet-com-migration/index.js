@@ -118,10 +118,9 @@ onReady(async () => {
       dom.maybe(stepper.getObs(4), () => [
         dom('p', `Congratulations, the import is done!`),
         dom('p', `
-If you see a "Save Copy" button in the top bar, this is a good time to save your copy.
-`),
-        dom('p', `
-To remove the Migration Tool, use the "Remove" option in the menu next to the page name,
+If you see a "Save Copy" button in the top bar, this is a good time to save your copy. You can
+also remove the Migration Tool:
+use the "Remove" option in the menu next to the page name,
 then select "Delete data and this page".
 `),
         dom('p', `
@@ -132,6 +131,13 @@ Grist supports powerful formulas with a slightly different approach. Read about 
 ` and `, dom('a', {href: 'https://support.getgrist.com/summary-tables/'}, 'summary tables'),
 `.`,
         ),
+        dom('p', `
+Grist supports `, dom('a', {href: 'https://support.getgrist.com/custom-layouts/'}, 'page layouts'), `
+to make your workflow more productive, as well as access rules, forms, charts,
+calendars, and other features. Take the time to explore and learn to get the most out of it.
+`
+        ),
+        dom('p', 'Welcome to Grist! 🤗'),
         dom('p', '\xa0'),
       ]),
     ),
