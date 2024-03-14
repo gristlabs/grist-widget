@@ -35,6 +35,9 @@ html, body, #map {
   display: none;
   background: white;
 }
+#settings > * {
+  color: black;
+}
 #btnClose {
   font-size: small;
   margin-bottom: 5px;
