@@ -448,11 +448,14 @@ function stepRunImport(owner, isComplete, selectedWorkbook) {
   const collapsed = Observable.create(owner, false);
   const messageObs = Observable.create(owner, '');
   const loadingObs = Observable.create(owner, false);
+  const progressMsgObs = Observable.create(owner, '');
 
   owner.autoDispose(isComplete.addListener(val => { if (!val) { collapsed.set(false); } }));
 
   async function doImportAllSheets(workbook) {
-    await migrate({ workbook, scGetItems: getItems, fetchSCAttachment});
+    await migrate({ workbook, scGetItems: getItems, fetchSCAttachment,
+      reportProgress: msg => progressMsgObs.set(msg),
+    });
     storeSet('importDone', true);
   }
   const importAllSheets = stepCompleter(doImportAllSheets, {isComplete, collapsed, messageObs, loadingObs});
@@ -473,11 +476,13 @@ function stepRunImport(owner, isComplete, selectedWorkbook) {
         cssUL(
           wb.sheets.map(sheet => cssLI(cssWBItem(cssWBName(sheet.name, {style: 'min-width: 300px'}))))
         ),
+        cssWarning(`⚠️ Do not leave this page while the migration is running, or it will not complete.`),
         cssActionLine(
           cssButton(`Import ${wb.sheets.length} sheets`,
             dom.prop('disabled', loadingObs),
             dom.on('click', () => { importAllSheets(wb); })),
           dom.maybe(loadingObs, () => cssSpinner()),
+          cssProgress(dom.text(progressMsgObs)),
         ),
       ];
     }),
@@ -675,4 +680,13 @@ const cssH3Flex = styled('h3', `
 const cssHelp = styled('div', `
   background-color: #a4dfc9;
   padding: 0 16px;
+`);
+
+const cssWarning = styled('p', `
+  font-weight: bold;
+  color: blue;
+`);
+
+const cssProgress = styled('div', `
+  color: #d77900;
 `);

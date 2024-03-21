@@ -9,10 +9,9 @@ const scTypes = {
 };
 
 async function migrate(options) {
-  const {workbook, scGetItems, fetchSCAttachment} = options;
+  const {workbook, scGetItems, fetchSCAttachment, reportProgress} = options;
 
-  const token = await grist.docApi.getAccessToken({});
-  const dstCli = getGristApiClient(token);
+  const dstCli = await getGristApiClient();
 
   let dstTables = await dstCli.getTables();
   let dstTableMap = new Map(dstTables.map(t => [t.id, t.fields]));
@@ -23,6 +22,7 @@ async function migrate(options) {
   const refCols = [];
 
   const worksheets = await scGetItems(`/workbooks/${workbook._id}/worksheets`);
+  reportProgress(`Creating tables`);
   for (const ws of worksheets) {
     console.warn("Worksheet", ws._id, ws.name, ws);
     let tableId = ws.name;
@@ -65,6 +65,7 @@ async function migrate(options) {
 
   for (const ws of worksheets) {
     console.log("PROCESSING", ws.name);
+    reportProgress(`Importing ${ws.name}...`);
     const tableId = sheetIdToTableId.get(ws._id);
     if (!tableId) { throw new Error(`Strange: failed to find table matching sheet ${ws._id}`); }
     const dstColumns = dstTableMap.get(tableId).columns;
@@ -72,6 +73,20 @@ async function migrate(options) {
     console.log("DST COLS", dstColumnByLabel);
     const rows = await scGetItems(`/worksheets/${ws._id}/rows`);
     console.warn("First row", rows[0]);
+
+    // Count up attachments for better reporting.
+    let totalAttachments = 0;
+    for (const r of rows) {
+      for (const cell of r.cellData) {
+        const col = dstColumnByLabel.get(cell.label);
+        if (!col) { throw new Error(`Didn't find ${cell.label}`); }
+        if (col.fields.type === 'Attachments' && Array.isArray(cell.data)) {
+          totalAttachments += cell.data.length;
+        }
+      }
+    }
+
+    let uploadedAttachments = 0;
     const records = [];
     for (const r of rows) {
       const fields = {};
@@ -83,10 +98,12 @@ async function migrate(options) {
         if (col.fields.type === 'Attachments') {
           value = null;
           if (Array.isArray(cell.data)) {
+            reportProgress(`Importing ${ws.name}: uploading attachments ${uploadedAttachments + 1} of ${totalAttachments}`);
             const attIds = await uploadAttachments(cell.data, fetchSCAttachment, dstCli.uploadToGrist);
             if (attIds) {
               value = ['L', ...attIds];
             }
+            uploadedAttachments += cell.data.length;
           }
         } else if (typeof cell.data === 'string' && cell.data === cell.formula) {
           value = cell.display || null;
@@ -98,6 +115,7 @@ async function migrate(options) {
       records.push({fields});
     }
 
+    reportProgress(`Importing ${ws.name}: adding ${records.length} records`);
     const res = await dstCli.addRecords(tableId, records);
     rows.forEach((r, i) => {
       scRowIdToGrist.set(r._id, [tableId, res.records[i].id]);
@@ -185,12 +203,25 @@ function columnScToGrist(scColumn) {
   };
 }
 
-function getGristApiClient(token) {
-  const baseUrl = token.baseUrl;
+async function getGristApiClient(token) {
+  let cachedToken = null;
+  let cachedTokenExp = 0;
+  const getToken = async () => {
+    // If token is too close to expiration, get a new one.
+    if (Date.now() >= cachedTokenExp - 30000) {
+      cachedToken = await grist.docApi.getAccessToken({});
+      cachedToken.ttlMsecs = 33000;
+      cachedTokenExp = Date.now() + cachedToken.ttlMsecs;
+      console.warn("Got new token; expires in", cachedToken.ttlMsecs);
+    }
+    return cachedToken;
+  };
+
+  const baseUrl = (await getToken()).baseUrl;
 
   const rawFetch = async (url, options) => {
     const fullUrl = new URL(url);
-    fullUrl.searchParams.set('auth', token.token);
+    fullUrl.searchParams.set('auth', (await getToken()).token);
     console.warn("FETCHING", options.method, fullUrl, "body", options.body?.length, "length");
     const resp = await fetch(fullUrl, options);
     const text = await resp.text();
