@@ -8,6 +8,8 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
+let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+let mapCopyright = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
 // Required, Label value
 const Name = "Name";
 // Required
@@ -214,9 +216,7 @@ function updateMap(data) {
   //    Old source was natgeo world map, but that only has data up to zoom 16
   //    (can't zoom in tighter than about 10 city blocks across)
   //
-  const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
-  });
+  const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
 
   const error = document.querySelector('.error');
   if (error) { error.remove(); }
@@ -430,6 +430,12 @@ function onEditOptions() {
       updateMode();
     }
   }
+  [ "mapSource", "mapCopyright" ].forEach((opt) => {
+    const ipt = document.getElementById(opt)
+    ipt.onchange = async (e) => {
+      await grist.setOption(opt, e.target.value);
+    }
+  })
 }
 
 const optional = true;
@@ -453,4 +459,10 @@ grist.onOptions((options, interaction) => {
   if (newMode != mode && lastRecords) {
     updateMode();
   }
+  const newSource = options?.mapSource ?? mapSource;
+  mapSource = newSource;
+  document.getElementById("mapSource").value = mapSource;
+  const newCopyright = options?.mapCopyright ?? mapCopyright;
+  mapCopyright = newCopyright
+  document.getElementById("mapCopyright").value = mapCopyright;
 });
