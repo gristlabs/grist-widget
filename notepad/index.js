@@ -29,6 +29,7 @@ let quill = {};
 
 const textChanged = new Subject();
 let column;
+let exportColumn;
 let id;
 let lastContent;
 let lastSave;
@@ -91,7 +92,7 @@ async function saveOptions() {
 }
 
 // Subscribe to grist data
-grist.ready({requiredAccess: 'full', columns: [{name: 'Content', type: 'Text'}],
+grist.ready({requiredAccess: 'full', columns: [{name: 'Content', type: 'Text'}, {name: 'HTML', type: 'Text', optional: true}],
   // Register configuration handler to show configuration panel.
   onEditOptions() {
     showPanel('configuration');
@@ -103,6 +104,7 @@ grist.onRecord(function (record, mappings) {
   if (id !== record.id || mappings?.Content !== column) {
     id = record.id;
     column = mappings?.Content;
+    exportColumn = mappings?.HTML;
     const mapped = grist.mapColumnNames(record);
     if (!mapped) {
       // Log but don't bother user - maybe we are just testing.
@@ -150,6 +152,7 @@ saveEvent.subscribe(() => {
     lastContent = newContent;
     lastSave = table.update({id, fields: {
       [column]: lastContent,
+      ...(exportColumn ? {[exportColumn]: quill.getSemanticHTML()}: {}),
     }}).finally(() => lastSave = null);
   }
 });
