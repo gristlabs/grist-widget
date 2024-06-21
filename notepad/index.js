@@ -104,7 +104,6 @@ grist.onRecord(function (record, mappings) {
   if (id !== record.id || mappings?.Content !== column) {
     id = record.id;
     column = mappings?.Content;
-    exportColumn = mappings?.HTML;
     const mapped = grist.mapColumnNames(record);
     if (!mapped) {
       // Log but don't bother user - maybe we are just testing.
@@ -116,6 +115,7 @@ grist.onRecord(function (record, mappings) {
       quill.setContents(content);
     }
   }
+  exportColumn = mappings?.HTML;
 });
 
 grist.onNewRecord(function () {
