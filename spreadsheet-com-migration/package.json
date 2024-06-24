@@ -1,0 +1,14 @@
+{
+  "name": "@gristlabs/spreadsheet-com-migration",
+  "description": "Spreadsheet.com Migration Helper",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Spreadsheet.com Migration Helper",
+    "url": "https://gristlabs.github.io/grist-widget/spreadsheet-com-migration",
+    "widgetId": "@gristlabs/spreadsheet-com-migration",
+    "accessLevel": "full",
+    "published": true,
+    "renderAfterReady": true
+  }
+}
