@@ -1,0 +1,58 @@
+#map {
+  width: 100vw; 
+  height: 100vh;
+}
+
+html, body, #map {
+  margin: 0;
+  padding: 0;
+  background:
+    radial-gradient(#eee 3px, transparent 4px),
+    radial-gradient(#eee 3px, transparent 4px),
+    linear-gradient(#fff 4px, transparent 0),
+    linear-gradient(45deg, transparent 74px, transparent 75px, #a4a4a4 75px, #a4a4a4 76px, transparent 77px, transparent 109px),
+    linear-gradient(-45deg, transparent 75px, transparent 76px, #a4a4a4 76px, #a4a4a4 77px, transparent 78px, transparent 109px),
+    #fff;
+  background-size: 109px 109px, 109px 109px,100% 6px, 109px 109px, 109px 109px;
+  background-position: 54px 55px, 0px 0px, 0px 0px, 0px 0px, 0px 0px;
+}
+
+.error {
+  background: red;
+  color: white;
+  padding: 2em;
+  margin: 2em;
+}
+
+#settings {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 500;
+  padding: 10px;
+  border: 1px solid lightgray;
+  border-radius: 5px;
+  display: none;
+  background: white;
+}
+#settings > * {
+  color: black;
+}
+#btnClose {
+  font-size: small;
+  margin-bottom: 5px;
+  text-align: right;
+  cursor: pointer;
+}
+#btnClose:hover {
+  text-decoration: underline;
+}
+#lblText {
+  min-width: 100px;
+  display: inline-block;
+}
+
+/* JV: Needed to highlight selected cluster */
+.marker-cluster-selected {
+  border: 3px solid #16b378;
+}
