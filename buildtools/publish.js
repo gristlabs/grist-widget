@@ -50,6 +50,8 @@ for (const folder of folders) {
     }
     if (config.published) {
       console.log('Publishing ' + config.widgetId);
+      config.lastUpdatedAt = execSync(`git log -1 --format=%cI ${packageFile}`, {encoding: 'utf8'})
+        .trimEnd();
       // If we have custom server url as a first argument for local testing,
       // replace widget url.
       if (replacementUrl) {
