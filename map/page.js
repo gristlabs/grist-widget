@@ -8,8 +8,8 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
-let mapCopyright = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
+let mapSource = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'; // Default OSM tiles
+let mapCopyright = '© OpenStreetMap contributors';
 // Required, Label value
 const Name = "Name";
 // Required
@@ -28,9 +28,9 @@ let lastRecord;
 let lastRecords;
 
 
-//Color markers downloaded from leaflet repo, color-shifted to green
-//Used to show currently selected pin
-const selectedIcon =  new L.Icon({
+// Color markers downloaded from leaflet repo, color-shifted to green
+// Used to show currently selected pin
+const selectedIcon = new L.Icon({
   iconUrl: 'marker-icon-green.png',
   iconRetinaUrl: 'marker-icon-green-2x.png',
   shadowUrl: 'marker-shadow.png',
@@ -39,7 +39,7 @@ const selectedIcon =  new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
-const defaultIcon =  new L.Icon.Default();
+const defaultIcon = new L.Icon.Default();
 
 
 
@@ -53,7 +53,7 @@ const defaultIcon =  new L.Icon.Default();
 // Copied from _defaultIconCreateFunction in ClusterMarkerGroup
 //    https://github.com/Leaflet/Leaflet.markercluster/blob/master/src/MarkerClusterGroup.js
 const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
-  return function(cluster) {
+  return function (cluster) {
     var childCount = cluster.getChildCount();
 
     let isSelected = false;
@@ -79,12 +79,12 @@ const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
     }
 
     return new L.DivIcon({
-        html: '<div><span>'
-            + childCount
-            + ' <span aria-label="markers"></span>'
-            + '</span></div>',
-        className: 'marker-cluster' + c + (isSelected ? ' marker-cluster-selected' : ''),
-        iconSize: new L.Point(40, 40)
+      html: '<div><span>'
+        + childCount
+        + ' <span aria-label="markers"></span>'
+        + '</span></div>',
+      className: 'marker-cluster' + c + (isSelected ? ' marker-cluster-selected' : ''),
+      iconSize: new L.Point(40, 40)
     });
   }
 };
@@ -123,9 +123,9 @@ async function delay(ms) {
   });
 }
 
-// If widget has wright access
+// If widget has write access
 let writeAccess = true;
-// A ongoing scanning promise, to check if we are in progress.
+// An ongoing scanning promise, to check if we are in progress.
 let scanning = null;
 
 async function scan(tableId, records, mappings) {
@@ -142,7 +142,7 @@ async function scan(tableId, records, mappings) {
     // But this field is optional, if it is not in the record (not mapped)
     // we will find the location each time (if coordinates are empty).
     if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
-      // We have caching field, and last address is diffrent.
+      // We have caching field, and last address is different.
       // So clear coordinates (as if the record wasn't scanned before)
       record[Longitude] = null;
       record[Latitude] = null;
@@ -152,11 +152,11 @@ async function scan(tableId, records, mappings) {
       // Find coordinates.
       const result = await geocode(address);
       // Update them, and update cache (if the field was mapped)
-      await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
+      await grist.docApi.applyUserActions([['UpdateRecord', tableId, record.id, {
         [mappings[Longitude]]: result.lng,
         [mappings[Latitude]]: result.lat,
-        ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
-      }] ]);
+        ...(GeocodedAddress in mappings) ? { [mappings[GeocodedAddress]]: address } : undefined
+      }]]);
       await delay(1000);
     }
   }
@@ -175,7 +175,7 @@ function showProblem(txt) {
 // Little extra wrinkle to deal with showing differences.  Should be taken
 // care of by Grist once diffing is out of beta.
 function parseValue(v) {
-  if (typeof(v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
+  if (typeof (v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
     const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
     return payload.remote || payload.local || payload.parent || payload;
   }
@@ -193,7 +193,7 @@ function getInfo(rec) {
 }
 
 // Function to clear last added markers. Used to clear the map when new record is selected.
-let clearMakers = () => {};
+let clearMakers = () => { };
 
 let markers = [];
 
@@ -205,17 +205,11 @@ function updateMap(data) {
     return;
   }
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
-    " in the Creator Panel.");
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns" +
+      " in the Creator Panel.");
     return;
   }
 
-
-  // Map tile source:
-  //    https://leaflet-extras.github.io/leaflet-providers/preview/
-  //    Old source was natgeo world map, but that only has data up to zoom 16
-  //    (can't zoom in tighter than about 10 city blocks across)
-  //
   const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
 
   const error = document.querySelector('.error');
@@ -234,235 +228,140 @@ function updateMap(data) {
     wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
   });
 
+  // Load uMap data
+  const umapUrl = "http://u.osmfr.org/m/1100523"; // Replace with your uMap URL
+  fetch(umapUrl)
+    .then(response => response.json())
+    .then(data => {
+      L.geoJSON(data).addTo(map);
+    })
+    .catch(error => console.error("Error loading uMap data:", error));
+
   // Make sure clusters always show up above points
   // Default z-index for markers is 600, 650 is where tooltipPane z-index starts
   map.createPane('selectedMarker').style.zIndex = 620;
-  map.createPane('clusters'      ).style.zIndex = 610;
-  map.createPane('otherMarkers'  ).style.zIndex = 600;
+  map.createPane('clusters').style.zIndex = 610;
+  map.createPane('defaultMarkers').style.zIndex = 600;
 
-  const points = []; //L.LatLng[], used for zooming to bounds of all markers
-
-  popups = {}; // Map: {[rowid]: L.marker}
-  // Make this before markerClusterGroup so iconCreateFunction
-  // can fetch the currently selected marker from popups by function closure
-
-  markers = L.markerClusterGroup({
-    disableClusteringAtZoom: 18,
-    //If markers are very close together, they'd stay clustered even at max zoom
-    //This disables that behavior explicitly for max zoom (18)
-    maxClusterRadius: 30, //px, default 80
-    // default behavior clusters too aggressively. It's nice to see individual markers
+  const markerClusters = L.markerClusterGroup({
     showCoverageOnHover: true,
-
-    clusterPane: 'clusters', //lets us specify z-index, so cluster icons can be on top
-    iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
+    disableClusteringAtZoom: 16,
+    iconCreateFunction: selectedRowClusterIconFactory(() => selectedMarker),
+    pane: 'clusters'
   });
-
-  markers.on('click', (e) => {
-    const id = e.layer.options.id;
-    selectMaker(id);
-  });
-
-  for (const rec of data) {
-    const {id, name, lng, lat} = getInfo(rec);
-    // If the record is in the middle of geocoding, skip it.
-    if (String(lng) === '...') { continue; }
-    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-      // Stuff at 0,0 usually indicates bad imports/geocoding.
-      continue;
+  map.addLayer(markerClusters);
+  // Add locate control
+  const locateControl = L.control.locate({
+    locateOptions: {
+      enableHighAccuracy: true,
+      maxZoom: 16
     }
-    const pt = new L.LatLng(lat, lng);
-    points.push(pt);
+  }).addTo(map);
 
-    const marker = L.marker(pt, {
-      title: name,
-      id: id,
-      icon: (id == selectedRowId) ?  selectedIcon    :  defaultIcon,
-      pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
-    });
-
-    marker.bindPopup(name);
-    markers.addLayer(marker);
-
-    popups[id] = marker;
-  }
-  map.addLayer(markers);
-
-  clearMakers = () => map.removeLayer(markers);
-
-  try {
-    map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
-  } catch (err) {
-    console.warn('cannot fit bounds');
-  }
-  function makeSureSelectedMarkerIsShown() {
-    const rowId = selectedRowId;
-
-    if (rowId && popups[rowId]) {
-      var marker = popups[rowId];
-      if (!marker._icon) { markers.zoomToShowLayer(marker); }
-      marker.openPopup();
-    }
-  }
-
-  amap = map;
-
-  makeSureSelectedMarkerIsShown();
-}
-
-function selectMaker(id) {
-   // Reset the options from the previously selected marker.
-   const previouslyClicked = popups[selectedRowId];
-   if (previouslyClicked) {
-     previouslyClicked.setIcon(defaultIcon);
-     previouslyClicked.pane = 'otherMarkers';
-   }
-   const marker = popups[id];
-   if (!marker) { return null; }
-
-   // Remember the new selected marker.
-   selectedRowId = id;
-
-   // Set the options for the newly selected marker.
-   marker.setIcon(selectedIcon);
-   previouslyClicked.pane = 'selectedMarker';
-
-   // Rerender markers in this cluster
-   markers.refreshClusters();
-
-   // Update the selected row in Grist.
-   grist.setCursorPos?.({rowId: id}).catch(() => {});
-
-   return marker;
-}
-
-
-grist.on('message', (e) => {
-  if (e.tableId) { selectedTableId = e.tableId; }
-});
-
-function hasCol(col, anything) {
-  return anything && typeof anything === 'object' && col in anything;
-}
-
-function defaultMapping(record, mappings) {
-  if (!mappings) {
-    return {
-      [Longitude]: Longitude,
-      [Name]: Name,
-      [Latitude]: Latitude,
-      [Address]: hasCol(Address, record) ? Address : null,
-      [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
-      [Geocode]: hasCol(Geocode, record) ? Geocode : null,
-    };
-  }
-  return mappings;
-}
-
-function selectOnMap(rec) {
-  // If this is already selected row, do nothing (to avoid flickering)
-  if (selectedRowId === rec.id) { return; }
-
-  selectedRowId = rec.id;
-  if (mode === 'single') {
-    updateMap([rec]);
-  } else {
-    updateMap();
-  }
-}
-
-grist.onRecord((record, mappings) => {
-  if (mode === 'single') {
-    // If mappings are not done, we will assume that table has correct columns.
-    // This is done to support existing widgets which where configured by
-    // renaming column names.
-    lastRecord = grist.mapColumnNames(record) || record;
-    selectOnMap(lastRecord);
-    scanOnNeed(defaultMapping(record, mappings));
-  } else {
-    const marker = selectMaker(record.id);
-    if (!marker) { return; }
-    markers.zoomToShowLayer(marker);
-    marker.openPopup();
-  }
-});
-grist.onRecords((data, mappings) => {
-  lastRecords = grist.mapColumnNames(data) || data;
-  if (mode !== 'single') {
-    // If mappings are not done, we will assume that table has correct columns.
-    // This is done to support existing widgets which where configured by
-    // renaming column names.
-    updateMap(lastRecords);
-    if (lastRecord) {
-      selectOnMap(lastRecord);
-    }
-    // We need to mimic the mappings for old widgets
-    scanOnNeed(defaultMapping(data[0], mappings));
-  }
-});
-
-grist.onNewRecord(() => {
+  markers = [];
+  clearMakers = () => {
+    markerClusters.clearLayers();
+    markers = [];
+    Object.keys(popups).forEach((k) => delete popups[k]);
+  };
   clearMakers();
-  clearMakers = () => {};
-})
 
-function updateMode() {
-  if (mode === 'single') {
-    selectedRowId = lastRecord.id;
-    updateMap([lastRecord]);
-  } else {
-    updateMap(lastRecords);
+  let bounds = [];
+
+  for (const row of data) {
+    const info = getInfo(row);
+    if (!info.lat || !info.lng) { continue; }
+    let marker;
+    if (info.id === selectedRowId) {
+      marker = L.marker(new L.LatLng(info.lat, info.lng), {
+        title: info.name,
+        icon: selectedIcon,
+        pane: 'selectedMarker'
+      });
+    } else {
+      marker = L.marker(new L.LatLng(info.lat, info.lng), {
+        title: info.name,
+        icon: defaultIcon,
+        pane: 'defaultMarkers'
+      });
+    }
+
+    bounds.push([info.lat, info.lng]);
+
+    const infoHtml = [];
+    for (const key of Object.keys(row)) {
+      if (key === Longitude || key === Latitude) { continue; }
+      infoHtml.push(
+        `<dt>${key}</dt><dd>${row[key]}</dd>`
+      );
+    }
+    const popup = L.popup().setContent(`<h3>${info.name}</h3><dl>${infoHtml.join('\n')}</dl>`);
+    marker.bindPopup(popup);
+
+    markerClusters.addLayer(marker);
+    markers.push(marker);
+    popups[info.id] = popup;
   }
+  if (bounds.length > 0) {
+    map.fitBounds(bounds);
+  }
+  // allow calling fit bounds for geocoded points too
+  amap = map;
 }
 
-function onEditOptions() {
-  const popup = document.getElementById("settings");
-  popup.style.display = 'block';
-  const btnClose = document.getElementById("btnClose");
-  btnClose.onclick = () => popup.style.display = 'none';
-  const checkbox = document.getElementById('cbxMode');
-  checkbox.checked = mode === 'multi' ? true : false;
-  checkbox.onchange = async (e) => {
-    const newMode = e.target.checked ? 'multi' : 'single';
-    if (newMode != mode) {
-      mode = newMode;
-      await grist.setOption('mode', mode);
-      updateMode();
-    }
-  }
-  [ "mapSource", "mapCopyright" ].forEach((opt) => {
-    const ipt = document.getElementById(opt)
-    ipt.onchange = async (e) => {
-      await grist.setOption(opt, e.target.value);
-    }
-  })
-}
-
-const optional = true;
-grist.ready({
-  columns: [
-    "Name",
-    { name: "Longitude", type: 'Numeric'} ,
-    { name: "Latitude", type: 'Numeric'},
-    { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
-    { name: "Address", type: 'Text', optional, optional},
-    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
-  ],
-  allowSelectBy: true,
-  onEditOptions
+grist.onRecords((data) => {
+  selectedTableId = data.tableId;
+  selectedRecords = data.records;
+  updateMap(data.records);
+  scanOnNeed(data.columnMappings);
 });
 
-grist.onOptions((options, interaction) => {
-  writeAccess = interaction.accessLevel === 'full';
-  const newMode = options?.mode ?? mode;
-  mode = newMode;
-  if (newMode != mode && lastRecords) {
-    updateMode();
+grist.onRecord((data) => {
+  selectedTableId = data.tableId;
+  selectedRowId = data.id;
+  selectedRecords = [data.record];
+  updateMap([data.record]);
+  scanOnNeed(data.columnMappings);
+});
+
+grist.onOptions((options) => {
+  if (options.mode) { mode = options.mode; }
+  if (options.mapSource) {
+    mapSource = options.mapSource;
+    mapCopyright = options.mapCopyright;
   }
-  const newSource = options?.mapSource ?? mapSource;
-  mapSource = newSource;
-  document.getElementById("mapSource").value = mapSource;
-  const newCopyright = options?.mapCopyright ?? mapCopyright;
-  mapCopyright = newCopyright
-  document.getElementById("mapCopyright").value = mapCopyright;
+});
+
+grist.onSelection(async (data) => {
+  const selectedRows = selectedRowId === null ? [] : selectedRecords.filter((record) => {
+    return record.id === selectedRowId;
+  });
+  if (selectedRows.length !== 1) {
+    selectedRowId = null;
+  }
+  if (selectedRows.length === 1) {
+    selectedRowId = selectedRows[0].id;
+    const info = getInfo(selectedRows[0]);
+    if (!info.lat || !info.lng) { return; }
+    const selectedMarker = markers.filter((m) => m.getLatLng().lat === info.lat && m.getLatLng().lng === info.lng)[0];
+    if (selectedMarker) {
+      amap.setView(new L.LatLng(info.lat, info.lng), 16);
+      amap.openPopup(selectedMarker._popup);
+    }
+  }
+});
+
+grist.on('onAccessChange', (data) => {
+  writeAccess = data;
+});
+
+window.addEventListener('unload', () => {
+  if (amap) {
+    try {
+      amap.off();
+      amap.remove();
+    } catch (e) {
+      // ignore
+    }
+  }
 });
