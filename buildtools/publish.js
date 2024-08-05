@@ -5,6 +5,7 @@
 // or:
 //   node ./buildtools/publish.js manifest.json http://localhost:8585
 
+const {execSync} = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
