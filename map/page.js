@@ -229,7 +229,7 @@ function updateMap(data) {
   });
 
   // Load uMap data
-  const umapUrl = "http://u.osmfr.org/m/1100523"; // Replace with your uMap URL
+  const umapUrl = "https://umap.openstreetmap.fr/en/map/grist-802_1100523?scaleControl=false&miniMap=false&scrollWheelZoom=false&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true"; // Replace with your uMap URL
   fetch(umapUrl)
     .then(response => response.json())
     .then(data => {
