@@ -7,7 +7,7 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let mapSource = 'mapbox://styles/mapbox/streets-v11';
+let mapSource = 'mapbox://styles/sgfroerer/clzc4a3mw00c901rc8836bh9z';
 let mapCopyright = '© Mapbox, © OpenStreetMap contributors';
 
 // Required, Label value
