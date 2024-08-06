@@ -29,18 +29,25 @@ let lastRecord;
 let lastRecords;
 
 // Mapbox access token
-mapboxgl.accessToken = 'pk.eyJ1Ijoic2dmcm9lcmVyIiwiYSI6ImNsdGk4cWY0OTBkaXgycG1kNDNreGpqYTgifQ.P0pY9LfTCJLO9abd0Y41QQ';
+mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
 
 function initMap() {
+  console.log("Initializing map...");
   map = new mapboxgl.Map({
     container: 'map',
     style: mapSource,
     center: [-98, 38.88], // Initial center point (longitude, latitude)
     zoom: 3 // Initial zoom level
   });
+
+  map.on('load', function() {
+    console.log("Map loaded.");
+    updateMap(selectedRecords);
+  });
 }
 
 function updateMap(data) {
+  console.log("Updating map with data: ", data);
   data = data || selectedRecords;
   selectedRecords = data;
   if (!data || data.length === 0) {
@@ -54,6 +61,7 @@ function updateMap(data) {
   }
 
   if (!map) {
+    console.log("Map not initialized, initializing now...");
     initMap();
   }
 
@@ -72,6 +80,8 @@ function updateMap(data) {
     if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
       continue;
     }
+
+    console.log("Adding marker for record: ", rec);
 
     const popup = new mapboxgl.Popup({ offset: 25 }).setText(name);
 
@@ -149,24 +159,29 @@ function parseValue(v) {
 }
 
 function showProblem(txt) {
+  console.error(txt);
   document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
 }
 
 grist.on('message', (e) => {
+  console.log("Received message: ", e);
   if (e.tableId) { selectedTableId = e.tableId; }
 });
 
 grist.onRecord((record, mappings) => {
+  console.log("Received record: ", record);
   lastRecord = grist.mapColumnNames(record) || record;
   selectOnMap(lastRecord);
 });
 
 grist.onRecords((data, mappings) => {
+  console.log("Received records: ", data);
   lastRecords = grist.mapColumnNames(data) || data;
   updateMap(lastRecords);
 });
 
 grist.onNewRecord(() => {
+  console.log("New record event");
   popups = {};
 });
 
@@ -237,4 +252,3 @@ function updateMode() {
     checkbox.checked = mode === 'multi' ? true : false;
   }
 }
-
