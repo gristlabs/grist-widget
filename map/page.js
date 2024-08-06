@@ -3,7 +3,6 @@
 /* global grist, window, mapboxgl */
 
 let map;
-let popups = {};
 let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
@@ -36,13 +35,113 @@ function initMap() {
   map = new mapboxgl.Map({
     container: 'map',
     style: mapSource,
-    center: [-98, 38.88], // Initial center point (longitude, latitude)
+    center: [-122.676483, 45.523064], // Initial center point (longitude, latitude)
     zoom: 3 // Initial zoom level
   });
 
   map.on('load', function() {
     console.log("Map loaded.");
+    map.addSource('properties', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: []
+      },
+      cluster: true,
+      clusterMaxZoom: 14, // Max zoom to cluster points on
+      clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+    });
+
+    map.addLayer({
+      id: 'clusters',
+      type: 'circle',
+      source: 'properties',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': [
+          'step',
+          ['get', 'point_count'],
+          '#51bbd6',
+          100,
+          '#f1f075',
+          750,
+          '#f28cb1'
+        ],
+        'circle-radius': [
+          'step',
+          ['get', 'point_count'],
+          20,
+          100,
+          30,
+          750,
+          40
+        ]
+      }
+    });
+
+    map.addLayer({
+      id: 'cluster-count',
+      type: 'symbol',
+      source: 'properties',
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': '{point_count_abbreviated}',
+        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+        'text-size': 12
+      }
+    });
+
+    map.addLayer({
+      id: 'unclustered-point',
+      type: 'circle',
+      source: 'properties',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': '#11b4da',
+        'circle-radius': 8,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': '#fff'
+      }
+    });
+
     updateMap(selectedRecords);
+
+    map.on('click', 'clusters', function (e) {
+      var features = map.queryRenderedFeatures(e.point, {
+        layers: ['clusters']
+      });
+      var clusterId = features[0].properties.cluster_id;
+      map.getSource('properties').getClusterExpansionZoom(
+        clusterId,
+        function (err, zoom) {
+          if (err) return;
+
+          map.easeTo({
+            center: features[0].geometry.coordinates,
+            zoom: zoom
+          });
+        }
+      );
+    });
+
+    map.on('click', 'unclustered-point', function (e) {
+      const coordinates = e.features[0].geometry.coordinates.slice();
+      const { id, name, lng, lat } = e.features[0].properties;
+
+      const popup = new mapboxgl.Popup({ offset: 25 })
+        .setLngLat(coordinates)
+        .setText(name)
+        .addTo(map);
+
+      selectMarker(id);
+    });
+
+    map.on('mouseenter', 'clusters', function () {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', 'clusters', function () {
+      map.getCanvas().style.cursor = '';
+    });
   });
 }
 
@@ -65,72 +164,43 @@ function updateMap(data) {
     initMap();
   }
 
-  // Remove existing markers
-  if (popups) {
-    for (const id in popups) {
-      popups[id].remove();
-    }
-  }
+  const features = data.map(rec => {
+    const { id, name, lng, lat } = getInfo(rec);
+    if (String(lng) === '...') { return null; }
+    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) { return null; }
 
-  popups = {}; // Reset popups
+    return {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [lng, lat]
+      },
+      properties: {
+        id,
+        name,
+        lng,
+        lat
+      }
+    };
+  }).filter(f => f !== null);
 
-  for (const rec of data) {
-    const {id, name, lng, lat} = getInfo(rec);
-    if (String(lng) === '...') { continue; }
-    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-      continue;
-    }
-
-    console.log("Adding marker for record: ", rec);
-
-    const popup = new mapboxgl.Popup({ offset: 25 }).setText(name);
-
-    const marker = new mapboxgl.Marker({
-      color: (id == selectedRowId) ? 'green' : 'red'
-    })
-    .setLngLat([lng, lat])
-    .setPopup(popup)
-    .addTo(map);
-
-    marker.getElement().addEventListener('click', () => {
-      selectMaker(id);
-    });
-
-    popups[id] = marker;
-  }
-
-  // Fit map to markers
-  const bounds = new mapboxgl.LngLatBounds();
-  data.forEach(rec => {
-    if (rec[Longitude] && rec[Latitude]) {
-      bounds.extend([rec[Longitude], rec[Latitude]]);
-    }
+  map.getSource('properties').setData({
+    type: 'FeatureCollection',
+    features: features
   });
-  if (bounds.isEmpty()) {
-    map.setCenter([-98, 38.88]);
-    map.setZoom(3);
-  } else {
-    map.fitBounds(bounds, { padding: 20 });
-  }
 
   makeSureSelectedMarkerIsShown();
 }
 
-function selectMaker(id) {
-  const previouslyClicked = popups[selectedRowId];
-  if (previouslyClicked) {
-    previouslyClicked.setPopup(null).setPopup(new mapboxgl.Popup({ offset: 25 }).setText(previouslyClicked.getElement().title));
-  }
-  const marker = popups[id];
-  if (!marker) { return null; }
-
+function selectMarker(id) {
   selectedRowId = id;
-  marker.setPopup(new mapboxgl.Popup({ offset: 25 }).setText(marker.getElement().title));
-  marker.togglePopup();
-
   grist.setCursorPos?.({rowId: id}).catch(() => {});
 
-  return marker;
+  const feature = selectedRecords.find(rec => rec.id === id);
+  if (feature) {
+    const coordinates = [parseFloat(feature[Longitude]), parseFloat(feature[Latitude])];
+    map.flyTo({ center: coordinates, zoom: 15, essential: true });
+  }
 }
 
 function getInfo(rec) {
@@ -145,8 +215,12 @@ function getInfo(rec) {
 
 function makeSureSelectedMarkerIsShown() {
   const rowId = selectedRowId;
-  if (rowId && popups[rowId]) {
-    map.flyTo({ center: popups[rowId].getLngLat(), essential: true });
+  if (rowId) {
+    const feature = selectedRecords.find(rec => rec.id === rowId);
+    if (feature) {
+      const coordinates = [parseFloat(feature[Longitude]), parseFloat(feature[Latitude])];
+      map.flyTo({ center: coordinates, zoom: 15, essential: true });
+    }
   }
 }
 
@@ -218,37 +292,21 @@ function onEditOptions() {
     const ipt = document.getElementById(opt);
     ipt.onchange = async (e) => {
       await grist.setOption(opt, e.target.value);
+      switch (opt) {
+        case 'mapSource': mapSource = e.target.value; break;
+        case 'mapCopyright': mapCopyright = e.target.value; break;
+      }
+      initMap();
     }
-  })
+  });
 }
 
-const optional = true;
-grist.ready({
-  columns: [
-    "Name",
-    { name: "Longitude", type: 'Numeric'} ,
-    { name: "Latitude", type: 'Numeric'},
-    { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
-    { name: "Address", type: 'Text', optional},
-    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
-  ],
-  allowSelectBy: true,
-  onEditOptions
-});
+async function updateMode() {
+  const data = await grist.getOption("mode");
+  mode = data === "multi" ? "multi" : "single";
+}
 
-grist.onOptions((options, interaction) => {
-  const newMode = options?.mode ?? mode;
-  mode = newMode;
+window.addEventListener('DOMContentLoaded', () => {
   updateMode();
-  if (!interaction) {
-    mapSource = options?.mapSource ?? mapSource;
-    mapCopyright = options?.mapCopyright ?? mapCopyright;
-  }
+  grist.ready();
 });
-
-function updateMode() {
-  const checkbox = document.getElementById('cbxMode');
-  if (checkbox) {
-    checkbox.checked = mode === 'multi' ? true : false;
-  }
-}
