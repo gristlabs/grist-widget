@@ -7,7 +7,7 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let mapSource = 'mapbox://styles/mapbox/streets-v11';
+let mapSource = 'mapbox://styles/sgfroerer/clzc4a3mw00c901rc8836bh9z';
 let mapCopyright = '© Mapbox, © OpenStreetMap contributors';
 
 // Required, Label value
@@ -16,6 +16,8 @@ const Name = "Name";
 const Longitude = "Longitude";
 // Required
 const Latitude = "Latitude";
+// Image URL
+const ImageURL = "ImageURL";
 // Optional - switch column to trigger geocoding
 const Geocode = 'Geocode';
 // Optional - but required for geocoding. Field with address to find (might be formula)
@@ -126,11 +128,13 @@ function initMap() {
 
     map.on('click', 'unclustered-point', function (e) {
       const coordinates = e.features[0].geometry.coordinates.slice();
-      const { id, name, lng, lat } = e.features[0].properties;
+      const { id, name, lng, lat, imageUrl } = e.features[0].properties;
+
+      const popupContent = `<strong>${name}</strong><br><img src="${imageUrl}" alt="${name}" style="width: 200px; height: auto;">`;
 
       const popup = new mapboxgl.Popup({ offset: 25 })
         .setLngLat(coordinates)
-        .setText(name)
+        .setHTML(popupContent)
         .addTo(map);
 
       selectMarker(id);
@@ -154,11 +158,10 @@ function updateMap(data) {
     return;
   }
 
-  // Log the keys of the first record to help debug the column names
   console.log("Columns in data: ", Object.keys(data[0]));
 
-  if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
+  if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0] && ImageURL in data[0])) {
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude, ImageURL. You can map custom columns"+
     " in the Creator Panel.");
     return;
   }
@@ -169,7 +172,7 @@ function updateMap(data) {
   }
 
   const features = data.map(rec => {
-    const { id, name, lng, lat } = getInfo(rec);
+    const { id, name, lng, lat, imageUrl } = getInfo(rec);
     if (String(lng) === '...') { return null; }
     if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) { return null; }
 
@@ -183,7 +186,8 @@ function updateMap(data) {
         id,
         name,
         lng,
-        lat
+        lat,
+        imageUrl
       }
     };
   }).filter(f => f !== null);
@@ -212,7 +216,8 @@ function getInfo(rec) {
     id: rec.id,
     name: parseValue(rec[Name]),
     lng: parseValue(rec[Longitude]),
-    lat: parseValue(rec[Latitude])
+    lat: parseValue(rec[Latitude]),
+    imageUrl: parseValue(rec[ImageURL])
   };
   return result;
 }
@@ -284,15 +289,8 @@ function onEditOptions() {
   btnClose.onclick = () => popup.style.display = 'none';
   const checkbox = document.getElementById('cbxMode');
   checkbox.checked = mode === 'multi' ? true : false;
-  checkbox.onchange = async (e) => {
-    const newMode = e.target.checked ? 'multi' : 'single';
-    if (newMode != mode) {
-      mode = newMode;
-      await grist.setOption('mode', mode);
-      updateMode();
-    }
-  }
-  [ "mapSource", "mapCopyright" ].forEach((opt) => {
+  checkbox.onchange = () => mode = checkbox.checked ? 'multi' : 'single';
+  ['mapSource', 'mapCopyright'].forEach((opt) => {
     const elem = document.getElementById(opt);
     elem.value = (opt === "mapSource" ? mapSource : mapCopyright);
     elem.onchange = async (e) => {
