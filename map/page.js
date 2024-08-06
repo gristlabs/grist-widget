@@ -1,140 +1,240 @@
 "use strict";
 
-/* global grist, window, L */
+/* global grist, window, mapboxgl */
 
-let amap;
+let map;
 let popups = {};
 let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let mapSource = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-let mapCopyright = '© OpenStreetMap contributors';
+let mapSource = 'mapbox://styles/mapbox/streets-v11';
+let mapCopyright = '© Mapbox, © OpenStreetMap contributors';
+
+// Required, Label value
 const Name = "Name";
+// Required
 const Longitude = "Longitude";
+// Required
 const Latitude = "Latitude";
+// Optional - switch column to trigger geocoding
+const Geocode = 'Geocode';
+// Optional - but required for geocoding. Field with address to find (might be formula)
+const Address = 'Address';
+// Optional - but useful for geocoding. Blank field which map uses
+//            to store last geocoded Address. Enables map widget
+//            to automatically update the geocoding if Address is changed
+const GeocodedAddress = 'GeocodedAddress';
+let lastRecord;
+let lastRecords;
 
-const selectedIcon = new L.Icon({
-  iconUrl: 'marker-icon-green.png',
-  iconRetinaUrl: 'marker-icon-green-2x.png',
-  shadowUrl: 'marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-const defaultIcon = new L.Icon.Default();
+// Mapbox access token
+mapboxgl.accessToken = 'pk.eyJ1Ijoic2dmcm9lcmVyIiwiYSI6ImNsdGk4cWY0OTBkaXgycG1kNDNreGpqYTgifQ.P0pY9LfTCJLO9abd0Y41QQ';
 
-let clearMarkers = () => {};
+function initMap() {
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: mapSource,
+    center: [-98, 38.88], // Initial center point (longitude, latitude)
+    zoom: 3 // Initial zoom level
+  });
+}
 
-async function loadUMapData() {
-  const response = await fetch('https://umap.openstreetmap.fr/en/map/grist-802_1100523/geojson/');
-  return await response.json();
+function updateMap(data) {
+  data = data || selectedRecords;
+  selectedRecords = data;
+  if (!data || data.length === 0) {
+    showProblem("No data found yet");
+    return;
+  }
+  if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
+    " in the Creator Panel.");
+    return;
+  }
+
+  if (!map) {
+    initMap();
+  }
+
+  // Remove existing markers
+  if (popups) {
+    for (const id in popups) {
+      popups[id].remove();
+    }
+  }
+
+  popups = {}; // Reset popups
+
+  for (const rec of data) {
+    const {id, name, lng, lat} = getInfo(rec);
+    if (String(lng) === '...') { continue; }
+    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
+      continue;
+    }
+
+    const popup = new mapboxgl.Popup({ offset: 25 }).setText(name);
+
+    const marker = new mapboxgl.Marker({
+      color: (id == selectedRowId) ? 'green' : 'red'
+    })
+    .setLngLat([lng, lat])
+    .setPopup(popup)
+    .addTo(map);
+
+    marker.getElement().addEventListener('click', () => {
+      selectMaker(id);
+    });
+
+    popups[id] = marker;
+  }
+
+  // Fit map to markers
+  const bounds = new mapboxgl.LngLatBounds();
+  data.forEach(rec => {
+    if (rec[Longitude] && rec[Latitude]) {
+      bounds.extend([rec[Longitude], rec[Latitude]]);
+    }
+  });
+  if (bounds.isEmpty()) {
+    map.setCenter([-98, 38.88]);
+    map.setZoom(3);
+  } else {
+    map.fitBounds(bounds, { padding: 20 });
+  }
+
+  makeSureSelectedMarkerIsShown();
+}
+
+function selectMaker(id) {
+  const previouslyClicked = popups[selectedRowId];
+  if (previouslyClicked) {
+    previouslyClicked.setPopup(null).setPopup(new mapboxgl.Popup({ offset: 25 }).setText(previouslyClicked.getElement().title));
+  }
+  const marker = popups[id];
+  if (!marker) { return null; }
+
+  selectedRowId = id;
+  marker.setPopup(new mapboxgl.Popup({ offset: 25 }).setText(marker.getElement().title));
+  marker.togglePopup();
+
+  grist.setCursorPos?.({rowId: id}).catch(() => {});
+
+  return marker;
+}
+
+function getInfo(rec) {
+  const result = {
+    id: rec.id,
+    name: parseValue(rec[Name]),
+    lng: parseValue(rec[Longitude]),
+    lat: parseValue(rec[Latitude])
+  };
+  return result;
+}
+
+function makeSureSelectedMarkerIsShown() {
+  const rowId = selectedRowId;
+  if (rowId && popups[rowId]) {
+    map.flyTo({ center: popups[rowId].getLngLat(), essential: true });
+  }
+}
+
+function parseValue(v) {
+  if (typeof(v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
+    const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
+    return payload.remote || payload.local || payload.parent || payload;
+  }
+  return v;
 }
 
 function showProblem(txt) {
   document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
 }
 
-async function updateMap(data) {
-  if (!data || data.length === 0) {
-    showProblem("No data found yet");
-    return;
-  }
-
-  const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
-
-  const error = document.querySelector('.error');
-  if (error) { error.remove(); }
-  if (amap) {
-    try {
-      amap.off();
-      amap.remove();
-    } catch (e) {
-      console.warn(e);
-    }
-  }
-  const map = L.map('map', {
-    layers: [tiles],
-    wheelPxPerZoomLevel: 90,
-  });
-
-  map.createPane('selectedMarker').style.zIndex = 620;
-  map.createPane('otherMarkers').style.zIndex = 600;
-
-  popups = {};
-
-  const uMapData = await loadUMapData();
-  
-  uMapData.features.forEach(feature => {
-    const {coordinates} = feature.geometry;
-    const {name, description} = feature.properties;
-    
-    const marker = L.marker([coordinates[1], coordinates[0]], {
-      title: name,
-      icon: defaultIcon,
-      pane: "otherMarkers",
-    });
-
-    marker.bindPopup(`<b>${name}</b><br>${description}`);
-    marker.addTo(map);
-
-    // Assuming the name can be used as an identifier
-    popups[name] = marker;
-  });
-
-  amap = map;
-  
-  // Fit the map to show all markers
-  const bounds = L.featureGroup(Object.values(popups)).getBounds();
-  map.fitBounds(bounds);
-}
-
-function selectMarker(name) {
-  const previouslyClicked = popups[selectedRowId];
-  if (previouslyClicked) {
-    previouslyClicked.setIcon(defaultIcon);
-    previouslyClicked.options.pane = 'otherMarkers';
-  }
-
-  const marker = popups[name];
-  if (!marker) { return null; }
-
-  selectedRowId = name;
-
-  marker.setIcon(selectedIcon);
-  marker.options.pane = 'selectedMarker';
-
-  marker.openPopup();
-
-  return marker;
-}
+grist.on('message', (e) => {
+  if (e.tableId) { selectedTableId = e.tableId; }
+});
 
 grist.onRecord((record, mappings) => {
-  const mappedRecord = grist.mapColumnNames(record) || record;
-  const name = mappedRecord[Name];
-  selectMarker(name);
+  lastRecord = grist.mapColumnNames(record) || record;
+  selectOnMap(lastRecord);
 });
 
 grist.onRecords((data, mappings) => {
-  const mappedData = grist.mapColumnNames(data) || data;
-  updateMap(mappedData);
+  lastRecords = grist.mapColumnNames(data) || data;
+  updateMap(lastRecords);
 });
 
+grist.onNewRecord(() => {
+  popups = {};
+});
+
+function selectOnMap(rec) {
+  if (selectedRowId === rec.id) { return; }
+  selectedRowId = rec.id;
+  if (mode === 'single') {
+    updateMap([rec]);
+  } else {
+    updateMap();
+  }
+}
+
+grist.on('message', (e) => {
+  if (e.tableId) { selectedTableId = e.tableId; }
+});
+
+function onEditOptions() {
+  const popup = document.getElementById("settings");
+  popup.style.display = 'block';
+  const btnClose = document.getElementById("btnClose");
+  btnClose.onclick = () => popup.style.display = 'none';
+  const checkbox = document.getElementById('cbxMode');
+  checkbox.checked = mode === 'multi' ? true : false;
+  checkbox.onchange = async (e) => {
+    const newMode = e.target.checked ? 'multi' : 'single';
+    if (newMode != mode) {
+      mode = newMode;
+      await grist.setOption('mode', mode);
+      updateMode();
+    }
+  }
+  [ "mapSource", "mapCopyright" ].forEach((opt) => {
+    const ipt = document.getElementById(opt);
+    ipt.onchange = async (e) => {
+      await grist.setOption(opt, e.target.value);
+    }
+  })
+}
+
+const optional = true;
 grist.ready({
   columns: [
     "Name",
-    { name: "Longitude", type: 'Numeric' },
-    { name: "Latitude", type: 'Numeric' },
+    { name: "Longitude", type: 'Numeric'} ,
+    { name: "Latitude", type: 'Numeric'},
+    { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
+    { name: "Address", type: 'Text', optional},
+    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
   ],
   allowSelectBy: true,
+  onEditOptions
 });
 
 grist.onOptions((options, interaction) => {
   const newMode = options?.mode ?? mode;
   mode = newMode;
-  const newSource = options?.mapSource ?? mapSource;
-  mapSource = newSource;
-  const newCopyright = options?.mapCopyright ?? mapCopyright;
-  mapCopyright = newCopyright;
+  updateMode();
+  if (!interaction) {
+    mapSource = options?.mapSource ?? mapSource;
+    mapCopyright = options?.mapCopyright ?? mapCopyright;
+  }
 });
+
+function updateMode() {
+  const checkbox = document.getElementById('cbxMode');
+  if (checkbox) {
+    checkbox.checked = mode === 'multi' ? true : false;
+  }
+}
+
