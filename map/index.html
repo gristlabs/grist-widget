@@ -1,11 +1,32 @@
-<!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <script src="page.js"></script>
+  <link rel="stylesheet" href="screen.css" />
 </head>
 <body>
-    <div id="map" style="width: 100%; height: 400px;"></div>
-    <script src="page.js"></script>
+  <div id="map"></div>
+  <div id="settings">
+    <div id="btnClose">Close</div>
+    <label id="lblToggle" for="cbxMode">
+      <input type="checkbox" id="cbxMode">
+      <span id="lblText">All locations</span>
+    </label>
+    <br/>
+    <table>
+      <tr>
+        <td> <label id="lblSource" for="mapSource"> Source </label> </td>
+        <td> <input id="mapSource"> </td>
+      </tr>
+      <tr>
+        <td> <label id="lblCopyright" for="mapCopyright"> Copyright </label> </td>
+        <td> <input id="mapCopyright"> </td>
+      </tr>
+    </table>
+  </div>
 </body>
 </html>
