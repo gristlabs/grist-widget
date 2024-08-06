@@ -7,7 +7,7 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let mapSource = 'mapbox://styles/sgfroerer/clzc4a3mw00c901rc8836bh9z';
+let mapSource = 'mapbox://styles/mapbox/streets-v11';
 let mapCopyright = '© Mapbox, © OpenStreetMap contributors';
 
 // Required, Label value
@@ -35,7 +35,7 @@ function initMap() {
   map = new mapboxgl.Map({
     container: 'map',
     style: mapSource,
-    center: [-122.676483, 45.523064], // Initial center point (longitude, latitude)
+    center: [-98, 38.88], // Initial center point (longitude, latitude)
     zoom: 3 // Initial zoom level
   });
 
@@ -153,6 +153,10 @@ function updateMap(data) {
     showProblem("No data found yet");
     return;
   }
+
+  // Log the keys of the first record to help debug the column names
+  console.log("Columns in data: ", Object.keys(data[0]));
+
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
     showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
     " in the Creator Panel.");
@@ -289,9 +293,9 @@ function onEditOptions() {
     }
   }
   [ "mapSource", "mapCopyright" ].forEach((opt) => {
-    const ipt = document.getElementById(opt);
-    ipt.onchange = async (e) => {
-      await grist.setOption(opt, e.target.value);
+    const elem = document.getElementById(opt);
+    elem.value = (opt === "mapSource" ? mapSource : mapCopyright);
+    elem.onchange = async (e) => {
       switch (opt) {
         case 'mapSource': mapSource = e.target.value; break;
         case 'mapCopyright': mapCopyright = e.target.value; break;
