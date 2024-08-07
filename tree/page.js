@@ -27,7 +27,7 @@ function updateMap(records) {
     map.removeSource('locations');
   }
 
-  const popupFields = ['Name', 'Owner']; // Add more field names as needed
+  const popupFields = ['Name', 'Date']; // Add more field names as needed
 
   const geojson = {
     type: 'FeatureCollection',
