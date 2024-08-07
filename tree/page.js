@@ -1,4 +1,6 @@
 let map;
+let nameColumn = 'Name';
+let ownerColumn = 'Owner';
 
 function initializeMap() {
   map = new maplibregl.Map({
@@ -12,16 +14,17 @@ function initializeMap() {
   map.addControl(nav, 'top-left');
 
   map.on('load', () => {
-    // Load data from Grist
     grist.ready();
     grist.onRecords((records) => {
-      console.log('Records from Grist:', records); // Log records to check data
       updateMap(records);
     });
 
-    // Listen for row selection
+    grist.onOptions((options, previousOptions) => {
+      if (options.nameColumn) nameColumn = options.nameColumn;
+      if (options.ownerColumn) ownerColumn = options.ownerColumn;
+    });
+
     grist.onRecord((record, previousRecord) => {
-      console.log('Selected record:', record);
       if (record && record.Longitude && record.Latitude) {
         map.flyTo({
           center: [record.Longitude, record.Latitude],
@@ -30,10 +33,19 @@ function initializeMap() {
       }
     });
   });
+
+  document.getElementById('saveConfig').addEventListener('click', () => {
+    const nameCol = document.getElementById('nameColumn').value;
+    const ownerCol = document.getElementById('ownerColumn').value;
+
+    grist.setOptions({
+      nameColumn: nameCol,
+      ownerColumn: ownerCol
+    });
+  });
 }
 
 function updateMap(records) {
-  // Clear any existing markers
   if (map.getSource('locations')) {
     map.removeLayer('locations-layer');
     map.removeSource('locations');
@@ -48,13 +60,11 @@ function updateMap(records) {
         coordinates: [record.Longitude, record.Latitude]
       },
       properties: {
-        name: record.Name,
-        owner: record.Owner
+        name: record[nameColumn],
+        owner: record[ownerColumn]
       }
     }))
   };
-
-  console.log('GeoJSON data:', geojson); // Log GeoJSON data to check structure
 
   map.addSource('locations', {
     type: 'geojson',
@@ -116,7 +126,6 @@ function updateMap(records) {
     }
   });
 
-  // Add a popup on click
   map.on('click', 'unclustered-point', (e) => {
     const coordinates = e.features[0].geometry.coordinates.slice();
     const { name, owner } = e.features[0].properties;
@@ -136,5 +145,4 @@ function updateMap(records) {
   });
 }
 
-// Initialize the map when the window loads
 window.onload = initializeMap;
