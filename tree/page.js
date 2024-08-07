@@ -2,10 +2,10 @@ let map;
 
 function initializeMap() {
   map = new maplibregl.Map({
-    container: 'map', // container id
-    style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E', // style URL
-    center: [-123.25260, 44.71041], // starting position [lng, lat]
-    zoom: 8.4 // starting zoom
+    container: 'map',
+    style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E',
+    center: [-123.25260, 44.71041],
+    zoom: 8.4
   });
 
   const nav = new maplibregl.NavigationControl();
@@ -15,6 +15,7 @@ function initializeMap() {
     // Load data from Grist
     grist.ready();
     grist.onRecords((records) => {
+      console.log('Records from Grist:', records); // Log records to check data
       updateMap(records);
     });
   });
@@ -27,26 +28,22 @@ function updateMap(records) {
     map.removeSource('locations');
   }
 
-  const popupFields = ['Name', 'Date']; // Add more field names as needed
-
   const geojson = {
     type: 'FeatureCollection',
-    features: records.map(record => {
-      const properties = {};
-      popupFields.forEach(field => {
-        properties[field.toLowerCase()] = record[field];
-      });
-
-      return {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [record.Longitude, record.Latitude]
-        },
-        properties: properties
-      };
-    })
+    features: records.map(record => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [record.Longitude, record.Latitude]
+      },
+      properties: {
+        name: record.Name,
+        owner: record.Owner
+      }
+    }))
   };
+
+  console.log('GeoJSON data:', geojson); // Log GeoJSON data to check structure
 
   map.addSource('locations', {
     type: 'geojson',
@@ -111,17 +108,11 @@ function updateMap(records) {
   // Add a popup on click
   map.on('click', 'unclustered-point', (e) => {
     const coordinates = e.features[0].geometry.coordinates.slice();
-    const properties = e.features[0].properties;
-    let popupContent = '<strong>' + properties.name + '</strong>';
-    popupFields.forEach(field => {
-      if (field.toLowerCase() !== 'name') {
-        popupContent += `<p>${properties[field.toLowerCase()]}</p>`;
-      }
-    });
+    const { name, owner } = e.features[0].properties;
 
     new maplibregl.Popup()
       .setLngLat(coordinates)
-      .setHTML(popupContent)
+      .setHTML(`<strong>${name}</strong><p>${owner}</p>`)
       .addTo(map);
   });
 
@@ -133,7 +124,6 @@ function updateMap(records) {
     map.getCanvas().style.cursor = '';
   });
 }
-
 
 // Initialize the map when the window loads
 window.onload = initializeMap;
