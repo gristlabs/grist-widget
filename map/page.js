@@ -130,7 +130,7 @@ function initMap() {
       const coordinates = e.features[0].geometry.coordinates.slice();
       const { id, name, lng, lat, imageUrl } = e.features[0].properties;
 
-      const popupContent = `<strong>${name}</strong><br><img src="${imageUrl}" alt="${name}" style="width: 200px; height: auto;">`;
+      const popupContent = `<strong>${name}</strong><br>`;
 
       const popup = new mapboxgl.Popup({ offset: 25 })
         .setLngLat(coordinates)
