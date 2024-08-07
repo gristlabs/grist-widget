@@ -33,7 +33,7 @@ function updateMap(records) {
       type: 'Feature',
       geometry: {
         type: 'Point',
-        coordinates: [record.Latitude, record.Longitude]
+        coordinates: [record.Longitude, record.Latitude] // Corrected to Longitude first
       },
       properties: {
         name: record.Name,
