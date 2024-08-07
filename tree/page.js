@@ -18,6 +18,17 @@ function initializeMap() {
       console.log('Records from Grist:', records); // Log records to check data
       updateMap(records);
     });
+
+    // Listen for row selection
+    grist.onRecord((record, previousRecord) => {
+      console.log('Selected record:', record);
+      if (record && record.Longitude && record.Latitude) {
+        map.flyTo({
+          center: [record.Longitude, record.Latitude],
+          zoom: 15
+        });
+      }
+    });
   });
 }
 
