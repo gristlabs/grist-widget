@@ -27,19 +27,25 @@ function updateMap(records) {
     map.removeSource('locations');
   }
 
+  const popupFields = ['Name', 'Owner']; // Add more field names as needed
+
   const geojson = {
     type: 'FeatureCollection',
-    features: records.map(record => ({
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [record.Longitude, record.Latitude] // Corrected to Longitude first
-      },
-      properties: {
-        name: record.Name,
-        owner: record.Owner
-      }
-    }))
+    features: records.map(record => {
+      const properties = {};
+      popupFields.forEach(field => {
+        properties[field.toLowerCase()] = record[field];
+      });
+
+      return {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [record.Longitude, record.Latitude]
+        },
+        properties: properties
+      };
+    })
   };
 
   map.addSource('locations', {
@@ -105,11 +111,17 @@ function updateMap(records) {
   // Add a popup on click
   map.on('click', 'unclustered-point', (e) => {
     const coordinates = e.features[0].geometry.coordinates.slice();
-    const { name, owner } = e.features[0].properties;
+    const properties = e.features[0].properties;
+    let popupContent = '<strong>' + properties.name + '</strong>';
+    popupFields.forEach(field => {
+      if (field.toLowerCase() !== 'name') {
+        popupContent += `<p>${properties[field.toLowerCase()]}</p>`;
+      }
+    });
 
     new maplibregl.Popup()
       .setLngLat(coordinates)
-      .setHTML(`<strong>${name}</strong><p>${owner}</p>`)
+      .setHTML(popupContent)
       .addTo(map);
   });
 
@@ -121,6 +133,7 @@ function updateMap(records) {
     map.getCanvas().style.cursor = '';
   });
 }
+
 
 // Initialize the map when the window loads
 window.onload = initializeMap;
