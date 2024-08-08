@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Custom Map with Popups</title>
+    <script src="https://cdn.maptiler.com/maps/js/api.js"></script>
+    <style>
+        #map {
+            width: 100%;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        const map = new maptiler.Map({
+            container: 'map',
+            style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E',
+            center: [longitude, latitude],
+            zoom: 12
+        });
+
+        map.on('load', () => {
+            const datasets = [
+                {
+                    id: 'new-construction',
+                    data: 'https://api.maptiler.com/data/9066d146-9207-456b-ae1c-a2a064aaa60d/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
+                    marker: 'construction',
+                    color: '#FF711F'
+                },
+                {
+                    id: 'recently-sold',
+                    data: 'https://api.maptiler.com/data/28992c2c-ad93-4699-acee-ef44ecf52cb6/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
+                    marker: 'https://img.icons8.com/?size=100&id=NflkgBMzcJLN&format=png&color=000000',
+                    color: '#28B463'
+                },
+                {
+                    id: 'currently-for-sale',
+                    data: 'https://api.maptiler.com/data/fed38d64-6b6e-4186-9652-c70fa9f0735c/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
+                    marker: 'https://img.icons8.com/?size=100&id=h3USDbkfsNWM&format=png&color=000000',
+                    color: '#FFC300'
+                },
+                //{
+                    //id: 'crm-owners',
+                    //data: 'url-to-your-crm-owners-geojson',
+                    //marker: 'circle-15', // Using a built-in icon
+                    //color: '#3498DB'
+                //}
+            ];
+
+            datasets.forEach(dataset => {
+                // Fetch the GeoJSON data
+                fetch(dataset.data)
+                    .then(response => response.json())
+                    .then(geojson => {
+                        // Add the GeoJSON data as a source
+                        map.addSource(dataset.id, {
+                            type: 'geojson',
+                            data: geojson
+                        });
+
+                        // Add a layer to display the points
+                        map.addLayer({
+                            id: `${dataset.id}-points`,
+                            type: 'symbol',
+                            source: dataset.id,
+                            layout: {
+                                'icon-image': dataset.marker.startsWith('url') ? `{url}` : dataset.marker,
+                                'icon-size': 1.5
+                            },
+                            paint: {
+                                'icon-color': dataset.color
+                            }
+                        });
+
+                        // Add popups
+                        map.on('click', `${dataset.id}-points`, (e) => {
+                            const coordinates = e.features[0].geometry.coordinates.slice();
+                            const { name, address, description } = e.features[0].properties;
+
+                            // Ensure the popup is displayed in the right location
+                            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                            }
+
+                            new maptiler.Popup()
+                                .setLngLat(coordinates)
+                                .setHTML(`
+                                    <strong>${name}</strong><br>
+                                    ${address}<br>
+                                    ${description}
+                                `)
+                                .addTo(map);
+                        });
+
+                        // Change the cursor to a pointer when over a clickable point
+                        map.on('mouseenter', `${dataset.id}-points`, () => {
+                            map.getCanvas().style.cursor = 'pointer';
+                        });
+
+                        // Change it back to the default when leaving
+                        map.on('mouseleave', `${dataset.id}-points`, () => {
+                            map.getCanvas().style.cursor = '';
+                        });
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
