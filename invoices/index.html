@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Map with Popups</title>
-    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
-    <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
+    <title>Map with Custom Markers</title>
+    <script src="https://cdn.maptiler.com/maplibre-gl-js/v2.2.0/maplibre-gl.js"></script>
+    <link href="https://cdn.maptiler.com/maplibre-gl-js/v2.2.0/maplibre-gl.css" rel="stylesheet" />
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
@@ -15,109 +15,68 @@
 <body>
     <div id="map"></div>
     <script>
-        maptilersdk.config.apiKey = 'TbsQ5qLxJHC20Jv4Th7E'; // Replace with your actual MapTiler API key
-        const map = new maptilersdk.Map({
+        const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E',
-            center: [-123.25260, 44.71041], // Replace with actual longitude and latitude
-            zoom: 8.4 // starting zoom
+            style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E', // Replace with your style URL and API key
+            center: [-123.25260, 44.71041], // Replace with your desired coordinates
+            zoom: 8.4
         });
 
         map.on('load', () => {
-            const datasets = [
-                {
-                    id: 'new-construction',
-                    data: 'https://api.maptiler.com/data/9066d146-9207-456b-ae1c-a2a064aaa60d/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
-                    marker: 'construction-15', // Built-in Mapbox Maki icon
-                    color: '#FF711F',
-                    iconUrl: null
-                },
-                {
-                    id: 'recently-sold',
-                    data: 'https://api.maptiler.com/data/28992c2c-ad93-4699-acee-ef44ecf52cb6/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
-                    marker: 'recently-sold-icon', // Custom icon name
-                    color: '#28B463',
-                    iconUrl: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-dollar-finance-flatart-icons-flat-flatarticons.png'
-                },
-                {
-                    id: 'currently-for-sale',
-                    data: 'https://api.maptiler.com/data/fed38d64-6b6e-4186-9652-c70fa9f0735c/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
-                    marker: 'currently-for-sale-icon', // Custom icon name
-                    color: '#FFC300',
-                    iconUrl: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-money-finance-flatart-icons-flat-flatarticons.png'
-                }
-            ];
+            // Load a custom icon
+            map.loadImage('https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-dollar-finance-flatart-icons-flat-flatarticons.png', (error, image) => {
+                if (error) throw error;
+                map.addImage('custom-marker', image);
 
-            datasets.forEach(dataset => {
-                if (dataset.iconUrl) {
-                    const img = new Image();
-                    img.src = dataset.iconUrl;
-                    img.onload = () => {
-                        map.addImage(dataset.marker, img);
-                        addLayerAndPopup(dataset);
-                    };
-                } else {
-                    addLayerAndPopup(dataset);
-                }
-            });
-
-            function addLayerAndPopup(dataset) {
-                // Fetch the GeoJSON data
-                fetch(dataset.data)
-                    .then(response => response.json())
-                    .then(geojson => {
-                        // Add the GeoJSON data as a source
-                        map.addSource(dataset.id, {
-                            type: 'geojson',
-                            data: geojson
-                        });
-
-                        // Add a layer to display the points
-                        map.addLayer({
-                            id: `${dataset.id}-points`,
-                            type: 'symbol',
-                            source: dataset.id,
-                            layout: {
-                                'icon-image': dataset.marker,
-                                'icon-size': 1.5
+                // Add a simple GeoJSON source with one point
+                map.addSource('point', {
+                    'type': 'geojson',
+                    'data': {
+                        'type': 'FeatureCollection',
+                        'features': [{
+                            'type': 'Feature',
+                            'geometry': {
+                                'type': 'Point',
+                                'coordinates': [-123.25260, 44.71041]
                             },
-                            paint: {
-                                'icon-color': dataset.color
+                            'properties': {
+                                'title': 'Custom Marker',
+                                'description': 'This is a custom marker with a popup.'
                             }
-                        });
+                        }]
+                    }
+                });
 
-                        // Add popups
-                        map.on('click', `${dataset.id}-points`, (e) => {
-                            const coordinates = e.features[0].geometry.coordinates.slice();
-                            const properties = e.features[0].properties;
+                // Add a layer to use the custom icon
+                map.addLayer({
+                    'id': 'points',
+                    'type': 'symbol',
+                    'source': 'point',
+                    'layout': {
+                        'icon-image': 'custom-marker',
+                        'icon-size': 1.5
+                    }
+                });
 
-                            // Ensure the popup is displayed in the right location
-                            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-                            }
+                // Add a popup
+                map.on('click', 'points', (e) => {
+                    const coordinates = e.features[0].geometry.coordinates.slice();
+                    const description = e.features[0].properties.description;
 
-                            new maptilersdk.Popup()
-                                .setLngLat(coordinates)
-                                .setHTML(`
-                                    <strong>${properties.name || 'No Name'}</strong><br>
-                                    ${properties.address || 'No Address'}<br>
-                                    ${properties.description || 'No Description'}
-                                `)
-                                .addTo(map);
-                        });
+                    new maplibregl.Popup()
+                        .setLngLat(coordinates)
+                        .setHTML(description)
+                        .addTo(map);
+                });
 
-                        // Change the cursor to a pointer when over a clickable point
-                        map.on('mouseenter', `${dataset.id}-points`, () => {
-                            map.getCanvas().style.cursor = 'pointer';
-                        });
-
-                        // Change it back to the default when leaving
-                        map.on('mouseleave', `${dataset.id}-points`, () => {
-                            map.getCanvas().style.cursor = '';
-                        });
-                    })
-                    .catch(error => console.error('Error loading GeoJSON data:', error));
-            }
+                // Change cursor on hover
+                map.on('mouseenter', 'points', () => {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+                map.on('mouseleave', 'points', () => {
+                    map.getCanvas().style.cursor = '';
+                });
+            });
         });
     </script>
 </body>
