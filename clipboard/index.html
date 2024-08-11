@@ -155,6 +155,7 @@
 
               // Check if image URL is valid and create the image tag or fallback text
               var imageUrl = e.features[0].properties.Image;
+              console.log("Image URL:", imageUrl); // Debugging: Log the image URL to the console
               var imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
 
               // Set popup text
