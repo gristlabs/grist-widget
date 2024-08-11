@@ -17,8 +17,8 @@
     <script>
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E', // Replace with your style URL and API key
-            center: [-123.25260, 44.71041], // Replace with your desired coordinates
+            style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E',
+            center: [-123.25260, 44.71041],
             zoom: 8.4
         });
 
@@ -28,37 +28,24 @@
                 if (error) throw error;
                 map.addImage('custom-marker', image);
 
-                // Add a simple GeoJSON source with one point
-                map.addSource('point', {
+                // Load GeoJSON data from an external source
+                map.addSource('points', {
                     'type': 'geojson',
-                    'data': {
-                        'type': 'FeatureCollection',
-                        'features': [{
-                            'type': 'Feature',
-                            'geometry': {
-                                'type': 'Point',
-                                'coordinates': [-123.25260, 44.71041]
-                            },
-                            'properties': {
-                                'title': 'Custom Marker',
-                                'description': 'This is a custom marker with a popup.'
-                            }
-                        }]
-                    }
+                    'data': 'https://api.maptiler.com/data/673a85b1-1458-4a40-acd6-7e63061b7e77/features.json?key=TbsQ5qLxJHC20Jv4Th7E' // Replace with your GeoJSON URL
                 });
 
-                // Add a layer to use the custom icon
+                // Add a layer to use the custom icon for the points
                 map.addLayer({
                     'id': 'points',
                     'type': 'symbol',
-                    'source': 'point',
+                    'source': 'points',
                     'layout': {
                         'icon-image': 'custom-marker',
                         'icon-size': 1.5
                     }
                 });
 
-                // Add a popup
+                // Add popups on click
                 map.on('click', 'points', (e) => {
                     const coordinates = e.features[0].geometry.coordinates.slice();
                     const description = e.features[0].properties.description;
