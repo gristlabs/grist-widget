@@ -1,47 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>QR Code</title>
-    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" integrity="sha512-pUhApVQtLbnpLtJn6DuzDD5o2xtmLJnJ7oBoMsBnzOkVkpqofGLGPaBJ6ayD2zQe3lCgCibhJBi4cj5wAxwVKA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  </head>
-  <body>
-    <div id="content"></div>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Map with Popups</title>
+    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
+    <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
+    <style>
+        body {margin: 0; padding: 0;}
+        #map {position: absolute; top: 0; bottom: 0; width: 100%;}
+    </style>
+</head>
+<body>
+    <div id="map"></div>
     <script>
-      function qrcode (qr) {
-        const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-        const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
-        const size = .92 * Math.min(vw, vh)
-        const canvas = document.createElement('canvas');
-        new QRious ({
-          element: canvas,
-          level: 'L',
-          size,
-          value: qr
+        maptilersdk.config.apiKey = 'TbsQ5qLxJHC20Jv4Th7E'; // Replace with your actual MapTiler API key
+        const map = new maptilersdk.Map({
+            container: 'map', // container id
+            style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E',
+            center: [-123.25260, 44.71041], // Replace with actual longitude and latitude
+            zoom: 8.4 // starting zoom
         });
-        return canvas;
-      }
-      grist.ready({
-        columns: ['QR'],
-        requiredAccess: 'read table'
-      });
-      grist.onRecord(function(record) {
-        const content = document.getElementById('content');
-        const { QR } = grist.mapColumnNames(record);
-        function update_qr () {
-          content.innerHTML = '';
-          if (typeof(QR) === "object") {
-            for (qr of QR) {
-              content.appendChild(qrcode(qr));
-            }
-          } else {
-            content.appendChild(qrcode(QR));
-          };
-        };
-        window.addEventListener("resize", update_qr);
-        update_qr();
-      });
+
+        map.on('load', () => {
+            const datasets = [
+                {
+                    id: 'new-construction',
+                    data: 'https://api.maptiler.com/data/9066d146-9207-456b-ae1c-a2a064aaa60d/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
+                    marker: 'construction-15', // Built-in Mapbox Maki icon
+                    color: '#FF711F'
+                },
+                {
+                    id: 'recently-sold',
+                    data: 'https://api.maptiler.com/data/28992c2c-ad93-4699-acee-ef44ecf52cb6/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
+                    marker: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-dollar-finance-flatart-icons-flat-flatarticons.png', // Custom icon URL
+                    color: '#28B463'
+                },
+                {
+                    id: 'currently-for-sale',
+                    data: 'https://api.maptiler.com/data/fed38d64-6b6e-4186-9652-c70fa9f0735c/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
+                    marker: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-money-finance-flatart-icons-flat-flatarticons.png', // Custom icon URL
+                    color: '#FFC300'
+                }
+                // {
+                //     id: 'crm-owners',
+                //     data: 'url-to-your-crm-owners-geojson',
+                //     marker: 'circle-15', // Built-in Mapbox Maki icon
+                //     color: '#3498DB'
+                // }
+            ];
+
+            datasets.forEach(dataset => {
+                // Fetch the GeoJSON data
+                fetch(dataset.data)
+                    .then(response => response.json())
+                    .then(geojson => {
+                        // Add the GeoJSON data as a source
+                        map.addSource(dataset.id, {
+                            type: 'geojson',
+                            data: geojson
+                        });
+
+                        // Add a layer to display the points
+                        map.addLayer({
+                            id: `${dataset.id}-points`,
+                            type: 'symbol',
+                            source: dataset.id,
+                            layout: {
+                                'icon-image': dataset.marker.startsWith('https://') ? `url(${dataset.marker})` : dataset.marker,
+                                'icon-size': 1.5
+                            },
+                            paint: {
+                                'icon-color': dataset.color
+                            }
+                        });
+
+                        // Add popups
+                        map.on('click', `${dataset.id}-points`, (e) => {
+                            const coordinates = e.features[0].geometry.coordinates.slice();
+                            const { name, address, description } = e.features[0].properties;
+
+                            // Ensure the popup is displayed in the right location
+                            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                            }
+
+                            new maptilersdk.Popup()
+                                .setLngLat(coordinates)
+                                .setHTML(`
+                                    <strong>${name}</strong><br>
+                                    ${address}<br>
+                                    ${description}
+                                `)
+                                .addTo(map);
+                        });
+
+                        // Change the cursor to a pointer when over a clickable point
+                        map.on('mouseenter', `${dataset.id}-points`, () => {
+                            map.getCanvas().style.cursor = 'pointer';
+                        });
+
+                        // Change it back to the default when leaving
+                        map.on('mouseleave', `${dataset.id}-points`, () => {
+                            map.getCanvas().style.cursor = '';
+                        });
+                    });
+            });
+        });
     </script>
-  </body>
+</body>
 </html>
