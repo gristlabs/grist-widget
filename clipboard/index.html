@@ -72,6 +72,13 @@
     .mapboxgl-popup-anchor-top>.mapboxgl-popup-tip {
       border-bottom-color: rgb(61, 59, 59);
     }
+
+    .mapboxgl-popup img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px 0;
+    }
   </style>
 </head>
 
@@ -90,7 +97,6 @@
           : url
       };
     };
-    //YOUR TURN: add your Mapbox token
     
     mapboxgl.accessToken = 'pk.eyJ1Ijoic2dmcm9lcmVyIiwiYSI6ImNsdGk4cWY0OTBkaXgycG1kNDNreGpqYTgifQ.P0pY9LfTCJLO9abd0Y41QQ'; //Mapbox token 
     var map = new mapboxgl.Map({
@@ -110,8 +116,6 @@
         success: function (csvData) { makeGeoJSON(csvData); }
       });
 
-
-
       function makeGeoJSON(csvData) {
         csv2geojson.csv2geojson(csvData, {
           latfield: 'Latitude',
@@ -120,7 +124,7 @@
         }, function (err, data) {
           map.on('load', function () {
 
-            //Add the the layer to the map
+            //Add the layer to the map
             map.addLayer({
               'id': 'csvData',
               'type': 'circle',
@@ -134,16 +138,18 @@
               }
             });
 
-
             // When a click event occurs on a feature in the csvData layer, open a popup at the
             // location of the feature, with description HTML from its properties.
             map.on('click', 'csvData', function (e) {
               var coordinates = e.features[0].geometry.coordinates.slice();
 
-              //set popup text
-              //You can adjust the values of the popup to match the headers of your CSV.
-              // For example: e.features[0].properties.Name is retrieving information from the field Name in the original CSV.
-              var description = `<h3>` + e.features[0].properties.Name + `</h3>` + `<h4>` + `<b>` + `Address: ` + `</b>` + e.features[0].properties.Address + `</h4>` + `<h4>` + `<b>` + `Phone: ` + `</b>` + e.features[0].properties.Phone + `</h4>`;
+              //Set popup text with an image included
+              var description = `
+                <h3>${e.features[0].properties.Name}</h3>
+                <h4><b>Address: </b>${e.features[0].properties.Address}</h4>
+                <h4><b>Phone: </b>${e.features[0].properties.Phone}</h4>
+                <img src="${e.features[0].properties.ImageURL}" alt="Image" />
+              `;
 
               // Ensure that if the map is zoomed out such that multiple
               // copies of the feature are visible, the popup appears
@@ -152,8 +158,7 @@
                 coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
               }
 
-              //add Popup to map
-
+              //Add Popup to map
               new mapboxgl.Popup()
                 .setLngLat(coordinates)
                 .setHTML(description)
@@ -178,9 +183,6 @@
         });
       };
     });
-
-
-
 
   </script>
 
