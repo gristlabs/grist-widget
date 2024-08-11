@@ -1,158 +1,58 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Map with Popups and Sidebar</title>
-    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
-    <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-        }
-        #sidebar {
-            width: 25%;
-            background: #f8f9fa;
-            overflow-y: auto;
-            border-right: 1px solid #ddd;
-            padding: 10px;
-        }
-        #map {
-            position: relative;
-            flex: 1;
-        }
-        .sidebar-item {
-            padding: 15px 10px;
-            border-bottom: 1px solid #ddd;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .sidebar-item:hover {
-            background-color: #f0f0f0;
-        }
-        .sidebar-item:active {
-            background-color: #ccc;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attach a popup to a marker instance</title>
+<script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
+<link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
+<style>
+  body {margin: 0; padding: 0;}
+  #map {position: absolute; top: 0; bottom: 0; width: 100%;}
+</style>
 </head>
 <body>
-    <div id="sidebar"></div>
-    <div id="map"></div>
-    <script>
-        maptilersdk.config.apiKey = 'TbsQ5qLxJHC20Jv4Th7E'; // Replace with your actual MapTiler API key
-        const map = new maptilersdk.Map({
-            container: 'map', // container id
-            style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E',
-            center: [-123.25260, 44.71041], // Replace with actual longitude and latitude
-            zoom: 8.4 // starting zoom
-        });
+<style>
+    #marker {
+        background-image: url('https://docs.maptiler.com/sdk-js/assets/washington-monument.jpg');
+        background-size: cover;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        cursor: pointer;
+    }
 
-        map.on('load', () => {
-            const sidebar = document.getElementById('sidebar');
+    .mapboxgl-popup {
+        max-width: 200px;
+    }
+</style>
 
-            const datasets = [
-                {
-                    id: 'new-construction',
-                    data: 'https://api.maptiler.com/data/9066d146-9207-456b-ae1c-a2a064aaa60d/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
-                    marker: 'construction-15', // Built-in Mapbox Maki icon
-                    color: '#FF711F'
-                },
-                {
-                    id: 'recently-sold',
-                    data: 'https://api.maptiler.com/data/28992c2c-ad93-4699-acee-ef44ecf52cb6/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
-                    marker: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-dollar-finance-flatart-icons-flat-flatarticons.png', // Custom icon URL
-                    color: '#28B463'
-                },
-                {
-                    id: 'currently-for-sale',
-                    data: 'https://api.maptiler.com/data/fed38d64-6b6e-4186-9652-c70fa9f0735c/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
-                    marker: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-money-finance-flatart-icons-flat-flatarticons.png', // Custom icon URL
-                    color: '#FFC300'
-                }
-            ];
+<div id="map"></div>
 
-            datasets.forEach((dataset) => {
-                fetch(dataset.data)
-                    .then(response => response.json())
-                    .then(geojson => {
-                        // Add the GeoJSON data as a source
-                        map.addSource(dataset.id, {
-                            type: 'geojson',
-                            data: geojson
-                        });
+<script>
+    maptilersdk.config.apiKey = 'TbsQ5qLxJHC20Jv4Th7E';
+    var monument = [-77.0353, 38.8895];
+    var map = new maptilersdk.Map({
+        container: 'map',
+        style: maptilersdk.MapStyle.STREETS,
+        center: monument,
+        zoom: 15
+    });
 
-                        // Add a layer to display the points
-                        map.addLayer({
-                            id: `${dataset.id}-points`,
-                            type: 'symbol',
-                            source: dataset.id,
-                            layout: {
-                                'icon-image': dataset.marker.startsWith('https://') ? `url(${dataset.marker})` : dataset.marker,
-                                'icon-size': 1.5
-                            },
-                            paint: {
-                                'icon-color': dataset.color
-                            }
-                        });
+    // create the popup
+    var popup = new maptilersdk.Popup({ offset: 25 }).setText(
+        'Construction on the Washington Monument began in 1848.'
+    );
 
-                        // Create sidebar entries
-                        geojson.features.forEach((feature, index) => {
-                            const item = document.createElement('div');
-                            item.className = 'sidebar-item';
-                            item.textContent = feature.properties.name || 'No Name'; // Updated for better handling of missing data
-                            item.dataset.index = index;
+    // create DOM element for the marker
+    var el = document.createElement('div');
+    el.id = 'marker';
 
-                            // Click event for focusing on the map
-                            item.addEventListener('click', () => {
-                                const coordinates = feature.geometry.coordinates;
-                                map.flyTo({
-                                    center: coordinates,
-                                    zoom: 15
-                                });
-                            });
-
-                            sidebar.appendChild(item);
-                        });
-
-                        // Add popups on click
-                        map.on('click', `${dataset.id}-points`, (e) => {
-                            const coordinates = e.features[0].geometry.coordinates.slice();
-                            const name = e.features[0].properties.name || 'No Name';
-                            const address = e.features[0].properties.address || 'No Address';
-                            const description = e.features[0].properties.description || 'No Description';
-
-                            // Ensure the popup is displayed in the right location
-                            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-                            }
-
-                            new maptilersdk.Popup()
-                                .setLngLat(coordinates)
-                                .setHTML(`
-                                    <strong>${name}</strong><br>
-                                    ${address}<br>
-                                    ${description}
-                                `)
-                                .addTo(map);
-                        });
-
-                        // Change the cursor to a pointer when over a clickable point
-                        map.on('mouseenter', `${dataset.id}-points`, () => {
-                            map.getCanvas().style.cursor = 'pointer';
-                        });
-
-                        // Change it back to the default when leaving
-                        map.on('mouseleave', `${dataset.id}-points`, () => {
-                            map.getCanvas().style.cursor = '';
-                        });
-                    });
-            });
-        });
-    </script>
+    // create the marker
+    new maptilersdk.Marker({element: el})
+        .setLngLat(monument)
+        .setPopup(popup) // sets a popup on this marker
+        .addTo(map);
+</script>
 </body>
 </html>
