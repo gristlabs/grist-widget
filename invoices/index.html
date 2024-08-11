@@ -29,23 +29,39 @@
                     id: 'new-construction',
                     data: 'https://api.maptiler.com/data/9066d146-9207-456b-ae1c-a2a064aaa60d/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
                     marker: 'construction-15', // Built-in Mapbox Maki icon
-                    color: '#FF711F'
+                    color: '#FF711F',
+                    iconUrl: null
                 },
                 {
                     id: 'recently-sold',
                     data: 'https://api.maptiler.com/data/28992c2c-ad93-4699-acee-ef44ecf52cb6/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
-                    marker: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-dollar-finance-flatart-icons-flat-flatarticons.png', // Custom icon URL
-                    color: '#28B463'
+                    marker: 'recently-sold-icon', // Custom icon name
+                    color: '#28B463',
+                    iconUrl: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-dollar-finance-flatart-icons-flat-flatarticons.png'
                 },
                 {
                     id: 'currently-for-sale',
                     data: 'https://api.maptiler.com/data/fed38d64-6b6e-4186-9652-c70fa9f0735c/features.json?key=TbsQ5qLxJHC20Jv4Th7E',
-                    marker: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-money-finance-flatart-icons-flat-flatarticons.png', // Custom icon URL
-                    color: '#FFC300'
+                    marker: 'currently-for-sale-icon', // Custom icon name
+                    color: '#FFC300',
+                    iconUrl: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-money-finance-flatart-icons-flat-flatarticons.png'
                 }
             ];
 
             datasets.forEach(dataset => {
+                if (dataset.iconUrl) {
+                    const img = new Image();
+                    img.src = dataset.iconUrl;
+                    img.onload = () => {
+                        map.addImage(dataset.marker, img);
+                        addLayerAndPopup(dataset);
+                    };
+                } else {
+                    addLayerAndPopup(dataset);
+                }
+            });
+
+            function addLayerAndPopup(dataset) {
                 // Fetch the GeoJSON data
                 fetch(dataset.data)
                     .then(response => response.json())
@@ -62,7 +78,7 @@
                             type: 'symbol',
                             source: dataset.id,
                             layout: {
-                                'icon-image': dataset.marker.startsWith('https://') ? `url(${dataset.marker})` : dataset.marker,
+                                'icon-image': dataset.marker,
                                 'icon-size': 1.5
                             },
                             paint: {
@@ -101,7 +117,7 @@
                         });
                     })
                     .catch(error => console.error('Error loading GeoJSON data:', error));
-            });
+            }
         });
     </script>
 </body>
