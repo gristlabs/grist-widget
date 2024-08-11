@@ -43,12 +43,6 @@
                     marker: 'https://img.icons8.com/external-flatart-icons-flat-flatarticons/64/000000/external-money-finance-flatart-icons-flat-flatarticons.png', // Custom icon URL
                     color: '#FFC300'
                 }
-                // {
-                //     id: 'crm-owners',
-                //     data: 'url-to-your-crm-owners-geojson',
-                //     marker: 'circle-15', // Built-in Mapbox Maki icon
-                //     color: '#3498DB'
-                // }
             ];
 
             datasets.forEach(dataset => {
@@ -70,9 +64,6 @@
                             layout: {
                                 'icon-image': dataset.marker.startsWith('https://') ? `url(${dataset.marker})` : dataset.marker,
                                 'icon-size': 1.5
-                            },
-                            paint: {
-                                'icon-color': dataset.color
                             }
                         });
 
@@ -80,11 +71,6 @@
                         map.on('click', `${dataset.id}-points`, (e) => {
                             const coordinates = e.features[0].geometry.coordinates.slice();
                             const { name, address, description } = e.features[0].properties;
-
-                            // Ensure the popup is displayed in the right location
-                            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-                            }
 
                             new maptilersdk.Popup()
                                 .setLngLat(coordinates)
