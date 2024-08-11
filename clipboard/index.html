@@ -153,10 +153,14 @@
             map.on('click', 'csvData', function (e) {
               var coordinates = e.features[0].geometry.coordinates.slice();
 
+              // Check if image URL is valid and create the image tag or fallback text
+              var imageUrl = e.features[0].properties.Image;
+              var imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
+
               // Set popup text
               var description = `
                 <h3>${e.features[0].properties.Name}</h3>
-                <img src="${e.features[0].properties.Image}" alt="Image" style="width: 100%; height: auto;" />
+                ${imageTag}
                 <h4><b>Address: </b>${e.features[0].properties.Address}</h4>
                 <h4><b>Phone: </b>${e.features[0].properties.Phone}</h4>
                 <div class="popup-buttons">
