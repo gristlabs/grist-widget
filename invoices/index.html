@@ -8,8 +8,8 @@
     <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js"></script>
     <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css" rel="stylesheet" />
     <style>
-        body {margin: 0; padding: 0;}
-        #map {position: absolute; top: 0; bottom: 0; width: 100%;}
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
     </style>
 </head>
 <body>
@@ -17,7 +17,7 @@
     <script>
         maptilersdk.config.apiKey = 'TbsQ5qLxJHC20Jv4Th7E'; // Replace with your actual MapTiler API key
         const map = new maptilersdk.Map({
-            container: 'map', // container id
+            container: 'map',
             style: 'https://api.maptiler.com/maps/02c3290e-4c70-4f5f-8701-51554ec4cfb2/style.json?key=TbsQ5qLxJHC20Jv4Th7E',
             center: [-123.25260, 44.71041], // Replace with actual longitude and latitude
             zoom: 8.4 // starting zoom
@@ -64,20 +64,28 @@
                             layout: {
                                 'icon-image': dataset.marker.startsWith('https://') ? `url(${dataset.marker})` : dataset.marker,
                                 'icon-size': 1.5
+                            },
+                            paint: {
+                                'icon-color': dataset.color
                             }
                         });
 
                         // Add popups
                         map.on('click', `${dataset.id}-points`, (e) => {
                             const coordinates = e.features[0].geometry.coordinates.slice();
-                            const { name, address, description } = e.features[0].properties;
+                            const properties = e.features[0].properties;
+
+                            // Ensure the popup is displayed in the right location
+                            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                            }
 
                             new maptilersdk.Popup()
                                 .setLngLat(coordinates)
                                 .setHTML(`
-                                    <strong>${name}</strong><br>
-                                    ${address}<br>
-                                    ${description}
+                                    <strong>${properties.name || 'No Name'}</strong><br>
+                                    ${properties.address || 'No Address'}<br>
+                                    ${properties.description || 'No Description'}
                                 `)
                                 .addTo(map);
                         });
@@ -91,7 +99,8 @@
                         map.on('mouseleave', `${dataset.id}-points`, () => {
                             map.getCanvas().style.cursor = '';
                         });
-                    });
+                    })
+                    .catch(error => console.error('Error loading GeoJSON data:', error));
             });
         });
     </script>
