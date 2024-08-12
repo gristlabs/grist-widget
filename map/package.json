@@ -16,7 +16,8 @@
         {
           "name": "Grist Labs"
         }
-      ]
+      ],
+      "isGristLabsMaintained": true
     }
   ]
 }

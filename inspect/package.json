@@ -16,7 +16,8 @@
         {
           "name": "Grist Labs"
         }
-      ]
+      ],
+      "isGristLabsMaintained": true
     },
     {
       "name": "Inspect Table",
@@ -30,7 +31,8 @@
         {
           "name": "Grist Labs"
         }
-      ]
+      ],
+      "isGristLabsMaintained": true
     },
     {
       "name": "Inspect Options",
@@ -43,7 +45,8 @@
         {
           "name": "Grist Labs"
         }
-      ]
+      ],
+      "isGristLabsMaintained": true
     },
     {
       "name": "Inspect Columns",
@@ -62,7 +65,8 @@
         {
           "name": "Grist Labs"
         }
-      ]
+      ],
+      "isGristLabsMaintained": true
     }
   ]
 }
