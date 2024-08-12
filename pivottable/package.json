@@ -13,8 +13,9 @@
     "description": "Build and modify a pivot table from a selected Grist table.",
     "authors": [
       {
-        "name": "Grist Labs"
+        "name": "jperon"
       }
-    ]
+    ],
+    "community": true
   }
 }

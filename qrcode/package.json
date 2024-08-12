@@ -14,9 +14,10 @@
       "description": "Generate custom QR codes based on data from a selected record.",
       "authors": [
         {
-          "name": "Grist Labs"
+          "name": "jperon"
         }
-      ]
+      ],
+      "community": true
     }
   ]
 }
