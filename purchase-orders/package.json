@@ -9,6 +9,12 @@
     "widgetId": "@gristlabs/widget-purchase-orders",
     "published": true,
     "accessLevel": "read table",
-    "renderAfterReady": true
+    "renderAfterReady": true,
+    "description": "Create printable purchase orders based on data from a selected record.",
+    "authors": [
+      {
+        "name": "Grist Labs"
+      }
+    ]
   }
 }

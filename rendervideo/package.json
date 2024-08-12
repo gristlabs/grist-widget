@@ -9,6 +9,12 @@
     "widgetId": "@gristlabs/widget-rendervideo",
     "published": true,
     "accessLevel": "read table",
-    "renderAfterReady": true
+    "renderAfterReady": true,
+    "description": "Embed videos from YouTube, Vimeo, Facebook Video, Google Drive and more.",
+    "authors": [
+      {
+        "name": "Grist Labs"
+      }
+    ]
   }
 }
