@@ -13,7 +13,8 @@
     "description": "Customize and print labels directly from a selected Grist table.",
     "authors": [
       {
-        "name": "Grist Labs"
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
       }
     ],
     "isGristLabsMaintained": true

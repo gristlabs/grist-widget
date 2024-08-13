@@ -13,7 +13,8 @@
     "description": "Build one or more buttons that send customizable actions (e.g. \"AddRecord\") to the Grist data engine.",
     "authors": [
       {
-        "name": "Grist Labs"
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
       }
     ],
     "isGristLabsMaintained": true

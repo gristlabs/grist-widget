@@ -13,7 +13,8 @@
     "description": "Generate printable invoices, with values filled in from the selected record.",
     "authors": [
       {
-        "name": "Grist Labs"
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
       }
     ],
     "isGristLabsMaintained": true

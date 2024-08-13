@@ -13,7 +13,8 @@
     "description": "Copy column values from records to your clipboard with a click of a button.",
     "authors": [
       {
-        "name": "Grist Labs"
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
       }
     ],
     "isGristLabsMaintained": true

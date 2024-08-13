@@ -13,7 +13,8 @@
     "description": "Build and modify a pivot table from a selected Grist table.",
     "authors": [
       {
-        "name": "jperon"
+        "name": "jperon",
+        "url": "https://github.com/jperon"
       }
     ]
   }

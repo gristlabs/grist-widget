@@ -14,7 +14,8 @@
       "description": "View the raw representation of the selected record as JSON.",
       "authors": [
         {
-          "name": "Grist Labs"
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
         }
       ],
       "isGristLabsMaintained": true
@@ -29,7 +30,8 @@
       "description": "View the raw representation of all the table's records as JSON.",
       "authors": [
         {
-          "name": "Grist Labs"
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
         }
       ],
       "isGristLabsMaintained": true
@@ -43,7 +45,8 @@
       "description": "View the options sent to this custom widget, and send your own custom options, for testing.",
       "authors": [
         {
-          "name": "Grist Labs"
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
         }
       ],
       "isGristLabsMaintained": true
@@ -63,7 +66,8 @@
       "description": "An interactive introduction to the Grist Custom Widget API, with live code examples.",
       "authors": [
         {
-          "name": "Grist Labs"
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
         }
       ],
       "isGristLabsMaintained": true

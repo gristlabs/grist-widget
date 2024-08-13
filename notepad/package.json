@@ -13,7 +13,8 @@
     "description": "View and format a record's text using a rich text editor.",
     "authors": [
       {
-        "name": "Grist Labs"
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
       }
     ],
     "isGristLabsMaintained": true

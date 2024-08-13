@@ -13,7 +13,8 @@
     "description": "View and format a record's text using Markdown syntax.",
     "authors": [
       {
-        "name": "Grist Labs"
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
       }
     ],
     "isGristLabsMaintained": true

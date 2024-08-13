@@ -13,7 +13,8 @@
     "description": "Embed videos from YouTube, Vimeo, Facebook Video, Google Drive and more.",
     "authors": [
       {
-        "name": "Grist Labs"
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
       }
     ],
     "isGristLabsMaintained": true

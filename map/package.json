@@ -14,7 +14,8 @@
       "description": "Display locations on a map using either addresses or latitude and longitude coordinates..",
       "authors": [
         {
-          "name": "Grist Labs"
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
         }
       ],
       "isGristLabsMaintained": true

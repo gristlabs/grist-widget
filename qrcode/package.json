@@ -14,7 +14,8 @@
       "description": "Generate custom QR codes based on data from a selected record.",
       "authors": [
         {
-          "name": "jperon"
+          "name": "jperon",
+          "url": "https://github.com/jperon"
         }
       ]
     }

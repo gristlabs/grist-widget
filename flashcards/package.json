@@ -13,7 +13,8 @@
     "description": "Show records as flashcards, with a question on one side and an answer on the other.",
     "authors": [
       {
-        "name": "Grist Labs"
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
       }
     ],
     "isGristLabsMaintained": true

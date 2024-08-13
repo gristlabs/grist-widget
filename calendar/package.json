@@ -20,7 +20,8 @@
       "description": "Show records as events in a calendar view. Choose between daily, monthly, or yearly views.",
       "authors": [
         {
-          "name": "Grist Labs"
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
         }
       ],
       "isGristLabsMaintained": true
