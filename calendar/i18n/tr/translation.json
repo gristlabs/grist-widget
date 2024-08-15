@@ -1,1 +1,17 @@
-{}
+{
+    "End Date": "bitiş tarihi",
+    "calendar": "takvim",
+    "week": "hafta",
+    "day": "gün",
+    "next": "sonraki",
+    "newEvent": "yeni olay",
+    "Title": "Başlık",
+    "Start Date": "başlangıç tarihi",
+    "Is All Day": "tümgünmü?",
+    "All Day": "Tüm gün",
+    "starting point of event": "etkinliğin başlangıç noktası",
+    "month": "ay",
+    "ending point of event": "etkinliğin bitiş noktası",
+    "today": "bugün",
+    "previous": "önceki"
+}
