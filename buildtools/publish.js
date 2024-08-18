@@ -5,6 +5,7 @@
 // or:
 //   node ./buildtools/publish.js manifest.json http://localhost:8585
 
+const {execSync} = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -18,22 +19,19 @@ if (!manifestFile) {
   throw new Error('please call with the file to build');
 }
 
-function isWidgetDir(folder) {
-  const indexHtmlFile = path.join(rootDir, folder, 'index.html');
-  const packageFile = path.join(rootDir, folder, 'package.json');
+function isWidgetDir(dir) {
+  const indexHtmlFile = path.join(dir, 'index.html');
+  const packageFile = path.join(dir, 'package.json');
   return fs.existsSync(indexHtmlFile) && fs.existsSync(packageFile);
 }
 
 const widgets = [];
 
 for (const folder of folders) {
-  if (!fs.statSync(folder).isDirectory()) {
-    continue;
-  }
-  if (!isWidgetDir(folder)) {
-    continue;
-  }
-  const packageFile = path.join(rootDir, folder, 'package.json');
+  const dir = path.join(rootDir, folder);
+  if (!fs.statSync(dir).isDirectory() || !isWidgetDir(dir)) { continue; }
+
+  const packageFile = path.join(dir, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageFile));
   let configs = packageJson.grist;
   if (!configs) {
@@ -50,6 +48,8 @@ for (const folder of folders) {
     }
     if (config.published) {
       console.log('Publishing ' + config.widgetId);
+      config.lastUpdatedAt = execSync(`git log -1 --format=%cI package.json`, {cwd: dir, encoding: 'utf8'})
+        .trimEnd();
       // If we have custom server url as a first argument for local testing,
       // replace widget url.
       if (replacementUrl) {
