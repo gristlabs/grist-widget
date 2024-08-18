@@ -9,6 +9,13 @@
     "widgetId": "@gristlabs/widget-pivottable",
     "published": true,
     "accessLevel": "read table",
-    "renderAfterReady": true
+    "renderAfterReady": true,
+    "description": "Build and modify a pivot table from a selected Grist table.",
+    "authors": [
+      {
+        "name": "jperon",
+        "url": "https://github.com/jperon"
+      }
+    ]
   }
 }

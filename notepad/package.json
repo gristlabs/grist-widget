@@ -9,6 +9,14 @@
     "widgetId": "@gristlabs/widget-notepad",
     "published": true,
     "accessLevel": "full",
-    "renderAfterReady": true
+    "renderAfterReady": true,
+    "description": "View and format a record's text using a rich text editor.",
+    "authors": [
+      {
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
+      }
+    ],
+    "isGristLabsMaintained": true
   }
 }

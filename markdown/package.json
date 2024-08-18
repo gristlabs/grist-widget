@@ -9,6 +9,14 @@
     "widgetId": "@gristlabs/widget-markdown",
     "published": true,
     "accessLevel": "full",
-    "renderAfterReady": true
+    "renderAfterReady": true,
+    "description": "View and format a record's text using Markdown syntax.",
+    "authors": [
+      {
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
+      }
+    ],
+    "isGristLabsMaintained": true
   }
 }

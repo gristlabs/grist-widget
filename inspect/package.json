@@ -10,7 +10,15 @@
       "widgetId": "@gristlabs/widget-inspect#onRecord",
       "published": true,
       "accessLevel": "read table",
-      "renderAfterReady": true
+      "renderAfterReady": true,
+      "description": "View the raw representation of the selected record as JSON.",
+      "authors": [
+        {
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
+        }
+      ],
+      "isGristLabsMaintained": true
     },
     {
       "name": "Inspect Table",
@@ -18,14 +26,30 @@
       "widgetId": "@gristlabs/widget-inspect#onRecords",
       "published": true,
       "accessLevel": "read table",
-      "renderAfterReady": true
+      "renderAfterReady": true,
+      "description": "View the raw representation of all the table's records as JSON.",
+      "authors": [
+        {
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
+        }
+      ],
+      "isGristLabsMaintained": true
     },
     {
       "name": "Inspect Options",
       "url": "https://gristlabs.github.io/grist-widget/inspect/onOptions.html",
       "widgetId": "@gristlabs/widget-inspect#onOptions",
       "published": true,
-      "renderAfterReady": true
+      "renderAfterReady": true,
+      "description": "View the options sent to this custom widget, and send your own custom options, for testing.",
+      "authors": [
+        {
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
+        }
+      ],
+      "isGristLabsMaintained": true
     },
     {
       "name": "Inspect Columns",
@@ -38,7 +62,15 @@
       "url": "https://gristlabs.github.io/grist-widget/inspect/api.html",
       "widgetId": "@gristlabs/widget-inspect#api",
       "published": true,
-      "renderAfterReady": true
+      "renderAfterReady": true,
+      "description": "An interactive introduction to the Grist Custom Widget API, with live code examples.",
+      "authors": [
+        {
+          "name": "Grist Labs",
+          "url": "https://github.com/gristlabs"
+        }
+      ],
+      "isGristLabsMaintained": true
     }
   ]
 }

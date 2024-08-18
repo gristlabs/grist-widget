@@ -10,7 +10,14 @@
       "widgetId": "@gristlabs/widget-qrcode",
       "published": true,
       "accessLevel": "read table",
-      "renderAfterReady": true
+      "renderAfterReady": true,
+      "description": "Generate custom QR codes based on data from a selected record.",
+      "authors": [
+        {
+          "name": "jperon",
+          "url": "https://github.com/jperon"
+        }
+      ]
     }
   ]
 }
