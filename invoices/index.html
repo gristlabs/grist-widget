@@ -21,50 +21,6 @@
             center: [-123.25260, 44.71041],
             zoom: 8.4
         });
-
-        map.on('load', () => {
-            // Load a custom icon
-            map.loadImage('https://cdn-icons-png.flaticon.com/512/2656/2656372.png', (error, image) => {
-                if (error) throw error;
-                map.addImage('custom-marker', image);
-
-                // Load GeoJSON data from an external source
-                map.addSource('points', {
-                    'type': 'geojson',
-                    'data': 'https://api.maptiler.com/data/673a85b1-1458-4a40-acd6-7e63061b7e77/features.json?key=TbsQ5qLxJHC20Jv4Th7E' // Replace with your GeoJSON URL
-                });
-
-                // Add a layer to use the custom icon for the points
-                map.addLayer({
-                    'id': 'points',
-                    'type': 'symbol',
-                    'source': 'points',
-                    'layout': {
-                        'icon-image': 'custom-marker',
-                        'icon-size': 1.5
-                    }
-                });
-
-                // Add popups on click
-                map.on('click', 'points', (e) => {
-                    const coordinates = e.features[0].geometry.coordinates.slice();
-                    const description = e.features[0].properties.description;
-
-                    new maplibregl.Popup()
-                        .setLngLat(coordinates)
-                        .setHTML(description)
-                        .addTo(map);
-                });
-
-                // Change cursor on hover
-                map.on('mouseenter', 'points', () => {
-                    map.getCanvas().style.cursor = 'pointer';
-                });
-                map.on('mouseleave', 'points', () => {
-                    map.getCanvas().style.cursor = '';
-                });
-            });
-        });
     </script>
 </body>
 </html>
