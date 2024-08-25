@@ -61,8 +61,8 @@
       };
     })();
 
-    // Hide loading message when Grist is ready
-    grist.ready().then(() => {
+    // Hide loading message when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('loading').style.display = 'none';
     });
   </script>

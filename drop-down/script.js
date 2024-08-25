@@ -27,53 +27,59 @@ function updateDropdown(options) {
   }
 }
 
-grist.ready({
-  columns: [{ name: "Options", title: 'Options', type: 'Any' }],
-  requiredAccess: 'read table',
-}).then(() => {
-  console.log('Grist ready');  // Log when Grist is ready
-}).catch(err => {
-  showError('Error initializing Grist: ' + err.message);
-});
+function initGrist() {
+  console.log('Initializing Grist');
+  grist.ready({
+    columns: [{ name: "Options", title: 'Options', type: 'Any' }],
+    requiredAccess: 'read table',
+  });
+  console.log('Grist initialized');
 
-grist.onRecords(function (records) {
-  console.log('Received records:', records);  // Log received records
-  if (!records || records.length === 0) {
-    showError("No records received");
-    updateDropdown([]);
-    return;
-  }
-  
-  const mapped = grist.mapColumnNames(records[0]);
-  console.log('Mapped record:', mapped);  // Log mapped record
-  
-  if (!mapped || !mapped.Options) {
-    showError("Please choose a column to show in the Creator Panel.");
-    updateDropdown([]);
-    return;
-  }
+  grist.onRecords(function (records) {
+    console.log('Received records:', records);  // Log received records
+    if (!records || records.length === 0) {
+      showError("No records received");
+      updateDropdown([]);
+      return;
+    }
+    
+    const mapped = grist.mapColumnNames(records[0]);
+    console.log('Mapped record:', mapped);  // Log mapped record
+    
+    if (!mapped || !mapped.Options) {
+      showError("Please choose a column to show in the Creator Panel.");
+      updateDropdown([]);
+      return;
+    }
 
-  showError("");
-  const options = records.map(record => record.Options).filter(option => option !== null && option !== undefined);
-  console.log('Filtered options:', options);  // Log filtered options
-  
-  if (options.length === 0) {
-    showError("No valid options found");
-  }
-  updateDropdown(options);
-});
+    showError("");
+    const options = records.map(record => record.Options).filter(option => option !== null && option !== undefined);
+    console.log('Filtered options:', options);  // Log filtered options
+    
+    if (options.length === 0) {
+      showError("No valid options found");
+    }
+    updateDropdown(options);
+  });
 
-grist.onRecord(function (record) {
-  console.log('Received single record:', record);  // Log received record
-  const mapped = grist.mapColumnNames(record);
-  if (!mapped || !mapped.Options) {
-    console.log('No Options field in mapped record');  // Log if Options is missing
-    return;
-  }
-  
-  const dropdown = document.getElementById('dropdown');
-  dropdown.value = String(mapped.Options);
-  console.log('Set dropdown value to:', dropdown.value);  // Log set value
+  grist.onRecord(function (record) {
+    console.log('Received single record:', record);  // Log received record
+    const mapped = grist.mapColumnNames(record);
+    if (!mapped || !mapped.Options) {
+      console.log('No Options field in mapped record');  // Log if Options is missing
+      return;
+    }
+    
+    const dropdown = document.getElementById('dropdown');
+    dropdown.value = String(mapped.Options);
+    console.log('Set dropdown value to:', dropdown.value);  // Log set value
+  });
+}
+
+// Initialize Grist when the document is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM fully loaded and parsed');
+  initGrist();
 });
 
 // Add this line to log any errors that occur
