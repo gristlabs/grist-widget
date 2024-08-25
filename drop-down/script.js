@@ -43,20 +43,11 @@ function initGrist() {
       return;
     }
     
-    const mapped = grist.mapColumnNames(records[0]);
+    const mapped = grist.mapColumnNames(records);
     console.log('Mapped record:', JSON.stringify(mapped, null, 2));
-    
-    // Find the first non-id field
-    const optionsField = Object.keys(mapped).find(key => key !== 'id');
-    
-    if (!optionsField) {
-      showError("Please choose a column to show in the Creator Panel.");
-      updateDropdown([]);
-      return;
-    }
 
     showError("");
-    const options = records.map(record => record[optionsField]).filter(option => option !== null && option !== undefined);
+    const options = mapped.map(record => record.OptionsToSelect).filter(option => option !== null && option !== undefined);
     console.log('Filtered options:', JSON.stringify(options, null, 2));
     
     if (options.length === 0) {
@@ -68,17 +59,8 @@ function initGrist() {
   grist.onRecord(function (record) {
     console.log('Received single record:', JSON.stringify(record, null, 2));
     const mapped = grist.mapColumnNames(record);
-    
-    // Find the first non-id field
-    const optionsField = Object.keys(mapped).find(key => key !== 'id');
-    
-    if (!optionsField) {
-      console.log('No options field in mapped record');
-      return;
-    }
-    
     const dropdown = document.getElementById('dropdown');
-    dropdown.value = String(mapped[optionsField]);
+    dropdown.value = String(mapped.OptionsToSelect);
     console.log('Set dropdown value to:', dropdown.value);
   });
 
