@@ -30,7 +30,7 @@ function updateDropdown(options) {
 function initGrist() {
   console.log('Initializing Grist');
   grist.ready({
-    columns: [{ name: "C", title: 'Options', type: 'Any' }],
+    columns: [{ name: "Options", title: 'Options', type: 'Any' }],
     requiredAccess: 'read table',
   });
   console.log('Grist initialized');
@@ -46,14 +46,14 @@ function initGrist() {
     const mapped = grist.mapColumnNames(records[0]);
     console.log('Mapped record:', JSON.stringify(mapped, null, 2));
     
-    if (!mapped || !mapped.C) {
+    if (!mapped || !mapped.Options) {
       showError("Please choose a column to show in the Creator Panel.");
       updateDropdown([]);
       return;
     }
 
     showError("");
-    const options = records.map(record => record.C).filter(option => option !== null && option !== undefined);
+    const options = records.map(record => record.Options).filter(option => option !== null && option !== undefined);
     console.log('Filtered options:', JSON.stringify(options, null, 2));
     
     if (options.length === 0) {
@@ -65,13 +65,13 @@ function initGrist() {
   grist.onRecord(function (record) {
     console.log('Received single record:', JSON.stringify(record, null, 2));
     const mapped = grist.mapColumnNames(record);
-    if (!mapped || !mapped.C) {
+    if (!mapped || !mapped.Options) {
       console.log('No Options field in mapped record');
       return;
     }
     
     const dropdown = document.getElementById('dropdown');
-    dropdown.value = String(mapped.C);
+    dropdown.value = String(mapped.Options);
     console.log('Set dropdown value to:', dropdown.value);
   });
 
