@@ -12,12 +12,16 @@
       width: 100%;
       padding: 5px;
     }
-    #error {
+    #error, #loading {
       display: none;
-      background: red;
-      color: white;
+      background: #f0f0f0;
+      color: #333;
       padding: 10px;
       margin-top: 10px;
+    }
+    #error {
+      background: red;
+      color: white;
     }
     #log {
       margin-top: 10px;
@@ -30,6 +34,7 @@
 </head>
 <body>
   <select id="dropdown"></select>
+  <div id="loading">Loading...</div>
   <div id="error"></div>
   <div id="log"></div>
   <script src="script.js"></script>
@@ -38,6 +43,9 @@
       grist.selectedValue = event.target.value;
       console.log('Selected value:', event.target.value);
     });
+
+    // Show loading message
+    document.getElementById('loading').style.display = 'block';
 
     // Capture console.log and console.error
     (function(){
@@ -52,6 +60,11 @@
         oldError.apply(console, arguments);
       };
     })();
+
+    // Hide loading message when Grist is ready
+    grist.ready().then(() => {
+      document.getElementById('loading').style.display = 'none';
+    });
   </script>
 </body>
 </html>

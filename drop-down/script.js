@@ -13,12 +13,18 @@ function updateDropdown(options) {
   const dropdown = document.getElementById('dropdown');
   dropdown.innerHTML = '';
   console.log('Updating dropdown with options:', options);  // Log options
-  options.forEach(option => {
+  if (options.length === 0) {
     const optionElement = document.createElement('option');
-    optionElement.value = String(option);
-    optionElement.textContent = String(option);
+    optionElement.textContent = 'No options available';
     dropdown.appendChild(optionElement);
-  });
+  } else {
+    options.forEach(option => {
+      const optionElement = document.createElement('option');
+      optionElement.value = String(option);
+      optionElement.textContent = String(option);
+      dropdown.appendChild(optionElement);
+    });
+  }
 }
 
 grist.ready({
@@ -34,12 +40,16 @@ grist.onRecords(function (records) {
   console.log('Received records:', records);  // Log received records
   if (!records || records.length === 0) {
     showError("No records received");
+    updateDropdown([]);
     return;
   }
+  
   const mapped = grist.mapColumnNames(records[0]);
   console.log('Mapped record:', mapped);  // Log mapped record
+  
   if (!mapped || !mapped.Options) {
     showError("Please choose a column to show in the Creator Panel.");
+    updateDropdown([]);
     return;
   }
 
@@ -49,9 +59,8 @@ grist.onRecords(function (records) {
   
   if (options.length === 0) {
     showError("No valid options found");
-  } else {
-    updateDropdown(options);
   }
+  updateDropdown(options);
 });
 
 grist.onRecord(function (record) {
@@ -66,3 +75,8 @@ grist.onRecord(function (record) {
   dropdown.value = String(mapped.Options);
   console.log('Set dropdown value to:', dropdown.value);  // Log set value
 });
+
+// Add this line to log any errors that occur
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error('Error:', message, 'at', source, lineno, colno, error);
+};
