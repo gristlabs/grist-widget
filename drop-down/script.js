@@ -32,6 +32,7 @@ function initGrist() {
   grist.ready({
     columns: [{ name: "OptionsToSelect", title: 'Options to select', type: 'Any' }],
     requiredAccess: 'read table',
+    allowSelectBy: true,
   });
   console.log('Grist initialized');
 
