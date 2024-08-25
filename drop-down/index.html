@@ -25,5 +25,10 @@
   <select id="dropdown"></select>
   <div id="error"></div>
   <script src="script.js"></script>
+  <script>
+    document.getElementById('dropdown').addEventListener('change', function(event) {
+      grist.selectedValue = event.target.value;
+    });
+  </script>
 </body>
 </html>

@@ -13,30 +13,38 @@ function updateDropdown(options) {
   dropdown.innerHTML = '';
   options.forEach(option => {
     const optionElement = document.createElement('option');
-    optionElement.value = option;
-    optionElement.textContent = option;
+    optionElement.value = String(option);
+    optionElement.textContent = String(option);
     dropdown.appendChild(optionElement);
   });
 }
 
 grist.ready({
-  columns: [{ name: "Options", title: 'Options', type: 'Text' }],
+  columns: [{ name: "Options", title: 'Options', type: 'Any' }],
   requiredAccess: 'read table',
+});
+
+grist.onRecords(function (records) {
+  const mapped = grist.mapColumnNames(records[0]);
+  if (!mapped || !mapped.Options) {
+    showError("Please choose a column to show in the Creator Panel.");
+    return;
+  }
+
+  showError("");
+  const options = records.map(record => record.Options).filter(option => option !== null && option !== undefined);
+  
+  if (options.length === 0) {
+    updateDropdown([]);
+  } else {
+    updateDropdown(options);
+  }
 });
 
 grist.onRecord(function (record) {
   const mapped = grist.mapColumnNames(record);
-  const data = mapped ? mapped.Options : undefined;
+  if (!mapped || !mapped.Options) return;
   
-  if (data === undefined) {
-    showError("Please choose a column to show in the Creator Panel.");
-  } else {
-    showError("");
-    if (!data) {
-      updateDropdown([]);
-    } else {
-      const options = data.split(',').map(option => option.trim());
-      updateDropdown(options);
-    }
-  }
+  const dropdown = document.getElementById('dropdown');
+  dropdown.value = String(mapped.Options);
 });
