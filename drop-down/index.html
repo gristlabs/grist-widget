@@ -14,66 +14,18 @@
       padding: 5px;
       margin-bottom: 10px;
     }
-    #error, #loading {
-      display: none;
-      background: #f0f0f0;
-      color: #333;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
     #error {
+      display: none;
       background: red;
       color: white;
-    }
-    #log {
-      border: 1px solid #ccc;
-      padding: 5px;
-      height: 200px;
-      overflow-y: auto;
-      font-family: monospace;
-      font-size: 12px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
+      padding: 10px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
   <select id="dropdown"></select>
-  <div id="loading">Loading...</div>
   <div id="error"></div>
-  <div id="log"></div>
   <script src="script.js"></script>
-  <script>
-    document.getElementById('dropdown').addEventListener('change', function(event) {
-      grist.selectedValue = event.target.value;
-      console.log('Selected value:', event.target.value);
-    });
-
-    // Show loading message
-    document.getElementById('loading').style.display = 'block';
-
-    // Capture console.log and console.error
-    (function(){
-      let oldLog = console.log;
-      let oldError = console.error;
-      console.log = function(...args) {
-        document.getElementById('log').innerHTML += args.map(arg => 
-          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
-        ).join(' ') + '\n';
-        oldLog.apply(console, arguments);
-      };
-      console.error = function(...args) {
-        document.getElementById('log').innerHTML += '<span style="color: red;">' + args.map(arg => 
-          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
-        ).join(' ') + '</span>\n';
-        oldError.apply(console, arguments);
-      };
-    })();
-
-    // Hide loading message when DOM is ready
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('loading').style.display = 'none';
-    });
-  </script>
 </body>
 </html>
