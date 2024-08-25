@@ -32,6 +32,8 @@
       overflow-y: auto;
       font-family: monospace;
       font-size: 12px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
   </style>
 </head>
@@ -55,11 +57,15 @@
       let oldLog = console.log;
       let oldError = console.error;
       console.log = function(...args) {
-        document.getElementById('log').innerHTML += args.join(' ') + '<br>';
+        document.getElementById('log').innerHTML += args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+        ).join(' ') + '\n';
         oldLog.apply(console, arguments);
       };
       console.error = function(...args) {
-        document.getElementById('log').innerHTML += '<span style="color: red;">' + args.join(' ') + '</span><br>';
+        document.getElementById('log').innerHTML += '<span style="color: red;">' + args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+        ).join(' ') + '</span>\n';
         oldError.apply(console, arguments);
       };
     })();
