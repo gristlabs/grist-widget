@@ -18,9 +18,9 @@ function updateDropdown(options) {
     optionElement.textContent = 'No options available';
     dropdown.appendChild(optionElement);
   } else {
-    options.forEach(option => {
+    options.forEach((option, index) => {
       const optionElement = document.createElement('option');
-      optionElement.value = String(option);
+      optionElement.value = String(index);  // Use index as value
       optionElement.textContent = String(option);
       dropdown.appendChild(optionElement);
     });
@@ -32,9 +32,11 @@ function initGrist() {
   grist.ready({
     columns: [{ name: "OptionsToSelect", title: 'Options to select', type: 'Any' }],
     requiredAccess: 'read table',
-    allowSelectBy: true,
+    allowSelectBy: true,  // Enable linking
   });
   console.log('Grist initialized');
+
+  let allRecords = [];
 
   grist.onRecords(function (records) {
     console.log('Received records:', JSON.stringify(records, null, 2));
@@ -44,8 +46,9 @@ function initGrist() {
       return;
     }
     
+    allRecords = records;  // Store all records
     const mapped = grist.mapColumnNames(records);
-    console.log('Mapped record:', JSON.stringify(mapped, null, 2));
+    console.log('Mapped records:', JSON.stringify(mapped, null, 2));
 
     showError("");
     const options = mapped.map(record => record.OptionsToSelect).filter(option => option !== null && option !== undefined);
@@ -61,8 +64,21 @@ function initGrist() {
     console.log('Received single record:', JSON.stringify(record, null, 2));
     const mapped = grist.mapColumnNames(record);
     const dropdown = document.getElementById('dropdown');
-    dropdown.value = String(mapped.OptionsToSelect);
+    const index = allRecords.findIndex(r => r.id === record.id);
+    if (index !== -1) {
+      dropdown.value = String(index);
+    }
     console.log('Set dropdown value to:', dropdown.value);
+  });
+
+  // Add event listener for dropdown changes
+  document.getElementById('dropdown').addEventListener('change', function(event) {
+    const selectedIndex = parseInt(event.target.value);
+    const selectedRecord = allRecords[selectedIndex];
+    if (selectedRecord) {
+      grist.setCursorPos({rowId: selectedRecord.id});
+      console.log('Set cursor position to row ID:', selectedRecord.id);
+    }
   });
 
   // Add this to check if we're getting any data at all
