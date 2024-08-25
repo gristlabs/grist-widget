@@ -19,16 +19,39 @@
       padding: 10px;
       margin-top: 10px;
     }
+    #log {
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      padding: 5px;
+      height: 100px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
   <select id="dropdown"></select>
   <div id="error"></div>
+  <div id="log"></div>
   <script src="script.js"></script>
   <script>
     document.getElementById('dropdown').addEventListener('change', function(event) {
       grist.selectedValue = event.target.value;
+      console.log('Selected value:', event.target.value);
     });
+
+    // Capture console.log and console.error
+    (function(){
+      let oldLog = console.log;
+      let oldError = console.error;
+      console.log = function(...args) {
+        document.getElementById('log').innerHTML += args.join(' ') + '<br>';
+        oldLog.apply(console, arguments);
+      };
+      console.error = function(...args) {
+        document.getElementById('log').innerHTML += '<span style="color: red;">' + args.join(' ') + '</span><br>';
+        oldError.apply(console, arguments);
+      };
+    })();
   </script>
 </body>
 </html>
