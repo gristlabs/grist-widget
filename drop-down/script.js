@@ -5,14 +5,14 @@ function showError(msg) {
   } else {
     el.innerHTML = msg;
     el.style.display = 'block';
-    console.error(msg);  // Log error to console
+    console.error(msg);
   }
 }
 
 function updateDropdown(options) {
   const dropdown = document.getElementById('dropdown');
   dropdown.innerHTML = '';
-  console.log('Updating dropdown with options:', options);  // Log options
+  console.log('Updating dropdown with options:', options);
   if (options.length === 0) {
     const optionElement = document.createElement('option');
     optionElement.textContent = 'No options available';
@@ -36,7 +36,7 @@ function initGrist() {
   console.log('Grist initialized');
 
   grist.onRecords(function (records) {
-    console.log('Received records:', records);  // Log received records
+    console.log('Received records:', JSON.stringify(records));
     if (!records || records.length === 0) {
       showError("No records received");
       updateDropdown([]);
@@ -44,7 +44,7 @@ function initGrist() {
     }
     
     const mapped = grist.mapColumnNames(records[0]);
-    console.log('Mapped record:', mapped);  // Log mapped record
+    console.log('Mapped record:', JSON.stringify(mapped));
     
     if (!mapped || !mapped.Options) {
       showError("Please choose a column to show in the Creator Panel.");
@@ -54,7 +54,7 @@ function initGrist() {
 
     showError("");
     const options = records.map(record => record.Options).filter(option => option !== null && option !== undefined);
-    console.log('Filtered options:', options);  // Log filtered options
+    console.log('Filtered options:', JSON.stringify(options));
     
     if (options.length === 0) {
       showError("No valid options found");
@@ -63,16 +63,23 @@ function initGrist() {
   });
 
   grist.onRecord(function (record) {
-    console.log('Received single record:', record);  // Log received record
+    console.log('Received single record:', JSON.stringify(record));
     const mapped = grist.mapColumnNames(record);
     if (!mapped || !mapped.Options) {
-      console.log('No Options field in mapped record');  // Log if Options is missing
+      console.log('No Options field in mapped record');
       return;
     }
     
     const dropdown = document.getElementById('dropdown');
     dropdown.value = String(mapped.Options);
-    console.log('Set dropdown value to:', dropdown.value);  // Log set value
+    console.log('Set dropdown value to:', dropdown.value);
+  });
+
+  // Add this to check if we're getting any data at all
+  grist.fetchSelectedTable().then(table => {
+    console.log('Fetched table:', JSON.stringify(table));
+  }).catch(err => {
+    console.error('Error fetching table:', err);
   });
 }
 
