@@ -11,6 +11,10 @@
       height: 100%;
       overflow: hidden;
     }
+    #container {
+      position: relative;
+      height: 100%;
+    }
     #dropdown {
       width: 100%;
       box-sizing: border-box;
@@ -20,17 +24,25 @@
     }
     #error {
       display: none;
-      background: red;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 50%;
+      height: 100%;
+      background: rgba(255, 0, 0, 0.8);
       color: white;
       padding: 2px;
       font-size: 12px;
-      text-align: center;
+      overflow-y: auto;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-  <select id="dropdown"></select>
-  <div id="error"></div>
+  <div id="container">
+    <select id="dropdown"></select>
+    <div id="error"></div>
+  </div>
   <script src="script.js"></script>
 </body>
 </html>
