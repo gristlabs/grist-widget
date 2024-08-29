@@ -1,6 +1,11 @@
 let map;
 let nameColumn = 'Name';
 let ownerColumn = 'Owner';
+let costarurlColumn = 'CoStarURL';
+let maptilerColumn = 'maptiler';
+let phoneColumn = 'Phone';
+let addressColumn = 'Address';
+let imageurlColumn = 'ImageURL';
 
 function initializeMap() {
   map = new maplibregl.Map({
@@ -22,6 +27,12 @@ function initializeMap() {
     grist.onOptions((options, previousOptions) => {
       if (options.nameColumn) nameColumn = options.nameColumn;
       if (options.ownerColumn) ownerColumn = options.ownerColumn;
+      if (options.costarurlColumn) costarurlColumn = options.costarurlColumn;
+      if (options.maptilerColumn) maptilerColumn = options.maptilerColumn;
+      if (options.phoneColumn) phoneColumn = options.phoneColumn;
+      if (options.addressColumn) addressColumn = options.addressColumn;
+      if (options.imageurlColumn) imageurlColumn = options.imageurlColumn;
+      
     });
 
     grist.onRecord((record, previousRecord) => {
@@ -37,10 +48,20 @@ function initializeMap() {
   document.getElementById('saveConfig').addEventListener('click', () => {
     const nameCol = document.getElementById('nameColumn').value;
     const ownerCol = document.getElementById('ownerColumn').value;
+    const costarurlCol = document.getElementById('costarurlColumn').value;
+    const maptilerCol = document.getElementById('maptilerColumn').value;
+    const phoneCol = document.getElementById('phoneColumn').value;
+    const addressCol = document.getElementById('addressColumn').value;
+    const imageurlCol = document.getElementById('imageurlColumn').value;
 
     grist.setOptions({
       nameColumn: nameCol,
       ownerColumn: ownerCol
+      costarurlColumn: costarurlCol
+      maptilerColumn: maptilerCol
+      phoneColumn: phoneCol
+      addressColumn: addressCol
+      imageurlColumn: imageurlCol
     });
   });
 }
@@ -62,6 +83,11 @@ function updateMap(records) {
       properties: {
         name: record[nameColumn],
         owner: record[ownerColumn]
+        costarurl: record[costarurlColumn]
+        maptiler: record[maptilerColumn]
+        phone: record[phoneColumn]
+        address: record[addressColumn]
+        imageurl: record[imageurlColumn]
       }
     }))
   };
@@ -132,7 +158,17 @@ function updateMap(records) {
 
     new maplibregl.Popup()
       .setLngLat(coordinates)
-      .setHTML(`<strong>${name}</strong><p>${owner}</p>`)
+      .setHTML(`
+        <strong>${name}</strong>
+        <p>${owner}</p>
+        <img src="${imageUrl}" alt="image" style="width: 100%; height: auto;" />
+        <h4><b>Address: </b>${address}</h4>
+        <h4><b>Phone: </b>${phone}</h4>
+        <div class="popup-buttons">
+          <a href="${CoStarURL}" class="popup-button" target="_blank">CoStar</a>
+          <a href="${maptiler}" class="popup-button" target="_blank">maptiler</a>
+        </div>
+      `)
       .addTo(map);
   });
 
