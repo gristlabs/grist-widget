@@ -162,8 +162,8 @@ function updateMap(records) {
         <strong>${name}</strong>
         <p>${owner}</p>
         <img src="${imageUrl}" alt="image" style="width: 100%; height: auto;" />
-        <h4><b>Address: </b>${address}</h4>
-        <h4><b>Phone: </b>${phone}</h4>
+        <h4>${address}</h4>
+        <h4>${phone}</h4>
         <div class="popup-buttons">
           <a href="${CoStarURL}" class="popup-button" target="_blank">CoStar</a>
           <a href="${maptiler}" class="popup-button" target="_blank">maptiler</a>
