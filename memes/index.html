@@ -180,11 +180,11 @@
     const latitude = record[Latitude];
     const longitude = record[Longitude];
     const name = record[Name];
-    const image = record.Image? `<img src="${record.Image}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
+    const image = record.ImageURL? `<img src="${record.ImageURL}" alt="ImageURL" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
     const address = record.Address;
     const phone = record.Phone;
-    const donate = record.Donate;
-    const volunteer = record.Volunteer;
+    const CoStarURL = record.CoStarURL;
+    const maptiler = record.maptiler;
 
     const description = `
       <h3>${name}</h3>
@@ -192,8 +192,8 @@
       <h4><b>Address: </b>${address}</h4>
       <h4><b>Phone: </b>${phone}</h4>
       <div class="popup-buttons">
-        <a href="${donate}" class="popup-button" target="_blank">Donate</a>
-        <a href="${volunteer}" class="popup-button" target="_blank">Volunteer</a>
+        <a href="${CoStarURL}" class="popup-button" target="_blank">CoStar</a>
+        <a href="${maptiler}" class="popup-button" target="_blank">maptiler</a>
       </div>
     `;
 
