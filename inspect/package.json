@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "grist": [
     {
-      "name": "Inspect Record",
+      "name": "Inspect record",
       "url": "https://gristlabs.github.io/grist-widget/inspect/onRecord.html",
       "widgetId": "@gristlabs/widget-inspect#onRecord",
       "published": true,
@@ -21,7 +21,7 @@
       "isGristLabsMaintained": true
     },
     {
-      "name": "Inspect Table",
+      "name": "Inspect table",
       "url": "https://gristlabs.github.io/grist-widget/inspect/onRecords.html",
       "widgetId": "@gristlabs/widget-inspect#onRecords",
       "published": true,
@@ -37,7 +37,7 @@
       "isGristLabsMaintained": true
     },
     {
-      "name": "Inspect Options",
+      "name": "Inspect options",
       "url": "https://gristlabs.github.io/grist-widget/inspect/onOptions.html",
       "widgetId": "@gristlabs/widget-inspect#onOptions",
       "published": true,
