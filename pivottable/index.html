@@ -1,42 +1,216 @@
 <!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="utf-8">
-    <title>PivotTable</title>
-    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.6.1/d3.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.16.3/plotly-basic.min.js"></script>
+<html>
 
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/d3_renderers.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/plotly_renderers.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/export_renderers.min.js"></script>
-    <style>
-      @media (prefers-color-scheme: dark) {
-        body {
-          background-color: #32323f;
-        }
-        .pvtUiCell,
-        .pvtRenderer,
-        .pvtAggregator,
-        .pvtAttr,
-        .pvtTriangle,
-        .pvtFilterBox,
-        .pvtFilterBox .count,
-        .pvtFilterBox button {
-          background-color: #32323f !important;
-          color: #FFF;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="table"></div>
-    <script src="index.js"></script>
-  </body>
+<head>
+  <meta charset='utf-8' />
+  <title></title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+  <script src='https://cdn.maptiler.com/maps/5.3.0/maplibre-gl.js'></script>
+  <link href='https://cdn.maptiler.com/maps/5.3.0/maplibre-gl.css' rel='stylesheet' />
+  <script src='https://npmcdn.com/csv2geojson@latest/csv2geojson.js'></script>
+  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+
+    /* Popup styling */
+    .maplibregl-popup {
+      padding-bottom: 5px;
+    }
+
+    .maplibregl-popup-close-button {
+      display: none;
+    }
+
+    .maplibregl-popup-content {
+      font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
+      padding: 0;
+      width: 350px;
+      height: auto;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .maplibregl-popup-content-wrapper {
+      padding: 1%;
+    }
+
+    .maplibregl-popup-content h3 {
+      background: rgb(61, 59, 59);
+      text-align: center;
+      color: #fff;
+      margin: 0;
+      display: block;
+      padding: 10px;
+      font-weight: 700;
+      margin-top: -5px;
+    }
+
+    .maplibregl-popup-content h4 {
+      margin: 0;
+      display: block;
+      padding: 8px;
+      font-weight: 400;
+    }
+
+    .maplibregl-container {
+      cursor: pointer;
+    }
+
+    .maplibregl-popup-anchor-top>.maplibregl-popup-content {
+      margin-top: 3px;
+    }
+
+    .maplibregl-popup-anchor-top>.maplibregl-popup-tip {
+      border-bottom-color: rgb(61, 59, 59);
+    }
+
+    .popup-buttons {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+    }
+
+    .popup-button {
+      background-color: #007bff;
+      color: white;
+      padding: 8px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id='map'></div>
+  <script>
+
+    var transformRequest = (url, resourceType) => {
+      var isMapTilerRequest =
+        url.slice(8, 22) === "api.maptiler.com" ||
+        url.slice(10, 26) === "tiles.maptiler.com";
+      return {
+        url: isMapTilerRequest
+          ? url.replace("?", "?pluginName=sheetMapper&")
+          : url
+      };
+    };
+
+    //YOUR TURN: add your MapTiler token
+    const maptilerAccessToken = 'TbsQ5qLxJHC20Jv4Th7E'; // MapTiler token
+    var map = new maplibregl.Map({
+      container: 'map', // container id
+      style: `https://api.maptiler.com/maps/streets/style.json?key=${maptilerAccessToken}`, // MapTiler style
+      center: [-122.411, 37.785], // starting position [lng, lat]
+      zoom: 10, // starting zoom
+      transformRequest: transformRequest
+    });
+
+    $(document).ready(function () {
+      $.ajax({
+        type: "GET",
+        //YOUR TURN: Replace with csv export link
+        url: 'https://docs.google.com/spreadsheets/d/1OCjh5aFFpflO9Qb7qIHHhfd8kIbO43o-SR2nSlBbqJs/gviz/tq?tqx=out:csv&sheet=Sheet1',
+        dataType: "text",
+        success: function (csvData) { makeGeoJSON(csvData); }
+      });
+
+      function makeGeoJSON(csvData) {
+        csv2geojson.csv2geojson(csvData, {
+          latfield: 'Latitude',
+          lonfield: 'Longitude',
+          delimiter: ','
+        }, function (err, data) {
+          map.on('load', function () {
+
+            //Add the the layer to the map
+            map.addLayer({
+              'id': 'csvData',
+              'type': 'circle',
+              'source': {
+                'type': 'geojson',
+                'data': data
+              },
+              'paint': {
+                'circle-radius': 5,
+                'circle-color': "purple"
+              }
+            });
+
+            // When a click event occurs on a feature in the csvData layer, open a popup at the
+            // location of the feature, with description HTML from its properties.
+            map.on('click', 'csvData', function (e) {
+              var coordinates = e.features[0].geometry.coordinates.slice();
+
+              // Access and display the image URL
+              var imageUrl = e.features[0].properties["Image"];  // Ensure the property name is correct
+              console.log("Image URL:", imageUrl);  // Debugging: Log the image URL to the console
+              var imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
+
+              // Set popup text
+              var description = `
+                <h3>${e.features[0].properties.Property_Name}</h3>
+                ${imageTag}
+                <h4><b>Address: </b>${e.features[0].properties.Address}</h4>
+                <h4><b>Property Type: </b>${e.features[0].properties.Property_Type}</h4>
+                <h4><b>Tenants: </b>${e.features[0].properties.Tenants}</h4>
+                <h4><b>Owner: </b>${e.features[0].properties.Owner}</h4>
+                <h4><b>Segment: </b>${e.features[0].properties.Segment}</h4>
+                <div class="popup-buttons">
+                  <a href="${e.features[0].properties.CoStar}" class="popup-button" target="_blank">CoStar</a>
+                  <a href="${e.features[0].properties.County}" class="popup-button" target="_blank">County</a>
+                </div>
+              `;
+
+              // Ensure that if the map is zoomed out such that multiple
+              // copies of the feature are visible, the popup appears
+              // over the copy being pointed to.
+              while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+              }
+
+              // Add Popup to map
+              new maplibregl.Popup()
+                .setLngLat(coordinates)
+                .setHTML(description)
+                .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the places layer.
+            map.on('mouseenter', 'csvData', function () {
+              map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'places', function () {
+              map.getCanvas().style.cursor = '';
+            });
+
+            var bbox = turf.bbox(data);
+            map.fitBounds(bbox, { padding: 50 });
+
+          });
+
+        });
+      };
+    });
+
+  </script>
+
+</body>
+
 </html>
