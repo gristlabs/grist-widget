@@ -35,7 +35,10 @@
     .mapboxgl-popup-content {
       font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
       padding: 0;
-      width: 250px;
+      width: 350px;
+      height: auto; /* Adjust height based on content */
+      max-height: 400px; /* Max height to ensure shorter height */
+      overflow-y: auto; /* Add scroll if content exceeds max height */
     }
 
     .mapboxgl-popup-content-wrapper {
