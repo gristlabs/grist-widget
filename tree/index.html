@@ -29,14 +29,14 @@
         function addLogoOverlay(lat, lng, logoUrl) {
             var logoIcon = L.icon({
                 iconUrl: logoUrl,
-                iconSize: [50, 100],  // size of the icon
+                iconSize: [50, 50],  // size of the icon
                 iconAnchor: [25, 25], // point of the icon which will correspond to marker's location
             });
             L.marker([lat, lng], { icon: logoIcon }).addTo(map);
         }
 
         // Example: Adding Costco and Walmart logos
-        addLogoOverlay(45.523, -122.676, 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Costco_Wholesale_logo_2010-10-26.svg/512px-Costco_Wholesale_logo_2010-10-26.svg.png'); // Portland Costco
+        addLogoOverlay(45.523, -122.676, 'https://upload.wikimedia.org/wikipedia/commons/5/59/Costco_Wholesale_logo_2010-10-26.svg'); // Portland Costco
         addLogoOverlay(44.052, -123.086, 'https://upload.wikimedia.org/wikipedia/commons/c/ca/Walmart_logo.svg'); // Eugene Walmart
 
     </script>
