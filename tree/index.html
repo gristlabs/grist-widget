@@ -30,6 +30,8 @@
 
         // Create a marker cluster group
         var markers = L.markerClusterGroup();
+            maxClusterRadius: 40  // Lower number = less clustering, default is 80
+        });
 
         // Function to add logo overlay
         function addLogoOverlay(lat, lng, logoUrl) {
