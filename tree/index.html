@@ -1,62 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" />
-  <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
-  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-  <script src="page.js"></script>
-  <link rel="stylesheet" href="screen.css" />
+    <title>Store Logo Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 600px; }
+        .logo-overlay {
+            width: 50px;  /* Adjust size of the logo */
+            height: 50px;
+        }
+    </style>
 </head>
 <body>
-  <div id="map"></div>
-  <div id="settings">
-    <div id="btnClose">Close</div>
-    <label id="lblToggle" for="cbxMode">
-      <input type="checkbox" id="cbxMode">
-      <span id="lblText">All locations</span>
-    </label>
-    <br/>
-    <table>
-      <tr>
-        <td><label id="lblSource" for="mapSource"> Source </label></td>
-        <td><input id="mapSource"></td>
-      </tr>
-      <tr>
-        <td><label id="lblCopyright" for="mapCopyright"> Copyright </label></td>
-        <td><input id="mapCopyright"></td>
-      </tr>
-      <tr>
-        <td><label for="nameColumn">Name Column</label></td>
-        <td><input id="nameColumn" type="text" /></td>
-      </tr>
-      <tr>
-        <td><label for="ownerColumn">Owner Column</label></td>
-        <td><input id="ownerColumn" type="text" /></td>
-      </tr>
-      <tr>
-        <td><label for="costarurlColumn">CoStar</label></td>
-        <td><input id="costarurlColumn" type="text" /></td>
-      </tr>
-      <tr>
-        <td><label for="maptilerColumn">Maptiler</label></td>
-        <td><input id="maptilerColumn" type="text" /></td>
-      </tr>
-      <tr>
-        <td><label for="phoneColumn">Phone</label></td>
-        <td><input id="phoneColumn" type="text" /></td>
-      </tr>
-      <tr>
-        <td><label for="addressColumn">Address</label></td>
-        <td><input id="addressColumn" type="text" /></td>
-      </tr>
-      <tr>
-        <td><label for="imageurlColumn">Image</label></td>
-        <td><input id="imageurlColumn" type="text" /></td>
-      </tr>
-    </table>
-    <button id="saveConfig">Save Configuration</button>
-  </div>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map and set view to Oregon
+        var map = L.map('map').setView([44.0, -120.5], 7);
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Function to add logo overlay
+        function addLogoOverlay(lat, lng, logoUrl) {
+            var logoIcon = L.icon({
+                iconUrl: logoUrl,
+                iconSize: [50, 50],  // size of the icon
+                iconAnchor: [25, 25], // point of the icon which will correspond to marker's location
+            });
+            L.marker([lat, lng], { icon: logoIcon }).addTo(map);
+        }
+
+        // Example: Adding Costco and Walmart logos
+        addLogoOverlay(45.523, -122.676, 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Costco_Wholesale_logo_2010-10-26.svg/512px-Costco_Wholesale_logo_2010-10-26.svg.png'); // Portland Costco
+        addLogoOverlay(44.052, -123.086, 'https://upload.wikimedia.org/wikipedia/commons/c/ca/Walmart_logo.svg'); // Eugene Walmart
+
+    </script>
 </body>
 </html>
