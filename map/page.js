@@ -131,6 +131,10 @@ function initMap() {
       const { id, name, lng, lat, imageUrl } = e.features[0].properties;
 
       const popupContent = `<strong>${name}</strong>`
+        // Check if the imageUrl is valid before showing it
+      if (imageUrl) {
+        popupContent += `<img src="${imageUrl}" alt="Image for ${name}" style="width: 100px; height: auto;"/><br>`;
+      }
 
       const popup = new mapboxgl.Popup({ offset: 25 })
         .setLngLat(coordinates)
