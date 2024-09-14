@@ -1,16 +1,17 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://api.maptiler.com/maps/streets/style.css?key=TbsQ5qLxJHC20Jv4Th7E" />
-  <script src="https://api.maptiler.com/maps/streets/script.js?key=TbsQ5qLxJHC20Jv4Th7E"></script>
+  <title>Map Widget</title>
+  <link href="https://api.maptiler.com/maps/maplibre-gl-js/v2.1.9/maplibre-gl.css" rel="stylesheet">
+  <script src="https://api.maptiler.com/maps/maplibre-gl-js/v2.1.9/maplibre-gl.js"></script>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="page.js"></script>
-  <link rel="stylesheet" href="screen.css" />
+  <link rel="stylesheet" href="screen.css">
 </head>
 <body>
-  <div id="map">
-  </div>
+  <div id="map"></div>
   <div id="settings">
     <div id="btnClose">Close</div>
     <label id="lblToggle" for="cbxMode">
@@ -20,12 +21,12 @@
     <br/>
     <table>
       <tr>
-        <td> <label id="lblSource" for="mapSource"> Source </label> </td>
-        <td> <input id="mapSource"> </td>
+        <td><label id="lblSource" for="mapSource">Source</label></td>
+        <td><input id="mapSource"></td>
       </tr>
       <tr>
-        <td> <label id="lblCopyright" for="mapCopyright"> Copyright </label> </td>
-        <td> <input id="mapCopyright"> </td>
+        <td><label id="lblCopyright" for="mapCopyright">Copyright</label></td>
+        <td><input id="mapCopyright"></td>
       </tr>
     </table>
   </div>
