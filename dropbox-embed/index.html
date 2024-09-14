@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet-src.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="screen.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- next line is optional - only if geocoding is desired -->
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <script src="page.js"></script>
+  </head>
+  <body>
+    <div id="map">
+    </div>
+    <div id="settings">
+      <div id="btnClose">Close</div>
+      <label id="lblToggle" for="cbxMode">
+        <input type="checkbox" id="cbxMode">
+        <span id="lblText">All locations</span>
+      </label>
+      <br/>
+      <table>
+        <tr>
+          <td> <label id="lblSource" for="mapSource"> Source </label> </td>
+          <td> <input id="mapSource"> </td>
+        </tr>
+        <tr>
+          <td> <label id="lblCopyright" for="mapCopyright"> Copyright </label> </td>
+          <td> <input id="mapCopyright"> </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
