@@ -7,8 +7,8 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let mapSource = 'mapbox://styles/sgfroerer/clzc4a3mw00c901rc8836bh9z';
-let mapCopyright = '© Mapbox, © OpenStreetMap contributors';
+const mapSource = 'https://api.maptiler.com/maps/streets/style.json?key=TbsQ5qLxJHC20Jv4Th7E';
+let mapCopyright = '© MapTiler';
 
 // Required, Label value
 const Name = "Name";
@@ -29,12 +29,9 @@ const GeocodedAddress = 'GeocodedAddress';
 let lastRecord;
 let lastRecords;
 
-// Mapbox access token
-mapboxgl.accessToken = 'pk.eyJ1Ijoic2dmcm9lcmVyIiwiYSI6ImNsdGk4cWY0OTBkaXgycG1kNDNreGpqYTgifQ.P0pY9LfTCJLO9abd0Y41QQ';
-
 function initMap() {
   console.log("Initializing map...");
-  map = new mapboxgl.Map({
+  map = new maplibregl.Map({
     container: 'map',
     style: mapSource,
     center: [-98, 38.88], // Initial center point (longitude, latitude)
@@ -51,10 +48,10 @@ function initMap() {
       },
       cluster: true,
       clusterMaxZoom: 14, // Max zoom to cluster points on
-      clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+      clusterRadius: 50 // Radius of each cluster when clustering points
     });
 
-    map.addLayer({
+map.addLayer({
       id: 'clusters',
       type: 'circle',
       source: 'properties',
@@ -109,34 +106,19 @@ function initMap() {
     updateMap(selectedRecords);
 
     map.on('click', 'clusters', function (e) {
-      var features = map.queryRenderedFeatures(e.point, {
-        layers: ['clusters']
+      const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+      const clusterId = features[0].properties.cluster_id;
+      map.getSource('properties').getClusterExpansionZoom(clusterId, function (err, zoom) {
+        if (err) return;
+        map.easeTo({ center: features[0].geometry.coordinates, zoom: zoom });
       });
-      var clusterId = features[0].properties.cluster_id;
-      map.getSource('properties').getClusterExpansionZoom(
-        clusterId,
-        function (err, zoom) {
-          if (err) return;
-
-          map.easeTo({
-            center: features[0].geometry.coordinates,
-            zoom: zoom
-          });
-        }
-      );
     });
 
     map.on('click', 'unclustered-point', function (e) {
       const coordinates = e.features[0].geometry.coordinates.slice();
-      const { id, name, lng, lat, imageUrl } = e.features[0].properties;
-
-      const popupContent = `<strong>${name}</strong>`
-
-      const popup = new mapboxgl.Popup({ offset: 25 })
-        .setLngLat(coordinates)
-        .setHTML(popupContent)
-        .addTo(map);
-
+      const { id, name } = e.features[0].properties;
+      const popupContent = `<strong>${name}</strong>`;
+      new maplibregl.Popup({ offset: 25 }).setLngLat(coordinates).setHTML(popupContent).addTo(map);
       selectMarker(id);
     });
 
@@ -161,8 +143,7 @@ function updateMap(data) {
   console.log("Columns in data: ", Object.keys(data[0]));
 
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0] && ImageURL in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude, ImageURL. You can map custom columns"+
-    " in the Creator Panel.");
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude, ImageURL. You can map custom columns in the Creator Panel.");
     return;
   }
 
@@ -173,22 +154,13 @@ function updateMap(data) {
 
   const features = data.map(rec => {
     const { id, name, lng, lat, imageUrl } = getInfo(rec);
-    if (String(lng) === '...') { return null; }
-    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) { return null; }
+    if (String(lng) === '...') return null;
+    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) return null;
 
     return {
       type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [lng, lat]
-      },
-      properties: {
-        id,
-        name,
-        lng,
-        lat,
-        imageUrl
-      }
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+      properties: { id, name, lng, lat, imageUrl }
     };
   }).filter(f => f !== null);
 
@@ -202,7 +174,7 @@ function updateMap(data) {
 
 function selectMarker(id) {
   selectedRowId = id;
-  grist.setCursorPos?.({rowId: id}).catch(() => {});
+  grist.setCursorPos?.({ rowId: id }).catch(() => {});
 
   const feature = selectedRecords.find(rec => rec.id === id);
   if (feature) {
@@ -212,14 +184,13 @@ function selectMarker(id) {
 }
 
 function getInfo(rec) {
-  const result = {
+  return {
     id: rec.id,
     name: parseValue(rec[Name]),
     lng: parseValue(rec[Longitude]),
     lat: parseValue(rec[Latitude]),
     imageUrl: parseValue(rec[ImageURL])
   };
-  return result;
 }
 
 function makeSureSelectedMarkerIsShown() {
@@ -234,7 +205,7 @@ function makeSureSelectedMarkerIsShown() {
 }
 
 function parseValue(v) {
-  if (typeof(v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
+  if (typeof v === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
     const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
     return payload.remote || payload.local || payload.parent || payload;
   }
@@ -243,33 +214,29 @@ function parseValue(v) {
 
 function showProblem(txt) {
   console.error(txt);
-  document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
+  document.getElementById('map').innerHTML = `<div class="error">${txt}</div>`;
 }
 
 grist.on('message', (e) => {
-  console.log("Received message: ", e);
-  if (e.tableId) { selectedTableId = e.tableId; }
+  if (e.tableId) selectedTableId = e.tableId;
 });
 
 grist.onRecord((record, mappings) => {
-  console.log("Received record: ", record);
   lastRecord = grist.mapColumnNames(record) || record;
   selectOnMap(lastRecord);
 });
 
 grist.onRecords((data, mappings) => {
-  console.log("Received records: ", data);
   lastRecords = grist.mapColumnNames(data) || data;
   updateMap(lastRecords);
 });
 
 grist.onNewRecord(() => {
-  console.log("New record event");
   popups = {};
 });
 
 function selectOnMap(rec) {
-  if (selectedRowId === rec.id) { return; }
+  if (selectedRowId === rec.id) return;
   selectedRowId = rec.id;
   if (mode === 'single') {
     updateMap([rec]);
@@ -278,28 +245,24 @@ function selectOnMap(rec) {
   }
 }
 
-grist.on('message', (e) => {
-  if (e.tableId) { selectedTableId = e.tableId; }
-});
-
 function onEditOptions() {
   const popup = document.getElementById("settings");
   popup.style.display = 'block';
   const btnClose = document.getElementById("btnClose");
   btnClose.onclick = () => popup.style.display = 'none';
   const checkbox = document.getElementById('cbxMode');
-  checkbox.checked = mode === 'multi' ? true : false;
+  checkbox.checked = mode === 'multi';
   checkbox.onchange = () => mode = checkbox.checked ? 'multi' : 'single';
   ['mapSource', 'mapCopyright'].forEach((opt) => {
     const elem = document.getElementById(opt);
-    elem.value = (opt === "mapSource" ? mapSource : mapCopyright);
+    elem.value = opt === "mapSource" ? mapSource : mapCopyright;
     elem.onchange = async (e) => {
       switch (opt) {
         case 'mapSource': mapSource = e.target.value; break;
         case 'mapCopyright': mapCopyright = e.target.value; break;
       }
       initMap();
-    }
+    };
   });
 }
 
