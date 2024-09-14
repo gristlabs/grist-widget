@@ -274,4 +274,5 @@ async function updateMode() {
 window.addEventListener('DOMContentLoaded', () => {
   updateMode();
   grist.ready();
+  initMap(); // Ensure map is initialized after DOM content is loaded
 });
