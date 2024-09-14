@@ -7,7 +7,7 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-const mapSource = 'https://api.maptiler.com/maps/streets/style.json?key=TbsQ5qLxJHC20Jv4Th7E';
+const mapSource = 'https://api.maptiler.com/maps/935f7b89-029d-4de6-a4df-7b5196d02f2b/style.json?key=TbsQ5qLxJHC20Jv4Th7E';
 let mapCopyright = '© MapTiler';
 
 // Required, Label value
