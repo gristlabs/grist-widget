@@ -1,15 +1,11 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <meta charset='utf-8' />
-  <title></title>
-  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-  <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
-  <script src='https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.js'></script>
-  <link href='https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.css' rel='stylesheet' />
-  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-  <script src="page.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Display a 3D Map</title>
+  <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.2.2/maptiler-sdk.umd.js"></script>
+  <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.2.2/maptiler-sdk.css" rel="stylesheet" />
   <style>
     body {
       margin: 0;
@@ -22,84 +18,24 @@
       bottom: 0;
       width: 100%;
     }
-
-    /* Popup styling */
-    .mapboxgl-popup {
-      padding-bottom: 5px;
-    }
-
-    .mapboxgl-popup-close-button {
-      display: none;
-    }
-
-    .mapboxgl-popup-content {
-      font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
-      padding: 0;
-      width: 250px;
-    }
-
-    .mapboxgl-popup-content-wrapper {
-      padding: 1%;
-    }
-
-    .mapboxgl-popup-content h3 {
-      background: rgb(61, 59, 59);
-      text-align: center;
-      color: #fff;
-      margin: 0;
-      display: block;
-      padding: 15px;
-      font-weight: 700;
-      margin-top: -5px;
-    }
-
-    .mapboxgl-popup-content h4 {
-      margin: 0;
-      display: block;
-      padding: 10px 3px 10px 10px;
-      font-weight: 400;
-    }
-
-    .mapboxgl-container {
-      cursor: pointer;
-    }
-
-    .mapboxgl-popup-anchor-top>.mapboxgl-popup-content {
-      margin-top: 3px;
-    }
-
-    .mapboxgl-popup-anchor-top>.mapboxgl-popup-tip {
-      border-bottom-color: rgb(61, 59, 59);
-    }
-
-    .popup-buttons {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px;
-    }
-
-    .popup-button {
-      background-color: #007bff;
-      color: white;
-      padding: 8px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      border-radius: 5px;
-      font-size: 14px;
-    }
   </style>
 </head>
 <body>
-  <div id='map'></div>
-  <div id='settings'>
-    <button id='toggle-map'>Toggle Map</button>
-    <div id='table-selector'>
-      <label for='table-selector'>Select a table:</label>
-      <select id='table-selector'>
-        <!-- options will be populated dynamically -->
-      </select>
-    </div>
-  </div>
+  <div id="map"></div>
+  <script>
+      maptilersdk.config.apiKey = 'TbsQ5qLxJHC20Jv4Th7E';
+      const map = new maptilersdk.Map({
+        container: 'map', // container id
+        style: maptilersdk.MapStyle.OUTDOOR,
+        center: [8.94738, 45.97812], // starting position [lng, lat]
+        zoom: 14, // starting zoom
+        pitch: 70,
+        bearing: -100.86,
+        maxPitch: 85,
+        maxZoom: 14,
+        terrain: true,
+        terrainControl: true
+      });
+  </script>
 </body>
 </html>
