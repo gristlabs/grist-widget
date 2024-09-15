@@ -3,39 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Display a 3D Map</title>
-  <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.2.2/maptiler-sdk.umd.js"></script>
-  <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.2.2/maptiler-sdk.css" rel="stylesheet" />
+  <title>Display a map in Cesium JS</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.98/Build/Cesium/Cesium.js"></script>
   <style>
+    @import url(https://cesium.com/downloads/cesiumjs/releases/1.98/Build/Cesium/Widgets/widgets.css);
     body {
       margin: 0;
       padding: 0;
     }
-
-    #map {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 100%;
-    }
+    #cesiumContainer {position: absolute; top: 0; right: 0; bottom: 0; left: 0;}
   </style>
 </head>
 <body>
-  <div id="map"></div>
-  <script>
-      maptilersdk.config.apiKey = 'TbsQ5qLxJHC20Jv4Th7E';
-      const map = new maptilersdk.Map({
-        container: 'map', // container id
-        style: maptilersdk.MapStyle.OUTDOOR,
-        center: [8.94738, 45.97812], // starting position [lng, lat]
-        zoom: 14, // starting zoom
-        pitch: 70,
-        bearing: -100.86,
-        maxPitch: 85,
-        maxZoom: 14,
-        terrain: true,
-        terrainControl: true
-      });
-  </script>
+  <div id="cesiumContainer">
+    <a href="https://www.maptiler.com" style="position:absolute;right:10px;bottom:10px;z-index:999;"><img src="https://api.maptiler.com/resources/logo.svg" alt="MapTiler logo"></a>
+  </div>
 </body>
+<script>
+  const key = 'TbsQ5qLxJHC20Jv4Th7E';
+  const viewer = new Cesium.Viewer('cesiumContainer', {
+    animation: false,
+    baseLayerPicker: false,
+    navigationHelpButton: false,
+    sceneModePicker: false,
+    homeButton: false,
+    geocoder: false,
+    fullscreenButton: false,
+    timeline: false,
+    terrainProvider: new Cesium.CesiumTerrainProvider({
+      url: `https://api.maptiler.com/tiles/terrain-quantized-mesh-v2/?key=${key}`,
+      credit: new Cesium.Credit("\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy;MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e", true),
+      requestVertexNormals: true
+    }),
+    imageryProvider: new Cesium.UrlTemplateImageryProvider({
+      url: `https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=${key}`,
+      minimumLevel: 0,
+      maximumLevel: 20,
+      credit: new Cesium.Credit("\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e", true)
+    }),
+  });
+  viewer.camera.setView({
+    destination: Cesium.Cartesian3.fromDegrees(8.67, 46.72, 4500),
+    orientation: {
+      pitch: Cesium.Math.toRadians(-20)
+    }
+  });
+</script>
 </html>
