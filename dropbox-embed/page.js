@@ -18,7 +18,6 @@ const Longitude = "Longitude";
 const Latitude = "Latitude";
 // Optional - switch column to trigger geocoding
 // Columns used in page.js
-const Address = 'Address';
 const Property_Type = 'Property_Type';
 const Tenants = 'Tenants';
 const TextName = 'TextName';
@@ -197,7 +196,6 @@ function getInfo(rec) {
     name: parseValue(rec[Name]),
     lng: parseValue(rec[Longitude]),
     lat: parseValue(rec[Latitude]),
-    address: parseValue(rec['Address']),  // Add Address column
     propertyType: parseValue(rec['Property_Type']),  // Add Property Type column
     tenants: parseValue(rec['Tenants']),  // Add Tenants column
     owner: parseValue(rec['TextName']),  // Add Owner column
@@ -281,7 +279,7 @@ function updateMap(data) {
   });
 
 for (const rec of data) {
-  const {id, name, lng, lat, address, propertyType, tenants, owner, segment, imageUrl, costarLink, countyLink} = getInfo(rec);
+  const {id, name, lng, lat, propertyType, tenants, owner, segment, imageUrl, costarLink, countyLink} = getInfo(rec);
   
   if (String(lng) === '...') { continue; }
   if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
@@ -385,7 +383,6 @@ function defaultMapping(record, mappings) {
       [Longitude]: Longitude,
       [Name]: Name,
       [Latitude]: Latitude,
-      [Address]: Address,
       [Property_Type]: Property_Type,
       [Tenants]: Tenants,
       [TextName]: TextName,
@@ -486,7 +483,6 @@ grist.ready({
     "Name",
     { name: "Longitude", type: 'Numeric'} ,
     { name: "Latitude", type: 'Numeric'},
-    { name: "Address", type: 'Text'} ,
     { name: "Property_Type", type: 'Choice'} ,
     { name: "Tenants", type: 'Choice List'} ,
     { name: "TextName", type: 'Text'} ,
