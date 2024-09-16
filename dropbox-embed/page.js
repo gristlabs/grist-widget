@@ -197,7 +197,7 @@ function getInfo(rec) {
     lat: parseValue(rec[Latitude]),
     propertyType: parseValue(rec['Property_Type']),  // Add Property Type column
     tenants: parseValue(rec['Tenants']),  // Add Tenants column
-    owner: parseValue(rec['TextName']),  // Add Owner column
+    owner: parseValue(rec['Secondary_Type']),  // Add Owner column
     imageUrl: parseValue(rec['ImageURL']),  // Add Image URL column
     costarLink: parseValue(rec['CoStar_URL']),  // Add CoStar link column
     countyLink: parseValue(rec['County_Hyper'])  // Add County link column
@@ -381,7 +381,7 @@ function defaultMapping(record, mappings) {
       [Latitude]: Latitude,
       [Property_Type]: Property_Type,
       [Tenants]: Tenants,
-      [TextName]: TextName,
+      [Secondary_Type]: Secondary_Type,
       [ImageURL]: ImageURL,
       [CoStar_URL]: CoStar_URL,
       [County_Hyper]: County_Hyper,
@@ -480,7 +480,7 @@ grist.ready({
     { name: "Latitude", type: 'Numeric'},
     { name: "Property_Type", type: 'Choice'} ,
     { name: "Tenants", type: 'ChoiceList'} ,
-    { name: "TextName", type: 'Text'} ,
+    { name: "Secondary_Type", type: 'ChoiceList'} ,
     { name: "ImageURL", type: 'Text'} ,
     { name: "CoStar_URL", type: 'Text'} ,
     { name: "County_Hyper", type: 'Text'} ,
