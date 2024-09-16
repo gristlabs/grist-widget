@@ -17,6 +17,15 @@ const Longitude = "Longitude";
 // Required
 const Latitude = "Latitude";
 // Optional - switch column to trigger geocoding
+// Columns used in page.js
+const Address = 'Address';
+const Property_Type = 'Property_Type';
+const Tenants = 'Tenants';
+const TextName = 'TextName';
+const Segment = 'Segment';
+const ImageURL = 'ImageURL';
+const CoStar_URL = 'CoStar_URL';
+const County_Hyper = 'County_Hyper';
 const Geocode = 'Geocode';
 // Optional - but required for geocoding. Field with address to find (might be formula)
 const Address = 'Address';
@@ -187,7 +196,7 @@ function getInfo(rec) {
     id: rec.id,
     name: parseValue(rec[Name]),
     lng: parseValue(rec[Longitude]),
-    lat: parseValue(rec[Latitude])
+    lat: parseValue(rec[Latitude]),
     address: parseValue(rec['Address']),  // Add Address column
     propertyType: parseValue(rec['Property_Type']),  // Add Property Type column
     tenants: parseValue(rec['Tenants']),  // Add Tenants column
