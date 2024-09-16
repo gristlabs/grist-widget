@@ -75,7 +75,7 @@ html, body, #map {
 .popup-button {
   display: inline-block;
   padding: 8px 12px;
-  background-color: #4CAF50;
+  background-color: #DBEFDC;
   color: white;
   text-decoration: none;
   border-radius: 4px;
@@ -84,7 +84,7 @@ html, body, #map {
 }
 
 .popup-button:hover {
-  background-color: #45a049;
+  background-color: #A5D7A7;
 }
 
 /* Popup Header and Text */
