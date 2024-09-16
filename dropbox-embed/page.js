@@ -24,6 +24,8 @@ const Secondary_Type = 'Secondary_Type';
 const ImageURL = 'ImageURL';
 const CoStar_URL = 'CoStar_URL';
 const County_Hyper = 'County_Hyper';
+const GIS = 'GIS';
+
 const Geocode = 'Geocode';
 // Optional - but required for geocoding. Field with address to find (might be formula)
 const Address = 'Address';
@@ -200,7 +202,8 @@ function getInfo(rec) {
     secondaryType: parseValue(rec['Secondary_Type']),  // Add Secondary Type column
     imageUrl: parseValue(rec['ImageURL']),  // Add Image URL column
     costarLink: parseValue(rec['CoStar_URL']),  // Add CoStar link column
-    countyLink: parseValue(rec['County_Hyper'])  // Add County link column
+    countyLink: parseValue(rec['County_Hyper']),  // Add County link column
+    gisLink: parseValue(rec['GIS'])  // Add GIS link column
   };
   return result;
 }
@@ -277,7 +280,7 @@ function updateMap(data) {
   });
 
 for (const rec of data) {
-  const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink} = getInfo(rec);
+  const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(rec);
   
   if (String(lng) === '...') { continue; }
   if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
@@ -305,6 +308,7 @@ for (const rec of data) {
     <div class="popup-buttons">
       <a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>
       <a href="${countyLink}" class="popup-button" target="_blank">County</a>
+      <a href="${gisLink}" class="popup-button" target="_blank">GIS</a>
     </div>
   `;
 
@@ -385,6 +389,7 @@ function defaultMapping(record, mappings) {
       [ImageURL]: ImageURL,
       [CoStar_URL]: CoStar_URL,
       [County_Hyper]: County_Hyper,
+      [GIS]: GIS,
       [Address]: hasCol(Address, record) ? Address : null,
       [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
       [Geocode]: hasCol(Geocode, record) ? Geocode : null,
@@ -484,6 +489,7 @@ grist.ready({
     { name: "ImageURL", type: 'Text'} ,
     { name: "CoStar_URL", type: 'Text'} ,
     { name: "County_Hyper", type: 'Text'} ,
+    { name: "GIS", type: 'Text'} ,
     { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
     { name: "Address", type: 'Text', optional, optional},
     { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
