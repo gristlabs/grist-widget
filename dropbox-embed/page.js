@@ -188,6 +188,14 @@ function getInfo(rec) {
     name: parseValue(rec[Name]),
     lng: parseValue(rec[Longitude]),
     lat: parseValue(rec[Latitude])
+    address: parseValue(rec['Address']),  // Add Address column
+    propertyType: parseValue(rec['Property_Type']),  // Add Property Type column
+    tenants: parseValue(rec['Tenants']),  // Add Tenants column
+    owner: parseValue(rec['TextName']),  // Add Owner column
+    segment: parseValue(rec['Segment']),  // Add Segment column
+    imageUrl: parseValue(rec['ImageURL']),  // Add Image URL column
+    costarLink: parseValue(rec['CoStar_URL']),  // Add CoStar link column
+    countyLink: parseValue(rec['County_Hyper'])  // Add County link column
   };
   return result;
 }
@@ -263,29 +271,46 @@ function updateMap(data) {
     selectMaker(id);
   });
 
-  for (const rec of data) {
-    const {id, name, lng, lat} = getInfo(rec);
-    // If the record is in the middle of geocoding, skip it.
-    if (String(lng) === '...') { continue; }
-    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-      // Stuff at 0,0 usually indicates bad imports/geocoding.
-      continue;
-    }
-    const pt = new L.LatLng(lat, lng);
-    points.push(pt);
-
-    const marker = L.marker(pt, {
-      title: name,
-      id: id,
-      icon: (id == selectedRowId) ?  selectedIcon    :  defaultIcon,
-      pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
-    });
-
-    marker.bindPopup(name);
-    markers.addLayer(marker);
-
-    popups[id] = marker;
+for (const rec of data) {
+  const {id, name, lng, lat, address, propertyType, tenants, owner, segment, imageUrl, costarLink, countyLink} = getInfo(rec);
+  
+  if (String(lng) === '...') { continue; }
+  if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
+    continue;
   }
+
+  const pt = new L.LatLng(lat, lng);
+  points.push(pt);
+
+  const marker = L.marker(pt, {
+    title: name,
+    id: id,
+    icon: (id == selectedRowId) ?  selectedIcon : defaultIcon,
+    pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
+  });
+
+  // Build HTML content for the popup, similar to your Mapbox example
+  const imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
+  const popupContent = `
+    <h3>${name}</h3>
+    ${imageTag}
+    <h4><b>Address: </b>${address}</h4>
+    <h4><b>Property Type: </b>${propertyType}</h4>
+    <h4><b>Tenants: </b>${tenants}</h4>
+    <h4><b>Owner: </b>${owner}</h4>
+    <h4><b>Segment: </b>${segment}</h4>
+    <div class="popup-buttons">
+      <a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>
+      <a href="${countyLink}" class="popup-button" target="_blank">County</a>
+    </div>
+  `;
+
+  // Bind the custom HTML content to the marker's popup
+  marker.bindPopup(popupContent);
+  markers.addLayer(marker);
+
+  popups[id] = marker;
+}
   map.addLayer(markers);
 
   clearMakers = () => map.removeLayer(markers);
@@ -351,6 +376,14 @@ function defaultMapping(record, mappings) {
       [Longitude]: Longitude,
       [Name]: Name,
       [Latitude]: Latitude,
+      [Address]: Address,
+      [Property_Type]: Property_Type,
+      [Tenants]: Tenants,
+      [TextName]: TextName,
+      [Segment]: Segment,
+      [ImageURL]: ImageURL,
+      [CoStar_URL]: CoStar_URL,
+      [County_Hyper]: County_Hyper,
       [Address]: hasCol(Address, record) ? Address : null,
       [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
       [Geocode]: hasCol(Geocode, record) ? Geocode : null,
@@ -444,6 +477,14 @@ grist.ready({
     "Name",
     { name: "Longitude", type: 'Numeric'} ,
     { name: "Latitude", type: 'Numeric'},
+    { name: "Address", type: 'Text'} ,
+    { name: "Property_Type", type: 'Choice'} ,
+    { name: "Tenants", type: 'Choice List'} ,
+    { name: "TextName", type: 'Text'} ,
+    { name: "Segment", type: 'Choice List'} ,
+    { name: "ImageURL", type: 'Text'} ,
+    { name: "CoStar_URL", type: 'Text'} ,
+    { name: "County_Hyper", type: 'Text'} ,
     { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
     { name: "Address", type: 'Text', optional, optional},
     { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
