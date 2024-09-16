@@ -20,7 +20,7 @@ const Latitude = "Latitude";
 // Columns used in page.js
 const Property_Type = 'Property_Type';
 const Tenants = 'Tenants';
-const TextName = 'TextName';
+const Secondary_Type = 'Secondary_Type';
 const ImageURL = 'ImageURL';
 const CoStar_URL = 'CoStar_URL';
 const County_Hyper = 'County_Hyper';
