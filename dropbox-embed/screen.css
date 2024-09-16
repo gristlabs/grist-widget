@@ -56,3 +56,50 @@ html, body, #map {
 .marker-cluster-selected {
   border: 3px solid #16b378;
 }
+
+/* Image Styling */
+.leaflet-popup-content img {
+  width: 100%;
+  height: auto;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+/* Popup Buttons */
+.popup-buttons {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.popup-button {
+  display: inline-block;
+  padding: 8px 12px;
+  background-color: #4CAF50;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.popup-button:hover {
+  background-color: #45a049;
+}
+
+/* Popup Header and Text */
+.leaflet-popup-content h3 {
+  font-size: 18px;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.leaflet-popup-content h4 {
+  font-size: 14px;
+  margin: 5px 0;
+  color: #555;
+}
+
+.leaflet-popup-content b {
+  font-weight: bold;
+}
