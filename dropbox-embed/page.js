@@ -25,7 +25,6 @@ const ImageURL = 'ImageURL';
 const CoStar_URL = 'CoStar_URL';
 const County_Hyper = 'County_Hyper';
 const GIS = 'GIS';
-
 const Geocode = 'Geocode';
 // Optional - but required for geocoding. Field with address to find (might be formula)
 const Address = 'Address';
@@ -203,7 +202,7 @@ function getInfo(rec) {
     imageUrl: parseValue(rec['ImageURL']),  // Add Image URL column
     costarLink: parseValue(rec['CoStar_URL']),  // Add CoStar link column
     countyLink: parseValue(rec['County_Hyper']),  // Add County link column
-    gisLink: parseValue(rec['GIS'])  // Add GIS link column
+    gisLink: parseValue(rec['GIS']),  // Add GIS link column
   };
   return result;
 }
