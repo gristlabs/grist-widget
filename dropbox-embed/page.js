@@ -21,7 +21,6 @@ const Latitude = "Latitude";
 const Property_Type = 'Property_Type';
 const Tenants = 'Tenants';
 const TextName = 'TextName';
-const Segment = 'Segment';
 const ImageURL = 'ImageURL';
 const CoStar_URL = 'CoStar_URL';
 const County_Hyper = 'County_Hyper';
@@ -199,7 +198,6 @@ function getInfo(rec) {
     propertyType: parseValue(rec['Property_Type']),  // Add Property Type column
     tenants: parseValue(rec['Tenants']),  // Add Tenants column
     owner: parseValue(rec['TextName']),  // Add Owner column
-    segment: parseValue(rec['Segment']),  // Add Segment column
     imageUrl: parseValue(rec['ImageURL']),  // Add Image URL column
     costarLink: parseValue(rec['CoStar_URL']),  // Add CoStar link column
     countyLink: parseValue(rec['County_Hyper'])  // Add County link column
@@ -279,7 +277,7 @@ function updateMap(data) {
   });
 
 for (const rec of data) {
-  const {id, name, lng, lat, propertyType, tenants, owner, segment, imageUrl, costarLink, countyLink} = getInfo(rec);
+  const {id, name, lng, lat, propertyType, tenants, owner, imageUrl, costarLink, countyLink} = getInfo(rec);
   
   if (String(lng) === '...') { continue; }
   if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
@@ -301,11 +299,9 @@ for (const rec of data) {
   const popupContent = `
     <h3>${name}</h3>
     ${imageTag}
-    <h4><b>Address: </b>${address}</h4>
     <h4><b>Property Type: </b>${propertyType}</h4>
     <h4><b>Tenants: </b>${tenants}</h4>
     <h4><b>Owner: </b>${owner}</h4>
-    <h4><b>Segment: </b>${segment}</h4>
     <div class="popup-buttons">
       <a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>
       <a href="${countyLink}" class="popup-button" target="_blank">County</a>
@@ -386,7 +382,6 @@ function defaultMapping(record, mappings) {
       [Property_Type]: Property_Type,
       [Tenants]: Tenants,
       [TextName]: TextName,
-      [Segment]: Segment,
       [ImageURL]: ImageURL,
       [CoStar_URL]: CoStar_URL,
       [County_Hyper]: County_Hyper,
@@ -484,9 +479,8 @@ grist.ready({
     { name: "Longitude", type: 'Numeric'} ,
     { name: "Latitude", type: 'Numeric'},
     { name: "Property_Type", type: 'Choice'} ,
-    { name: "Tenants", type: 'Choice List'} ,
+    { name: "Tenants", type: 'ChoiceList'} ,
     { name: "TextName", type: 'Text'} ,
-    { name: "Segment", type: 'Choice List'} ,
     { name: "ImageURL", type: 'Text'} ,
     { name: "CoStar_URL", type: 'Text'} ,
     { name: "County_Hyper", type: 'Text'} ,
