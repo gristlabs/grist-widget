@@ -197,7 +197,7 @@ function getInfo(rec) {
     lat: parseValue(rec[Latitude]),
     propertyType: parseValue(rec['Property_Type']),  // Add Property Type column
     tenants: parseValue(rec['Tenants']),  // Add Tenants column
-    owner: parseValue(rec['Secondary_Type']),  // Add Owner column
+    secondaryType: parseValue(rec['Secondary_Type']),  // Add Secondary Type column
     imageUrl: parseValue(rec['ImageURL']),  // Add Image URL column
     costarLink: parseValue(rec['CoStar_URL']),  // Add CoStar link column
     countyLink: parseValue(rec['County_Hyper'])  // Add County link column
@@ -277,7 +277,7 @@ function updateMap(data) {
   });
 
 for (const rec of data) {
-  const {id, name, lng, lat, propertyType, tenants, owner, imageUrl, costarLink, countyLink} = getInfo(rec);
+  const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink} = getInfo(rec);
   
   if (String(lng) === '...') { continue; }
   if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
@@ -300,7 +300,7 @@ for (const rec of data) {
     <h3>${name}</h3>
     ${imageTag}
     <h4><b>Property Type: </b>${propertyType}</h4>
-    <h4><b>Secondary Type: </b>${owner}</h4>
+    <h4><b>Secondary Type: </b>${secondaryType}</h4>
     <h4><b>Tenants: </b>${tenants}</h4>
     <div class="popup-buttons">
       <a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>
