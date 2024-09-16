@@ -300,8 +300,8 @@ for (const rec of data) {
     <h3>${name}</h3>
     ${imageTag}
     <h4><b>Property Type: </b>${propertyType}</h4>
+    <h4><b>Secondary Type: </b>${owner}</h4>
     <h4><b>Tenants: </b>${tenants}</h4>
-    <h4><b>Owner: </b>${owner}</h4>
     <div class="popup-buttons">
       <a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>
       <a href="${countyLink}" class="popup-button" target="_blank">County</a>
