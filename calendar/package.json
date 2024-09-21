@@ -12,7 +12,7 @@
       "accessLevel": "full",
       "renderAfterReady": true,
       "archive": {
-        "domains": ["uicdn.toast.com", "maxcdn.bootstrapcdn.com"],
+        "domains": ["uicdn.toast.com", "maxcdn.bootstrapcdn.com", "unpkg.com", "cdn.jsdelivr.net"],
         "entrypoints": [
           "https://gristlabs.github.io/grist-widget/calendar/i18n/"
         ]
