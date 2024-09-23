@@ -1,6 +1,6 @@
 {
   "name": "@gristlabs/grist-widget",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A repository of grist custom widgets that have no back-end requirements.",
   "scripts": {
     "build": "tsc --build && node ./buildtools/publish.js manifest.json",
