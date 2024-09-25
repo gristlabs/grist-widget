@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "grist": [
     {
-      "name": "QR Code",
+      "name": "QR code",
       "url": "https://gristlabs.github.io/grist-widget/qrcode/index.html",
       "widgetId": "@gristlabs/widget-qrcode",
       "published": true,
