@@ -1,0 +1,24 @@
+{
+  "name": "@berhalak/js-fiddle",
+  "description": "Editor for building widgets with HTML and JS inside Grist.",
+  "homePage": "https://github.com/gristlabs/grist-widget/tree/master/js-fiddle",
+  "version": "0.0.1",
+  "grist": [
+    {
+      "name": "JS Fiddle",
+      "url": "https://gristlabs.github.io/grist-widget/js-fiddle/index.html",
+      "widgetId": "@berhalak/js-fiddle",
+      "published": true,
+      "accessLevel": "read table",
+      "renderAfterReady": true,
+      "description": "Editor for building widgets with HTML and JS inside Grist.",
+      "isGristLabsMaintained": false,
+      "authors": [
+        {
+          "name": "berhalak",
+          "url": "https://github.com/berhalak"
+        }
+      ]
+    }
+  ]
+}

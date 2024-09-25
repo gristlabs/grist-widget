@@ -1,0 +1,84 @@
+<html lang="en" style="height: 100%; margin: 0px; padding: 0px">
+
+<head>
+  <meta charset="utf-8">
+  <title>Grist Fiddle</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <script src="api_deps.js"></script>
+  <style>
+    #page_widget {
+      flex: 1;
+      border: 0px;
+      display: none;
+    }
+
+    #page_widget iframe {
+      height: 100%;
+      width: 100%;
+      border: 0px;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-size: 13px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Liberation Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+  </style>
+</head>
+
+<body style="height: 100%; display: flex; flex-direction: column; margin: 0px; overflow: hidden;">
+  <div id="_bar" style="display: none; flex: 0; justify-content: space-between; font-size: 12px; font-family: Arial, Helvetica, sans-serif;">
+    <div>
+      <span class="_tab" id="tab_html" onclick="changeTab('html');" style="padding: 2px 8px; border: 1px solid gray; cursor: pointer; background: green;">HTML</span>
+      <span class="_tab" id="tab_js" onclick="changeTab('js');" style="padding: 2px 8px; border: 1px solid gray; cursor: pointer; ">JavaScript</span>
+      <span class="_tab" id="tab_help" onclick="changeTab('help');" style="padding: 2px 8px; border: 1px solid gray; cursor: pointer;">Help</span>
+    </div>
+    <div>
+      <span class="_button" id="btnReset" onclick="bntReset_onClick();" style="padding: 2px 8px; border: 1px solid gray; cursor: pointer;">Reset</span>
+      <span class="_button" id="btnInstall" onclick="btnInstall_onClick();" style="padding: 2px 8px; border: 1px solid gray; cursor: pointer;">Install</span>
+    </div>
+  </div>
+  <div id="page_editor" style="display: none; flex-grow:1; box-sizing: border-box; border-top:1px solid #a0a0a0;  border-bottom:1px solid #a0a0a0;">
+    <div id="container" style="border-top:0px; height: 100%; box-sizing: border-box;"></div>
+  </div>
+  <div id="page_widget">
+
+  </div>
+  <div id="page_help" style="display: none; flex-grow:1; box-sizing: border-box; border-top:1px solid #a0a0a0;  border-bottom:1px solid #a0a0a0;">
+    <div id="container_help" style="border-top:0px; height: 100%; box-sizing: border-box;">
+      <div style="padding: 10px;">
+        <h2>How to Use This Editor</h2>
+        <p>
+          This editor allows you to write code for a custom widget and "install" it inside a Grist document.
+        </p>
+        <p>
+          There are two tabs: "JavaScript" and "HTML". The JavaScript tab is where you write code that
+          interacts with the Grist Plugin API, while the HTML tab is where you write the code that displays the
+          results of the JavaScript code.
+        </p>
+        <h3>Modifying the Widget</h3>
+        <p>
+          To open the editor, click the "Open Configuration" button in the creator panel or clear saved
+          filter settings for this section.
+        </p>
+        <h3>Installing the Widget</h3>
+        <p>
+          When you click the "Install" button, the widget (both the JavaScript and HTML code) will be saved in the
+          document's metadata, and the editor will then replace itself with the widget you have created.
+        </p>
+        <p>
+          After installing the widget, you need to press the "Save" button and save the configuration for a section.
+          It works similarly to saving filters in Grist. If you don't save the configuration, the widget will be lost when you refresh the page.
+         </p>
+       
+        <p>
+          Note that there is no autosave feature, so if you don't install the widget and refresh the page, the widget content will be lost.
+        </p>
+      </div>
+    </div>
+  </div>
+  <script src="api.js"></script>
+</body>
+
+</html>
