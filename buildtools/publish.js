@@ -69,56 +69,6 @@ for (const folder of folders) {
 
 fs.writeFileSync(manifestFile, JSON.stringify(widgets, null, 2));
 
-const indexHtml = `
-  <div class="grid">
-  ${widgets.map(widget => `
-    <div class="widget">
-      <h2>${widget.name}
-      ${widget.isGristLabsMaintained ? '<span style="color: #007bff">🛡️</span>' : ''}
-      </h2>
-      <p>${widget.description}</p>
-      <p>
-      <a href="${widget.url}">Open</a>
-      </p>
-      <p>Author: ${widget.authors[0]?.name ?? '-'}</p>
-      <p>Last updated: ${widget.lastUpdatedAt}</p>
-    </div>
-    `).join('')}
-  </div>
-  <style>
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1.5rem;
-      margin: 20px;
-    }
-    .widget {
-      border: 1px solid #ddd;
-      box-shadow: 1px 1px 4px 1px #0000001A;
-      border-radius: 4px;
-    }
-    h2 {
-      margin-top: 0;
-      background-color: #ddd;
-      padding: 0.5em;
-      font-size: 1.2em;
-    }
-    p {
-      margin-left: 0.5em;
-      margin-right: 0.5em;
-      margin-bottom: 0.5em;
-    }
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-size: 13px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Liberation Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    }
-</style>
-`
-
-fs.writeFileSync(path.join(rootDir, 'index.html'), indexHtml);
-
 function replaceUrl(replacementUrl, configUrl) {
   return configUrl.replace(
     'https://gristlabs.github.io/grist-widget',
