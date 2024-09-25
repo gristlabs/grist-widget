@@ -26,18 +26,17 @@ const currentJs = memory('js');
 const currentHtml = memory('html');
 const state = memory('state'); // null, 'installed', 'editor'
 
-const DEFAULT_HTML = `
-<html lang="en">
+const DEFAULT_HTML = `<html>
 <head>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 </head>
 <body>
   <pre>
-    To open this editor, press the "Open configuration" button on the creator panel.
+    To edit this widget press the "Open configuration" button on the creator panel.
 
-    Press "Preview" to replace the editor with your custom widget.
+    After editing this widget, press the "Preview" button to see it live.
 
-    Press "Save" to install the widget.
+    If you finish your work, press the "Save" button to remember your changes.
   </pre>
 </body>
 </html>
@@ -58,15 +57,6 @@ let jsModel;
 
 let monacoLoaded = false;
 async function loadMonaco() {
-  /*
-  <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css">
-<script>
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js"></script>
-*/
-
   // Load all those scripts above.
 
   if (monacoLoaded) {
@@ -252,6 +242,7 @@ function changeTab(lang) {
   editor.setModel(lang === 'js' ? jsModel : htmlModel);
   (lang == 'js' ? btnTabJs : btnTabHtml).style.background = 'green';
 }
+
 function installWidget(code, html) {
   state('installed');
   code = code ?? jsModel.getValue();
@@ -310,8 +301,15 @@ async function showEditor() {
 
 const onOptions = function (clb) {
   let listen = true;
+  let last = undefined;
   grist.onOptions((...data) => {
     if (listen) {
+      if (last !== undefined) {
+        if (JSON.stringify(last) === JSON.stringify(data)) {
+          return;
+        }
+        last = data;
+      }
       clb(...data);
     }
   });
@@ -320,17 +318,35 @@ const onOptions = function (clb) {
 
 onOptions(async options => {
   if (!options) {
-    currentHtml(null);
-    currentJs(null);
-    await showEditor();
+    if (state() === 'installed') {
+      // If we are already installed, check that we don't have any code shown.
+      if (currentJs() || currentHtml()) {
+        // If we have, remove it and install default widget.
+        currentHtml(null);
+        currentJs(null);
+        installWidget(DEFAULT_JS, DEFAULT_HTML);
+      } else {
+        // Don't need to do anything.
+      }
+    } else {
+      // We are not installed, so install the default widget.
+      currentHtml(null);
+      currentJs(null);
+      state('installed');
+      installWidget(DEFAULT_JS, DEFAULT_HTML);
+    }
   } else {
-    const newJs = options._js;
-    const newHtml = options._html;
-    const isDifferent = newJs !== currentJs() || newHtml !== currentHtml();
-    if (isDifferent || state() !== 'installed') {
+    // Install the widget from options, if we don't have any code in memory.
+    const newJs = options?._js ?? null;
+    const newHtml = options?._html ?? null;
+
+    if (currentJs() !== newJs || currentHtml() !== newHtml) {
+      // If we have code in memory, and it is different from the one in options,
+      // we need to update it.
       currentJs(newJs);
       currentHtml(newHtml);
-      installWidget(newJs, newHtml);
+      state('installed');
+      installWidget(currentJs() ?? DEFAULT_JS, currentHtml() ?? DEFAULT_HTML);
     }
   }
 });
@@ -345,8 +361,8 @@ function btnInstall_onClick() {
   state('installed');
 
   // Copy file contents into memory.
-  currentJs(options?._js ?? DEFAULT_JS);
-  currentHtml(options?._html ?? DEFAULT_HTML);
+  currentJs(options?._js);
+  currentHtml(options?._html);
 
   // Hide editor.
   page_editor.style.display = 'none';
