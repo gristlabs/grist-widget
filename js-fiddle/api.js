@@ -32,7 +32,13 @@ const DEFAULT_HTML = `
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 </head>
 <body>
-  Hello world
+  <pre>
+    To open this editor, press the "Open configuration" button on the creator panel.
+
+    Press "Preview" to replace the editor with your custom widget.
+
+    Press "Save" to install the widget.
+  </pre>
 </body>
 </html>
 `.trim();
