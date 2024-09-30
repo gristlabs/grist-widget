@@ -1,6 +1,9 @@
-import { Timeline, DataSet, TimelineOptions } from 'vis-timeline/standalone';
 import moment from 'moment';
+import 'moment/locale/en-gb'; // Import the 'en-gb' locale which uses ISO weeks
 
+import { Timeline, DataSet, TimelineOptions } from 'vis-timeline/standalone';
+
+moment.locale('en-gb');
 
 declare global {
   var grist: any;
@@ -41,7 +44,6 @@ const options: TimelineOptions = {
     updateGroup: true,
     remove: true
   },
-
   */
 
   editable: {
@@ -50,8 +52,8 @@ const options: TimelineOptions = {
     remove: true,
   },
   showCurrentTime: true,
+  showWeekScale: true,
 
-  stack: true,
   verticalScroll: true,
   zoomKey: 'ctrlKey',
   height: '100%',
@@ -59,17 +61,41 @@ const options: TimelineOptions = {
   orientation: 'top',
 
   timeAxis: {
-    scale: 'week',
-    step: 1
+    scale: 'day',
+    step: 3600,
   },
   format: {
-    minorLabels: {week: 'w'}
+   
   },
 
-  locale: 'pl',
+  locale: 'en-gb',
+  stack: false,
+  stackSubgroups: true,
+  groupHeightMode: 'fixed',
 
-  zoomMin: 1000 * 60 * 60 * 24 * 31 * 3, // one day in milliseconds
+  zoomMin: 1000 * 60 * 60 * 24 * 7 * 4, // about three months in milliseconds
   zoomMax: 1000 * 60 * 60 * 24 * 31 * 12, // about three months in milliseconds
+  moment: function(date) {
+    return moment(date); // Use moment with the 'en-gb' locale setting
+  },
+  snap: function(date, scale, step) {
+    const snappedDate = moment(date);
+    
+    // Adjust snapping to always align with Mondays
+    if (scale === 'week') {
+      snappedDate.startOf('isoWeek'); // Start of the ISO week, i.e., Monday
+    }
+    
+    return snappedDate.toDate();
+  },
+
+
+  margin: {
+    item: 4,    // Adjusts the space around each item
+    axis: 2     // Adjusts the space between items and the axis
+  },
+  // Optional: Set max/min heights for the row
+  // maxHeight: 300, // You can adjust this to your liking
 };
 
 // Create a Timeline
@@ -77,7 +103,9 @@ var timeline = new Timeline(container, items, options);
 
 async function onSelect(data) {
   await grist.setCursorPos({ rowId: data.items[0] });
-  await grist.commandApi.run('viewAsCard');
+  // await grist.commandApi.run('viewAsCard');
+  console.error('selected', items.get(data.items[0]));
+  // dump(items.get(data.items[0]));
 }
 
 // add event listener
@@ -90,9 +118,7 @@ const records = observable([]);
 let show = () => {};
 
 grist.onRecords(recs => {
-  console.error('records', recs);
   const keys = Object.keys(recs[0] || {});
-  console.error('keys', keys);
   console.log(recs);
   records(recs);
   show();
@@ -111,13 +137,11 @@ function recToItem(r) {
     id: r.id,
     content: r.Subject || 'no title',
     start: trimTime(getFrom(r)),
-    end: trimTime(getTo(r)),
+    end: appendEnd(trimTime(getTo(r))),
     type: same(getTo(r), getFrom(r)) ? 'point' : 'range',
     group: undefined,
   };
 }
-
-
 
 function onClick(selector: string, callback: () => void) {
   window.document.querySelector(selector)!.addEventListener('click', callback);
@@ -132,11 +156,11 @@ onClick('#btnAlCampaign', () => {
   show();
 });
 onClick('#btnModel', () => {
-  show = showModel
+  show = showModel;
   show();
 });
 onClick('#btnReseller', () => {
-  show = showReseller
+  show = showReseller;
   show();
 });
 
@@ -149,9 +173,15 @@ function same(a: any, b: any) {
 
 function trimTime(date?: Date) {
   if (!date) {
-    return date;
+    return '';
   }
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  // Format date in format 'YYYY-MM-DD'
+  const formattedDate = date.toISOString().split('T')[0];
+  return formattedDate;
+}
+
+function appendEnd(yyyy_mm_dd: string) {
+  return `${yyyy_mm_dd}T23:59:59`;
 }
 
 function observable(value?: any) {
@@ -221,7 +251,6 @@ function renderGroups(group: string) {
   timeline.setGroups(groups);
 }
 
-
 function showModel() {
   // Same thing as above, but by Part.
   const formated = x => formatCurrency.format(x);
@@ -231,7 +260,6 @@ function showModel() {
 }
 
 function showReseller() {
-
   const formated = x => formatCurrency.format(x);
   renderItems('Reseller', x => `${x.Part} (${formated(x.Campaign_MSRP)})`);
 
@@ -244,11 +272,92 @@ function showAll() {
   const existing = items.getIds();
   const removed = existing.filter(x => !newIds.has(x));
   items.remove(removed);
-  const newItems: any = recs
-    .filter(r => getFrom(r) || getTo(r))
-    .map(recToItem);
+  const newItems: any = recs.filter(r => getFrom(r) || getTo(r)).map(recToItem);
   items.update(newItems);
   timeline.setGroups();
+
+  timeline.setOptions({
+    timeAxis: {
+      scale: 'day',
+    }
+  })
 }
 
 show = showCampaings;
+
+// update the locale when changing the select box value
+const select = document.getElementById('locale') as HTMLSelectElement;
+select.onchange = function () {
+  timeline.setOptions({
+    locale: select.value as any
+  });
+};
+
+
+function dump(arg: any) {
+  const div = document.getElementById('status-bar')!;
+  div.innerText = JSON.stringify(arg);
+}
+
+window.timeline = timeline;
+
+// const range = document.getElementById('range') as HTMLInputElement;
+// range.oninput = function () {
+//   // Copy this value as margin.
+//   const margin = parseInt(range.value, 10);
+//   timeline.setOptions({
+//     margin: {
+//       item: {
+//         horizontal: margin,
+//         vertical: margin
+//       },    // Adjusts the space around each item
+//       axis: margin     // Adjusts the space between items and the axis
+//     }
+//   });
+// };
+
+function bindConfig() {
+  const configElements = document.querySelectorAll('.config');
+  console.log(`Found ${configElements.length} config elements`);
+  for (const el of configElements) {
+    console.debug(`Binding config element: ${el}`);
+    // Subscribe to change event.
+    (el as any).onchange = function () {
+      const value = (el as any).value;
+      const formatedValue = formatValue(value);
+      const elementId = (el as any).id;
+      const hasDot = elementId.indexOf('.') !== -1;
+      if (hasDot) {
+        const [parent, child] = elementId.split('.');
+        console.log(`Setting ${parent}.${child} to ${formatedValue}`);
+        timeline.setOptions({
+          [parent]: {
+            [child]: formatedValue
+          }
+        });
+      } else {
+        console.log(`Setting ${elementId} to ${formatedValue}`);
+        timeline.setOptions({
+          [elementId]: formatedValue
+        });
+      }
+    };
+    (el as any).onchange();
+  }
+}
+bindConfig();
+
+
+function formatValue(value: any) {
+  if (['true', 'false'].includes(value)) {
+    return value === 'true';
+  }
+  if (value === 'null') {
+    return null;
+  }
+  // Test for string that looks like integer.
+  if (/^\d+$/.test(value)) {
+    return parseInt(value, 10);
+  }
+  return value;
+}
