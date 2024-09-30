@@ -1,0 +1,31 @@
+{
+  "name": "@gristlabs/timeline",
+  "description": "Timeline",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Timeline",
+    "url": "https://gristlabs.github.io/grist-widget/timeline",
+    "widgetId": "@gristlabs/timeline",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true,
+    "description": "Timeline",
+    "authors": [
+      {
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
+      }
+    ]
+  },
+  "dependencies": {
+    "vis-timeline": "^7.7.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "scripts": {
+    "build": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js",
+    "watch": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch"
+  }
+}
