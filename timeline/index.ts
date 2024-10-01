@@ -9,6 +9,24 @@ declare global {
 
 grist.ready({
   allowSelectBy: true,
+  requiredAccess: 'read table',
+  columns: [
+    {
+      name: 'Group',
+      allowMultiple: true,
+    },
+    {
+      name: 'Columns',
+      allowMultiple: true,
+      optional: true,
+    },
+    {
+      name: 'From',
+    },
+    {
+      name: 'To',
+    },
+  ],
 });
 
 // DOM element where the Timeline will be attached
@@ -55,17 +73,16 @@ const options: TimelineOptions = {
     input.style.width = '100px'; // Set desired width
 
     // Prevent `vis-timeline` from hijacking the input events
-    const stopEventPropagation = (event) => {
+    const stopEventPropagation = event => {
       event.stopPropagation(); // Stop the event from propagating to vis-timeline
     };
-    
+
     // Add event listeners for various pointer events
     input.addEventListener('pointerdown', stopEventPropagation);
     input.addEventListener('pointerup', stopEventPropagation);
     input.addEventListener('pointermove', stopEventPropagation);
     input.addEventListener('click', stopEventPropagation);
     input.addEventListener('mousedown', stopEventPropagation);
-
 
     // Append the input to the container
     container.appendChild(input);
@@ -151,10 +168,8 @@ const records = observable([]);
 
 let show = () => {};
 
-grist.onRecords(recs => {
-  const keys = Object.keys(recs[0] || {});
-  console.log(recs);
-  records(recs);
+grist.onRecords((recs, maps) => {
+  records(grist.mapColumnNames(recs));
   show();
 
   const ids = recs.map(r => r.id);
@@ -162,11 +177,11 @@ grist.onRecords(recs => {
 });
 
 function getFrom(r: any) {
-  return r.Valid_From;
+  return r.From;
 }
 
 function getTo(r: any) {
-  return r.Valid_To;
+  return r.To;
 }
 
 function recToItem(r) {
@@ -361,8 +376,6 @@ function dump(arg: any) {
   div.innerText = JSON.stringify(arg);
 }
 
-
-
 (window as any).timeline = timeline;
 
 // const range = document.getElementById('range') as HTMLInputElement;
@@ -425,16 +438,12 @@ function formatValue(value: any) {
   return value;
 }
 
-
-
-
 grist.onRecord(rec => {
   if (!rec || !rec.id) {
     return;
   }
   timeline.setSelection(Number(rec.id));
-})
-
+});
 
 async function main() {
   await grist.allowSelectBy();

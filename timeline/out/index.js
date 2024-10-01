@@ -43234,7 +43234,25 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   // index.ts
   import_moment_timezone.default.locale("en-gb");
   grist.ready({
-    allowSelectBy: true
+    allowSelectBy: true,
+    requiredAccess: "read table",
+    columns: [
+      {
+        name: "Group",
+        allowMultiple: true
+      },
+      {
+        name: "Columns",
+        allowMultiple: true,
+        optional: true
+      },
+      {
+        name: "From"
+      },
+      {
+        name: "To"
+      }
+    ]
   });
   var container = document.getElementById("visualization");
   var items = new DataSet([
@@ -43339,19 +43357,17 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var records = observable([]);
   var show = () => {
   };
-  grist.onRecords((recs) => {
-    const keys4 = Object.keys(recs[0] || {});
-    console.log(recs);
-    records(recs);
+  grist.onRecords((recs, maps) => {
+    records(grist.mapColumnNames(recs));
     show();
     const ids = recs.map((r) => r.id);
     grist.setSelectedRows(ids);
   });
   function getFrom(r) {
-    return r.Valid_From;
+    return r.From;
   }
   function getTo(r) {
-    return r.Valid_To;
+    return r.To;
   }
   function recToItem(r) {
     return {

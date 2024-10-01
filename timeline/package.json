@@ -19,10 +19,11 @@
     ]
   },
   "dependencies": {
-    "vis-timeline": "^7.7.3",
-    "moment-timezone": "0.5.45"
+    "moment-timezone": "0.5.45",
+    "vis-timeline": "^7.7.3"
   },
   "devDependencies": {
+    "@types/moment-timezone": "^0.5.30",
     "esbuild": "^0.24.0"
   },
   "scripts": {
