@@ -1,8 +1,6 @@
-import moment from 'moment';
+import moment from 'moment-timezone';
 import 'moment/locale/en-gb'; // Import the 'en-gb' locale which uses ISO weeks
-
 import { Timeline, DataSet, TimelineOptions } from 'vis-timeline/standalone';
-
 moment.locale('en-gb');
 
 declare global {
@@ -46,10 +44,42 @@ const options: TimelineOptions = {
   },
   */
 
+  groupTemplate: function (group) {
+    // Create a container for the group
+    const container = document.createElement('div');
+
+    // Create an input element
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = group.content; // Set default value based on the group's content
+    input.style.width = '100px'; // Set desired width
+
+    // Prevent `vis-timeline` from hijacking the input events
+    const stopEventPropagation = (event) => {
+      event.stopPropagation(); // Stop the event from propagating to vis-timeline
+    };
+    
+    // Add event listeners for various pointer events
+    input.addEventListener('pointerdown', stopEventPropagation);
+    input.addEventListener('pointerup', stopEventPropagation);
+    input.addEventListener('pointermove', stopEventPropagation);
+    input.addEventListener('click', stopEventPropagation);
+    input.addEventListener('mousedown', stopEventPropagation);
+
+
+    // Append the input to the container
+    container.appendChild(input);
+
+    // Return the container as the group's template
+    return container;
+  },
+
   editable: {
     add: true,
     updateTime: true,
+    updateGroup: true,
     remove: true,
+    overrideItems: true,
   },
   showCurrentTime: true,
   showWeekScale: true,
@@ -64,35 +94,35 @@ const options: TimelineOptions = {
     scale: 'day',
     step: 3600,
   },
-  format: {
-   
-  },
+  format: {},
 
   locale: 'en-gb',
   stack: false,
   stackSubgroups: true,
   groupHeightMode: 'fixed',
+  xss: {
+    disabled: true,
+  },
 
   zoomMin: 1000 * 60 * 60 * 24 * 7 * 4, // about three months in milliseconds
   zoomMax: 1000 * 60 * 60 * 24 * 31 * 12, // about three months in milliseconds
-  moment: function(date) {
+  moment: function (date) {
     return moment(date); // Use moment with the 'en-gb' locale setting
   },
-  snap: function(date, scale, step) {
+  snap: function (date, scale, step) {
     const snappedDate = moment(date);
-    
+
     // Adjust snapping to always align with Mondays
     if (scale === 'week') {
       snappedDate.startOf('isoWeek'); // Start of the ISO week, i.e., Monday
     }
-    
+
     return snappedDate.toDate();
   },
 
-
   margin: {
-    item: 4,    // Adjusts the space around each item
-    axis: 2     // Adjusts the space between items and the axis
+    item: 4, // Adjusts the space around each item
+    axis: 2, // Adjusts the space between items and the axis
   },
   // Optional: Set max/min heights for the row
   // maxHeight: 300, // You can adjust this to your liking
@@ -103,9 +133,13 @@ var timeline = new Timeline(container, items, options);
 
 async function onSelect(data) {
   await grist.setCursorPos({ rowId: data.items[0] });
-  // await grist.commandApi.run('viewAsCard');
-  console.error('selected', items.get(data.items[0]));
-  // dump(items.get(data.items[0]));
+
+  if (!data.items.length) {
+    const allIds = items.getIds();
+    await grist.setSelectedRows(allIds);
+  } else {
+    await grist.setSelectedRows([data.items[0]]);
+  }
 }
 
 // add event listener
@@ -122,6 +156,9 @@ grist.onRecords(recs => {
   console.log(recs);
   records(recs);
   show();
+
+  const ids = recs.map(r => r.id);
+  grist.setSelectedRows(ids);
 });
 
 function getFrom(r: any) {
@@ -243,13 +280,39 @@ function showCampaings() {
 
 function renderGroups(group: string) {
   const recs = records();
-  const groupIds = new Set(recs.map(x => x[group]));
+  const groupIds = new Set(recs.map(x => x[group])) as Set<string>;
   const existingGroups = groups.getIds();
   const groupsToRemove = existingGroups.filter(x => !groupIds.has(x));
   groups.remove(groupsToRemove);
-  groups.update(Array.from(groupIds).map(c => ({ id: c, content: c })));
+  groups.update(
+    Array.from(groupIds).map(c => ({
+      id: c,
+      content: c,
+      editable: true,
+    }))
+  );
   timeline.setGroups(groups);
 }
+
+function groupHtml(group: string) {
+  return `
+    <div class="grist_row" >
+      <input type="text" value="${group}" onclick="grist_row_click(this, event)" />
+      <input type="text" value="0"  onclick="grist_row_click(this, event)"/>
+    </div>
+  `;
+}
+
+(window as any).grist_row_click = function (
+  el: HTMLElement,
+  event: MouseEvent
+) {
+  console.log(`Stopping this `);
+  // event.stopImmediatePropagation();
+  // event.stopPropagation();
+  // console.log(el);
+  // el.focus();
+};
 
 function showModel() {
   // Same thing as above, but by Part.
@@ -279,8 +342,8 @@ function showAll() {
   timeline.setOptions({
     timeAxis: {
       scale: 'day',
-    }
-  })
+    },
+  });
 }
 
 show = showCampaings;
@@ -289,17 +352,18 @@ show = showCampaings;
 const select = document.getElementById('locale') as HTMLSelectElement;
 select.onchange = function () {
   timeline.setOptions({
-    locale: select.value as any
+    locale: select.value as any,
   });
 };
-
 
 function dump(arg: any) {
   const div = document.getElementById('status-bar')!;
   div.innerText = JSON.stringify(arg);
 }
 
-window.timeline = timeline;
+
+
+(window as any).timeline = timeline;
 
 // const range = document.getElementById('range') as HTMLInputElement;
 // range.oninput = function () {
@@ -332,13 +396,13 @@ function bindConfig() {
         console.log(`Setting ${parent}.${child} to ${formatedValue}`);
         timeline.setOptions({
           [parent]: {
-            [child]: formatedValue
-          }
+            [child]: formatedValue,
+          },
         });
       } else {
         console.log(`Setting ${elementId} to ${formatedValue}`);
         timeline.setOptions({
-          [elementId]: formatedValue
+          [elementId]: formatedValue,
         });
       }
     };
@@ -346,7 +410,6 @@ function bindConfig() {
   }
 }
 bindConfig();
-
 
 function formatValue(value: any) {
   if (['true', 'false'].includes(value)) {
@@ -361,3 +424,20 @@ function formatValue(value: any) {
   }
   return value;
 }
+
+
+
+
+grist.onRecord(rec => {
+  if (!rec || !rec.id) {
+    return;
+  }
+  timeline.setSelection(Number(rec.id));
+})
+
+
+async function main() {
+  await grist.allowSelectBy();
+}
+
+main();

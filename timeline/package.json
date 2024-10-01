@@ -19,13 +19,15 @@
     ]
   },
   "dependencies": {
-    "vis-timeline": "^7.7.3"
+    "vis-timeline": "^7.7.3",
+    "moment-timezone": "0.5.45"
   },
   "devDependencies": {
     "esbuild": "^0.24.0"
   },
   "scripts": {
     "build": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js",
-    "watch": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch"
+    "watch": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch",
+    "dev": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch"
   }
 }
