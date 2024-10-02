@@ -11700,8 +11700,8 @@
     var IS_CONSTRUCTOR = isConstructor$3(this);
     var argumentsLength = arguments.length;
     var mapfn = argumentsLength > 1 ? arguments[1] : void 0;
-    var mapping = mapfn !== void 0;
-    if (mapping) mapfn = bind$g(mapfn, argumentsLength > 2 ? arguments[2] : void 0);
+    var mapping2 = mapfn !== void 0;
+    if (mapping2) mapfn = bind$g(mapfn, argumentsLength > 2 ? arguments[2] : void 0);
     var iteratorMethod = getIteratorMethod$7(O);
     var index = 0;
     var length, result, step, iterator2, next2, value;
@@ -11710,14 +11710,14 @@
       next2 = iterator2.next;
       result = IS_CONSTRUCTOR ? new this() : [];
       for (; !(step = call$b(next2, iterator2)).done; index++) {
-        value = mapping ? callWithSafeIterationClosing(iterator2, mapfn, [step.value, index], true) : step.value;
+        value = mapping2 ? callWithSafeIterationClosing(iterator2, mapfn, [step.value, index], true) : step.value;
         createProperty$5(result, index, value);
       }
     } else {
       length = lengthOfArrayLike$c(O);
       result = IS_CONSTRUCTOR ? new this(length) : $Array$3(length);
       for (; length > index; index++) {
-        value = mapping ? mapfn(O[index], index) : O[index];
+        value = mapping2 ? mapfn(O[index], index) : O[index];
         createProperty$5(result, index, value);
       }
     }
@@ -43238,11 +43238,11 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     requiredAccess: "read table",
     columns: [
       {
-        name: "Group",
+        name: "Columns",
         allowMultiple: true
       },
       {
-        name: "Columns",
+        name: "Title",
         allowMultiple: true,
         optional: true
       },
@@ -43280,19 +43280,15 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       */
     groupTemplate: function(group) {
       const container2 = document.createElement("div");
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = group.content;
-      input.style.width = "100px";
-      const stopEventPropagation = (event2) => {
-        event2.stopPropagation();
-      };
-      input.addEventListener("pointerdown", stopEventPropagation);
-      input.addEventListener("pointerup", stopEventPropagation);
-      input.addEventListener("pointermove", stopEventPropagation);
-      input.addEventListener("click", stopEventPropagation);
-      input.addEventListener("mousedown", stopEventPropagation);
-      container2.appendChild(input);
+      container2.classList.add("group-template");
+      const parts = group.content.split("|");
+      const partsHtml = parts.map((part) => {
+        const div = document.createElement("div");
+        div.innerText = part;
+        div.classList.add("group-part");
+        return div;
+      });
+      container2.append(...partsHtml);
       return container2;
     },
     editable: {
@@ -43346,28 +43342,22 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var timeline = new Timeline(container, items, options);
   async function onSelect(data2) {
     await grist.setCursorPos({ rowId: data2.items[0] });
-    if (!data2.items.length) {
-      const allIds = items.getIds();
-      await grist.setSelectedRows(allIds);
-    } else {
-      await grist.setSelectedRows([data2.items[0]]);
-    }
   }
   timeline.on("select", onSelect);
   var records = observable([]);
   var show = () => {
   };
+  var mapping = observable({});
   grist.onRecords((recs, maps) => {
+    mapping(maps);
     records(grist.mapColumnNames(recs));
     show();
-    const ids = recs.map((r) => r.id);
-    grist.setSelectedRows(ids);
   });
   function getFrom(r) {
-    return r.From;
+    return r.From && r.From instanceof Date ? r.From : null;
   }
   function getTo(r) {
-    return r.To;
+    return r.To && r.To instanceof Date ? r.To : null;
   }
   function recToItem(r) {
     return {
@@ -43391,11 +43381,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     show();
   });
   onClick("#btnModel", () => {
-    show = showModel;
     show();
   });
   onClick("#btnReseller", () => {
-    show = showReseller;
     show();
   });
   function same(a, b) {
@@ -43406,6 +43394,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   }
   function trimTime(date2) {
     if (!date2) {
+      return "";
+    }
+    if (!(date2 instanceof Date)) {
       return "";
     }
     const formattedDate = date2.toISOString().split("T")[0];
@@ -43435,20 +43426,18 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     };
     return obj;
   }
-  function renderItems(group, show2) {
+  function renderItems(group = false) {
     const recs = records();
     const newIds = new Set(recs.map((x) => x.id));
     const existing = items.getIds();
     const removed = existing.filter((x) => !newIds.has(x));
     items.remove(removed);
-    const newItems = recs.filter((r) => getFrom(r) || getTo(r)).map((r) => {
+    const newItems = recs.filter((r) => getFrom(r) && getTo(r)).map((r) => {
       const result = recToItem(r);
       if (group) {
-        result.group = r[group];
+        result.group = r.Columns.join("|");
       }
-      if (show2) {
-        result.content = show2(r);
-      }
+      result.content = r.Title.join("|");
       return result;
     });
     items.update(newItems);
@@ -43458,13 +43447,15 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     currency: "USD"
   });
   function showCampaings() {
-    const formated = (x) => formatCurrency.format(x);
-    renderItems("Campaign", (x) => `${x.Subject} (${formated(x.Campaign_MSRP)})`);
-    renderGroups("Campaign");
+    renderItems(true);
+    renderGroups();
   }
-  function renderGroups(group) {
+  function calcGroup(rec) {
+    return rec.Columns.join("|");
+  }
+  function renderGroups() {
     const recs = records();
-    const groupIds = new Set(recs.map((x) => x[group]));
+    const groupIds = new Set(recs.map((x) => calcGroup(x)));
     const existingGroups = groups.getIds();
     const groupsToRemove = existingGroups.filter((x) => !groupIds.has(x));
     groups.remove(groupsToRemove);
@@ -43480,16 +43471,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   window.grist_row_click = function(el, event2) {
     console.log(`Stopping this `);
   };
-  function showModel() {
-    const formated = (x) => formatCurrency.format(x);
-    renderItems("Part", (x) => `${x.Reseller} (${formated(x.Campaign_MSRP)})`);
-    renderGroups("Part");
-  }
-  function showReseller() {
-    const formated = (x) => formatCurrency.format(x);
-    renderItems("Reseller", (x) => `${x.Part} (${formated(x.Campaign_MSRP)})`);
-    renderGroups("Reseller");
-  }
   function showAll() {
     const recs = records();
     const newIds = new Set(recs.map((x) => x.id));
@@ -43558,10 +43539,16 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     if (!rec || !rec.id) {
       return;
     }
-    timeline.setSelection(Number(rec.id));
+    setTimeout(() => {
+      timeline.setSelection(Number(rec.id), {
+        focus: true,
+        animation: {
+          animation: false
+        }
+      });
+    }, 10);
   });
   async function main() {
-    await grist.allowSelectBy();
   }
   main();
 })();

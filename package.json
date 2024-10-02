@@ -8,12 +8,12 @@
     "build:dev": "node ./buildtools/publish.js manifest.json http://localhost:8585",
     "serve:dev": "live-server --port=8585 --no-browser --middleware=$(pwd)/buildtools/rewriteUrl.js",
     "watch": "nodemon --ignore manifest.json -e js,json --exec 'npm run build:dev'",
-    "dev": "npm run watch 1> /dev/null & npm run serve:dev 1> /dev/null",
+    "dev": "npm run serve:dev",
     "test": "docker image inspect gristlabs/grist --format 'gristlabs/grist image present' && NODE_PATH=_build SELENIUM_BROWSER=chrome mocha -g \"${GREP_TESTS}\" _build/test/*.js",
     "test:ci": "MOCHA_WEBDRIVER_HEADLESS=1 npm run test",
     "pretest": "docker pull gristlabs/grist && tsc --build && node ./buildtools/publish.js manifest.json http://localhost:9998",
     "prepack": "node ./buildtools/bundle.js --name grist-bundled --unlisted",
-    "grist": "docker run --add-host host.docker.internal:host-gateway --env PORT=8484 --env GRIST_WIDGET_LIST_URL=http://host.docker.internal:8585/manifest.json -p 8484:8484 -v $PWD/_build/persist:/persist -it gristlabs/grist"
+    "grist": "docker run --add-host host.docker.internal:host-gateway --env PORT=8484 --env GRIST_WIDGET_LIST_URL=http://host.docker.internal:8585/manifest.json -p 8484:8484 -it -v  $PWD/_build/persist:/persist gristlabs/grist"
   },
   "devDependencies": {
     "@types/chai": "^4.3.5",
@@ -23,6 +23,7 @@
     "@types/node-fetch": "^2.6.4",
     "@types/selenium-webdriver": "^4.1.15",
     "commander": "^11.1.0",
+    "concurrently": "^9.0.1",
     "live-server": "^1.2.1",
     "lodash": "^4.17.21",
     "lodash.escaperegexp": "^4.1.2",

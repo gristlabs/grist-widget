@@ -12,11 +12,11 @@ grist.ready({
   requiredAccess: 'read table',
   columns: [
     {
-      name: 'Group',
+      name: 'Columns',
       allowMultiple: true,
     },
     {
-      name: 'Columns',
+      name: 'Title',
       allowMultiple: true,
       optional: true,
     },
@@ -66,26 +66,15 @@ const options: TimelineOptions = {
     // Create a container for the group
     const container = document.createElement('div');
 
-    // Create an input element
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = group.content; // Set default value based on the group's content
-    input.style.width = '100px'; // Set desired width
-
-    // Prevent `vis-timeline` from hijacking the input events
-    const stopEventPropagation = event => {
-      event.stopPropagation(); // Stop the event from propagating to vis-timeline
-    };
-
-    // Add event listeners for various pointer events
-    input.addEventListener('pointerdown', stopEventPropagation);
-    input.addEventListener('pointerup', stopEventPropagation);
-    input.addEventListener('pointermove', stopEventPropagation);
-    input.addEventListener('click', stopEventPropagation);
-    input.addEventListener('mousedown', stopEventPropagation);
-
-    // Append the input to the container
-    container.appendChild(input);
+    container.classList.add('group-template');
+    const parts = group.content.split('|');
+    const partsHtml = parts.map(part => {
+      const div = document.createElement('div');
+      div.innerText = part;
+      div.classList.add('group-part');
+      return div;
+    });
+    container.append(...partsHtml);
 
     // Return the container as the group's template
     return container;
@@ -146,17 +135,17 @@ const options: TimelineOptions = {
 };
 
 // Create a Timeline
-var timeline = new Timeline(container, items, options);
+const timeline = new Timeline(container, items, options);
 
 async function onSelect(data) {
   await grist.setCursorPos({ rowId: data.items[0] });
 
-  if (!data.items.length) {
-    const allIds = items.getIds();
-    await grist.setSelectedRows(allIds);
-  } else {
-    await grist.setSelectedRows([data.items[0]]);
-  }
+  // if (!data.items.length) {
+  //   const allIds = items.getIds();
+  //   await grist.setSelectedRows(allIds);
+  // } else {
+  //   await grist.setSelectedRows([data.items[0]]);
+  // }
 }
 
 // add event listener
@@ -167,21 +156,22 @@ let lastRows = new Set();
 const records = observable([]);
 
 let show = () => {};
+let mapping = observable({});
 
 grist.onRecords((recs, maps) => {
+  mapping(maps);
   records(grist.mapColumnNames(recs));
   show();
-
-  const ids = recs.map(r => r.id);
-  grist.setSelectedRows(ids);
+  // const ids = recs.map(r => r.id);
+  // grist.setSelectedRows(ids);
 });
 
 function getFrom(r: any) {
-  return r.From;
+  return r.From && r.From instanceof Date ? r.From : null;
 }
 
 function getTo(r: any) {
-  return r.To;
+  return r.To && r.To instanceof Date ? r.To : null;
 }
 
 function recToItem(r) {
@@ -208,11 +198,9 @@ onClick('#btnAlCampaign', () => {
   show();
 });
 onClick('#btnModel', () => {
-  show = showModel;
   show();
 });
 onClick('#btnReseller', () => {
-  show = showReseller;
   show();
 });
 
@@ -225,6 +213,9 @@ function same(a: any, b: any) {
 
 function trimTime(date?: Date) {
   if (!date) {
+    return '';
+  }
+  if (!(date instanceof Date)) {
     return '';
   }
   // Format date in format 'YYYY-MM-DD'
@@ -261,22 +252,20 @@ function observable(value?: any) {
   return obj;
 }
 
-function renderItems(group?: string, show?: (r: any) => string) {
+function renderItems(group = false) {
   const recs = records();
   const newIds = new Set(recs.map(x => x.id));
   const existing = items.getIds();
   const removed = existing.filter(x => !newIds.has(x));
   items.remove(removed);
   const newItems: any = recs
-    .filter(r => getFrom(r) || getTo(r))
+    .filter(r => getFrom(r) && getTo(r))
     .map(r => {
       const result = recToItem(r);
       if (group) {
-        result.group = r[group];
+        result.group = r.Columns.join('|');
       }
-      if (show) {
-        result.content = show(r);
-      }
+      result.content = r.Title.join('|');
       return result;
     });
 
@@ -288,14 +277,17 @@ const formatCurrency = new Intl.NumberFormat('en-US', {
 });
 
 function showCampaings() {
-  const formated = x => formatCurrency.format(x);
-  renderItems('Campaign', x => `${x.Subject} (${formated(x.Campaign_MSRP)})`);
-  renderGroups('Campaign');
+  renderItems(true);
+  renderGroups();
 }
 
-function renderGroups(group: string) {
+function calcGroup(rec: any) {
+  return rec.Columns.join('|');
+}
+
+function renderGroups() {
   const recs = records();
-  const groupIds = new Set(recs.map(x => x[group])) as Set<string>;
+  const groupIds = new Set(recs.map(x => calcGroup(x))) as Set<string>;
   const existingGroups = groups.getIds();
   const groupsToRemove = existingGroups.filter(x => !groupIds.has(x));
   groups.remove(groupsToRemove);
@@ -328,21 +320,6 @@ function groupHtml(group: string) {
   // console.log(el);
   // el.focus();
 };
-
-function showModel() {
-  // Same thing as above, but by Part.
-  const formated = x => formatCurrency.format(x);
-  renderItems('Part', x => `${x.Reseller} (${formated(x.Campaign_MSRP)})`);
-
-  renderGroups('Part');
-}
-
-function showReseller() {
-  const formated = x => formatCurrency.format(x);
-  renderItems('Reseller', x => `${x.Part} (${formated(x.Campaign_MSRP)})`);
-
-  renderGroups('Reseller');
-}
 
 function showAll() {
   const recs = records();
@@ -442,11 +419,18 @@ grist.onRecord(rec => {
   if (!rec || !rec.id) {
     return;
   }
-  timeline.setSelection(Number(rec.id));
+  setTimeout(() => {
+    timeline.setSelection(Number(rec.id), {
+      focus: true,
+      animation: {
+        animation: false
+      }
+    });
+  }, 10);
 });
 
 async function main() {
-  await grist.allowSelectBy();
+  // await grist.allowSelectBy();
 }
 
 main();

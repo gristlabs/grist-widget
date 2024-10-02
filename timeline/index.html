@@ -1,9 +1,14 @@
 
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script> -->
-<!-- <script type="text/javascript" src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js" ></script> -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
+<script
+  type="text/javascript"
+  src="https://unpkg.com/vis-timeline@latest/peer/umd/vis-timeline-graph2d.min.js"
+></script>
 
+<script type="text/javascript" src="https://unpkg.com/vis-data@latest/peer/umd/vis-data.min.js"></script>
 
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/vis-timeline/styles/vis-timeline-graph2d.min.css" /> -->
 <style type="text/css">
   * {
     box-sizing: border-box;
@@ -15,7 +20,7 @@
   }
 
   :root {
-    --buttons-height: 20px;
+    --buttons-height: 0px;
     --status-height: 20px;
   }
   #visualization {
@@ -62,11 +67,36 @@
   .selected {
     --background-color: #007bff;
   }
+  .group-template {
+    display: flex;
+    gap: 4px;
+  }
+  .vertical-bar {
+    /* vertical bar that splits columns */
+    width: 1px;
+    background-color: #d3d3d3;
+  }
+  .group-header {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-bottom: 1px solid #d3d3d3;
+    background-color: #f7f7f7;
+    position: absolute;
+    top: calc(46px - 1.9em);
+  }
 </style>
 
-<div id="visualization"></div>
 
-<div id="buttons" style="text-align: right">
+
+<div id="visualization">
+
+  <div class="group-header">
+    <div>Reseller</div>
+  </div>
+</div>
+
+<div id="buttons" style="text-align: right; display: none;">
   <button class="btn" style="min-width: 60px" id="btnAll">All</button>
   <button class="btn" id="btnAlCampaign">Campaign</button>
   <button class="btn" id="btnModel">Model</button>
@@ -157,5 +187,37 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
     border-radius: 4px;
     z-index: 200;
     outline-color: #16b378;
+  }
+
+  .vis-labelset .vis-label .vis-inner {
+    padding: 0px;
+  }
+
+  .vis-labelset {
+    display: grid;
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .vis-labelset > div, .vis-labelset > div > div, .vis-labelset > div > div > div {
+    display: grid !important;
+    grid-column: 1/-1;
+    grid-template-columns: subgrid;
+  }
+
+  .group-template {
+  }
+
+  .group-part {
+    padding: 5px;
+    border-right: 1px solid #d3d3d3;
+  }
+  .group-part:last-child {
+    border-right: none;
+  }
+  .vis-time-axis .vis-text {
+    color: var(--grist-theme-text, black);
+  }
+  .vis-time-axis .vis-text {
+    padding: 6px 6px;
   }
 </style>
