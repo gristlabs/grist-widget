@@ -1,7 +1,8 @@
 
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/themes/light.css" />
-<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/shoelace-autoloader.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/shoelace.js" ></script>
 
 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
 <script
@@ -22,9 +23,13 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Liberation Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   }
 
+  div {
+    scrollbar-width: thin;
+  }
+
   :root {
     --buttons-height: 0px;
-    --status-height: 20px;
+    --status-height: 24px;
   }
   #visualization {
     width: 100%;
@@ -77,8 +82,8 @@
     --background-color: #007bff;
   }
   .group-template {
-    display: flex;
-    gap: 4px;
+    border-bottom: 1px solid #d3d3d3;
+    background: white;
   }
   .vertical-bar {
     /* vertical bar that splits columns */
@@ -86,13 +91,15 @@
     background-color: #d3d3d3;
   }
   .group-header {
-    display: flex;
-    gap: 4px;
-    padding: 4px;
-    border-bottom: 1px solid #d3d3d3;
     background-color: #f7f7f7;
     position: absolute;
     top: calc(46px - 1.9em);
+    left: 0px;
+    overflow: hidden;
+    display: grid;
+    grid-auto-flow: column;
+    border-top: 1px solid #d3d3d3;
+    font-weight: 600;
   }
 </style>
 
@@ -100,8 +107,7 @@
 
 <div id="visualization">
 
-  <div class="group-header">
-    <div>Reseller</div>
+  <div class="group-header" id="groupHeader">
   </div>
 </div>
 
@@ -142,8 +148,12 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
   </select>
 
   <sl-switch class="config" id="local:editCard" size="small">Edit card</sl-switch>
+  <sl-switch class="config" id="local:zoomOnClick" size="small">Zoom on click</sl-switch>
+  <sl-switch class="config" id="timeline:cluster" checked="true" size="small">Cluster</sl-switch>
+
 
   <sl-icon-button id="focusButton" name="arrows-collapse-vertical" label="Settings" style="margin-left: auto"></sl-icon-button>
+
 
 </div>
 
@@ -208,16 +218,14 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
 
   .vis-labelset {
     display: grid;
-    grid-template-columns: repeat(12, max-content);
+    grid-template-columns: var(--group-columns,  repeat(12, max-content));
+    min-width: var(--group-header-width, 100px);
   }
 
   .vis-labelset > div, .vis-labelset > div > div, .vis-labelset > div > div > div {
     display: grid !important;
     grid-column: 1/-1;
     grid-template-columns: subgrid;
-  }
-
-  .group-template {
   }
 
   .group-part {
@@ -233,4 +241,11 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
   .vis-time-axis .vis-text {
     padding: 6px 6px;
   }
+  .vis-labelset .vis-label {
+    border-bottom: 0px solid #bfbfbf;
+  }
+  .vis-foreground .vis-group:last-child {
+    border-bottom: 1px solid #bfbfbf;
+  }
 </style>
+

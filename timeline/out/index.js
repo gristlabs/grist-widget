@@ -19294,7 +19294,7 @@
   var IS_IOS_PEBBLE = engineIsIosPebble;
   var IS_WEBOS_WEBKIT = engineIsWebosWebkit;
   var IS_NODE$3 = engineIsNode;
-  var MutationObserver = global$6.MutationObserver || global$6.WebKitMutationObserver;
+  var MutationObserver2 = global$6.MutationObserver || global$6.WebKitMutationObserver;
   var document$2 = global$6.document;
   var process$1 = global$6.process;
   var Promise$1 = global$6.Promise;
@@ -19318,10 +19318,10 @@
       }
       if (parent2) parent2.enter();
     };
-    if (!IS_IOS && !IS_NODE$3 && !IS_WEBOS_WEBKIT && MutationObserver && document$2) {
+    if (!IS_IOS && !IS_NODE$3 && !IS_WEBOS_WEBKIT && MutationObserver2 && document$2) {
       toggle = true;
       node = document$2.createTextNode("");
-      new MutationObserver(flush).observe(node, { characterData: true });
+      new MutationObserver2(flush).observe(node, { characterData: true });
       notify$1 = function() {
         node.data = toggle = !toggle;
       };
@@ -44062,14 +44062,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     ]
   });
   var container = document.getElementById("visualization");
-  var items = new DataSet([
-    // { id: 1, content: 'item 1', start: '2014-04-20' },
-    // { id: 2, content: 'item 2', start: '2014-04-14' },
-    // { id: 3, content: 'item 3', start: '2014-04-18' },
-    // { id: 4, content: 'item 4', start: '2014-04-16', end: '2014-04-19' },
-    // { id: 5, content: 'item 5', start: '2014-04-25' },
-    // { id: 6, content: 'item 6', start: '2014-04-27', type: 'point' },
-  ]);
+  var items = new DataSet([]);
   var groups = new DataSet([]);
   var options = {
     // allow selecting multiple items using ctrl+click, shift+click, or hold.
@@ -44100,6 +44093,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
           div.innerHTML = `<input type="checkbox" ${value ? "checked" : ""} disabled>`;
         }
         div.classList.add("group-part");
+        div.style.padding = "5px";
         return div;
       });
       container2.append(...partsHtml);
@@ -44114,19 +44108,17 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     },
     showCurrentTime: true,
     showWeekScale: true,
+    groupHeightMode: "fixed",
     verticalScroll: true,
     zoomKey: "ctrlKey",
     height: "100%",
     orientation: "top",
     timeAxis: {
-      scale: "week",
-      step: 3600
+      scale: "day"
     },
-    format: {},
     locale: "en-gb",
-    stack: false,
+    stack: true,
     stackSubgroups: true,
-    groupHeightMode: "fixed",
     xss: {
       disabled: true
     },
@@ -44149,9 +44141,13 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       // Adjusts the space around each item
       axis: 2
       // Adjusts the space between items and the axis
+    },
+    cluster: {
+      clusterCriteria: function(a, b2) {
+        console.log("CLUUUUUUSTER", a, b2);
+        return true;
+      }
     }
-    // Optional: Set max/min heights for the row
-    // maxHeight: 300, // You can adjust this to your liking
   };
   var timeline = new Timeline(container, items, options);
   async function onSelect(data2) {
@@ -44163,14 +44159,16 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   timeline.on("select", onSelect);
   var records = observable([]);
   var editCard = observable(false);
+  var zoomOnClick = observable(false);
   window.editCard = editCard;
   var show = () => {
   };
-  var mapping = observable({});
+  var mapping = observable({}, { deep: true });
   grist.onRecords((recs, maps) => {
     mapping(maps);
     records(grist.mapColumnNames(recs));
     show();
+    updateHeader();
   });
   function getFrom(r) {
     return r.From && r.From instanceof Date ? r.From : null;
@@ -44245,13 +44243,18 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   function appendEnd(yyyy_mm_dd) {
     return `${yyyy_mm_dd}T23:59:59`;
   }
-  function observable(value) {
+  function observable(value, options2) {
     let listeners = [];
     const obj = function(arg) {
       if (arg === void 0) {
         return value;
       } else {
-        if (value !== arg) {
+        if (options2?.deep) {
+          if (JSON.stringify(value) !== JSON.stringify(arg)) {
+            listeners.forEach((clb) => clb(arg));
+            value = arg;
+          }
+        } else if (value !== arg) {
           listeners.forEach((clb) => clb(arg));
           value = arg;
         }
@@ -44316,7 +44319,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       Array.from(groupIds).map((c2) => ({
         id: c2,
         content: c2,
-        editable: true
+        editable: true,
+        className: "group_" + c2
       }))
     );
     timeline.setGroups(groups);
@@ -44350,7 +44354,32 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     }
   }
   bindConfig();
+  var functions = {
+    ["timeline:cluster"](value) {
+      if (value) {
+        timeline.setOptions({
+          cluster: true,
+          stack: false,
+          groupHeightMode: "fitItems"
+        });
+        timeline.setGroups(groups);
+        timeline.redraw();
+      } else {
+        timeline.setOptions({
+          cluster: false,
+          stack: true,
+          groupHeightMode: "fitItems"
+        });
+        timeline.setGroups(groups);
+        timeline.redraw();
+      }
+    }
+  };
   function updateConfig(elementId, value) {
+    if (elementId in functions) {
+      functions[elementId](value);
+      return;
+    }
     const formatedValue = formatValue(value);
     const schema = elementId.split(":")[0];
     const [parent2, child] = elementId.split(":")[1].split(".");
@@ -44394,6 +44423,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       return;
     }
     setTimeout(() => {
+      const selected = timeline.getSelection();
+      if (selected[0] === rec.id) {
+        return;
+      }
       timeline.setSelection(Number(rec.id), {
         focus: true,
         animation: {
@@ -44405,26 +44438,100 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   async function main() {
   }
   main();
+  timeline.setGroups(groups);
   document.addEventListener("DOMContentLoaded", function() {
+    timeline.setOptions({
+      stack: false,
+      timeAxis: {
+        scale: "week"
+      }
+    });
     const button = document.getElementById("focusButton");
     button.addEventListener("click", function() {
       timeline.fit();
     });
-  });
-  timeline.setOptions({
-    timeAxis: {
-      scale: "week"
-    }
+    const panel = document.querySelector(".vis-panel.vis-left");
+    const header = document.getElementById("groupHeader");
+    let lastTop2 = 0;
+    const observer = new MutationObserver((mutations) => {
+      const content = panel.querySelector(".vis-labelset");
+      const top = panel.getBoundingClientRect().top;
+      if (top === lastTop2) {
+        return;
+      }
+      lastTop2 = top;
+      const headerHeight = header.getBoundingClientRect().height;
+      const newTop = top - headerHeight;
+      header.style.setProperty("top", `${newTop}px`);
+      const left = content.getBoundingClientRect().left;
+      header.style.setProperty("left", `${left}px`);
+    });
+    observer.observe(panel, { attributes: true });
   });
   editCard.subscribe(async (value) => {
     await grist.setOption("editCard", value);
     document.getElementById("local:editCard").checked = value;
   });
   grist.onOptions((options2) => {
-    if (options2.editCard !== void 0) {
+    if (options2?.editCard !== void 0) {
       editCard(options2.editCard ?? false);
     }
   });
+  var lastMappings = "";
+  function updateHeader() {
+    const newMappings = JSON.stringify(mapping());
+    if (newMappings === lastMappings) {
+      return;
+    }
+    lastMappings = newMappings;
+    const groupHeader = document.getElementById("groupHeader");
+    if (!groupHeader) {
+      return;
+    }
+    groupHeader.innerHTML = "";
+    const parts = mapping().Columns.map((col) => {
+      const div = document.createElement("div");
+      div.innerText = col;
+      div.classList.add("group-part");
+      div.style.padding = "5px";
+      return div;
+    });
+    groupHeader.style.setProperty("grid-template-columns", "auto");
+    groupHeader.append(...parts);
+    const width = Math.ceil(groupHeader.getBoundingClientRect().width);
+    const visualization = document.getElementById("visualization");
+    visualization.style.setProperty("--group-header-width", `${width}px`);
+    const widths = parts.map(
+      (part) => Math.ceil(part.getBoundingClientRect().width)
+    );
+    const templateColumns = widths.map((w2) => `minmax(${w2}px, max-content)`).join(" ");
+    visualization.style.setProperty("--group-columns", templateColumns);
+    anchorHeader();
+    const firstLine = document.querySelector(".group-template");
+    if (!firstLine) {
+      console.error("No first line found");
+      return;
+    }
+    const sizesFromFirstLine = Array.from(firstLine.children).map((el) => el.getBoundingClientRect().width).map(Math.ceil);
+    const templateColumns2 = sizesFromFirstLine.map((w2) => `${w2}px`).join(" ");
+    groupHeader.style.setProperty("grid-template-columns", templateColumns2);
+  }
+  var lastTop = 0;
+  function anchorHeader() {
+    const panel = document.querySelector(".vis-panel.vis-left");
+    const header = document.getElementById("groupHeader");
+    const content = panel.querySelector(".vis-labelset");
+    const top = panel.getBoundingClientRect().top;
+    if (top === lastTop) {
+      return;
+    }
+    lastTop = top;
+    const headerHeight = header.getBoundingClientRect().height;
+    const newTop = top - headerHeight;
+    header.style.setProperty("top", `${newTop}px`);
+    const left = content.getBoundingClientRect().left;
+    header.style.setProperty("left", `${left}px`);
+  }
 })();
 /*! Bundled license information:
 

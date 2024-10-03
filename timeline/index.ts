@@ -33,16 +33,9 @@ grist.ready({
 // DOM element where the Timeline will be attached
 const container = document.getElementById('visualization')!;
 
-// Items data set, each item is : {
-const items = new DataSet([
-  // { id: 1, content: 'item 1', start: '2014-04-20' },
-  // { id: 2, content: 'item 2', start: '2014-04-14' },
-  // { id: 3, content: 'item 3', start: '2014-04-18' },
-  // { id: 4, content: 'item 4', start: '2014-04-16', end: '2014-04-19' },
-  // { id: 5, content: 'item 5', start: '2014-04-25' },
-  // { id: 6, content: 'item 6', start: '2014-04-27', type: 'point' },
-]);
+// { id: 6, content: 'item 6', start: '2014-04-27', type: 'point' },
 
+const items = new DataSet([]);
 const groups = new DataSet<any>([]);
 
 // Configuration for the Timeline
@@ -82,6 +75,7 @@ const options: TimelineOptions = {
         } disabled>`;
       }
       div.classList.add('group-part');
+      div.style.padding = '5px';
       return div;
     });
     container.append(...partsHtml);
@@ -99,6 +93,7 @@ const options: TimelineOptions = {
   },
   showCurrentTime: true,
   showWeekScale: true,
+  groupHeightMode: 'fixed',
 
   verticalScroll: true,
   zoomKey: 'ctrlKey',
@@ -107,19 +102,14 @@ const options: TimelineOptions = {
   orientation: 'top',
 
   timeAxis: {
-    scale: 'week',
-    step: 3600,
+    scale: 'day',
   },
-  format: {},
-
   locale: 'en-gb',
-  stack: false,
+  stack: true,
   stackSubgroups: true,
-  groupHeightMode: 'fixed',
   xss: {
     disabled: true,
   },
-
   zoomMin: 1000 * 60 * 60 * 24 * 7 * 4, // about three months in milliseconds
   zoomMax: 1000 * 60 * 60 * 24 * 31 * 12, // about three months in milliseconds
   moment: function (date) {
@@ -140,8 +130,12 @@ const options: TimelineOptions = {
     item: 4, // Adjusts the space around each item
     axis: 2, // Adjusts the space between items and the axis
   },
-  // Optional: Set max/min heights for the row
-  // maxHeight: 300, // You can adjust this to your liking
+  cluster: {
+    clusterCriteria: function (a, b) {
+      console.log('CLUUUUUUSTER', a, b);
+      return true;
+    },
+  },
 };
 
 // Create a Timeline
@@ -149,14 +143,6 @@ const timeline = new Timeline(container, items, options);
 
 async function onSelect(data) {
   await grist.setCursorPos({ rowId: data.items[0] });
-
-  // if (!data.items.length) {
-  //   const allIds = items.getIds();
-  //   await grist.setSelectedRows(allIds);
-  // } else {
-  //   await grist.setSelectedRows([data.items[0]]);
-  // }
-
   if (editCard()) {
     await grist.commandApi.run('viewAsCard');
   }
@@ -169,19 +155,17 @@ let lastGroups = new Set();
 let lastRows = new Set();
 const records = observable([]);
 const editCard = observable(false);
+const zoomOnClick = observable(false);
 (window as any).editCard = editCard;
 
 let show = () => {};
-let mapping = observable({});
-
-
+let mapping = observable({}, { deep: true });
 
 grist.onRecords((recs, maps) => {
   mapping(maps);
   records(grist.mapColumnNames(recs));
   show();
-  // const ids = recs.map(r => r.id);
-  // grist.setSelectedRows(ids);
+  updateHeader();
 });
 
 function getFrom(r: any) {
@@ -268,13 +252,23 @@ function appendEnd(yyyy_mm_dd: string) {
   return `${yyyy_mm_dd}T23:59:59`;
 }
 
-function observable(value?: any) {
+function observable(
+  value?: any,
+  options?: {
+    deep?: boolean;
+  }
+) {
   let listeners = [] as any[];
   const obj = function (arg?: any) {
     if (arg === undefined) {
       return value;
     } else {
-      if (value !== arg) {
+      if (options?.deep) {
+        if (JSON.stringify(value) !== JSON.stringify(arg)) {
+          listeners.forEach((clb: any) => clb(arg));
+          value = arg;
+        }
+      } else if (value !== arg) {
         listeners.forEach((clb: any) => clb(arg));
         value = arg;
       }
@@ -357,6 +351,7 @@ function renderGroups() {
       id: c,
       content: c,
       editable: true,
+      className: 'group_' + c,
     }))
   );
   timeline.setGroups(groups);
@@ -434,7 +429,33 @@ function bindConfig() {
 }
 bindConfig();
 
+const functions = {
+  ['timeline:cluster'](value: boolean) {
+    if (value) {
+      timeline.setOptions({
+        cluster: true,
+        stack: false,
+        groupHeightMode: 'fitItems',
+      });
+      timeline.setGroups(groups);
+      timeline.redraw();
+    } else {
+      timeline.setOptions({
+        cluster: false,
+        stack: true,
+        groupHeightMode: 'fitItems',
+      });
+      timeline.setGroups(groups);
+      timeline.redraw();
+    }
+  },
+};
+
 function updateConfig(elementId: string, value: any) {
+  if (elementId in functions) {
+    functions[elementId](value);
+    return;
+  }
   const formatedValue = formatValue(value);
   const schema = elementId.split(':')[0];
   const [parent, child] = elementId.split(':')[1].split('.');
@@ -481,6 +502,13 @@ grist.onRecord(rec => {
     return;
   }
   setTimeout(() => {
+    // Get selected row.
+    const selected = timeline.getSelection();
+
+    if (selected[0] === rec.id) {
+      return;
+    }
+
     timeline.setSelection(Number(rec.id), {
       focus: true,
       animation: {
@@ -495,20 +523,45 @@ async function main() {
 }
 
 main();
+timeline.setGroups(groups);
 
 document.addEventListener('DOMContentLoaded', function () {
+  // Set defaults.
+  timeline.setOptions({
+    stack: false,
+    timeAxis: {
+      scale: 'week',
+    },
+  });
+
   const button = document.getElementById('focusButton')!;
   button.addEventListener('click', function () {
     timeline.fit();
   });
-});
 
-timeline.setOptions({
-  timeAxis: {
-    scale: 'week',
-  },
-});
+  // We need to track the .vis-panel.vis-left element top property changed, and adjust
+  // group-header acordingly.
 
+  const panel = document.querySelector('.vis-panel.vis-left')!;
+  const header = document.getElementById('groupHeader')!;
+  let lastTop = 0;
+  const observer = new MutationObserver(mutations => {
+    const content = panel.querySelector('.vis-labelset')!;
+    const top = panel.getBoundingClientRect().top;
+    if (top === lastTop) {
+      return;
+    }
+    lastTop = top;
+    const headerHeight = header.getBoundingClientRect().height;
+    const newTop = top - headerHeight;
+    header.style.setProperty('top', `${newTop}px`);
+
+    // Also adjust the left property of the group-header, as it may have a scrool element.
+    const left = content.getBoundingClientRect().left;
+    header.style.setProperty('left', `${left}px`);
+  });
+  observer.observe(panel, { attributes: true });
+});
 
 editCard.subscribe(async (value: any) => {
   await grist.setOption('editCard', value);
@@ -516,7 +569,93 @@ editCard.subscribe(async (value: any) => {
 });
 
 grist.onOptions((options: any) => {
-  if (options.editCard !== undefined) {
+  if (options?.editCard !== undefined) {
     editCard(options.editCard ?? false);
-      }
+  }
 });
+
+// Hihgligh group if clicked
+
+let lastMappings = '';
+
+function updateHeader() {
+  const newMappings = JSON.stringify(mapping());
+  if (newMappings === lastMappings) {
+    return;
+  }
+  lastMappings = newMappings;
+
+  // We have this element  <div class="group-header" id="groupHeader"></div>
+
+  // Maps has somegint like this { Columns: [ 'Campaign', 'Model', 'Reseller' ] }
+
+  // So generate elements and insert it into the groupHeader, so that it looks like this
+  // Campaign | Model | Reseller
+
+  const groupHeader = document.getElementById('groupHeader')!;
+  if (!groupHeader) {
+    return;
+  }
+  groupHeader.innerHTML = '';
+  const parts = mapping().Columns.map((col: string) => {
+    const div = document.createElement('div');
+    div.innerText = col;
+    div.classList.add('group-part');
+    div.style.padding = '5px';
+    return div;
+  });
+  groupHeader.style.setProperty('grid-template-columns', 'auto');
+  groupHeader.append(...parts);
+
+  // Now we need to update its width, we can't break lines and anything like that.
+  const width = Math.ceil(groupHeader.getBoundingClientRect().width);
+
+  // And set this width as minimum for the table rendered below.
+  const visualization = document.getElementById('visualization')!;
+  // Set custom property --group-header-width to the width of the groupHeader
+  visualization.style.setProperty('--group-header-width', `${width}px`);
+
+  // Now measer each individual line, and provide grisd-template-columns variable with minimum
+  // width to acomodate column and header width.
+  // grid-template-columns: var(--group-columns,  repeat(12, max-content));
+
+  const widths = parts.map(part =>
+    Math.ceil(part.getBoundingClientRect().width)
+  );
+  const templateColumns = widths
+    .map(w => `minmax(${w}px, max-content)`)
+    .join(' ');
+
+  visualization.style.setProperty('--group-columns', templateColumns);
+  anchorHeader();
+
+  const firstLine = document.querySelector('.group-template');
+  if (!firstLine) {
+    console.error('No first line found');
+    return;
+  }
+  const sizesFromFirstLine = Array.from(firstLine.children)
+    .map((el: Element) => el.getBoundingClientRect().width)
+    .map(Math.ceil);
+  const templateColumns2 = sizesFromFirstLine.map(w => `${w}px`).join(' ');
+  groupHeader.style.setProperty('grid-template-columns', templateColumns2);
+}
+let lastTop = 0;
+
+function anchorHeader() {
+  const panel = document.querySelector('.vis-panel.vis-left')!;
+  const header = document.getElementById('groupHeader')!;
+  const content = panel.querySelector('.vis-labelset')!;
+  const top = panel.getBoundingClientRect().top;
+  if (top === lastTop) {
+    return;
+  }
+  lastTop = top;
+  const headerHeight = header.getBoundingClientRect().height;
+  const newTop = top - headerHeight;
+  header.style.setProperty('top', `${newTop}px`);
+
+  // Also adjust the left property of the group-header, as it may have a scrool element.
+  const left = content.getBoundingClientRect().left;
+  header.style.setProperty('left', `${left}px`);
+}
