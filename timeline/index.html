@@ -1,5 +1,8 @@
 
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/themes/light.css" />
+<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/shoelace-autoloader.js"></script>
+
 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
 <script
   type="text/javascript"
@@ -38,7 +41,13 @@
     min-height: 0px;
     max-height: var(--status-height);
     overflow: hidden;
+    gap: 4px;
   }
+
+  select.config {
+    border-color: rgb(217, 217, 217);
+  }
+
   body,
   html {
     padding: 0px;
@@ -119,7 +128,7 @@
 Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 'second', 'minute', 'hour', 'weekday', 'week', 'day', 'month', 'year'. Example usage:
 -->
 
-  <select class="conf-select config" id="timeAxis.scale">
+  <select class="conf-select config" id="timeline:timeAxis.scale">
     <option value="day">day</option>
     <option value="week" selected>week</option>
     <option value="month">month</option>
@@ -127,10 +136,14 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
   </select>
 
 
-  <select class="conf-select config" id="stack">
+  <select class="conf-select config" id="timeline:stack">
     <option value="false" selected>overlap</option>
     <option value="true">stack</option>
   </select>
+
+  <sl-switch class="config" id="local:editCard" size="small">Edit card</sl-switch>
+
+  <sl-icon-button id="focusButton" name="arrows-collapse-vertical" label="Settings" style="margin-left: auto"></sl-icon-button>
 
 </div>
 

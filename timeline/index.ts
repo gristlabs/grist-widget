@@ -2,6 +2,7 @@ import moment from 'moment-timezone';
 import 'moment/locale/en-gb'; // Import the 'en-gb' locale which uses ISO weeks
 import { Timeline, DataSet, TimelineOptions } from 'vis-timeline/standalone';
 moment.locale('en-gb');
+import { from } from 'fromit';
 
 declare global {
   var grist: any;
@@ -70,7 +71,16 @@ const options: TimelineOptions = {
     const parts = group.content.split('|');
     const partsHtml = parts.map(part => {
       const div = document.createElement('div');
-      div.innerText = part;
+      const value = formatValue(part);
+      if (typeof value === 'string') {
+        div.innerText = String(value) || '-';
+      } else if (typeof value === 'number') {
+        div.innerText = formatCurrency.format(value);
+      } else if (typeof value === 'boolean') {
+        div.innerHTML = `<input type="checkbox" ${
+          value ? 'checked' : ''
+        } disabled>`;
+      }
       div.classList.add('group-part');
       return div;
     });
@@ -83,7 +93,7 @@ const options: TimelineOptions = {
   editable: {
     add: true,
     updateTime: true,
-    updateGroup: true,
+    updateGroup: false,
     remove: true,
     overrideItems: true,
   },
@@ -97,7 +107,7 @@ const options: TimelineOptions = {
   orientation: 'top',
 
   timeAxis: {
-    scale: 'day',
+    scale: 'week',
     step: 3600,
   },
   format: {},
@@ -146,6 +156,10 @@ async function onSelect(data) {
   // } else {
   //   await grist.setSelectedRows([data.items[0]]);
   // }
+
+  if (editCard()) {
+    await grist.commandApi.run('viewAsCard');
+  }
 }
 
 // add event listener
@@ -154,9 +168,13 @@ timeline.on('select', onSelect);
 let lastGroups = new Set();
 let lastRows = new Set();
 const records = observable([]);
+const editCard = observable(false);
+(window as any).editCard = editCard;
 
 let show = () => {};
 let mapping = observable({});
+
+
 
 grist.onRecords((recs, maps) => {
   mapping(maps);
@@ -183,6 +201,29 @@ function recToItem(r) {
     type: same(getTo(r), getFrom(r)) ? 'point' : 'range',
     group: undefined,
   };
+}
+
+function compareItems(a: any, b: any) {
+  // Compare each field in the item above
+  if (a.id !== b.id) {
+    return false;
+  }
+  if (a.content !== b.content) {
+    return false;
+  }
+  if (a.start !== b.start) {
+    return false;
+  }
+  if (a.end !== b.end) {
+    return false;
+  }
+  if (a.group !== b.group) {
+    return false;
+  }
+  if (a.type !== b.type) {
+    return false;
+  }
+  return true;
 }
 
 function onClick(selector: string, callback: () => void) {
@@ -252,13 +293,15 @@ function observable(value?: any) {
   return obj;
 }
 
+const oldRecs = new Map();
+
 function renderItems(group = false) {
   const recs = records();
   const newIds = new Set(recs.map(x => x.id));
   const existing = items.getIds();
   const removed = existing.filter(x => !newIds.has(x));
   items.remove(removed);
-  const newItems: any = recs
+  const newItems = from(recs as any[])
     .filter(r => getFrom(r) && getTo(r))
     .map(r => {
       const result = recToItem(r);
@@ -269,7 +312,25 @@ function renderItems(group = false) {
       return result;
     });
 
-  items.update(newItems);
+  const changedItems =
+    oldRecs.size > 0
+      ? newItems.filter(newOne => {
+          const old = oldRecs.get(newOne.id);
+          const LEAVE = true,
+            REMOVE = false;
+          if (!old) {
+            return LEAVE;
+          }
+          const same = compareItems(old, newOne);
+          return same ? REMOVE : LEAVE;
+        })
+      : newItems;
+
+  const array = changedItems.toArray();
+  oldRecs.clear();
+  array.forEach(x => oldRecs.set(x.id, x));
+
+  items.update(array);
 }
 const formatCurrency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -321,23 +382,6 @@ function groupHtml(group: string) {
   // el.focus();
 };
 
-function showAll() {
-  const recs = records();
-  const newIds = new Set(recs.map(x => x.id));
-  const existing = items.getIds();
-  const removed = existing.filter(x => !newIds.has(x));
-  items.remove(removed);
-  const newItems: any = recs.filter(r => getFrom(r) || getTo(r)).map(recToItem);
-  items.update(newItems);
-  timeline.setGroups();
-
-  timeline.setOptions({
-    timeAxis: {
-      scale: 'day',
-    },
-  });
-}
-
 show = showCampaings;
 
 // update the locale when changing the select box value
@@ -376,30 +420,47 @@ function bindConfig() {
   for (const el of configElements) {
     console.debug(`Binding config element: ${el}`);
     // Subscribe to change event.
-    (el as any).onchange = function () {
-      const value = (el as any).value;
-      const formatedValue = formatValue(value);
-      const elementId = (el as any).id;
-      const hasDot = elementId.indexOf('.') !== -1;
-      if (hasDot) {
-        const [parent, child] = elementId.split('.');
-        console.log(`Setting ${parent}.${child} to ${formatedValue}`);
-        timeline.setOptions({
-          [parent]: {
-            [child]: formatedValue,
-          },
-        });
-      } else {
-        console.log(`Setting ${elementId} to ${formatedValue}`);
-        timeline.setOptions({
-          [elementId]: formatedValue,
-        });
-      }
+    (el as HTMLSelectElement).onchange = function () {
+      const elementId = el.getAttribute('id')!;
+      const value = (el as HTMLSelectElement).value;
+      updateConfig(elementId, value);
     };
-    (el as any).onchange();
+    el.addEventListener('sl-change', event => {
+      const checked = (event.target as any).checked;
+      const elementId = el.getAttribute('id')!;
+      updateConfig(elementId, checked);
+    });
   }
 }
 bindConfig();
+
+function updateConfig(elementId: string, value: any) {
+  const formatedValue = formatValue(value);
+  const schema = elementId.split(':')[0];
+  const [parent, child] = elementId.split(':')[1].split('.');
+  if (child && schema === 'timeline') {
+    console.log(`Setting ${parent}.${child} to ${formatedValue}`);
+    timeline.setOptions({
+      [parent]: {
+        [child]: formatedValue,
+      },
+    });
+  } else if (schema === 'timeline') {
+    console.log(`Setting ${parent} to ${formatedValue}`);
+    timeline.setOptions({
+      [parent]: formatedValue,
+    });
+  } else if (schema === 'local') {
+    if (!(parent in window)) {
+      console.error(`Local variable ${parent} not found in window`);
+      return;
+    }
+    console.log(`Setting ${parent} to ${formatedValue}`);
+    (window as any)[parent](formatedValue);
+  } else {
+    console.error(`Unknown schema ${schema}`);
+  }
+}
 
 function formatValue(value: any) {
   if (['true', 'false'].includes(value)) {
@@ -423,8 +484,8 @@ grist.onRecord(rec => {
     timeline.setSelection(Number(rec.id), {
       focus: true,
       animation: {
-        animation: false
-      }
+        animation: false,
+      },
     });
   }, 10);
 });
@@ -434,3 +495,28 @@ async function main() {
 }
 
 main();
+
+document.addEventListener('DOMContentLoaded', function () {
+  const button = document.getElementById('focusButton')!;
+  button.addEventListener('click', function () {
+    timeline.fit();
+  });
+});
+
+timeline.setOptions({
+  timeAxis: {
+    scale: 'week',
+  },
+});
+
+
+editCard.subscribe(async (value: any) => {
+  await grist.setOption('editCard', value);
+  (document.getElementById('local:editCard') as any)!.checked = value;
+});
+
+grist.onOptions((options: any) => {
+  if (options.editCard !== undefined) {
+    editCard(options.editCard ?? false);
+      }
+});

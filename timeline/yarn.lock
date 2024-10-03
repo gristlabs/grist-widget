@@ -159,6 +159,11 @@ esbuild@^0.24.0:
     "@esbuild/win32-ia32" "0.24.0"
     "@esbuild/win32-x64" "0.24.0"
 
+fromit@^2.2.11:
+  version "2.2.11"
+  resolved "https://registry.yarnpkg.com/fromit/-/fromit-2.2.11.tgz#e3fad7d5787135219114c71e34b79f2e605817bf"
+  integrity sha512-k9QRMH7Yuipkhn5L5IzjKJHrpifVo937M/TuaEysqPGp/Q766HyuP4fltD8A3GjROSftYEW4majqTsFTx/62Vg==
+
 moment-timezone@*, moment-timezone@0.5.45:
   version "0.5.45"
   resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.5.45.tgz#cb685acd56bac10e69d93c536366eb65aa6bcf5c"
