@@ -30,6 +30,7 @@
   "scripts": {
     "build": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js",
     "watch": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch",
-    "dev": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch"
+    "dev": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch",
+    "serve": "reload -p 8585"
   }
 }
