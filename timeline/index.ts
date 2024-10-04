@@ -141,15 +141,6 @@ const options: TimelineOptions = {
 // Create a Timeline
 const timeline = new Timeline(container, items, options);
 
-async function onSelect(data) {
-  await grist.setCursorPos({ rowId: data.items[0] });
-  if (editCard()) {
-    await grist.commandApi.run('viewAsCard');
-  }
-}
-
-// add event listener
-timeline.on('select', onSelect);
 
 let lastGroups = new Set();
 let lastRows = new Set();
@@ -394,20 +385,13 @@ function dump(arg: any) {
 
 (window as any).timeline = timeline;
 
-// const range = document.getElementById('range') as HTMLInputElement;
-// range.oninput = function () {
-//   // Copy this value as margin.
-//   const margin = parseInt(range.value, 10);
-//   timeline.setOptions({
-//     margin: {
-//       item: {
-//         horizontal: margin,
-//         vertical: margin
-//       },    // Adjusts the space around each item
-//       axis: margin     // Adjusts the space between items and the axis
-//     }
-//   });
-// };
+const range = document.getElementById('range') as HTMLInputElement;
+range.oninput = function () {
+  const visi = document.getElementById('visualization')!;
+  const margin = parseInt(range.value, 10);
+  visi.setAttribute('style', `--group-columns: ${margin * 3}px minmax(57px, max-content) minmax(86px, max-content)`);
+  timeline.redraw();
+};
 
 function bindConfig() {
   const configElements = document.querySelectorAll('.config');
@@ -659,3 +643,22 @@ function anchorHeader() {
   const left = content.getBoundingClientRect().left;
   header.style.setProperty('left', `${left}px`);
 }
+
+
+timeline.on('change', (...args) => console.log('CHANGE', args));
+
+timeline.on('doubleClick', event => {
+  console.log('DOUBLE CLICK', event);
+})
+
+timeline.on('mouseOver', event => {
+  console.log('MOUSE OVER', event);
+})
+
+
+// async function onSelect(data) {
+//   await grist.setCursorPos({ rowId: data.items[0] });
+//   if (editCard()) {
+//     await grist.commandApi.run('viewAsCard');
+//   }
+// }
