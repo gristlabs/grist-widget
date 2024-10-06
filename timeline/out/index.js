@@ -5491,6 +5491,813 @@
     }
   });
 
+  // node_modules/fromit/dist/fromit.mjs
+  var Q = (s) => !!s;
+  var l = class {
+    iterator() {
+      return this[Symbol.asyncIterator]();
+    }
+    async includes(t, e = (r, n) => r == n) {
+      for await (let r of this) if (e(r, t)) return true;
+      return false;
+    }
+    sort(t) {
+      let e = this;
+      async function* r() {
+        yield* (await e.toArray()).sort(t);
+      }
+      return new f(r());
+    }
+    orderBy(t) {
+      return typeof t != "function" && (t = (e) => e[t]), new K(this, t);
+    }
+    distinct(t) {
+      if (typeof t != "function") {
+        let e = /* @__PURE__ */ new Set(), r = this;
+        async function* n() {
+          for await (let i2 of r) e.has(i2) || (e.add(i2), yield i2);
+        }
+        return new f(n());
+      } else {
+        let e = /* @__PURE__ */ new Set(), r = this;
+        async function* n() {
+          let i2 = 0;
+          for await (let o of r) {
+            let a = await t(o, i2);
+            i2++, e.has(a) || (e.add(a), yield o);
+          }
+        }
+        return new f(n());
+      }
+    }
+    orderByDesc(t) {
+      return new k(this, t);
+    }
+    map(t) {
+      return typeof t != "function" && (t = (e) => e[t]), new V(this, t);
+    }
+    groupBy(t) {
+      return new x(this, t);
+    }
+    filter(t) {
+      return new M(this, t != null ? t : Q);
+    }
+    skip(t) {
+      return new T(this, t);
+    }
+    skipWhile(t) {
+      return new T(this, t);
+    }
+    take(t) {
+      return new d(this, t);
+    }
+    takeWhile(t) {
+      return new d(this, t);
+    }
+    many(t) {
+      return new v(this, t);
+    }
+    async first(t) {
+      for await (let e of this) return e;
+      return t;
+    }
+    async last(t) {
+      let e = null;
+      for await (let r of this) e = r;
+      return t !== void 0 ? t : e;
+    }
+    async find(t) {
+      let e = 0;
+      for await (let r of this) if (t(r, e++)) return r;
+    }
+    async some(t) {
+      let e = 0;
+      for await (let r of this) if (t(r, e++)) return true;
+      return false;
+    }
+    async any() {
+      for await (let t of this) return true;
+      return false;
+    }
+    async count() {
+      let t = 0;
+      for await (let e of this) t++;
+      return t;
+    }
+    async sum(t) {
+      let e = 0, r = 0;
+      for await (let n of this) t ? e += await t(n, r++) : e += n;
+      return e;
+    }
+    async toArray() {
+      let t = [];
+      for await (let e of this) t.push(e);
+      return t;
+    }
+    async forEach(t) {
+      let e = 0;
+      for await (let r of this) await t(r, e++);
+      return this;
+    }
+    except(t) {
+      return new S(this, t);
+    }
+    union(t) {
+      return new A(this, t);
+    }
+    intersect(t) {
+      return new E(this, t);
+    }
+    chunk(t) {
+      return new w(this, t);
+    }
+    flatDeep() {
+      return this.flat(20);
+    }
+    flat(t) {
+      return new y(this, t);
+    }
+    zip(t) {
+      let e = this;
+      async function* r() {
+        let n = e[Symbol.asyncIterator](), i2 = t[Symbol.asyncIterator]();
+        for (; ; ) {
+          let o = await n.next(), a = await i2.next();
+          if (o.done || a.done) break;
+          yield [o.value, a.value];
+        }
+      }
+      return new f(r());
+    }
+    concat(t) {
+      let e = this;
+      async function* r() {
+        for await (let n of e) yield n;
+        for await (let n of t) yield n;
+      }
+      return new f(r());
+    }
+    diff(t) {
+      return this.except(t).concat(new f(t).except(this));
+    }
+    async join(t) {
+      return (await this.toArray()).join(t);
+    }
+    async reduce(t, e) {
+      let r = -1;
+      for await (let n of this) {
+        if (r++, await e === void 0 && r === 0) {
+          e = n;
+          continue;
+        }
+        e = await t(await e, n, r);
+      }
+      return e;
+    }
+  };
+  function X(s) {
+    return s != null && typeof s != "string" && (s[Symbol.asyncIterator] || s[Symbol.iterator]);
+  }
+  var y = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.depth = r;
+      this.depth = r != null ? r : 1;
+    }
+    async *[Symbol.asyncIterator]() {
+      for await (let e of this.list) if (X(e)) if (this.depth === 0) yield e;
+      else {
+        let r = new y(e, this.depth - 1);
+        for await (let n of r) yield n;
+      }
+      else yield e;
+    }
+  };
+  var w = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.size = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e = [];
+      for await (let r of this.list) e.length === this.size ? (yield new p(e), e = [r]) : e.push(r);
+      e.length && (yield new p(e));
+    }
+  };
+  var h = class extends l {
+    constructor(e, r) {
+      super();
+      this.key = e;
+      this.buffer = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      for (let e of this.buffer) yield e;
+    }
+  };
+  var x = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e = null, r = true, n = [], i2 = 0;
+      for await (let o of this.list.orderBy(this.selector)) {
+        if (r) {
+          r = false, e = await this.selector(o, i2++), n.push(o);
+          continue;
+        }
+        let a = await this.selector(o, i2++);
+        if (a != e) {
+          yield new h(e, n), n = [o], e = a;
+          continue;
+        }
+        n.push(o);
+      }
+      n.length && (yield new h(e, n));
+    }
+  };
+  var S = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.other = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e = /* @__PURE__ */ new Set();
+      for await (let r of this.other) e.add(r);
+      for await (let r of this.list) e.has(r) || (yield r);
+    }
+  };
+  var A = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.other = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e = /* @__PURE__ */ new Set();
+      for await (let r of this.list) e.add(r), yield r;
+      for await (let r of this.other) e.has(r) || (yield r);
+    }
+  };
+  var E = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.other = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      for await (let e of this.list) for await (let r of this.other) if (e == r) {
+        yield e;
+        break;
+      }
+    }
+  };
+  var T = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      typeof r == "number" ? this._size = r : this._matcher = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      if (this._size !== void 0) {
+        let e = -1;
+        for await (let r of this.list) e++, e >= this._size && (yield r);
+      } else {
+        let e = true, r = -1;
+        for await (let n of this.list) r++, e && (e = await this._matcher(n, r)), e || (yield n);
+      }
+    }
+  };
+  var d = class extends T {
+    async *[Symbol.asyncIterator]() {
+      if (this._size !== void 0) {
+        let t = 0;
+        if (this._size <= 0) return;
+        for await (let e of this.list) if (t++, yield e, t >= this._size) break;
+      } else {
+        let t = -1;
+        for await (let e of this.list) {
+          if (t++, !await this._matcher(e, t)) return;
+          yield e;
+        }
+      }
+    }
+  };
+  var M = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e = 0;
+      for await (let r of this.list) this.selector(r, e++) && (yield r);
+    }
+  };
+  var v = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e = 0;
+      for await (let r of this.list) {
+        let n = await this.selector(r, e++);
+        for (let i2 of n) yield i2;
+      }
+    }
+  };
+  var K = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e = [];
+      for await (let r of this.list) e.push(r);
+      e.sort((r, n) => {
+        let i2 = this.selector(r, -1), o = this.selector(n, -1);
+        return i2 < o ? -1 : i2 > o ? 1 : 0;
+      });
+      for (let r of e) yield r;
+    }
+  };
+  var k = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e = [];
+      for await (let r of this.list) e.push(r);
+      e.sort((r, n) => {
+        let i2 = this.selector(r, -1), o = this.selector(n, -1);
+        return i2 < o ? 1 : i2 > o ? -1 : 0;
+      });
+      for (let r of e) yield r;
+    }
+  };
+  var V = class extends l {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e = 0;
+      for await (let r of this.list) yield this.selector(r, e++);
+    }
+  };
+  var p = class extends l {
+    constructor(e) {
+      super();
+      this.list = e;
+    }
+    async *[Symbol.asyncIterator]() {
+      for (let e of this.list) yield e;
+    }
+  };
+  var f = class extends l {
+    constructor(e) {
+      super();
+      this.list = e;
+    }
+    async *[Symbol.asyncIterator]() {
+      for await (let e of this.list) yield e;
+    }
+  };
+  var Y = (s) => !!s;
+  var c = class {
+    async() {
+      let t = this;
+      async function* e() {
+        for (let r of t) yield r;
+      }
+      return u(e());
+    }
+    iterator() {
+      return this[Symbol.iterator]();
+    }
+    sort(t) {
+      return u(function* (e) {
+        yield* [...e].sort(t);
+      }(this));
+    }
+    orderBy(t) {
+      if (t || (t = (e) => e), typeof t != "function") {
+        let e = t;
+        t = (r) => r[e];
+      }
+      return new W(this, t);
+    }
+    chunk(t) {
+      return new F(this, t);
+    }
+    orderByDesc(t) {
+      return new L(this, t);
+    }
+    map(t) {
+      if (typeof t != "function") {
+        let e = t;
+        t = (r) => r[e];
+      }
+      return new G(this, t);
+    }
+    groupBy(t) {
+      return new _(this, t);
+    }
+    filter(t) {
+      return new D(this, t != null ? t : Y);
+    }
+    skip(t) {
+      return new b(this, t);
+    }
+    skipWhile(t) {
+      return new b(this, t);
+    }
+    take(t) {
+      return new I(this, t);
+    }
+    takeWhile(t) {
+      return new I(this, t);
+    }
+    many(t) {
+      return new C(this, t);
+    }
+    first(t) {
+      for (let e of this) return e;
+      return t;
+    }
+    last(t) {
+      let e = null;
+      for (let r of this) e = r;
+      return t !== void 0 ? t : e;
+    }
+    find(t) {
+      let e = 0;
+      for (let r of this) if (t(r, e++)) return r;
+    }
+    some(t) {
+      let e = 0;
+      for (let r of this) if (t(r, e++)) return true;
+      return false;
+    }
+    any() {
+      for (let t of this) return true;
+      return false;
+    }
+    count() {
+      let t = 0;
+      for (let e of this) t++;
+      return t;
+    }
+    includes(t, e = (r, n) => r == n) {
+      for (let r of this) if (e(r, t)) return true;
+      return false;
+    }
+    sum(t) {
+      let e = 0, r = 0;
+      for (let n of this) t ? e += t(n, r++) : e += n;
+      return e;
+    }
+    toArray() {
+      return [...this];
+    }
+    forEach(t) {
+      let e = 0;
+      for (let r of this) t(r, e++);
+      return this;
+    }
+    except(t, e) {
+      return new B(this, t, e);
+    }
+    union(t) {
+      return this.except(t).concat(t);
+    }
+    distinct(t) {
+      return new g(this, t);
+    }
+    intersect(t, e) {
+      return new R(this, t, e);
+    }
+    reverse() {
+      return new P(this);
+    }
+    flatDeep() {
+      return this.flat(20);
+    }
+    flat(t) {
+      return new m(this, t);
+    }
+    zip(t) {
+      let e = this;
+      function* r() {
+        let n = e[Symbol.iterator](), i2 = t[Symbol.iterator]();
+        for (; ; ) {
+          let o = n.next(), a = i2.next();
+          if (o.done || a.done) break;
+          yield [o.value, a.value];
+        }
+      }
+      return u(r());
+    }
+    concat(t) {
+      let e = this;
+      function* r() {
+        yield* e, yield* t;
+      }
+      return u(r());
+    }
+    diff(t) {
+      return this.except(t).concat(u(t).except(this));
+    }
+    lookup(t) {
+      let e = /* @__PURE__ */ new Map();
+      for (let r of this.groupBy(t)) e.set(r.key, r.toArray());
+      return e;
+    }
+    join(...t) {
+      if (!t.length || typeof t[0] == "string") return this.toArray().join(t[0] || "");
+      {
+        let e = t[0], r = t[1] || ((a) => a), n = t[2] || r, i2 = this;
+        function* o() {
+          let a = u(e).lookup(n), N = -1;
+          for (let q of i2) {
+            let H = r(q, ++N);
+            !a.has(H) || (yield [q, a.get(H)]);
+          }
+        }
+        return u(o());
+      }
+    }
+    reduce(t, e) {
+      let r = -1;
+      for (let n of this) {
+        if (r++, e === void 0 && r === 0) {
+          e = n;
+          continue;
+        }
+        e = t(e, n, r);
+      }
+      return e;
+    }
+  };
+  var z = class extends c {
+    constructor(e, r) {
+      super();
+      this.key = e;
+      this.buffer = r;
+    }
+    *[Symbol.iterator]() {
+      for (let e of this.buffer) yield e;
+    }
+  };
+  function Z(s) {
+    return s != null && typeof s != "string" && s[Symbol.iterator];
+  }
+  var m = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.depth = r;
+      this.depth = r != null ? r : 1;
+    }
+    *[Symbol.iterator]() {
+      for (let e of this.list) Z(e) ? this.depth === 0 ? yield e : yield* new m(e, this.depth - 1) : yield e;
+    }
+  };
+  var _ = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    *[Symbol.iterator]() {
+      let e = /* @__PURE__ */ new Set(), r = -1;
+      for (let n of this.list) {
+        r++;
+        let i2 = this.selector(n, r);
+        e.has(i2) || (e.add(i2), yield new z(i2, u(this.list).skip(r).filter((o, a) => this.selector(o, r + a) === i2)));
+      }
+    }
+  };
+  var P = class extends c {
+    constructor(e) {
+      super();
+      this.list = e;
+    }
+    *[Symbol.iterator]() {
+      yield* [...this.list].reverse();
+    }
+  };
+  var B = class extends c {
+    constructor(e, r, n) {
+      super();
+      this.list = e;
+      this.other = r;
+      this.selector = n;
+    }
+    *[Symbol.iterator]() {
+      let e = /* @__PURE__ */ new Set(), r = 0, n = 0;
+      for (let i2 of this.other) {
+        let o = this.selector ? this.selector(i2, n++) : i2;
+        e.add(o);
+      }
+      for (let i2 of this.list) {
+        let o = this.selector ? this.selector(i2, r++) : i2;
+        e.has(o) || (yield i2);
+      }
+    }
+  };
+  var R = class extends c {
+    constructor(e, r, n) {
+      super();
+      this.list = e;
+      this.other = r;
+      this.selector = n;
+      this.selector = n != null ? n : (i2) => i2;
+    }
+    *[Symbol.iterator]() {
+      let e = -1;
+      for (let r of this.list) {
+        e++;
+        let n = -1;
+        for (let i2 of this.other) if (n++, this.selector(r, e) == this.selector(i2, n)) {
+          yield r;
+          break;
+        }
+      }
+    }
+  };
+  var b = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      typeof r == "number" ? this._size = r : this._matcher = r;
+    }
+    *[Symbol.iterator]() {
+      if (this._size !== void 0) {
+        let e = -1;
+        for (let r of this.list) e++, e >= this._size && (yield r);
+      } else {
+        let e = true, r = -1;
+        for (let n of this.list) r++, e && (e = this._matcher(n, r)), e || (yield n);
+      }
+    }
+  };
+  var I = class extends b {
+    *[Symbol.iterator]() {
+      if (this._size !== void 0) {
+        let t = 0;
+        if (this._size <= 0) return;
+        for (let e of this.list) if (t++, yield e, t >= this._size) break;
+      } else {
+        let t = -1;
+        for (let e of this.list) {
+          if (t++, !this._matcher(e, t)) return;
+          yield e;
+        }
+      }
+    }
+  };
+  var g = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    *[Symbol.iterator]() {
+      let e = /* @__PURE__ */ new Set(), r = this.selector || ((i2) => i2), n = 0;
+      for (let i2 of this.list) {
+        let o = r(i2, n++);
+        e.has(o) || (e.add(o), yield i2);
+      }
+    }
+  };
+  var D = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    *[Symbol.iterator]() {
+      let e = 0;
+      for (let r of this.list) this.selector(r, e++) && (yield r);
+    }
+  };
+  var C = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    *[Symbol.iterator]() {
+      let e = 0;
+      for (let r of this.list) {
+        let n = this.selector(r, e++);
+        for (let i2 of n) yield i2;
+      }
+    }
+  };
+  var W = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    *[Symbol.iterator]() {
+      let e = [...this.list];
+      e.sort((r, n) => {
+        let i2 = this.selector(r, -1), o = this.selector(n, -1);
+        return i2 < o ? -1 : i2 > o ? 1 : 0;
+      });
+      for (let r of e) yield r;
+    }
+  };
+  var L = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    *[Symbol.iterator]() {
+      let e = [...this.list];
+      e.sort((r, n) => {
+        let i2 = this.selector(r, -1), o = this.selector(n, -1);
+        return i2 < o ? 1 : i2 > o ? -1 : 0;
+      });
+      for (let r of e) yield r;
+    }
+  };
+  var F = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.size = r;
+    }
+    *[Symbol.iterator]() {
+      let e = [];
+      for (let r of this.list) e.length === this.size ? (yield u(e), e = [r]) : e.push(r);
+      e.length && (yield u(e));
+    }
+  };
+  var G = class extends c {
+    constructor(e, r) {
+      super();
+      this.list = e;
+      this.selector = r;
+    }
+    *[Symbol.iterator]() {
+      let e = 0;
+      for (let r of this.list) yield this.selector(r, e++);
+    }
+  };
+  var j = class extends c {
+    constructor(e) {
+      super();
+      this.list = e;
+    }
+    *[Symbol.iterator]() {
+      for (let e of this.list) yield e;
+    }
+  };
+  function u(...s) {
+    if (typeof s[0] == "number") {
+      if (s.length === 1) return u(function* () {
+        for (let e = 0; e < s[0]; e++) yield e;
+      }());
+      if (s.length === 2) return s[0] < s[1] ? u(function* () {
+        for (let e = s[0]; e <= s[1]; e++) yield e;
+      }()) : u(function* () {
+        for (let e = s[0]; e >= s[1]; e--) yield e;
+      }());
+      if (s.length === 3) return s[0] < s[1] ? u(function* () {
+        for (let e = s[0]; e <= s[1]; e += s[2]) yield e;
+      }()) : u(function* () {
+        for (let e = s[0]; e >= s[1]; e -= s[2]) yield e;
+      }());
+    }
+    let t = s[0];
+    if (typeof t == "object") {
+      if (Symbol.asyncIterator in t) return new f(t);
+      if (typeof t.then == "function") {
+        async function* e() {
+          yield* await t;
+        }
+        return new f(e());
+      }
+    }
+    if (t != null && t[Symbol.iterator]) return new j(t);
+    throw new Error("Argument is not iterable");
+  }
+
   // index.ts
   var import_moment_timezone = __toESM(require_moment_timezone2());
   var import_en_gb = __toESM(require_en_gb());
@@ -11700,8 +12507,8 @@
     var IS_CONSTRUCTOR = isConstructor$3(this);
     var argumentsLength = arguments.length;
     var mapfn = argumentsLength > 1 ? arguments[1] : void 0;
-    var mapping2 = mapfn !== void 0;
-    if (mapping2) mapfn = bind$g(mapfn, argumentsLength > 2 ? arguments[2] : void 0);
+    var mapping = mapfn !== void 0;
+    if (mapping) mapfn = bind$g(mapfn, argumentsLength > 2 ? arguments[2] : void 0);
     var iteratorMethod = getIteratorMethod$7(O);
     var index = 0;
     var length, result, step, iterator2, next2, value;
@@ -11710,14 +12517,14 @@
       next2 = iterator2.next;
       result = IS_CONSTRUCTOR ? new this() : [];
       for (; !(step = call$b(next2, iterator2)).done; index++) {
-        value = mapping2 ? callWithSafeIterationClosing(iterator2, mapfn, [step.value, index], true) : step.value;
+        value = mapping ? callWithSafeIterationClosing(iterator2, mapfn, [step.value, index], true) : step.value;
         createProperty$5(result, index, value);
       }
     } else {
       length = lengthOfArrayLike$c(O);
       result = IS_CONSTRUCTOR ? new this(length) : $Array$3(length);
       for (; length > index; index++) {
-        value = mapping2 ? mapfn(O[index], index) : O[index];
+        value = mapping ? mapfn(O[index], index) : O[index];
         createProperty$5(result, index, value);
       }
     }
@@ -22528,11 +23335,11 @@
       value: function getIds(options2) {
         var data2 = this._data;
         var filter3 = options2 && _filterInstanceProperty(options2);
-        var order = options2 && options2.order;
+        var order2 = options2 && options2.order;
         var itemIds = _toConsumableArray(_keysInstanceProperty(data2).call(data2));
         var ids = [];
         if (filter3) {
-          if (order) {
+          if (order2) {
             var items2 = [];
             for (var i2 = 0, len = itemIds.length; i2 < len; i2++) {
               var id2 = itemIds[i2];
@@ -22541,7 +23348,7 @@
                 items2.push(item);
               }
             }
-            this._sort(items2, order);
+            this._sort(items2, order2);
             for (var _i4 = 0, _len5 = items2.length; _i4 < _len5; _i4++) {
               ids.push(items2[_i4][this._idProp]);
             }
@@ -22555,13 +23362,13 @@
             }
           }
         } else {
-          if (order) {
+          if (order2) {
             var _items = [];
             for (var _i6 = 0, _len7 = itemIds.length; _i6 < _len7; _i6++) {
               var _id4 = itemIds[_i6];
               _items.push(data2.get(_id4));
             }
-            this._sort(_items, order);
+            this._sort(_items, order2);
             for (var _i7 = 0, _len8 = _items.length; _i7 < _len8; _i7++) {
               ids.push(_items[_i7][this._idProp]);
             }
@@ -22662,16 +23469,16 @@
        */
     }, {
       key: "_sort",
-      value: function _sort(items2, order) {
-        if (typeof order === "string") {
-          var name = order;
+      value: function _sort(items2, order2) {
+        if (typeof order2 === "string") {
+          var name = order2;
           _sortInstanceProperty(items2).call(items2, function(a, b2) {
             var av = a[name];
             var bv = b2[name];
             return av > bv ? 1 : av < bv ? -1 : 0;
           });
-        } else if (typeof order === "function") {
-          _sortInstanceProperty(items2).call(items2, order);
+        } else if (typeof order2 === "function") {
+          _sortInstanceProperty(items2).call(items2, order2);
         } else {
           throw new TypeError("Order must be a function or a string");
         }
@@ -24361,21 +25168,21 @@
   var parser = parser$1;
   var parseTag = parser.parseTag;
   var parseAttr = parser.parseAttr;
-  var _ = util;
+  var _2 = util;
   function isNull(obj) {
     return obj === void 0 || obj === null;
   }
   function getAttrs(html2) {
-    var i2 = _.spaceIndex(html2);
+    var i2 = _2.spaceIndex(html2);
     if (i2 === -1) {
       return {
         html: "",
         closing: html2[html2.length - 2] === "/"
       };
     }
-    html2 = _.trim(html2.slice(i2 + 1, -1));
+    html2 = _2.trim(html2.slice(i2 + 1, -1));
     var isClosing2 = html2[html2.length - 1] === "/";
-    if (isClosing2) html2 = _.trim(html2.slice(0, -1));
+    if (isClosing2) html2 = _2.trim(html2.slice(0, -1));
     return {
       html: html2,
       closing: isClosing2
@@ -24476,7 +25283,7 @@
           var attrs = getAttrs(html3);
           var whiteAttrList = whiteList[tag];
           var attrsHtml = parseAttr(attrs.html, function(name, value) {
-            var isWhiteAttr = _.indexOf(whiteAttrList, name) !== -1;
+            var isWhiteAttr = _2.indexOf(whiteAttrList, name) !== -1;
             var ret2 = onTagAttr2(tag, name, value, isWhiteAttr);
             if (!isNull(ret2)) return ret2;
             if (isWhiteAttr) {
@@ -30681,7 +31488,7 @@
        */
     }, {
       key: "order",
-      value: function order() {
+      value: function order2() {
         var array2 = availableUtils.toArray(this.items);
         var startArray = [];
         var endArray = [];
@@ -43231,813 +44038,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var defaultLanguage = getNavigatorLanguage();
   moment$4.locale(defaultLanguage);
 
-  // node_modules/fromit/dist/fromit.mjs
-  var Q = (s) => !!s;
-  var l = class {
-    iterator() {
-      return this[Symbol.asyncIterator]();
-    }
-    async includes(t, e = (r, n) => r == n) {
-      for await (let r of this) if (e(r, t)) return true;
-      return false;
-    }
-    sort(t) {
-      let e = this;
-      async function* r() {
-        yield* (await e.toArray()).sort(t);
-      }
-      return new f(r());
-    }
-    orderBy(t) {
-      return typeof t != "function" && (t = (e) => e[t]), new K(this, t);
-    }
-    distinct(t) {
-      if (typeof t != "function") {
-        let e = /* @__PURE__ */ new Set(), r = this;
-        async function* n() {
-          for await (let i2 of r) e.has(i2) || (e.add(i2), yield i2);
-        }
-        return new f(n());
-      } else {
-        let e = /* @__PURE__ */ new Set(), r = this;
-        async function* n() {
-          let i2 = 0;
-          for await (let o of r) {
-            let a = await t(o, i2);
-            i2++, e.has(a) || (e.add(a), yield o);
-          }
-        }
-        return new f(n());
-      }
-    }
-    orderByDesc(t) {
-      return new k(this, t);
-    }
-    map(t) {
-      return typeof t != "function" && (t = (e) => e[t]), new V(this, t);
-    }
-    groupBy(t) {
-      return new x(this, t);
-    }
-    filter(t) {
-      return new M(this, t != null ? t : Q);
-    }
-    skip(t) {
-      return new T(this, t);
-    }
-    skipWhile(t) {
-      return new T(this, t);
-    }
-    take(t) {
-      return new d(this, t);
-    }
-    takeWhile(t) {
-      return new d(this, t);
-    }
-    many(t) {
-      return new v(this, t);
-    }
-    async first(t) {
-      for await (let e of this) return e;
-      return t;
-    }
-    async last(t) {
-      let e = null;
-      for await (let r of this) e = r;
-      return t !== void 0 ? t : e;
-    }
-    async find(t) {
-      let e = 0;
-      for await (let r of this) if (t(r, e++)) return r;
-    }
-    async some(t) {
-      let e = 0;
-      for await (let r of this) if (t(r, e++)) return true;
-      return false;
-    }
-    async any() {
-      for await (let t of this) return true;
-      return false;
-    }
-    async count() {
-      let t = 0;
-      for await (let e of this) t++;
-      return t;
-    }
-    async sum(t) {
-      let e = 0, r = 0;
-      for await (let n of this) t ? e += await t(n, r++) : e += n;
-      return e;
-    }
-    async toArray() {
-      let t = [];
-      for await (let e of this) t.push(e);
-      return t;
-    }
-    async forEach(t) {
-      let e = 0;
-      for await (let r of this) await t(r, e++);
-      return this;
-    }
-    except(t) {
-      return new S(this, t);
-    }
-    union(t) {
-      return new A(this, t);
-    }
-    intersect(t) {
-      return new E(this, t);
-    }
-    chunk(t) {
-      return new w(this, t);
-    }
-    flatDeep() {
-      return this.flat(20);
-    }
-    flat(t) {
-      return new y(this, t);
-    }
-    zip(t) {
-      let e = this;
-      async function* r() {
-        let n = e[Symbol.asyncIterator](), i2 = t[Symbol.asyncIterator]();
-        for (; ; ) {
-          let o = await n.next(), a = await i2.next();
-          if (o.done || a.done) break;
-          yield [o.value, a.value];
-        }
-      }
-      return new f(r());
-    }
-    concat(t) {
-      let e = this;
-      async function* r() {
-        for await (let n of e) yield n;
-        for await (let n of t) yield n;
-      }
-      return new f(r());
-    }
-    diff(t) {
-      return this.except(t).concat(new f(t).except(this));
-    }
-    async join(t) {
-      return (await this.toArray()).join(t);
-    }
-    async reduce(t, e) {
-      let r = -1;
-      for await (let n of this) {
-        if (r++, await e === void 0 && r === 0) {
-          e = n;
-          continue;
-        }
-        e = await t(await e, n, r);
-      }
-      return e;
-    }
-  };
-  function X(s) {
-    return s != null && typeof s != "string" && (s[Symbol.asyncIterator] || s[Symbol.iterator]);
-  }
-  var y = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.depth = r;
-      this.depth = r != null ? r : 1;
-    }
-    async *[Symbol.asyncIterator]() {
-      for await (let e of this.list) if (X(e)) if (this.depth === 0) yield e;
-      else {
-        let r = new y(e, this.depth - 1);
-        for await (let n of r) yield n;
-      }
-      else yield e;
-    }
-  };
-  var w = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.size = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e = [];
-      for await (let r of this.list) e.length === this.size ? (yield new p(e), e = [r]) : e.push(r);
-      e.length && (yield new p(e));
-    }
-  };
-  var h = class extends l {
-    constructor(e, r) {
-      super();
-      this.key = e;
-      this.buffer = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      for (let e of this.buffer) yield e;
-    }
-  };
-  var x = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e = null, r = true, n = [], i2 = 0;
-      for await (let o of this.list.orderBy(this.selector)) {
-        if (r) {
-          r = false, e = await this.selector(o, i2++), n.push(o);
-          continue;
-        }
-        let a = await this.selector(o, i2++);
-        if (a != e) {
-          yield new h(e, n), n = [o], e = a;
-          continue;
-        }
-        n.push(o);
-      }
-      n.length && (yield new h(e, n));
-    }
-  };
-  var S = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.other = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e = /* @__PURE__ */ new Set();
-      for await (let r of this.other) e.add(r);
-      for await (let r of this.list) e.has(r) || (yield r);
-    }
-  };
-  var A = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.other = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e = /* @__PURE__ */ new Set();
-      for await (let r of this.list) e.add(r), yield r;
-      for await (let r of this.other) e.has(r) || (yield r);
-    }
-  };
-  var E = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.other = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      for await (let e of this.list) for await (let r of this.other) if (e == r) {
-        yield e;
-        break;
-      }
-    }
-  };
-  var T = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      typeof r == "number" ? this._size = r : this._matcher = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      if (this._size !== void 0) {
-        let e = -1;
-        for await (let r of this.list) e++, e >= this._size && (yield r);
-      } else {
-        let e = true, r = -1;
-        for await (let n of this.list) r++, e && (e = await this._matcher(n, r)), e || (yield n);
-      }
-    }
-  };
-  var d = class extends T {
-    async *[Symbol.asyncIterator]() {
-      if (this._size !== void 0) {
-        let t = 0;
-        if (this._size <= 0) return;
-        for await (let e of this.list) if (t++, yield e, t >= this._size) break;
-      } else {
-        let t = -1;
-        for await (let e of this.list) {
-          if (t++, !await this._matcher(e, t)) return;
-          yield e;
-        }
-      }
-    }
-  };
-  var M = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e = 0;
-      for await (let r of this.list) this.selector(r, e++) && (yield r);
-    }
-  };
-  var v = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e = 0;
-      for await (let r of this.list) {
-        let n = await this.selector(r, e++);
-        for (let i2 of n) yield i2;
-      }
-    }
-  };
-  var K = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e = [];
-      for await (let r of this.list) e.push(r);
-      e.sort((r, n) => {
-        let i2 = this.selector(r, -1), o = this.selector(n, -1);
-        return i2 < o ? -1 : i2 > o ? 1 : 0;
-      });
-      for (let r of e) yield r;
-    }
-  };
-  var k = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e = [];
-      for await (let r of this.list) e.push(r);
-      e.sort((r, n) => {
-        let i2 = this.selector(r, -1), o = this.selector(n, -1);
-        return i2 < o ? 1 : i2 > o ? -1 : 0;
-      });
-      for (let r of e) yield r;
-    }
-  };
-  var V = class extends l {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e = 0;
-      for await (let r of this.list) yield this.selector(r, e++);
-    }
-  };
-  var p = class extends l {
-    constructor(e) {
-      super();
-      this.list = e;
-    }
-    async *[Symbol.asyncIterator]() {
-      for (let e of this.list) yield e;
-    }
-  };
-  var f = class extends l {
-    constructor(e) {
-      super();
-      this.list = e;
-    }
-    async *[Symbol.asyncIterator]() {
-      for await (let e of this.list) yield e;
-    }
-  };
-  var Y = (s) => !!s;
-  var c = class {
-    async() {
-      let t = this;
-      async function* e() {
-        for (let r of t) yield r;
-      }
-      return u(e());
-    }
-    iterator() {
-      return this[Symbol.iterator]();
-    }
-    sort(t) {
-      return u(function* (e) {
-        yield* [...e].sort(t);
-      }(this));
-    }
-    orderBy(t) {
-      if (t || (t = (e) => e), typeof t != "function") {
-        let e = t;
-        t = (r) => r[e];
-      }
-      return new W(this, t);
-    }
-    chunk(t) {
-      return new F(this, t);
-    }
-    orderByDesc(t) {
-      return new L(this, t);
-    }
-    map(t) {
-      if (typeof t != "function") {
-        let e = t;
-        t = (r) => r[e];
-      }
-      return new G(this, t);
-    }
-    groupBy(t) {
-      return new _2(this, t);
-    }
-    filter(t) {
-      return new D(this, t != null ? t : Y);
-    }
-    skip(t) {
-      return new b(this, t);
-    }
-    skipWhile(t) {
-      return new b(this, t);
-    }
-    take(t) {
-      return new I(this, t);
-    }
-    takeWhile(t) {
-      return new I(this, t);
-    }
-    many(t) {
-      return new C(this, t);
-    }
-    first(t) {
-      for (let e of this) return e;
-      return t;
-    }
-    last(t) {
-      let e = null;
-      for (let r of this) e = r;
-      return t !== void 0 ? t : e;
-    }
-    find(t) {
-      let e = 0;
-      for (let r of this) if (t(r, e++)) return r;
-    }
-    some(t) {
-      let e = 0;
-      for (let r of this) if (t(r, e++)) return true;
-      return false;
-    }
-    any() {
-      for (let t of this) return true;
-      return false;
-    }
-    count() {
-      let t = 0;
-      for (let e of this) t++;
-      return t;
-    }
-    includes(t, e = (r, n) => r == n) {
-      for (let r of this) if (e(r, t)) return true;
-      return false;
-    }
-    sum(t) {
-      let e = 0, r = 0;
-      for (let n of this) t ? e += t(n, r++) : e += n;
-      return e;
-    }
-    toArray() {
-      return [...this];
-    }
-    forEach(t) {
-      let e = 0;
-      for (let r of this) t(r, e++);
-      return this;
-    }
-    except(t, e) {
-      return new B(this, t, e);
-    }
-    union(t) {
-      return this.except(t).concat(t);
-    }
-    distinct(t) {
-      return new g(this, t);
-    }
-    intersect(t, e) {
-      return new R(this, t, e);
-    }
-    reverse() {
-      return new P(this);
-    }
-    flatDeep() {
-      return this.flat(20);
-    }
-    flat(t) {
-      return new m(this, t);
-    }
-    zip(t) {
-      let e = this;
-      function* r() {
-        let n = e[Symbol.iterator](), i2 = t[Symbol.iterator]();
-        for (; ; ) {
-          let o = n.next(), a = i2.next();
-          if (o.done || a.done) break;
-          yield [o.value, a.value];
-        }
-      }
-      return u(r());
-    }
-    concat(t) {
-      let e = this;
-      function* r() {
-        yield* e, yield* t;
-      }
-      return u(r());
-    }
-    diff(t) {
-      return this.except(t).concat(u(t).except(this));
-    }
-    lookup(t) {
-      let e = /* @__PURE__ */ new Map();
-      for (let r of this.groupBy(t)) e.set(r.key, r.toArray());
-      return e;
-    }
-    join(...t) {
-      if (!t.length || typeof t[0] == "string") return this.toArray().join(t[0] || "");
-      {
-        let e = t[0], r = t[1] || ((a) => a), n = t[2] || r, i2 = this;
-        function* o() {
-          let a = u(e).lookup(n), N = -1;
-          for (let q of i2) {
-            let H = r(q, ++N);
-            !a.has(H) || (yield [q, a.get(H)]);
-          }
-        }
-        return u(o());
-      }
-    }
-    reduce(t, e) {
-      let r = -1;
-      for (let n of this) {
-        if (r++, e === void 0 && r === 0) {
-          e = n;
-          continue;
-        }
-        e = t(e, n, r);
-      }
-      return e;
-    }
-  };
-  var z = class extends c {
-    constructor(e, r) {
-      super();
-      this.key = e;
-      this.buffer = r;
-    }
-    *[Symbol.iterator]() {
-      for (let e of this.buffer) yield e;
-    }
-  };
-  function Z(s) {
-    return s != null && typeof s != "string" && s[Symbol.iterator];
-  }
-  var m = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.depth = r;
-      this.depth = r != null ? r : 1;
-    }
-    *[Symbol.iterator]() {
-      for (let e of this.list) Z(e) ? this.depth === 0 ? yield e : yield* new m(e, this.depth - 1) : yield e;
-    }
-  };
-  var _2 = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    *[Symbol.iterator]() {
-      let e = /* @__PURE__ */ new Set(), r = -1;
-      for (let n of this.list) {
-        r++;
-        let i2 = this.selector(n, r);
-        e.has(i2) || (e.add(i2), yield new z(i2, u(this.list).skip(r).filter((o, a) => this.selector(o, r + a) === i2)));
-      }
-    }
-  };
-  var P = class extends c {
-    constructor(e) {
-      super();
-      this.list = e;
-    }
-    *[Symbol.iterator]() {
-      yield* [...this.list].reverse();
-    }
-  };
-  var B = class extends c {
-    constructor(e, r, n) {
-      super();
-      this.list = e;
-      this.other = r;
-      this.selector = n;
-    }
-    *[Symbol.iterator]() {
-      let e = /* @__PURE__ */ new Set(), r = 0, n = 0;
-      for (let i2 of this.other) {
-        let o = this.selector ? this.selector(i2, n++) : i2;
-        e.add(o);
-      }
-      for (let i2 of this.list) {
-        let o = this.selector ? this.selector(i2, r++) : i2;
-        e.has(o) || (yield i2);
-      }
-    }
-  };
-  var R = class extends c {
-    constructor(e, r, n) {
-      super();
-      this.list = e;
-      this.other = r;
-      this.selector = n;
-      this.selector = n != null ? n : (i2) => i2;
-    }
-    *[Symbol.iterator]() {
-      let e = -1;
-      for (let r of this.list) {
-        e++;
-        let n = -1;
-        for (let i2 of this.other) if (n++, this.selector(r, e) == this.selector(i2, n)) {
-          yield r;
-          break;
-        }
-      }
-    }
-  };
-  var b = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      typeof r == "number" ? this._size = r : this._matcher = r;
-    }
-    *[Symbol.iterator]() {
-      if (this._size !== void 0) {
-        let e = -1;
-        for (let r of this.list) e++, e >= this._size && (yield r);
-      } else {
-        let e = true, r = -1;
-        for (let n of this.list) r++, e && (e = this._matcher(n, r)), e || (yield n);
-      }
-    }
-  };
-  var I = class extends b {
-    *[Symbol.iterator]() {
-      if (this._size !== void 0) {
-        let t = 0;
-        if (this._size <= 0) return;
-        for (let e of this.list) if (t++, yield e, t >= this._size) break;
-      } else {
-        let t = -1;
-        for (let e of this.list) {
-          if (t++, !this._matcher(e, t)) return;
-          yield e;
-        }
-      }
-    }
-  };
-  var g = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    *[Symbol.iterator]() {
-      let e = /* @__PURE__ */ new Set(), r = this.selector || ((i2) => i2), n = 0;
-      for (let i2 of this.list) {
-        let o = r(i2, n++);
-        e.has(o) || (e.add(o), yield i2);
-      }
-    }
-  };
-  var D = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    *[Symbol.iterator]() {
-      let e = 0;
-      for (let r of this.list) this.selector(r, e++) && (yield r);
-    }
-  };
-  var C = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    *[Symbol.iterator]() {
-      let e = 0;
-      for (let r of this.list) {
-        let n = this.selector(r, e++);
-        for (let i2 of n) yield i2;
-      }
-    }
-  };
-  var W = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    *[Symbol.iterator]() {
-      let e = [...this.list];
-      e.sort((r, n) => {
-        let i2 = this.selector(r, -1), o = this.selector(n, -1);
-        return i2 < o ? -1 : i2 > o ? 1 : 0;
-      });
-      for (let r of e) yield r;
-    }
-  };
-  var L = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    *[Symbol.iterator]() {
-      let e = [...this.list];
-      e.sort((r, n) => {
-        let i2 = this.selector(r, -1), o = this.selector(n, -1);
-        return i2 < o ? 1 : i2 > o ? -1 : 0;
-      });
-      for (let r of e) yield r;
-    }
-  };
-  var F = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.size = r;
-    }
-    *[Symbol.iterator]() {
-      let e = [];
-      for (let r of this.list) e.length === this.size ? (yield u(e), e = [r]) : e.push(r);
-      e.length && (yield u(e));
-    }
-  };
-  var G = class extends c {
-    constructor(e, r) {
-      super();
-      this.list = e;
-      this.selector = r;
-    }
-    *[Symbol.iterator]() {
-      let e = 0;
-      for (let r of this.list) yield this.selector(r, e++);
-    }
-  };
-  var j = class extends c {
-    constructor(e) {
-      super();
-      this.list = e;
-    }
-    *[Symbol.iterator]() {
-      for (let e of this.list) yield e;
-    }
-  };
-  function u(...s) {
-    if (typeof s[0] == "number") {
-      if (s.length === 1) return u(function* () {
-        for (let e = 0; e < s[0]; e++) yield e;
-      }());
-      if (s.length === 2) return s[0] < s[1] ? u(function* () {
-        for (let e = s[0]; e <= s[1]; e++) yield e;
-      }()) : u(function* () {
-        for (let e = s[0]; e >= s[1]; e--) yield e;
-      }());
-      if (s.length === 3) return s[0] < s[1] ? u(function* () {
-        for (let e = s[0]; e <= s[1]; e += s[2]) yield e;
-      }()) : u(function* () {
-        for (let e = s[0]; e >= s[1]; e -= s[2]) yield e;
-      }());
-    }
-    let t = s[0];
-    if (typeof t == "object") {
-      if (Symbol.asyncIterator in t) return new f(t);
-      if (typeof t.then == "function") {
-        async function* e() {
-          yield* await t;
-        }
-        return new f(e());
-      }
-    }
-    if (t != null && t[Symbol.iterator]) return new j(t);
-    throw new Error("Argument is not iterable");
-  }
-
   // index.ts
   import_moment_timezone.default.locale("en-gb");
   grist.ready({
@@ -44065,8 +44065,48 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var items = new DataSet([]);
   var groups = new DataSet([]);
   var options = {
+    order: function(a, b2) {
+      const leftId = a.id, rightId = b2.id;
+      const leftOrder = order.get(leftId);
+      const rightOrder = order.get(rightId);
+      if (!leftOrder || !rightOrder) {
+        return 0;
+      }
+      return leftOrder - rightOrder;
+    },
     // allow selecting multiple items using ctrl+click, shift+click, or hold.
     multiselect: true,
+    async onRemove(item, callback) {
+      if (confirm("Are you sure you want to delete this item?")) {
+        await grist.selectedTable.destroy(item.id);
+        callback(null);
+      }
+    },
+    async onMove(item, callback) {
+      let { start, end } = item;
+      const format = (date2) => (0, import_moment_timezone.default)(date2).format("YYYY-MM-DD");
+      if (end.getHours() === 0 && end.getMinutes() === 0) {
+        end = (0, import_moment_timezone.default)(end).subtract(1, "minute").toDate();
+      }
+      const fields = {
+        [mappings().From]: format(start),
+        [mappings().To]: format(end)
+      };
+      await grist.selectedTable.update({ id: item.id, fields });
+      callback(item);
+    },
+    async onAdd(item, callback) {
+      const group = item.group.split("|").map(formatValue);
+      const start = (0, import_moment_timezone.default)(item.start).format("YYYY-MM-DD");
+      const end = (0, import_moment_timezone.default)(defaultEnd(item.start)).format("YYYY-MM-DD");
+      const values3 = [...group, start, end];
+      const columns = [...mappings().Columns, mappings().From, mappings().To];
+      const rawFields = Object.fromEntries(zip(columns, values3));
+      const fields = await liftFields(rawFields);
+      const { id: id2 } = await grist.selectedTable.create({ fields });
+      await grist.setCursorPos({ rowId: id2 });
+      callback(null);
+    },
     // allow manipulation of items
     // editable: true,
     /* alternatively, enable/disable individual actions:
@@ -44133,6 +44173,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       const snappedDate = (0, import_moment_timezone.default)(date2);
       if (scale === "week") {
         snappedDate.startOf("isoWeek");
+      } else if (scale === "day") {
+        snappedDate.startOf("day");
       }
       return snappedDate.toDate();
     },
@@ -44144,22 +44186,24 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     },
     cluster: {
       clusterCriteria: function(a, b2) {
-        console.log("CLUUUUUUSTER", a, b2);
         return true;
       }
     }
   };
   var timeline = new Timeline(container, items, options);
   var records = observable([]);
+  var order = /* @__PURE__ */ new Map();
   var editCard = observable(false);
   var zoomOnClick = observable(false);
   window.editCard = editCard;
   var show = () => {
   };
-  var mapping = observable({}, { deep: true });
+  var mappings = observable({}, { deep: true });
   grist.onRecords((recs, maps) => {
-    mapping(maps);
+    mappings(maps);
     records(grist.mapColumnNames(recs));
+    order.clear();
+    recs.forEach((r, i2) => order.set(r.id, i2));
     show();
     updateHeader();
   });
@@ -44175,7 +44219,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       content: r.Subject || "no title",
       start: trimTime(getFrom(r)),
       end: appendEnd(trimTime(getTo(r))),
-      type: same(getTo(r), getFrom(r)) ? "point" : "range",
+      type: "range",
       group: void 0
     };
   }
@@ -44203,26 +44247,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   function onClick(selector, callback) {
     window.document.querySelector(selector).addEventListener("click", callback);
   }
-  onClick("#btnAll", () => {
-    show = showAll;
-    show();
-  });
   onClick("#btnAlCampaign", () => {
     show = showCampaings;
     show();
   });
-  onClick("#btnModel", () => {
-    show();
-  });
-  onClick("#btnReseller", () => {
-    show();
-  });
-  function same(a, b2) {
-    if (!a || !b2) {
-      return false;
-    }
-    return a.getTime() === b2.getTime();
-  }
   function trimTime(date2) {
     if (!date2) {
       return "";
@@ -44263,17 +44291,28 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     return obj;
   }
   var oldRecs = /* @__PURE__ */ new Map();
-  function renderItems(group = false) {
+  function renderItems() {
     const recs = records();
+    let i2 = 1;
+    nameToId.clear();
+    idToName.clear();
+    for (const rec of recs) {
+      const groupName = calcGroup(rec);
+      if (nameToId.has(groupName)) {
+        continue;
+      }
+      nameToId.set(groupName, i2);
+      idToName.set(i2, groupName);
+      i2++;
+    }
     const newIds = new Set(recs.map((x2) => x2.id));
     const existing = items.getIds();
     const removed = existing.filter((x2) => !newIds.has(x2));
     items.remove(removed);
     const newItems = u(recs).filter((r) => getFrom(r) && getTo(r)).map((r) => {
       const result = recToItem(r);
-      if (group) {
-        result.group = r.Columns.join("|");
-      }
+      result.group = r.Columns.join("|");
+      result.group = nameToId.get(result.group);
       result.content = r.Title.join("|");
       return result;
     });
@@ -44283,8 +44322,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       if (!old) {
         return LEAVE;
       }
-      const same2 = compareItems(old, newOne);
-      return same2 ? REMOVE : LEAVE;
+      const same = compareItems(old, newOne);
+      return same ? REMOVE : LEAVE;
     }) : newItems;
     const array2 = changedItems.toArray();
     oldRecs.clear();
@@ -44296,31 +44335,28 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     currency: "USD"
   });
   function showCampaings() {
-    renderItems(true);
+    renderItems();
     renderGroups();
   }
+  var nameToId = /* @__PURE__ */ new Map();
+  var idToName = /* @__PURE__ */ new Map();
   function calcGroup(rec) {
     return rec.Columns.join("|");
   }
   function renderGroups() {
-    const recs = records();
-    const groupIds = new Set(recs.map((x2) => calcGroup(x2)));
     const existingGroups = groups.getIds();
-    const groupsToRemove = existingGroups.filter((x2) => !groupIds.has(x2));
+    const groupsToRemove = existingGroups.filter((id2) => !idToName.has(id2));
     groups.remove(groupsToRemove);
     groups.update(
-      Array.from(groupIds).map((c2) => ({
-        id: c2,
-        content: c2,
+      Array.from(idToName.entries()).map((c2) => ({
+        id: c2[0],
+        content: c2[1],
         editable: true,
-        className: "group_" + c2
+        className: "group_" + c2[1]
       }))
     );
     timeline.setGroups(groups);
   }
-  window.grist_row_click = function(el, event2) {
-    console.log(`Stopping this `);
-  };
   show = showCampaings;
   var select = document.getElementById("locale");
   select.onchange = function() {
@@ -44333,12 +44369,14 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   range.oninput = function() {
     const visi = document.getElementById("visualization");
     const margin = parseInt(range.value, 10);
-    visi.setAttribute("style", `--group-columns: ${margin * 3}px minmax(57px, max-content) minmax(86px, max-content)`);
+    visi.setAttribute(
+      "style",
+      `--group-columns: ${margin * 3}px minmax(57px, max-content) minmax(86px, max-content)`
+    );
     timeline.redraw();
   };
   function bindConfig() {
     const configElements = document.querySelectorAll(".config");
-    console.log(`Found ${configElements.length} config elements`);
     for (const el of configElements) {
       console.debug(`Binding config element: ${el}`);
       el.onchange = function() {
@@ -44384,14 +44422,21 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const schema = elementId.split(":")[0];
     const [parent2, child] = elementId.split(":")[1].split(".");
     if (child && schema === "timeline") {
-      console.log(`Setting ${parent2}.${child} to ${formatedValue}`);
-      timeline.setOptions({
-        [parent2]: {
-          [child]: formatedValue
-        }
-      });
+      if (child === "scale") {
+        currentScale(formatedValue);
+        timeline.setOptions({
+          [parent2]: {
+            [child]: formatedValue
+          }
+        });
+      } else {
+        timeline.setOptions({
+          [parent2]: {
+            [child]: formatedValue
+          }
+        });
+      }
     } else if (schema === "timeline") {
-      console.log(`Setting ${parent2} to ${formatedValue}`);
       timeline.setOptions({
         [parent2]: formatedValue
       });
@@ -44400,7 +44445,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         console.error(`Local variable ${parent2} not found in window`);
         return;
       }
-      console.log(`Setting ${parent2} to ${formatedValue}`);
       window[parent2](formatedValue);
     } else {
       console.error(`Unknown schema ${schema}`);
@@ -44439,7 +44483,27 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   }
   main();
   timeline.setGroups(groups);
+  var currentScale = observable("day");
   document.addEventListener("DOMContentLoaded", function() {
+    new VanillaContextMenu({
+      scope: document.querySelector(".vis-panel.vis-left "),
+      menuItems: [
+        {
+          label: "Add new campaign",
+          callback: async () => {
+            const fields = {
+              [mappings().From]: (0, import_moment_timezone.default)().startOf("day").toDate(),
+              [mappings().To]: (0, import_moment_timezone.default)().endOf("isoWeek").toDate()
+            };
+            const { id: id2 } = await grist.selectedTable.create({ fields });
+            await grist.setCursorPos({ rowId: id2 });
+            await openCard();
+          }
+        },
+        "hr"
+      ]
+    });
+    currentScale("week");
     timeline.setOptions({
       stack: false,
       timeAxis: {
@@ -44467,6 +44531,67 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       header.style.setProperty("left", `${left}px`);
     });
     observer.observe(panel, { attributes: true });
+    const foreground = document.querySelector(".vis-center .vis-foreground");
+    const selection = document.createElement("div");
+    selection.className = "cursor-selection";
+    foreground.appendChild(selection);
+    foreground.addEventListener("mouseleave", function() {
+      selection.style.display = "none";
+    });
+    timeline.on("select", function(properties) {
+      if (properties.items.length === 0) {
+        return;
+      }
+      grist.setCursorPos({ rowId: properties.items[0] });
+    });
+    foreground.addEventListener("mousemove", function(e) {
+      const x2 = e.clientX - foreground.getBoundingClientRect().left;
+      const target = e.target;
+      if (target === selection) {
+        return;
+      }
+      if (!target.classList.contains("vis-group")) {
+        selection.style.display = "none";
+        return;
+      }
+      selection.style.display = "block";
+      const anotherDiv = document.querySelector(
+        "div.vis-panel.vis-background.vis-vertical > div.vis-time-axis.vis-background"
+      );
+      const anotherDivPos = anotherDiv.getBoundingClientRect().left;
+      const children = Array.from(anotherDiv.children);
+      const weekFromElement = (el) => {
+        const classList = Array.from(el.classList);
+        const scale = currentScale();
+        const weekClass = classList.find((c2) => c2.startsWith("vis-" + scale));
+        if (!weekClass) {
+          return null;
+        }
+        const week = parseInt(weekClass.replace("vis-" + scale, ""), 10);
+        return week;
+      };
+      const grouped = u(children).groupBy((e2) => weekFromElement(e2)).toArray();
+      const leftPoints = grouped.map((group) => {
+        const left = group.first().getBoundingClientRect().left;
+        const width = group.reduce(
+          (acc, el) => acc + el.getBoundingClientRect().width,
+          0
+        );
+        const adjustedWidth = left - anotherDivPos;
+        return { left: adjustedWidth, width };
+      });
+      const index = leftPoints.findLastIndex((c2) => c2.left < x2);
+      const closest = leftPoints[index];
+      const element = anotherDiv.children[index];
+      selection.style.left = `${closest.left}px`;
+      selection.style.width = `${closest.width}px`;
+      try {
+        if (selection.parentElement !== target) {
+          target.prepend(selection);
+        }
+      } catch (ex) {
+      }
+    });
   });
   editCard.subscribe(async (value) => {
     await grist.setOption("editCard", value);
@@ -44479,7 +44604,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   });
   var lastMappings = "";
   function updateHeader() {
-    const newMappings = JSON.stringify(mapping());
+    const newMappings = JSON.stringify(mappings());
     if (newMappings === lastMappings) {
       return;
     }
@@ -44489,7 +44614,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       return;
     }
     groupHeader.innerHTML = "";
-    const parts = mapping().Columns.map((col) => {
+    const parts = mappings().Columns.map((col) => {
       const div = document.createElement("div");
       div.innerText = col;
       div.classList.add("group-part");
@@ -44532,12 +44657,78 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const left = content.getBoundingClientRect().left;
     header.style.setProperty("left", `${left}px`);
   }
-  timeline.on("change", (...args) => console.log("CHANGE", args));
-  timeline.on("doubleClick", (event2) => {
-    console.log("DOUBLE CLICK", event2);
-  });
-  timeline.on("mouseOver", (event2) => {
-    console.log("MOUSE OVER", event2);
+  function zip(a, b2) {
+    return a.map((e, i2) => [e, b2[i2]]);
+  }
+  function defaultEnd(start) {
+    switch (currentScale()) {
+      case "day":
+        return (0, import_moment_timezone.default)(start).endOf("day").toDate();
+      case "week":
+        return (0, import_moment_timezone.default)(start).add(1, "week").subtract(1, "day").endOf("day").toDate();
+      case "month":
+        return (0, import_moment_timezone.default)(start).add(1, "month").subtract(1, "day").endOf("day").toDate();
+      case "year":
+        return (0, import_moment_timezone.default)(start).add(1, "year").subtract(1, "day").endOf("day").toDate();
+    }
+    throw new Error("Unknown scale");
+  }
+  function openCard() {
+    return grist.commandApi.run("viewAsCard");
+  }
+  var getAllColumns = buildColumns();
+  function buildColumns() {
+    let cache = [];
+    let lastMappings2 = JSON.stringify(mappings());
+    return async () => {
+      const newMappings = JSON.stringify(mappings());
+      if (newMappings === lastMappings2) {
+        return cache;
+      }
+      lastMappings2 = newMappings;
+      const columns = await getAllColumns2();
+      cache = columns;
+      return columns;
+    };
+    async function getAllColumns2() {
+      const columns = await grist.docApi.fetchTable("_grist_Tables_column");
+      const fields = Object.keys(columns);
+      const tableColumns = [];
+      for (const index in columns.parentId) {
+        tableColumns.push(
+          Object.fromEntries(fields.map((f2) => [f2, columns[f2][index]]))
+        );
+      }
+      return tableColumns;
+    }
+  }
+  async function liftFields(fields) {
+    const allColumns = await getAllColumns();
+    let clone2 = null;
+    for (const colId in fields) {
+      const col = allColumns.find((c2) => c2.colId === colId);
+      const type = col?.type;
+      if (type.startsWith("Ref:")) {
+        const tableId = type.split(":")[1];
+        const visibleColRowId = col.visibleCol;
+        const visibleColModel = allColumns.find((c2) => c2.id === visibleColRowId);
+        const visibleColId = visibleColModel?.colId;
+        const table = await grist.docApi.fetchTable(tableId);
+        const visibleColValues = table[visibleColId];
+        const rowIndex = visibleColValues.indexOf(fields[colId]);
+        const rowId = table.id[rowIndex];
+        clone2 ??= { ...fields };
+        clone2[colId] = rowId;
+      }
+    }
+    return clone2 ?? fields;
+  }
+  timeline.on("doubleClick", async function(props) {
+    const { item, event: event2 } = props;
+    if (event2?.type === "dblclick" && item) {
+      await grist.setCursorPos({ rowId: item });
+      await openCard();
+    }
   });
 })();
 /*! Bundled license information:

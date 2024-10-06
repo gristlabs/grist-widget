@@ -1,11 +1,12 @@
-import moment from 'moment-timezone';
-import 'moment/locale/en-gb'; // Import the 'en-gb' locale which uses ISO weeks
-import { Timeline, DataSet, TimelineOptions } from 'vis-timeline/standalone';
-moment.locale('en-gb');
 import { from } from 'fromit';
+import moment from 'moment-timezone';
+import 'moment/locale/en-gb';
+import { DataSet, Timeline, TimelineOptions } from 'vis-timeline/standalone';
+moment.locale('en-gb');
 
 declare global {
   var grist: any;
+  var VanillaContextMenu: any;
 }
 
 grist.ready({
@@ -40,8 +41,58 @@ const groups = new DataSet<any>([]);
 
 // Configuration for the Timeline
 const options: TimelineOptions = {
+  order: function(a,b){
+    const leftId = a.id, rightId = b.id;
+    const leftOrder = order.get(leftId);
+    const rightOrder = order.get(rightId);
+    if (!leftOrder || !rightOrder) {
+      return 0;
+    }
+    return leftOrder - rightOrder;
+  },
   // allow selecting multiple items using ctrl+click, shift+click, or hold.
   multiselect: true,
+  async onRemove(item, callback) {
+    if (confirm('Are you sure you want to delete this item?')) {
+      await grist.selectedTable.destroy(item.id);
+      callback(null);
+    }
+  },
+  async onMove(item, callback) {
+    let {start, end} = item;
+    const format = (date: Date) => moment(date).format('YYYY-MM-DD');
+
+    // If end is at midnignt (0:00) it means we were extending or shrinking, in that case move 1 minute before.
+    if (end.getHours() === 0 && end.getMinutes() === 0) {
+      end = moment(end).subtract(1, 'minute').toDate();
+    }
+
+    const fields = {
+      [mappings().From]: format(start),
+      [mappings().To]: format(end),
+    };
+    await grist.selectedTable.update({ id: item.id, fields });
+    callback(item);
+  },
+  async onAdd(item, callback) {
+    const group = item.group.split('|').map(formatValue);
+    const start = moment(item.start).format('YYYY-MM-DD');
+
+    // In group we have list of values, we need to create an object from it (zip it with columns).
+
+    const end = moment(defaultEnd(item.start)).format('YYYY-MM-DD');
+    const values = [...group, start, end];
+    const columns = [...mappings().Columns, mappings().From, mappings().To];
+    const rawFields = Object.fromEntries(zip(columns, values));
+
+    const fields = await liftFields(rawFields);
+
+    const { id } = await grist.selectedTable.create({ fields });
+
+    await grist.setCursorPos({ rowId: id });
+
+    callback(null);
+  },
 
   // allow manipulation of items
   // editable: true,
@@ -121,6 +172,8 @@ const options: TimelineOptions = {
     // Adjust snapping to always align with Mondays
     if (scale === 'week') {
       snappedDate.startOf('isoWeek'); // Start of the ISO week, i.e., Monday
+    } else if (scale === 'day') {
+      snappedDate.startOf('day');
     }
 
     return snappedDate.toDate();
@@ -132,7 +185,6 @@ const options: TimelineOptions = {
   },
   cluster: {
     clusterCriteria: function (a, b) {
-      console.log('CLUUUUUUSTER', a, b);
       return true;
     },
   },
@@ -141,20 +193,22 @@ const options: TimelineOptions = {
 // Create a Timeline
 const timeline = new Timeline(container, items, options);
 
-
 let lastGroups = new Set();
 let lastRows = new Set();
 const records = observable([]);
+const order = new Map();
 const editCard = observable(false);
 const zoomOnClick = observable(false);
 (window as any).editCard = editCard;
 
 let show = () => {};
-let mapping = observable({}, { deep: true });
+let mappings = observable({}, { deep: true });
 
 grist.onRecords((recs, maps) => {
-  mapping(maps);
+  mappings(maps);
   records(grist.mapColumnNames(recs));
+  order.clear();
+  recs.forEach((r, i) => order.set(r.id, i));
   show();
   updateHeader();
 });
@@ -173,7 +227,7 @@ function recToItem(r) {
     content: r.Subject || 'no title',
     start: trimTime(getFrom(r)),
     end: appendEnd(trimTime(getTo(r))),
-    type: same(getTo(r), getFrom(r)) ? 'point' : 'range',
+    type: 'range',
     group: undefined,
   };
 }
@@ -205,18 +259,8 @@ function onClick(selector: string, callback: () => void) {
   window.document.querySelector(selector)!.addEventListener('click', callback);
 }
 
-onClick('#btnAll', () => {
-  show = showAll;
-  show();
-});
 onClick('#btnAlCampaign', () => {
   show = showCampaings;
-  show();
-});
-onClick('#btnModel', () => {
-  show();
-});
-onClick('#btnReseller', () => {
   show();
 });
 
@@ -280,8 +324,22 @@ function observable(
 
 const oldRecs = new Map();
 
-function renderItems(group = false) {
+function renderItems() {
   const recs = records();
+
+  let i = 1;
+  nameToId.clear();
+  idToName.clear();
+  for(const rec of recs) {
+    const groupName = calcGroup(rec);
+    if (nameToId.has(groupName)) {
+      continue;
+    }
+    nameToId.set(groupName, i);
+    idToName.set(i, groupName);
+    i++;
+  }
+
   const newIds = new Set(recs.map(x => x.id));
   const existing = items.getIds();
   const removed = existing.filter(x => !newIds.has(x));
@@ -290,9 +348,8 @@ function renderItems(group = false) {
     .filter(r => getFrom(r) && getTo(r))
     .map(r => {
       const result = recToItem(r);
-      if (group) {
-        result.group = r.Columns.join('|');
-      }
+      result.group = r.Columns.join('|');
+      result.group = nameToId.get(result.group);
       result.content = r.Title.join('|');
       return result;
     });
@@ -323,50 +380,32 @@ const formatCurrency = new Intl.NumberFormat('en-US', {
 });
 
 function showCampaings() {
-  renderItems(true);
+  renderItems();
   renderGroups();
 }
+
+const nameToId = new Map();
+const idToName = new Map();
+
 
 function calcGroup(rec: any) {
   return rec.Columns.join('|');
 }
 
 function renderGroups() {
-  const recs = records();
-  const groupIds = new Set(recs.map(x => calcGroup(x))) as Set<string>;
   const existingGroups = groups.getIds();
-  const groupsToRemove = existingGroups.filter(x => !groupIds.has(x));
+  const groupsToRemove = existingGroups.filter(id => !idToName.has(id));
   groups.remove(groupsToRemove);
   groups.update(
-    Array.from(groupIds).map(c => ({
-      id: c,
-      content: c,
+    Array.from(idToName.entries()).map(c => ({
+      id: c[0],
+      content: c[1],
       editable: true,
-      className: 'group_' + c,
+      className: 'group_' + c[1],
     }))
   );
   timeline.setGroups(groups);
 }
-
-function groupHtml(group: string) {
-  return `
-    <div class="grist_row" >
-      <input type="text" value="${group}" onclick="grist_row_click(this, event)" />
-      <input type="text" value="0"  onclick="grist_row_click(this, event)"/>
-    </div>
-  `;
-}
-
-(window as any).grist_row_click = function (
-  el: HTMLElement,
-  event: MouseEvent
-) {
-  console.log(`Stopping this `);
-  // event.stopImmediatePropagation();
-  // event.stopPropagation();
-  // console.log(el);
-  // el.focus();
-};
 
 show = showCampaings;
 
@@ -389,13 +428,18 @@ const range = document.getElementById('range') as HTMLInputElement;
 range.oninput = function () {
   const visi = document.getElementById('visualization')!;
   const margin = parseInt(range.value, 10);
-  visi.setAttribute('style', `--group-columns: ${margin * 3}px minmax(57px, max-content) minmax(86px, max-content)`);
+  visi.setAttribute(
+    'style',
+    `--group-columns: ${
+      margin * 3
+    }px minmax(57px, max-content) minmax(86px, max-content)`
+  );
   timeline.redraw();
 };
 
 function bindConfig() {
   const configElements = document.querySelectorAll('.config');
-  console.log(`Found ${configElements.length} config elements`);
+
   for (const el of configElements) {
     console.debug(`Binding config element: ${el}`);
     // Subscribe to change event.
@@ -444,14 +488,21 @@ function updateConfig(elementId: string, value: any) {
   const schema = elementId.split(':')[0];
   const [parent, child] = elementId.split(':')[1].split('.');
   if (child && schema === 'timeline') {
-    console.log(`Setting ${parent}.${child} to ${formatedValue}`);
-    timeline.setOptions({
-      [parent]: {
-        [child]: formatedValue,
-      },
-    });
+    if (child === 'scale') {
+      currentScale(formatedValue);
+      timeline.setOptions({
+        [parent]: {
+          [child]: formatedValue,
+        },
+      });
+    } else {
+      timeline.setOptions({
+        [parent]: {
+          [child]: formatedValue,
+        },
+      });
+    }
   } else if (schema === 'timeline') {
-    console.log(`Setting ${parent} to ${formatedValue}`);
     timeline.setOptions({
       [parent]: formatedValue,
     });
@@ -460,7 +511,7 @@ function updateConfig(elementId: string, value: any) {
       console.error(`Local variable ${parent} not found in window`);
       return;
     }
-    console.log(`Setting ${parent} to ${formatedValue}`);
+
     (window as any)[parent](formatedValue);
   } else {
     console.error(`Unknown schema ${schema}`);
@@ -509,7 +560,30 @@ async function main() {
 main();
 timeline.setGroups(groups);
 
+const currentScale = observable('day');
+
 document.addEventListener('DOMContentLoaded', function () {
+  new VanillaContextMenu({
+    scope: document.querySelector('.vis-panel.vis-left '),
+    menuItems: [
+      {
+        label: 'Add new campaign',
+        callback: async () => {
+          const fields = {
+            [mappings().From]: moment().startOf('day').toDate(),
+            [mappings().To]: moment().endOf('isoWeek').toDate(),
+          };
+          const { id } = await grist.selectedTable.create({ fields });
+          await grist.setCursorPos({ rowId: id });
+          // Open the card.
+          await openCard();
+        },
+      },
+      'hr',
+    ],
+  });
+
+  currentScale('week');
   // Set defaults.
   timeline.setOptions({
     stack: false,
@@ -545,6 +619,102 @@ document.addEventListener('DOMContentLoaded', function () {
     header.style.setProperty('left', `${left}px`);
   });
   observer.observe(panel, { attributes: true });
+
+  const foreground = document.querySelector('.vis-center .vis-foreground')!;
+
+  const selection = document.createElement('div');
+  selection.className = 'cursor-selection';
+  foreground.appendChild(selection);
+
+  foreground.addEventListener('mouseleave', function () {
+    selection.style.display = 'none';
+  });
+
+  timeline.on('select', function (properties) {
+    if (properties.items.length === 0) {
+      return;
+    }
+    grist.setCursorPos({ rowId: properties.items[0] });
+  });
+
+  foreground.addEventListener('mousemove', function (e: MouseEvent) {
+    // Get the x position in regards of the parent.
+    const x = e.clientX - foreground.getBoundingClientRect().left;
+
+    const target = e.target as HTMLElement;
+
+    if (target === selection) {
+      return;
+    }
+
+    // Make sure target has vis-group class.
+    if (!target.classList.contains('vis-group')) {
+      selection.style.display = 'none';
+      return;
+    }
+    selection.style.display = 'block';
+
+    // Now get the element at that position but in another div.
+    const anotherDiv = document.querySelector(
+      'div.vis-panel.vis-background.vis-vertical > div.vis-time-axis.vis-background'
+    )!;
+
+    const anotherDivPos = anotherDiv.getBoundingClientRect().left;
+
+    const children = Array.from(anotherDiv.children);
+
+    // Group by week number, element will have class like vis-week4
+
+    // Get current scale from timeline.
+
+    const weekFromElement = (el: Element) => {
+      const classList = Array.from(el.classList);
+
+      const scale = currentScale();
+
+      const weekClass = classList.find(c => c.startsWith('vis-' + scale));
+      if (!weekClass) {
+        return null;
+      }
+      const week = parseInt(weekClass.replace('vis-' + scale, ''), 10);
+      return week;
+    };
+
+    // Group by class attribute.
+    const grouped = from(children)
+      .groupBy(e => weekFromElement(e))
+      .toArray();
+
+    // Map to { left: the left of the first element in group, width: total width of the group }
+    const leftPoints = grouped.map(group => {
+      const left = group.first().getBoundingClientRect().left;
+      const width = group.reduce(
+        (acc, el) => acc + el.getBoundingClientRect().width,
+        0
+      );
+      const adjustedWidth = left - anotherDivPos;
+      return { left: adjustedWidth, width };
+    });
+
+    // Find the one that is closest to the x position, so the first after.
+    const index = leftPoints.findLastIndex(c => c.left < x);
+
+    // Find its index.
+    const closest = leftPoints[index];
+
+    // Now get the element from the other div.
+    const element = anotherDiv.children[index];
+
+    // Now reposition selection.
+    selection.style.left = `${closest.left}px`;
+    selection.style.width = `${closest.width}px`;
+
+    try {
+      if (selection.parentElement !== target) {
+        target.prepend(selection);
+      }
+    } catch (ex) {}
+  });
 });
 
 editCard.subscribe(async (value: any) => {
@@ -563,7 +733,7 @@ grist.onOptions((options: any) => {
 let lastMappings = '';
 
 function updateHeader() {
-  const newMappings = JSON.stringify(mapping());
+  const newMappings = JSON.stringify(mappings());
   if (newMappings === lastMappings) {
     return;
   }
@@ -581,7 +751,7 @@ function updateHeader() {
     return;
   }
   groupHeader.innerHTML = '';
-  const parts = mapping().Columns.map((col: string) => {
+  const parts = mappings().Columns.map((col: string) => {
     const div = document.createElement('div');
     div.innerText = col;
     div.classList.add('group-part');
@@ -644,21 +814,103 @@ function anchorHeader() {
   header.style.setProperty('left', `${left}px`);
 }
 
+function zip<T, V>(a: T[], b: V[]): [T, V][] {
+  return a.map((e, i) => [e, b[i]]);
+}
 
-timeline.on('change', (...args) => console.log('CHANGE', args));
+function defaultEnd(start: Date) {
+  switch (currentScale()) {
+    case 'day':
+      return moment(start).endOf('day').toDate();
+    case 'week':
+      return moment(start)
+        .add(1, 'week')
+        .subtract(1, 'day')
+        .endOf('day')
+        .toDate();
+    case 'month':
+      return moment(start)
+        .add(1, 'month')
+        .subtract(1, 'day')
+        .endOf('day')
+        .toDate();
+    case 'year':
+      return moment(start)
+        .add(1, 'year')
+        .subtract(1, 'day')
+        .endOf('day')
+        .toDate();
+  }
+  throw new Error('Unknown scale');
+}
 
-timeline.on('doubleClick', event => {
-  console.log('DOUBLE CLICK', event);
-})
+// timeline.on('contextmenu', function (props) {
+//   alert('Right click!');
 
-timeline.on('mouseOver', event => {
-  console.log('MOUSE OVER', event);
-})
+//   props.event.preventDefault();
+// });
 
+function openCard() {
+  return grist.commandApi.run('viewAsCard');
+}
 
-// async function onSelect(data) {
-//   await grist.setCursorPos({ rowId: data.items[0] });
-//   if (editCard()) {
-//     await grist.commandApi.run('viewAsCard');
-//   }
-// }
+const getAllColumns = buildColumns();
+
+function buildColumns() {
+  let cache = [] as any[];
+  let lastMappings = JSON.stringify(mappings());
+  return async () => {
+    const newMappings = JSON.stringify(mappings());
+    if (newMappings === lastMappings) {
+      return cache;
+    }
+    lastMappings = newMappings;
+    const columns = await getAllColumns();
+    cache = columns;
+    return columns;
+  };
+
+  async function getAllColumns() {
+    const columns = await grist.docApi.fetchTable('_grist_Tables_column');
+    const fields = Object.keys(columns);
+    const tableColumns = [] as any[];
+    for (const index in columns.parentId) {
+      tableColumns.push(
+        Object.fromEntries(fields.map(f => [f, columns[f][index]]))
+      );
+    }
+    return tableColumns;
+  }
+}
+
+async function liftFields(fields: any) {
+  const allColumns = await getAllColumns();
+  let clone = null as any;
+
+  for (const colId in fields) {
+    const col = allColumns.find(c => c.colId === colId);
+    const type = col?.type;
+    if (type.startsWith('Ref:')) {
+      const tableId = type.split(':')[1];
+      const visibleColRowId = col.visibleCol;
+      const visibleColModel = allColumns.find(c => c.id === visibleColRowId);
+      const visibleColId = visibleColModel?.colId;
+      const table = await grist.docApi.fetchTable(tableId);
+      const visibleColValues = table[visibleColId];
+      const rowIndex = visibleColValues.indexOf(fields[colId]);
+      const rowId = table.id[rowIndex];
+      clone ??= { ...fields };
+      clone[colId] = rowId;
+    }
+  }
+
+  return clone ?? fields;
+}
+
+timeline.on('doubleClick', async function (props) {
+  const { item, event } = props;
+  if (event?.type === 'dblclick' && item) {
+    await grist.setCursorPos({ rowId: item });
+    await openCard();
+  }
+});
