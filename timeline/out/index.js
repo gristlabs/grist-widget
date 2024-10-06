@@ -44065,17 +44065,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var items = new DataSet([]);
   var groups = new DataSet([]);
   var options = {
-    order: function(a, b2) {
-      const leftId = a.id, rightId = b2.id;
-      const leftOrder = order.get(leftId);
-      const rightOrder = order.get(rightId);
-      if (!leftOrder || !rightOrder) {
-        return 0;
-      }
-      return leftOrder - rightOrder;
+    groupOrder: function(a, b2) {
+      return a.id - b2.id;
     },
-    // allow selecting multiple items using ctrl+click, shift+click, or hold.
-    multiselect: true,
     async onRemove(item, callback) {
       if (confirm("Are you sure you want to delete this item?")) {
         await grist.selectedTable.destroy(item.id);
@@ -44153,12 +44145,13 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     zoomKey: "ctrlKey",
     height: "100%",
     orientation: "top",
+    cluster: true,
     timeAxis: {
       scale: "day"
     },
     locale: "en-gb",
-    stack: true,
-    stackSubgroups: true,
+    stack: false,
+    stackSubgroups: false,
     xss: {
       disabled: true
     },
@@ -44183,11 +44176,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       // Adjusts the space around each item
       axis: 2
       // Adjusts the space between items and the axis
-    },
-    cluster: {
-      clusterCriteria: function(a, b2) {
-        return true;
-      }
     }
   };
   var timeline = new Timeline(container, items, options);
@@ -44234,7 +44222,11 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const allColumns = [...columns, mappings().From, mappings().To];
     const newStart = (0, import_moment_timezone.default)(rec.From).add(1, "day").toDate();
     const newEnd = (0, import_moment_timezone.default)(rec.To).add(1, "week").subtract(-1).toDate();
-    const allValues = [...groupValues, (0, import_moment_timezone.default)(newStart).format("YYYY-MM-DD"), (0, import_moment_timezone.default)(newEnd).format("YYYY-MM-DD")];
+    const allValues = [
+      ...groupValues,
+      (0, import_moment_timezone.default)(newStart).format("YYYY-MM-DD"),
+      (0, import_moment_timezone.default)(newEnd).format("YYYY-MM-DD")
+    ];
     const fields = Object.fromEntries(zip(allColumns, allValues));
     return {
       id: rec.id,
@@ -44402,16 +44394,18 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       if (value) {
         timeline.setOptions({
           cluster: true,
-          stack: false,
-          groupHeightMode: "fitItems"
+          stack: false
         });
+        try {
+          timeline.setGroups(null);
+        } catch (ex) {
+        }
         timeline.setGroups(groups);
         timeline.redraw();
       } else {
         timeline.setOptions({
           cluster: false,
-          stack: true,
-          groupHeightMode: "fitItems"
+          stack: false
         });
         timeline.setGroups(groups);
         timeline.redraw();
@@ -44445,6 +44439,13 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       timeline.setOptions({
         [parent2]: formatedValue
       });
+      if (parent2 === "stack") {
+        timeline.setOptions({
+          cluster: false
+        });
+        timeline.setGroups(groups);
+        timeline.redraw();
+      }
     } else if (schema === "local") {
       if (!(parent2 in window)) {
         console.error(`Local variable ${parent2} not found in window`);
@@ -44508,10 +44509,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         "hr"
       ]
     });
-    timeline.on("contextmenu", function(props) {
-      alert("Right click!");
-      props.event.preventDefault();
-    });
     const fore = document.querySelector(
       "#visualization > div.vis-timeline.vis-bottom.vis-ltr > div.vis-panel.vis-center > div.vis-content > div > div.vis-foreground"
     );
@@ -44527,58 +44524,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       } else {
         e.stopImmediatePropagation();
       }
-    });
-    const itemMenu = new VanillaContextMenu({
-      scope: fore,
-      menuItems: [
-        {
-          label: "Edit",
-          callback: async () => {
-            const selected = timeline.getSelection();
-            if (selected.length === 0) {
-              return;
-            }
-            await grist.setCursorPos({ rowId: selected[0] });
-            await openCard();
-          }
-        },
-        {
-          label: "Delete",
-          callback: async () => {
-            const selected = timeline.getSelection();
-            if (selected.length === 0) {
-              return;
-            }
-            setTimeout(async () => {
-              if (confirm("Are you sure you want to delete this item?")) {
-                await grist.selectedTable.destroy(selected[0]);
-              }
-            }, 10);
-          }
-        },
-        {
-          label: "Duplicate",
-          callback: async () => {
-            const selected = timeline.getSelection();
-            if (selected.length === 0) {
-              return;
-            }
-            const recs = records();
-            const rec = recs.find((r) => r.id === selected[0]);
-            if (!rec) {
-              return;
-            }
-            const clone2 = structuredClone(rec);
-            clone2.From = rec.To;
-            const diff = (0, import_moment_timezone.default)(rec.To).diff(clone2.From);
-            clone2.To = (0, import_moment_timezone.default)(clone2.From).add(diff).toDate();
-            const row = recToRow(clone2);
-            delete row.id;
-            const fields = await liftFields(row);
-            await grist.selectedTable.create({ fields });
-          }
-        }
-      ]
     });
     currentScale("week");
     timeline.setOptions({
@@ -44668,6 +44613,58 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         }
       } catch (ex) {
       }
+    });
+    const itemMenu = new VanillaContextMenu({
+      scope: fore,
+      menuItems: [
+        {
+          label: "Edit",
+          callback: async () => {
+            const selected = timeline.getSelection();
+            if (selected.length === 0) {
+              return;
+            }
+            await grist.setCursorPos({ rowId: selected[0] });
+            await openCard();
+          }
+        },
+        {
+          label: "Delete",
+          callback: async () => {
+            const selected = timeline.getSelection();
+            if (selected.length === 0) {
+              return;
+            }
+            setTimeout(async () => {
+              if (confirm("Are you sure you want to delete this item?")) {
+                await grist.selectedTable.destroy(selected[0]);
+              }
+            }, 10);
+          }
+        },
+        {
+          label: "Duplicate",
+          callback: async () => {
+            const selected = timeline.getSelection();
+            if (selected.length === 0) {
+              return;
+            }
+            const recs = records();
+            const rec = recs.find((r) => r.id === selected[0]);
+            if (!rec) {
+              return;
+            }
+            const clone2 = structuredClone(rec);
+            clone2.From = rec.To;
+            const diff = (0, import_moment_timezone.default)(rec.To).diff(clone2.From);
+            clone2.To = (0, import_moment_timezone.default)(clone2.From).add(diff).toDate();
+            const row = recToRow(clone2);
+            delete row.id;
+            const fields = await liftFields(row);
+            await grist.selectedTable.create({ fields });
+          }
+        }
+      ]
     });
   });
   editCard.subscribe(async (value) => {
@@ -44808,6 +44805,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     }
   });
   window.items = items;
+  window.groups = groups;
 })();
 /*! Bundled license information:
 

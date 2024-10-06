@@ -41,18 +41,9 @@ const groups = new DataSet<any>([]);
 
 // Configuration for the Timeline
 const options: TimelineOptions = {
-  order: function (a, b) {
-    const leftId = a.id,
-      rightId = b.id;
-    const leftOrder = order.get(leftId);
-    const rightOrder = order.get(rightId);
-    if (!leftOrder || !rightOrder) {
-      return 0;
-    }
-    return leftOrder - rightOrder;
+  groupOrder: function (a, b) {
+    return a.id - b.id;
   },
-  // allow selecting multiple items using ctrl+click, shift+click, or hold.
-  multiselect: true,
   async onRemove(item, callback) {
     if (confirm('Are you sure you want to delete this item?')) {
       await grist.selectedTable.destroy(item.id);
@@ -152,13 +143,14 @@ const options: TimelineOptions = {
   height: '100%',
 
   orientation: 'top',
+  cluster: true,
 
   timeAxis: {
     scale: 'day',
   },
   locale: 'en-gb',
-  stack: true,
-  stackSubgroups: true,
+  stack: false,
+  stackSubgroups: false,
   xss: {
     disabled: true,
   },
@@ -183,11 +175,6 @@ const options: TimelineOptions = {
   margin: {
     item: 4, // Adjusts the space around each item
     axis: 2, // Adjusts the space between items and the axis
-  },
-  cluster: {
-    clusterCriteria: function (a, b) {
-      return true;
-    },
   },
 };
 
@@ -235,10 +222,9 @@ function recToItem(r) {
   result.group = r.Columns.join('|');
   result.group = nameToId.get(result.group);
   result.content = r.Title.join('|');
-  
+
   return result;
 }
-
 
 function itemToRec(item) {
   const groupName = idToName.get(item.group);
@@ -251,7 +237,7 @@ function itemToRec(item) {
     From: item.start,
     To: item.end,
     id: item.id,
-  }
+  };
 }
 
 function recToRow(rec) {
@@ -260,12 +246,16 @@ function recToRow(rec) {
   const allColumns = [...columns, mappings().From, mappings().To];
   const newStart = moment(rec.From).add(1, 'day').toDate();
   const newEnd = moment(rec.To).add(1, 'week').subtract(-1).toDate();
-  const allValues = [...groupValues, moment(newStart).format('YYYY-MM-DD'), moment(newEnd).format('YYYY-MM-DD')];
+  const allValues = [
+    ...groupValues,
+    moment(newStart).format('YYYY-MM-DD'),
+    moment(newEnd).format('YYYY-MM-DD'),
+  ];
   const fields = Object.fromEntries(zip(allColumns, allValues));
   return {
     id: rec.id,
     ...fields,
-  }
+  };
 }
 
 function compareItems(a: any, b: any) {
@@ -495,15 +485,16 @@ const functions = {
       timeline.setOptions({
         cluster: true,
         stack: false,
-        groupHeightMode: 'fitItems',
       });
+      try {
+        timeline.setGroups(null);
+      } catch (ex) {}
       timeline.setGroups(groups);
       timeline.redraw();
     } else {
       timeline.setOptions({
         cluster: false,
-        stack: true,
-        groupHeightMode: 'fitItems',
+        stack: false,
       });
       timeline.setGroups(groups);
       timeline.redraw();
@@ -538,6 +529,15 @@ function updateConfig(elementId: string, value: any) {
     timeline.setOptions({
       [parent]: formatedValue,
     });
+
+    if (parent === 'stack') {
+      timeline.setOptions({
+        cluster: false,
+      });
+      timeline.setGroups(groups);
+      timeline.redraw();
+    }
+
   } else if (schema === 'local') {
     if (!(parent in window)) {
       console.error(`Local variable ${parent} not found in window`);
@@ -615,11 +615,6 @@ document.addEventListener('DOMContentLoaded', function () {
     ],
   });
 
-  timeline.on('contextmenu', function (props) {
-    alert('Right click!');
-    props.event.preventDefault();
-  });
-
   const fore = document.querySelector(
     '#visualization > div.vis-timeline.vis-bottom.vis-ltr > div.vis-panel.vis-center > div.vis-content > div > div.vis-foreground'
   );
@@ -640,67 +635,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // e.preventDefault();
   });
-  // same manu for .vis-item.vis-range
-  const itemMenu = new VanillaContextMenu({
-    scope: fore,
-    menuItems: [
-      {
-        label: 'Edit',
-        callback: async () => {
-          const selected = timeline.getSelection();
-          if (selected.length === 0) {
-            return;
-          }
-          await grist.setCursorPos({ rowId: selected[0] });
-          await openCard();
-        },
-      },
-      {
-        label: 'Delete',
-        callback: async () => {
-          const selected = timeline.getSelection();
-          if (selected.length === 0) {
-            return;
-          }
-          setTimeout(async () => {
-            if (confirm('Are you sure you want to delete this item?')) {
-              await grist.selectedTable.destroy(selected[0]);
-            }
-          }, 10);
-        },
-      },
-      {
-        label: 'Duplicate',
-        callback: async () => {
-          const selected = timeline.getSelection();
-          if (selected.length === 0) {
-            return;
-          }
-          const recs = records();
-          const rec = recs.find(r => r.id === selected[0]);
-          if (!rec) {
-            return;
-          }
-
-
-          const clone = structuredClone(rec);
-          clone.From = rec.To;
-          
-          // Calculate difference, and add it to the new date.
-          const diff = moment(rec.To).diff(clone.From);
-          clone.To = moment(clone.From).add(diff).toDate();
-
-          const row = recToRow(clone);
-          delete row.id;
-
-          const fields = await liftFields(row);
-
-          await grist.selectedTable.create({ fields });
-        },
-      },
-    ],
-  });
-
   currentScale('week');
   // Set defaults.
   timeline.setOptions({
@@ -832,6 +766,66 @@ document.addEventListener('DOMContentLoaded', function () {
         target.prepend(selection);
       }
     } catch (ex) {}
+  });
+
+  // same manu for .vis-item.vis-range
+  const itemMenu = new VanillaContextMenu({
+    scope: fore,
+    menuItems: [
+      {
+        label: 'Edit',
+        callback: async () => {
+          const selected = timeline.getSelection();
+          if (selected.length === 0) {
+            return;
+          }
+          await grist.setCursorPos({ rowId: selected[0] });
+          await openCard();
+        },
+      },
+      {
+        label: 'Delete',
+        callback: async () => {
+          const selected = timeline.getSelection();
+          if (selected.length === 0) {
+            return;
+          }
+          setTimeout(async () => {
+            if (confirm('Are you sure you want to delete this item?')) {
+              await grist.selectedTable.destroy(selected[0]);
+            }
+          }, 10);
+        },
+      },
+      {
+        label: 'Duplicate',
+        callback: async () => {
+          const selected = timeline.getSelection();
+          if (selected.length === 0) {
+            return;
+          }
+          const recs = records();
+          const rec = recs.find(r => r.id === selected[0]);
+          if (!rec) {
+            return;
+          }
+
+          const clone = structuredClone(rec);
+          clone.From = rec.To;
+
+          // Calculate difference, and add it to the new date.
+          const diff = moment(rec.To).diff(clone.From);
+          clone.To = moment(clone.From).add(diff).toDate();
+
+          const row = recToRow(clone);
+          delete row.id;
+
+          const fields = await liftFields(row);
+
+          await grist.selectedTable.create({ fields });
+        },
+      },
+    ],
   });
 });
 
@@ -1033,5 +1027,5 @@ timeline.on('doubleClick', async function (props) {
   }
 });
 
-
 (window as any).items = items;
+(window as any).groups = groups;
