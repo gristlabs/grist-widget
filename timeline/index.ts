@@ -41,8 +41,9 @@ const groups = new DataSet<any>([]);
 
 // Configuration for the Timeline
 const options: TimelineOptions = {
-  order: function(a,b){
-    const leftId = a.id, rightId = b.id;
+  order: function (a, b) {
+    const leftId = a.id,
+      rightId = b.id;
     const leftOrder = order.get(leftId);
     const rightOrder = order.get(rightId);
     if (!leftOrder || !rightOrder) {
@@ -59,7 +60,7 @@ const options: TimelineOptions = {
     }
   },
   async onMove(item, callback) {
-    let {start, end} = item;
+    let { start, end } = item;
     const format = (date: Date) => moment(date).format('YYYY-MM-DD');
 
     // If end is at midnignt (0:00) it means we were extending or shrinking, in that case move 1 minute before.
@@ -222,14 +223,49 @@ function getTo(r: any) {
 }
 
 function recToItem(r) {
-  return {
+  const result = {
     id: r.id,
-    content: r.Subject || 'no title',
+    content: '',
     start: trimTime(getFrom(r)),
     end: appendEnd(trimTime(getTo(r))),
     type: 'range',
     group: undefined,
+    className: 'item_' + r.id,
   };
+  result.group = r.Columns.join('|');
+  result.group = nameToId.get(result.group);
+  result.content = r.Title.join('|');
+  
+  return result;
+}
+
+
+function itemToRec(item) {
+  const groupName = idToName.get(item.group);
+  const groupValues = groupName.split('|');
+  const titleValues = item.content?.split('|') ?? [];
+
+  return {
+    Columns: groupValues,
+    Title: titleValues,
+    From: item.start,
+    To: item.end,
+    id: item.id,
+  }
+}
+
+function recToRow(rec) {
+  const groupValues = rec.Columns;
+  const columns = mappings().Columns;
+  const allColumns = [...columns, mappings().From, mappings().To];
+  const newStart = moment(rec.From).add(1, 'day').toDate();
+  const newEnd = moment(rec.To).add(1, 'week').subtract(-1).toDate();
+  const allValues = [...groupValues, moment(newStart).format('YYYY-MM-DD'), moment(newEnd).format('YYYY-MM-DD')];
+  const fields = Object.fromEntries(zip(allColumns, allValues));
+  return {
+    id: rec.id,
+    ...fields,
+  }
 }
 
 function compareItems(a: any, b: any) {
@@ -330,7 +366,7 @@ function renderItems() {
   let i = 1;
   nameToId.clear();
   idToName.clear();
-  for(const rec of recs) {
+  for (const rec of recs) {
     const groupName = calcGroup(rec);
     if (nameToId.has(groupName)) {
       continue;
@@ -348,9 +384,6 @@ function renderItems() {
     .filter(r => getFrom(r) && getTo(r))
     .map(r => {
       const result = recToItem(r);
-      result.group = r.Columns.join('|');
-      result.group = nameToId.get(result.group);
-      result.content = r.Title.join('|');
       return result;
     });
 
@@ -386,7 +419,6 @@ function showCampaings() {
 
 const nameToId = new Map();
 const idToName = new Map();
-
 
 function calcGroup(rec: any) {
   return rec.Columns.join('|');
@@ -424,18 +456,18 @@ function dump(arg: any) {
 
 (window as any).timeline = timeline;
 
-const range = document.getElementById('range') as HTMLInputElement;
-range.oninput = function () {
-  const visi = document.getElementById('visualization')!;
-  const margin = parseInt(range.value, 10);
-  visi.setAttribute(
-    'style',
-    `--group-columns: ${
-      margin * 3
-    }px minmax(57px, max-content) minmax(86px, max-content)`
-  );
-  timeline.redraw();
-};
+// const range = document.getElementById('range') as HTMLInputElement;
+// range.oninput = function () {
+//   const visi = document.getElementById('visualization')!;
+//   const margin = parseInt(range.value, 10);
+//   visi.setAttribute(
+//     'style',
+//     `--group-columns: ${
+//       margin * 3
+//     }px minmax(57px, max-content) minmax(86px, max-content)`
+//   );
+//   timeline.redraw();
+// };
 
 function bindConfig() {
   const configElements = document.querySelectorAll('.config');
@@ -583,12 +615,98 @@ document.addEventListener('DOMContentLoaded', function () {
     ],
   });
 
+  timeline.on('contextmenu', function (props) {
+    alert('Right click!');
+    props.event.preventDefault();
+  });
+
+  const fore = document.querySelector(
+    '#visualization > div.vis-timeline.vis-bottom.vis-ltr > div.vis-panel.vis-center > div.vis-content > div > div.vis-foreground'
+  );
+  fore?.addEventListener('contextmenu', function (e) {
+    // If we clicked in the .vis-item.vis-range it is ok, else stopImmediatePropagation
+    const item = (e.target as HTMLElement).closest('.vis-item.vis-range');
+    if (item) {
+      // It has class item_N, get the N and select it (but first find that class)
+      // then parse it to int and select it.
+      const classes = Array.from(item.classList);
+      const classItem = classes.find(c => c.startsWith('item_'));
+      if (classItem) {
+        const id = parseInt(classItem.replace('item_', ''), 10);
+        timeline.setSelection([id]);
+      }
+    } else {
+      e.stopImmediatePropagation();
+    }
+    // e.preventDefault();
+  });
+  // same manu for .vis-item.vis-range
+  const itemMenu = new VanillaContextMenu({
+    scope: fore,
+    menuItems: [
+      {
+        label: 'Edit',
+        callback: async () => {
+          const selected = timeline.getSelection();
+          if (selected.length === 0) {
+            return;
+          }
+          await grist.setCursorPos({ rowId: selected[0] });
+          await openCard();
+        },
+      },
+      {
+        label: 'Delete',
+        callback: async () => {
+          const selected = timeline.getSelection();
+          if (selected.length === 0) {
+            return;
+          }
+          setTimeout(async () => {
+            if (confirm('Are you sure you want to delete this item?')) {
+              await grist.selectedTable.destroy(selected[0]);
+            }
+          }, 10);
+        },
+      },
+      {
+        label: 'Duplicate',
+        callback: async () => {
+          const selected = timeline.getSelection();
+          if (selected.length === 0) {
+            return;
+          }
+          const recs = records();
+          const rec = recs.find(r => r.id === selected[0]);
+          if (!rec) {
+            return;
+          }
+
+
+          const clone = structuredClone(rec);
+          clone.From = rec.To;
+          
+          // Calculate difference, and add it to the new date.
+          const diff = moment(rec.To).diff(clone.From);
+          clone.To = moment(clone.From).add(diff).toDate();
+
+          const row = recToRow(clone);
+          delete row.id;
+
+          const fields = await liftFields(row);
+
+          await grist.selectedTable.create({ fields });
+        },
+      },
+    ],
+  });
+
   currentScale('week');
   // Set defaults.
   timeline.setOptions({
     stack: false,
     timeAxis: {
-      scale: 'week',
+      scale: 'day',
     },
   });
 
@@ -914,3 +1032,6 @@ timeline.on('doubleClick', async function (props) {
     await openCard();
   }
 });
+
+
+(window as any).items = items;

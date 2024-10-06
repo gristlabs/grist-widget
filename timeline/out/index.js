@@ -18557,50 +18557,50 @@
         var min2 = arr[1];
         var max2 = arr[2];
         var step = arr[3];
-        var range2 = document.createElement("input");
-        range2.className = "vis-configuration vis-config-range";
+        var range = document.createElement("input");
+        range.className = "vis-configuration vis-config-range";
         try {
-          range2.type = "range";
-          range2.min = min2;
-          range2.max = max2;
+          range.type = "range";
+          range.min = min2;
+          range.max = max2;
         } catch (err) {
         }
-        range2.step = step;
+        range.step = step;
         var popupString = "";
         var popupValue = 0;
         if (value !== void 0) {
           var factor = 1.2;
           if (value < 0 && value * factor < min2) {
-            range2.min = Math.ceil(value * factor);
-            popupValue = range2.min;
+            range.min = Math.ceil(value * factor);
+            popupValue = range.min;
             popupString = "range increased";
           } else if (value / factor < min2) {
-            range2.min = Math.ceil(value / factor);
-            popupValue = range2.min;
+            range.min = Math.ceil(value / factor);
+            popupValue = range.min;
             popupString = "range increased";
           }
           if (value * factor > max2 && max2 !== 1) {
-            range2.max = Math.ceil(value * factor);
-            popupValue = range2.max;
+            range.max = Math.ceil(value * factor);
+            popupValue = range.max;
             popupString = "range increased";
           }
-          range2.value = value;
+          range.value = value;
         } else {
-          range2.value = defaultValue;
+          range.value = defaultValue;
         }
         var input = document.createElement("input");
         input.className = "vis-configuration vis-config-rangeinput";
-        input.value = range2.value;
+        input.value = range.value;
         var me = this;
-        range2.onchange = function() {
+        range.onchange = function() {
           input.value = this.value;
           me._update(Number(this.value), path2);
         };
-        range2.oninput = function() {
+        range.oninput = function() {
           input.value = this.value;
         };
         var label = this._makeLabel(path2[path2.length - 1], path2);
-        var itemIndex = this._makeItem(path2, label, range2, input);
+        var itemIndex = this._makeItem(path2, label, range, input);
         if (popupString !== "" && this.popupHistory[itemIndex] !== popupValue) {
           this.popupHistory[itemIndex] = popupValue;
           this._setupPopup(popupString, itemIndex);
@@ -25949,18 +25949,18 @@
     }
     return duration;
   }
-  function correctTimeForHidden(moment3, hiddenDates, range2, time) {
+  function correctTimeForHidden(moment3, hiddenDates, range, time) {
     time = moment3(time).toDate().valueOf();
-    time -= getHiddenDurationBefore(moment3, hiddenDates, range2, time);
+    time -= getHiddenDurationBefore(moment3, hiddenDates, range, time);
     return time;
   }
-  function getHiddenDurationBefore(moment3, hiddenDates, range2, time) {
+  function getHiddenDurationBefore(moment3, hiddenDates, range, time) {
     var timeOffset = 0;
     time = moment3(time).toDate().valueOf();
     for (var i2 = 0; i2 < hiddenDates.length; i2++) {
       var startDate = hiddenDates[i2].start;
       var endDate = hiddenDates[i2].end;
-      if (startDate >= range2.start && endDate < range2.end) {
+      if (startDate >= range.start && endDate < range.end) {
         if (time >= endDate) {
           timeOffset += endDate - startDate;
         }
@@ -25968,14 +25968,14 @@
     }
     return timeOffset;
   }
-  function getAccumulatedHiddenDuration(hiddenDates, range2, requiredDuration) {
+  function getAccumulatedHiddenDuration(hiddenDates, range, requiredDuration) {
     var hiddenDuration = 0;
     var duration = 0;
-    var previousPoint = range2.start;
+    var previousPoint = range.start;
     for (var i2 = 0; i2 < hiddenDates.length; i2++) {
       var startDate = hiddenDates[i2].start;
       var endDate = hiddenDates[i2].end;
-      if (startDate >= range2.start && endDate < range2.end) {
+      if (startDate >= range.start && endDate < range.end) {
         duration += startDate - previousPoint;
         previousPoint = endDate;
         if (duration >= requiredDuration) {
@@ -29527,13 +29527,13 @@
     }, {
       key: "fit",
       value: function fit(options2, callback) {
-        var range2 = this.getDataRange();
-        if (range2.min === null && range2.max === null) {
+        var range = this.getDataRange();
+        if (range.min === null && range.max === null) {
           return;
         }
-        var interval = range2.max - range2.min;
-        var min2 = new Date(range2.min.valueOf() - interval * 0.01);
-        var max2 = new Date(range2.max.valueOf() + interval * 0.01);
+        var interval = range.max - range.min;
+        var min2 = new Date(range.min.valueOf() - interval * 0.01);
+        var max2 = new Date(range.max.valueOf() + interval * 0.01);
         var animation = options2 && options2.animation !== void 0 ? options2.animation : true;
         this.range.setRange(min2, max2, {
           animation
@@ -29579,18 +29579,18 @@
           options2 = {};
         }
         var animation;
-        var range2;
+        var range;
         if (arguments.length == 1) {
-          range2 = arguments[0];
-          animation = range2.animation !== void 0 ? range2.animation : true;
-          this.range.setRange(range2.start, range2.end, {
+          range = arguments[0];
+          animation = range.animation !== void 0 ? range.animation : true;
+          this.range.setRange(range.start, range.end, {
             animation
           });
         } else if (arguments.length == 2 && typeof arguments[1] == "function") {
-          range2 = arguments[0];
+          range = arguments[0];
           callback = arguments[1];
-          animation = range2.animation !== void 0 ? range2.animation : true;
-          this.range.setRange(range2.start, range2.end, {
+          animation = range.animation !== void 0 ? range.animation : true;
+          this.range.setRange(range.start, range.end, {
             animation
           }, callback);
         } else {
@@ -29635,10 +29635,10 @@
     }, {
       key: "getWindow",
       value: function getWindow() {
-        var range2 = this.range.getRange();
+        var range = this.range.getRange();
         return {
-          start: new Date(range2.start),
-          end: new Date(range2.end)
+          start: new Date(range.start),
+          end: new Date(range.end)
         };
       }
       /**
@@ -29661,9 +29661,9 @@
           callback = arguments[1];
           options2 = {};
         }
-        var range2 = this.getWindow();
-        var start = range2.start.valueOf();
-        var end = range2.end.valueOf();
+        var range = this.getWindow();
+        var start = range.start.valueOf();
+        var end = range.end.valueOf();
         var interval = end - start;
         var newInterval = interval / (1 + percentage);
         var distance = (interval - newInterval) / 2;
@@ -29691,9 +29691,9 @@
           callback = arguments[1];
           options2 = {};
         }
-        var range2 = this.getWindow();
-        var start = range2.start.valueOf();
-        var end = range2.end.valueOf();
+        var range = this.getWindow();
+        var start = range.start.valueOf();
+        var end = range.end.valueOf();
         var interval = end - start;
         var newStart = start - interval * percentage / 2;
         var newEnd = end + interval * percentage / 2;
@@ -30975,7 +30975,7 @@
        */
     }, {
       key: "_redrawItems",
-      value: function _redrawItems(forceRestack, lastIsVisible, margin, range2) {
+      value: function _redrawItems(forceRestack, lastIsVisible, margin, range) {
         var _this2 = this;
         var restack = forceRestack || this.stackDirty || this.isVisible && !lastIsVisible;
         if (restack) {
@@ -31004,10 +31004,10 @@
             var _context8, _context9, _context10;
             var visibleItems = _this2._updateItemsInRange(orderedItems, _filterInstanceProperty(_context8 = _this2.visibleItems).call(_context8, function(item) {
               return !item.isCluster;
-            }), range2);
+            }), range);
             var visibleClusters = _this2._updateClustersInRange(orderedClusters, _filterInstanceProperty(_context9 = _this2.visibleItems).call(_context9, function(item) {
               return item.isCluster;
-            }), range2);
+            }), range);
             return _concatInstanceProperty(_context10 = []).call(_context10, _toConsumableArray(visibleItems), _toConsumableArray(visibleClusters));
           };
           var getVisibleItemsGroupedBySubgroup = function getVisibleItemsGroupedBySubgroup2(orderFn) {
@@ -31132,7 +31132,7 @@
        */
     }, {
       key: "redraw",
-      value: function redraw(range2, margin, forceRestack, returnQueue) {
+      value: function redraw(range, margin, forceRestack, returnQueue) {
         var _this3 = this, _context17, _context18, _context21, _context23, _context27;
         var resized = false;
         var lastIsVisible = this.isVisible;
@@ -31147,11 +31147,11 @@
           _bindInstanceProperty$1(_context18 = this._calculateGroupSizeAndPosition).call(_context18, this),
           function() {
             var _context19;
-            _this3.isVisible = _bindInstanceProperty$1(_context19 = _this3._isGroupVisible).call(_context19, _this3)(range2, margin);
+            _this3.isVisible = _bindInstanceProperty$1(_context19 = _this3._isGroupVisible).call(_context19, _this3)(range, margin);
           },
           function() {
             var _context20;
-            _bindInstanceProperty$1(_context20 = _this3._redrawItems).call(_context20, _this3)(forceRestack, lastIsVisible, margin, range2);
+            _bindInstanceProperty$1(_context20 = _this3._redrawItems).call(_context20, _this3)(forceRestack, lastIsVisible, margin, range);
           },
           // update subgroups
           _bindInstanceProperty$1(_context21 = this._updateSubgroupsSizes).call(_context21, this),
@@ -31221,8 +31221,8 @@
        */
     }, {
       key: "_isGroupVisible",
-      value: function _isGroupVisible(range2, margin) {
-        return this.top <= range2.body.domProps.centerContainer.height - range2.body.domProps.scrollTop + margin.axis && this.top + this.height + margin.axis >= -range2.body.domProps.scrollTop;
+      value: function _isGroupVisible(range, margin) {
+        return this.top <= range.body.domProps.centerContainer.height - range.body.domProps.scrollTop + margin.axis && this.top + this.height + margin.axis >= -range.body.domProps.scrollTop;
       }
       /**
        * recalculate the height of the group
@@ -31321,8 +31321,8 @@
           this.orderSubgroups();
         }
         if (!_includesInstanceProperty(_context28 = this.visibleItems).call(_context28, item)) {
-          var range2 = this.itemSet.body.range;
-          this._checkIfVisible(item, this.visibleItems, range2);
+          var range = this.itemSet.body.range;
+          this._checkIfVisible(item, this.visibleItems, range);
         }
       }
       /**
@@ -31515,7 +31515,7 @@
        */
     }, {
       key: "_updateItemsInRange",
-      value: function _updateItemsInRange(orderedItems, oldVisibleItems, range2) {
+      value: function _updateItemsInRange(orderedItems, oldVisibleItems, range) {
         var visibleItems = [];
         var visibleItemsLookup = {};
         if (!this.isVisible && this.height !== void 0 && this.groupId != ReservedGroupIds$1.BACKGROUND) {
@@ -31525,9 +31525,9 @@
           }
           return visibleItems;
         }
-        var interval = (range2.end - range2.start) / 4;
-        var lowerBound = range2.start - interval;
-        var upperBound = range2.end + interval;
+        var interval = (range.end - range.start) / 4;
+        var lowerBound = range.start - interval;
+        var upperBound = range.end + interval;
         var startSearchFunction = function startSearchFunction2(value) {
           if (value < lowerBound) {
             return -1;
@@ -31549,7 +31549,7 @@
         };
         if (oldVisibleItems.length > 0) {
           for (var _i = 0; _i < oldVisibleItems.length; _i++) {
-            this._checkIfVisibleWithReference(oldVisibleItems[_i], visibleItems, visibleItemsLookup, range2);
+            this._checkIfVisibleWithReference(oldVisibleItems[_i], visibleItems, visibleItemsLookup, range);
           }
         }
         var initialPosByStart = availableUtils.binarySearchCustom(orderedItems.byStart, startSearchFunction, "data", "start");
@@ -31559,7 +31559,7 @@
         if (this.checkRangedItems == true) {
           this.checkRangedItems = false;
           for (var _i2 = 0; _i2 < orderedItems.byEnd.length; _i2++) {
-            this._checkIfVisibleWithReference(orderedItems.byEnd[_i2], visibleItems, visibleItemsLookup, range2);
+            this._checkIfVisibleWithReference(orderedItems.byEnd[_i2], visibleItems, visibleItemsLookup, range);
           }
         } else {
           var initialPosByEnd = availableUtils.binarySearchCustom(orderedItems.byEnd, endSearchFunction, "data");
@@ -31646,8 +31646,8 @@
        */
     }, {
       key: "_checkIfVisible",
-      value: function _checkIfVisible(item, visibleItems, range2) {
-        if (item.isVisible(range2)) {
+      value: function _checkIfVisible(item, visibleItems, range) {
+        if (item.isVisible(range)) {
           if (!item.displayed) item.show();
           item.repositionX();
           visibleItems.push(item);
@@ -31669,8 +31669,8 @@
        */
     }, {
       key: "_checkIfVisibleWithReference",
-      value: function _checkIfVisibleWithReference(item, visibleItems, visibleItemsLookup, range2) {
-        if (item.isVisible(range2)) {
+      value: function _checkIfVisibleWithReference(item, visibleItems, visibleItemsLookup, range) {
+        if (item.isVisible(range)) {
           if (visibleItemsLookup[item.id] === void 0) {
             visibleItemsLookup[item.id] = true;
             visibleItems.push(item);
@@ -31689,19 +31689,19 @@
        */
     }, {
       key: "_updateClustersInRange",
-      value: function _updateClustersInRange(orderedClusters, oldVisibleClusters, range2) {
+      value: function _updateClustersInRange(orderedClusters, oldVisibleClusters, range) {
         var visibleClusters = [];
         var visibleClustersLookup = {};
         if (oldVisibleClusters.length > 0) {
           for (var i2 = 0; i2 < oldVisibleClusters.length; i2++) {
-            this._checkIfVisibleWithReference(oldVisibleClusters[i2], visibleClusters, visibleClustersLookup, range2);
+            this._checkIfVisibleWithReference(oldVisibleClusters[i2], visibleClusters, visibleClustersLookup, range);
           }
         }
         for (var _i6 = 0; _i6 < orderedClusters.byStart.length; _i6++) {
-          this._checkIfVisibleWithReference(orderedClusters.byStart[_i6], visibleClusters, visibleClustersLookup, range2);
+          this._checkIfVisibleWithReference(orderedClusters.byStart[_i6], visibleClusters, visibleClustersLookup, range);
         }
         for (var _i7 = 0; _i7 < orderedClusters.byEnd.length; _i7++) {
-          this._checkIfVisibleWithReference(orderedClusters.byEnd[_i7], visibleClusters, visibleClustersLookup, range2);
+          this._checkIfVisibleWithReference(orderedClusters.byEnd[_i7], visibleClusters, visibleClustersLookup, range);
         }
         var redrawQueue = {};
         var redrawQueueLength = 0;
@@ -31795,9 +31795,9 @@
     }
     _createClass(BackgroundGroup2, [{
       key: "redraw",
-      value: function redraw(range2, margin, forceRestack) {
+      value: function redraw(range, margin, forceRestack) {
         var resized = false;
-        this.visibleItems = this._updateItemsInRange(this.orderedItems, this.visibleItems, range2);
+        this.visibleItems = this._updateItemsInRange(this.orderedItems, this.visibleItems, range);
         this.width = this.dom.background.offsetWidth;
         this.dom.background.style.height = "0";
         for (var i2 = 0, ii = this.visibleItems.length; i2 < ii; i2++) {
@@ -31983,7 +31983,7 @@
        */
     }, {
       key: "isVisible",
-      value: function isVisible(range2) {
+      value: function isVisible(range) {
         return false;
       }
       /**
@@ -32446,19 +32446,19 @@
     }
     _createClass(BoxItem2, [{
       key: "isVisible",
-      value: function isVisible(range2) {
+      value: function isVisible(range) {
         if (this.cluster) {
           return false;
         }
         var isVisible2;
         var align = this.data.align || this.options.align;
-        var widthInMs = this.width * range2.getMillisecondsPerPixel();
+        var widthInMs = this.width * range.getMillisecondsPerPixel();
         if (align == "right") {
-          isVisible2 = this.data.start.getTime() > range2.start && this.data.start.getTime() - widthInMs < range2.end;
+          isVisible2 = this.data.start.getTime() > range.start && this.data.start.getTime() - widthInMs < range.end;
         } else if (align == "left") {
-          isVisible2 = this.data.start.getTime() + widthInMs > range2.start && this.data.start.getTime() < range2.end;
+          isVisible2 = this.data.start.getTime() + widthInMs > range.start && this.data.start.getTime() < range.end;
         } else {
-          isVisible2 = this.data.start.getTime() + widthInMs / 2 > range2.start && this.data.start.getTime() - widthInMs / 2 < range2.end;
+          isVisible2 = this.data.start.getTime() + widthInMs / 2 > range.start && this.data.start.getTime() - widthInMs / 2 < range.end;
         }
         return isVisible2;
       }
@@ -32815,12 +32815,12 @@
     }
     _createClass(PointItem2, [{
       key: "isVisible",
-      value: function isVisible(range2) {
+      value: function isVisible(range) {
         if (this.cluster) {
           return false;
         }
-        var widthInMs = this.width * range2.getMillisecondsPerPixel();
-        return this.data.start.getTime() + widthInMs > range2.start && this.data.start < range2.end;
+        var widthInMs = this.width * range.getMillisecondsPerPixel();
+        return this.data.start.getTime() + widthInMs > range.start && this.data.start < range.end;
       }
       /**
        * create DOM element
@@ -33128,11 +33128,11 @@
     }
     _createClass(RangeItem2, [{
       key: "isVisible",
-      value: function isVisible(range2) {
+      value: function isVisible(range) {
         if (this.cluster) {
           return false;
         }
-        return this.data.start < range2.end && this.data.end > range2.start;
+        return this.data.start < range.end && this.data.end > range.start;
       }
       /**
        * create DOM elements
@@ -33511,8 +33511,8 @@
     }
     _createClass(BackgroundItem2, [{
       key: "isVisible",
-      value: function isVisible(range2) {
-        return this.data.start < range2.end && this.data.end > range2.start;
+      value: function isVisible(range) {
+        return this.data.start < range.end && this.data.end > range.start;
       }
       /**
        * create DOM element
@@ -33950,11 +33950,11 @@
        */
     }, {
       key: "isVisible",
-      value: function isVisible(range2) {
+      value: function isVisible(range) {
         var rangeWidth = this.data.end ? this.data.end - this.data.start : 0;
-        var widthInMs = this.width * range2.getMillisecondsPerPixel();
+        var widthInMs = this.width * range.getMillisecondsPerPixel();
         var end = Math.max(this.data.start.getTime() + rangeWidth, this.data.start.getTime() + widthInMs);
-        return this.data.start < range2.end && end > range2.start && this.hasItems();
+        return this.data.start < range.end && end > range.start && this.hasItems();
       }
       /**
        * get cluster data
@@ -35515,15 +35515,15 @@
     }, {
       key: "getVisibleItems",
       value: function getVisibleItems() {
-        var range2 = this.body.range.getRange();
+        var range = this.body.range.getRange();
         var right;
         var left;
         if (this.options.rtl) {
-          right = this.body.util.toScreen(range2.start);
-          left = this.body.util.toScreen(range2.end);
+          right = this.body.util.toScreen(range.start);
+          left = this.body.util.toScreen(range.end);
         } else {
-          left = this.body.util.toScreen(range2.start);
-          right = this.body.util.toScreen(range2.end);
+          left = this.body.util.toScreen(range.start);
+          right = this.body.util.toScreen(range.end);
         }
         var ids = [];
         for (var groupId in this.groups) {
@@ -35652,7 +35652,7 @@
       key: "redraw",
       value: function redraw() {
         var margin = this.options.margin;
-        var range2 = this.body.range;
+        var range = this.body.range;
         var asSize2 = availableUtils.option.asSize;
         var options2 = this.options;
         var orientation = options2.orientation.item;
@@ -35669,14 +35669,14 @@
           this._clusterItems();
         }
         resized = this._orderGroups() || resized;
-        var visibleInterval = range2.end - range2.start;
+        var visibleInterval = range.end - range.start;
         var zoomed = visibleInterval != this.lastVisibleInterval || this.props.width != this.props.lastWidth;
-        var scrolled = range2.start != this.lastRangeStart;
+        var scrolled = range.start != this.lastRangeStart;
         var changedStackOption = options2.stack != this.lastStack;
         var changedStackSubgroupsOption = options2.stackSubgroups != this.lastStackSubgroups;
         var forceRestack = zoomed || scrolled || changedStackOption || changedStackSubgroupsOption;
         this.lastVisibleInterval = visibleInterval;
-        this.lastRangeStart = range2.start;
+        this.lastRangeStart = range.start;
         this.lastStack = options2.stack;
         this.lastStackSubgroups = options2.stackSubgroups;
         this.props.lastWidth = this.props.width;
@@ -35691,14 +35691,14 @@
         };
         var height = 0;
         var minHeight = margin.axis + margin.item.vertical;
-        this.groups[BACKGROUND].redraw(range2, nonFirstMargin, forceRestack);
+        this.groups[BACKGROUND].redraw(range, nonFirstMargin, forceRestack);
         var redrawQueue = {};
         var redrawQueueLength = 0;
         _forEachInstanceProperty(availableUtils).call(availableUtils, this.groups, function(group, key) {
           if (key === BACKGROUND) return;
           var groupMargin = group == firstGroup ? firstMargin : nonFirstMargin;
           var returnQueue = true;
-          redrawQueue[key] = group.redraw(range2, groupMargin, forceRestack, returnQueue);
+          redrawQueue[key] = group.redraw(range, groupMargin, forceRestack, returnQueue);
           redrawQueueLength = redrawQueue[key].length;
         });
         var needRedraw = redrawQueueLength > 0;
@@ -37056,7 +37056,7 @@
             if (!this.options.multiselectPerGroup || lastSelectedGroup == void 0 || lastSelectedGroup == itemGroup) {
               selection.push(item.id);
             }
-            var range2 = ItemSet2._getItemRange(this.itemsData.get(selection));
+            var range = ItemSet2._getItemRange(this.itemsData.get(selection));
             if (!this.options.multiselectPerGroup || lastSelectedGroup == itemGroup) {
               selection = [];
               for (var id2 in this.items) {
@@ -37064,7 +37064,7 @@
                   var _item = this.items[id2];
                   var start = _item.data.start;
                   var end = _item.data.end !== void 0 ? _item.data.end : start;
-                  if (start >= range2.min && end <= range2.max && (!this.options.multiselectPerGroup || lastSelectedGroup == this.itemsData.get(_item.id).group) && !(_item instanceof BackgroundItem)) {
+                  if (start >= range.min && end <= range.max && (!this.options.multiselectPerGroup || lastSelectedGroup == this.itemsData.get(_item.id).group) && !(_item instanceof BackgroundItem)) {
                     selection.push(_item.id);
                   }
                 }
@@ -39559,50 +39559,50 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         var min2 = arr[1];
         var max2 = arr[2];
         var step = arr[3];
-        var range2 = document.createElement("input");
-        range2.className = "vis-configuration vis-config-range";
+        var range = document.createElement("input");
+        range.className = "vis-configuration vis-config-range";
         try {
-          range2.type = "range";
-          range2.min = min2;
-          range2.max = max2;
+          range.type = "range";
+          range.min = min2;
+          range.max = max2;
         } catch (err) {
         }
-        range2.step = step;
+        range.step = step;
         var popupString = "";
         var popupValue = 0;
         if (value !== void 0) {
           var factor = 1.2;
           if (value < 0 && value * factor < min2) {
-            range2.min = Math.ceil(value * factor);
-            popupValue = range2.min;
+            range.min = Math.ceil(value * factor);
+            popupValue = range.min;
             popupString = "range increased";
           } else if (value / factor < min2) {
-            range2.min = Math.ceil(value / factor);
-            popupValue = range2.min;
+            range.min = Math.ceil(value / factor);
+            popupValue = range.min;
             popupString = "range increased";
           }
           if (value * factor > max2 && max2 !== 1) {
-            range2.max = Math.ceil(value * factor);
-            popupValue = range2.max;
+            range.max = Math.ceil(value * factor);
+            popupValue = range.max;
             popupString = "range increased";
           }
-          range2.value = value;
+          range.value = value;
         } else {
-          range2.value = defaultValue;
+          range.value = defaultValue;
         }
         var input = document.createElement("input");
         input.className = "vis-configuration vis-config-rangeinput";
-        input.value = Number(range2.value);
+        input.value = Number(range.value);
         var me = this;
-        range2.onchange = function() {
+        range.onchange = function() {
           input.value = this.value;
           me._update(Number(this.value), path2);
         };
-        range2.oninput = function() {
+        range.oninput = function() {
           input.value = this.value;
         };
         var label = this._makeLabel(path2[path2.length - 1], path2);
-        var itemIndex = this._makeItem(path2, label, range2, input);
+        var itemIndex = this._makeItem(path2, label, range, input);
         if (popupString !== "" && this.popupHistory[itemIndex] !== popupValue) {
           this.popupHistory[itemIndex] = popupValue;
           this._setupPopup(popupString, itemIndex);
@@ -40180,10 +40180,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
           me.initialFitDone = true;
           if (me.options.start != void 0 || me.options.end != void 0) {
             if (me.options.start == void 0 || me.options.end == void 0) {
-              var range2 = me.getItemRange();
+              var range = me.getItemRange();
             }
-            var start = me.options.start != void 0 ? me.options.start : range2.min;
-            var end = me.options.end != void 0 ? me.options.end : range2.max;
+            var start = me.options.start != void 0 ? me.options.start : range.min;
+            var end = me.options.end != void 0 ? me.options.end : range.max;
             me.setWindow(start, end, {
               animation: false
             });
@@ -40466,15 +40466,15 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       key: "fit",
       value: function fit(options2, callback) {
         var animation = options2 && options2.animation !== void 0 ? options2.animation : true;
-        var range2;
+        var range;
         if (this.itemsData.length === 1 && this.itemsData.get()[0].end === void 0) {
-          range2 = this.getDataRange();
-          this.moveTo(range2.min.valueOf(), {
+          range = this.getDataRange();
+          this.moveTo(range.min.valueOf(), {
             animation
           }, callback);
         } else {
-          range2 = this.getItemRange();
-          this.range.setRange(range2.min, range2.max, {
+          range = this.getItemRange();
+          this.range.setRange(range.min, range.max, {
             animation
           }, callback);
         }
@@ -40489,9 +40489,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       key: "getItemRange",
       value: function getItemRange() {
         var _this2 = this;
-        var range2 = this.getDataRange();
-        var min2 = range2.min !== null ? range2.min.valueOf() : null;
-        var max2 = range2.max !== null ? range2.max.valueOf() : null;
+        var range = this.getDataRange();
+        var min2 = range.min !== null ? range.min.valueOf() : null;
+        var max2 = range.max !== null ? range.max.valueOf() : null;
         var minItem = null;
         var maxItem = null;
         if (min2 != null && max2 != null) {
@@ -40793,10 +40793,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     }, {
       key: "determineScale",
       value: function determineScale() {
-        var range2 = this._end - this._start;
-        this.scale = this.containerHeight / range2;
+        var range = this._end - this._start;
+        this.scale = this.containerHeight / range;
         var minimumStepValue = this.majorCharHeight / this.scale;
-        var orderOfMagnitude = range2 > 0 ? Math.round(Math.log(range2) / Math.LN10) : 0;
+        var orderOfMagnitude = range > 0 ? Math.round(Math.log(range) / Math.LN10) : 0;
         this.minorStepIdx = -1;
         this.magnitudefactor = Math.pow(10, orderOfMagnitude);
         var start = 0;
@@ -42795,9 +42795,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     } else {
       if (this.lastStart != 0) {
         var offset = this.body.range.start - this.lastStart;
-        var range2 = this.body.range.end - this.body.range.start;
+        var range = this.body.range.end - this.body.range.start;
         if (this.props.width != 0) {
-          var rangePerPixelInv = this.props.width / range2;
+          var rangePerPixelInv = this.props.width / range;
           var xOffset = offset * rangePerPixelInv;
           this.svg.style.left = -this.props.width - xOffset + "px";
         }
@@ -43859,10 +43859,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         me.initialFitDone = true;
         if (me.options.start != void 0 || me.options.end != void 0) {
           if (me.options.start == void 0 || me.options.end == void 0) {
-            var range2 = me.getItemRange();
+            var range = me.getItemRange();
           }
-          var start = me.options.start != void 0 ? me.options.start : range2.min;
-          var end = me.options.end != void 0 ? me.options.end : range2.max;
+          var start = me.options.start != void 0 ? me.options.start : range.min;
+          var end = me.options.end != void 0 ? me.options.end : range.max;
           me.setWindow(start, end, {
             animation: false
           });
@@ -44214,13 +44214,31 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     return r.To && r.To instanceof Date ? r.To : null;
   }
   function recToItem(r) {
-    return {
+    const result = {
       id: r.id,
-      content: r.Subject || "no title",
+      content: "",
       start: trimTime(getFrom(r)),
       end: appendEnd(trimTime(getTo(r))),
       type: "range",
-      group: void 0
+      group: void 0,
+      className: "item_" + r.id
+    };
+    result.group = r.Columns.join("|");
+    result.group = nameToId.get(result.group);
+    result.content = r.Title.join("|");
+    return result;
+  }
+  function recToRow(rec) {
+    const groupValues = rec.Columns;
+    const columns = mappings().Columns;
+    const allColumns = [...columns, mappings().From, mappings().To];
+    const newStart = (0, import_moment_timezone.default)(rec.From).add(1, "day").toDate();
+    const newEnd = (0, import_moment_timezone.default)(rec.To).add(1, "week").subtract(-1).toDate();
+    const allValues = [...groupValues, (0, import_moment_timezone.default)(newStart).format("YYYY-MM-DD"), (0, import_moment_timezone.default)(newEnd).format("YYYY-MM-DD")];
+    const fields = Object.fromEntries(zip(allColumns, allValues));
+    return {
+      id: rec.id,
+      ...fields
     };
   }
   function compareItems(a, b2) {
@@ -44311,9 +44329,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     items.remove(removed);
     const newItems = u(recs).filter((r) => getFrom(r) && getTo(r)).map((r) => {
       const result = recToItem(r);
-      result.group = r.Columns.join("|");
-      result.group = nameToId.get(result.group);
-      result.content = r.Title.join("|");
       return result;
     });
     const changedItems = oldRecs.size > 0 ? newItems.filter((newOne) => {
@@ -44365,16 +44380,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     });
   };
   window.timeline = timeline;
-  var range = document.getElementById("range");
-  range.oninput = function() {
-    const visi = document.getElementById("visualization");
-    const margin = parseInt(range.value, 10);
-    visi.setAttribute(
-      "style",
-      `--group-columns: ${margin * 3}px minmax(57px, max-content) minmax(86px, max-content)`
-    );
-    timeline.redraw();
-  };
   function bindConfig() {
     const configElements = document.querySelectorAll(".config");
     for (const el of configElements) {
@@ -44503,11 +44508,83 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         "hr"
       ]
     });
+    timeline.on("contextmenu", function(props) {
+      alert("Right click!");
+      props.event.preventDefault();
+    });
+    const fore = document.querySelector(
+      "#visualization > div.vis-timeline.vis-bottom.vis-ltr > div.vis-panel.vis-center > div.vis-content > div > div.vis-foreground"
+    );
+    fore?.addEventListener("contextmenu", function(e) {
+      const item = e.target.closest(".vis-item.vis-range");
+      if (item) {
+        const classes = Array.from(item.classList);
+        const classItem = classes.find((c2) => c2.startsWith("item_"));
+        if (classItem) {
+          const id2 = parseInt(classItem.replace("item_", ""), 10);
+          timeline.setSelection([id2]);
+        }
+      } else {
+        e.stopImmediatePropagation();
+      }
+    });
+    const itemMenu = new VanillaContextMenu({
+      scope: fore,
+      menuItems: [
+        {
+          label: "Edit",
+          callback: async () => {
+            const selected = timeline.getSelection();
+            if (selected.length === 0) {
+              return;
+            }
+            await grist.setCursorPos({ rowId: selected[0] });
+            await openCard();
+          }
+        },
+        {
+          label: "Delete",
+          callback: async () => {
+            const selected = timeline.getSelection();
+            if (selected.length === 0) {
+              return;
+            }
+            setTimeout(async () => {
+              if (confirm("Are you sure you want to delete this item?")) {
+                await grist.selectedTable.destroy(selected[0]);
+              }
+            }, 10);
+          }
+        },
+        {
+          label: "Duplicate",
+          callback: async () => {
+            const selected = timeline.getSelection();
+            if (selected.length === 0) {
+              return;
+            }
+            const recs = records();
+            const rec = recs.find((r) => r.id === selected[0]);
+            if (!rec) {
+              return;
+            }
+            const clone2 = structuredClone(rec);
+            clone2.From = rec.To;
+            const diff = (0, import_moment_timezone.default)(rec.To).diff(clone2.From);
+            clone2.To = (0, import_moment_timezone.default)(clone2.From).add(diff).toDate();
+            const row = recToRow(clone2);
+            delete row.id;
+            const fields = await liftFields(row);
+            await grist.selectedTable.create({ fields });
+          }
+        }
+      ]
+    });
     currentScale("week");
     timeline.setOptions({
       stack: false,
       timeAxis: {
-        scale: "week"
+        scale: "day"
       }
     });
     const button = document.getElementById("focusButton");
@@ -44730,6 +44807,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       await openCard();
     }
   });
+  window.items = items;
 })();
 /*! Bundled license information:
 
