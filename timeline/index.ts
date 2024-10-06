@@ -637,7 +637,7 @@ document.addEventListener('DOMContentLoaded', function () {
     grist.setCursorPos({ rowId: properties.items[0] });
   });
 
-  foreground.addEventListener('mousemove', function (e: MouseEvent) {
+  (foreground as any).addEventListener('mousemove', function (e: MouseEvent) {
     // Get the x position in regards of the parent.
     const x = e.clientX - foreground.getBoundingClientRect().left;
 
