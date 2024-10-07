@@ -44068,6 +44068,13 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     groupOrder: function(a, b2) {
       return a.id - b2.id;
     },
+    template: function(item, element, data2) {
+      const parts = data2.content.split("|");
+      if (parts.length === 1) {
+        return parts[0];
+      }
+      return `${parts[0]} (${parts[1] || "no subject"})`;
+    },
     async onRemove(item, callback) {
       if (confirm("Are you sure you want to delete this item?")) {
         await grist.selectedTable.destroy(item.id);
@@ -44088,7 +44095,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       callback(item);
     },
     async onAdd(item, callback) {
-      const group = item.group.split("|").map(formatValue);
+      const group = idToName.get(item.group).split("|").map(formatValue);
       const start = (0, import_moment_timezone.default)(item.start).format("YYYY-MM-DD");
       const end = (0, import_moment_timezone.default)(defaultEnd(item.start)).format("YYYY-MM-DD");
       const values3 = [...group, start, end];
@@ -44178,7 +44185,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       // Adjusts the space between items and the axis
     }
   };
-  var timeline = new Timeline(container, items, options);
   var records = observable([]);
   var order = /* @__PURE__ */ new Map();
   var editCard = observable(false);
@@ -44187,6 +44193,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var show = () => {
   };
   var mappings = observable({}, { deep: true });
+  var timeline = new Timeline(container, items, options);
   grist.onRecords((recs, maps) => {
     mappings(maps);
     records(grist.mapColumnNames(recs));
@@ -44800,7 +44807,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   timeline.on("doubleClick", async function(props) {
     const { item, event: event2 } = props;
     if (event2?.type === "dblclick" && item) {
-      await grist.setCursorPos({ rowId: item });
       await openCard();
     }
   });

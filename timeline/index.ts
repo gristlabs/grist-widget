@@ -44,6 +44,13 @@ const options: TimelineOptions = {
   groupOrder: function (a, b) {
     return a.id - b.id;
   },
+  template: function (item, element, data) {
+    const parts = data.content.split('|');
+    if (parts.length === 1) {
+      return parts[0];
+    }
+    return `${parts[0]} (${parts[1] || 'no subject'})`;
+  },
   async onRemove(item, callback) {
     if (confirm('Are you sure you want to delete this item?')) {
       await grist.selectedTable.destroy(item.id);
@@ -67,7 +74,7 @@ const options: TimelineOptions = {
     callback(item);
   },
   async onAdd(item, callback) {
-    const group = item.group.split('|').map(formatValue);
+    const group = idToName.get(item.group).split('|').map(formatValue);
     const start = moment(item.start).format('YYYY-MM-DD');
 
     // In group we have list of values, we need to create an object from it (zip it with columns).
@@ -178,8 +185,6 @@ const options: TimelineOptions = {
   },
 };
 
-// Create a Timeline
-const timeline = new Timeline(container, items, options);
 
 let lastGroups = new Set();
 let lastRows = new Set();
@@ -191,6 +196,10 @@ const zoomOnClick = observable(false);
 
 let show = () => {};
 let mappings = observable({}, { deep: true });
+
+
+// Create a Timeline
+const timeline = new Timeline(container, items, options);
 
 grist.onRecords((recs, maps) => {
   mappings(maps);
@@ -1022,7 +1031,6 @@ async function liftFields(fields: any) {
 timeline.on('doubleClick', async function (props) {
   const { item, event } = props;
   if (event?.type === 'dblclick' && item) {
-    await grist.setCursorPos({ rowId: item });
     await openCard();
   }
 });
