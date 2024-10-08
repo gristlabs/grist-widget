@@ -14,6 +14,17 @@ import escapeRegExp = require('lodash/escapeRegExp');
 type SectionTypes = 'Table' | 'Card' | 'Card List' | 'Chart' | 'Custom';
 type UserAction = Array<string | number | object | boolean | null | undefined>;
 
+export async function ignoreMissingElementErrors<T>(callback: () => T): Promise<T | undefined> {
+  try {
+    return await callback()
+  } catch (e) {
+    if (e.name === 'NoSuchElementError' || e.name === 'StaleElementReferenceError') {
+      return;
+    }
+    throw e;
+  }
+}
+
 export class GristWebDriverUtils {
   public constructor(public driver: WebDriver) {
   }
@@ -145,7 +156,9 @@ export class GristWebDriverUtils {
     if (options.dismissTips) { await this.dismissBehavioralPrompts(); }
 
     if (tableRe) {
-      const tableEl = driver.findContent('.test-wselect-table', tableRe);
+      const tableEl = driver.findContentWait('.test-wselect-table', tableRe, 2000);
+
+      if (options.dismissTips) { await this.dismissBehavioralPrompts(); }
 
       // unselect all selected columns
       for (const col of (await driver.findAll('.test-wselect-column[class*=-selected]'))) {
@@ -210,8 +223,11 @@ export class GristWebDriverUtils {
     const max = 10;
 
     // Keep dismissing prompts until there are no more, up to a maximum of 10 times.
-    while (i < max && await this.driver.find('.test-behavioral-prompt').isPresent()) {
-      await this.driver.find('.test-behavioral-prompt-dismiss').click();
+    const getButton = () => {
+      return this.driver.find('.test-behavioral-prompt-dismiss')
+    }
+    while (i < max && await getButton().isPresent()) {
+      await ignoreMissingElementErrors(() => getButton().click());
       await this.waitForServer();
       i += 1;
     }
