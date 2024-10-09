@@ -110,6 +110,11 @@
       border-top: 1px solid #d3d3d3;
       font-weight: 600;
     }
+    .item-template {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
   </style>
 
 
@@ -143,8 +148,8 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
 -->
 
     <select class="conf-select config" id="timeline:timeAxis.scale">
-      <option value="day">day</option>
-      <option value="week" selected>week</option>
+      <option value="day" selected>day</option>
+      <option value="week">week</option>
       <option value="month">month</option>
       <option value="year">year</option>
     </select>
@@ -166,6 +171,16 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
   </div>
 
   <script src="out/index.js"></script>
+
+
+
+  <sl-alert variant="danger" duration="10000" closable>
+    <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
+    <strong id="title">Your account has been deleted</strong><br />
+    <div id="text"></div>
+  </sl-alert>
+
+
 
   <style type="text/css">
     .conf-select {
@@ -276,5 +291,38 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       position: absolute;
       top: 0px;
       height: 100%;
+    }
+
+    .vis-item sl-spinner {
+      position: absolute;
+      top: 6px;
+      right: 5px;
+      --indicator-color: white;
+      --track-color: gray;
+    }
+    .group-template:hover {
+      background-color: rgba(22, 179, 120, 0.15);
+    }
+    .vis-item:has(.item-right) {
+      border-right: 0px;
+      border-top-right-radius: 0px;
+      border-bottom-right-radius: 0px;
+    }
+    .vis-item:has(.item-left) {
+      border-top-left-radius: 0px;
+      border-bottom-left-radius: 0px;
+    }
+    .vis-item {
+      mix-blend-mode: difference;
+    }
+
+    .vis-item.vis-selected:active {
+      background-color: #0f8558;
+    }
+
+    .vis-item.vis-readonly {
+      background-color: #eeeeee;
+      border-color: #777777;
+      color:darkgray;
     }
   </style>

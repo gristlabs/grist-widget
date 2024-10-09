@@ -30679,7 +30679,7 @@
     BACKGROUND: BACKGROUND$2
   };
   var Group = /* @__PURE__ */ function() {
-    function Group2(groupId, data2, itemSet) {
+    function Group2(groupId, data2, itemSet2) {
       var _this = this;
       _classCallCheck(this, Group2);
       this.groupId = groupId;
@@ -30691,7 +30691,7 @@
       this.shouldBailStackItems = false;
       this.subgroupIndex = 0;
       this.subgroupOrderer = data2 && data2.subgroupOrder;
-      this.itemSet = itemSet;
+      this.itemSet = itemSet2;
       this.isVisible = null;
       this.stackDirty = true;
       this._disposeCallbacks = [];
@@ -30717,7 +30717,7 @@
       if (data2 && data2.heightMode) {
         this.heightMode = data2.heightMode;
       } else {
-        this.heightMode = itemSet.options.groupHeightMode;
+        this.heightMode = itemSet2.options.groupHeightMode;
       }
       this.nestedInGroup = null;
       this.dom = {};
@@ -31783,10 +31783,10 @@
   var BackgroundGroup = /* @__PURE__ */ function(_Group) {
     _inherits(BackgroundGroup2, _Group);
     var _super = _createSuper$8(BackgroundGroup2);
-    function BackgroundGroup2(groupId, data2, itemSet) {
+    function BackgroundGroup2(groupId, data2, itemSet2) {
       var _this;
       _classCallCheck(this, BackgroundGroup2);
-      _this = _super.call(this, groupId, data2, itemSet);
+      _this = _super.call(this, groupId, data2, itemSet2);
       _this.width = 0;
       _this.height = 0;
       _this.top = 0;
@@ -34566,9 +34566,9 @@
     BACKGROUND: BACKGROUND$1
   };
   var ClusterGenerator = /* @__PURE__ */ function() {
-    function ClusterGenerator2(itemSet) {
+    function ClusterGenerator2(itemSet2) {
       _classCallCheck(this, ClusterGenerator2);
-      this.itemSet = itemSet;
+      this.itemSet = itemSet2;
       this.groups = {};
       this.cache = {};
       this.cache[-1] = [];
@@ -34710,15 +34710,15 @@
     }, {
       key: "_filterData",
       value: function _filterData() {
-        var groups2 = {};
-        this.groups = groups2;
+        var groups = {};
+        this.groups = groups;
         for (var _i = 0, _Object$values = _Object$values2(this.items); _i < _Object$values.length; _i++) {
           var item = _Object$values[_i];
           var groupName = item.parent ? item.parent.groupId : "";
-          var group = groups2[groupName];
+          var group = groups[groupName];
           if (!group) {
             group = [];
-            groups2[groupName] = group;
+            groups[groupName] = group;
           }
           group.push(item);
           if (item.data.start) {
@@ -34729,10 +34729,10 @@
             }
           }
         }
-        for (var currentGroupName in groups2) {
-          if (groups2.hasOwnProperty(currentGroupName)) {
+        for (var currentGroupName in groups) {
+          if (groups.hasOwnProperty(currentGroupName)) {
             var _context;
-            _sortInstanceProperty(_context = groups2[currentGroupName]).call(_context, function(a, b2) {
+            _sortInstanceProperty(_context = groups[currentGroupName]).call(_context, function(a, b2) {
               return a.center - b2.center;
             });
           }
@@ -34933,7 +34933,7 @@
         // alignment of box items
         stack: true,
         stackSubgroups: true,
-        groupOrderSwap: function groupOrderSwap(fromGroup, toGroup, groups2) {
+        groupOrderSwap: function groupOrderSwap(fromGroup, toGroup, groups) {
           var targetOrder = toGroup.order;
           toGroup.order = fromGroup.order;
           fromGroup.order = targetOrder;
@@ -35854,7 +35854,7 @@
        */
     }, {
       key: "setGroups",
-      value: function setGroups(groups2) {
+      value: function setGroups(groups) {
         var me = this;
         var ids;
         if (this.groupsData) {
@@ -35865,10 +35865,10 @@
           this.groupsData = null;
           this._onRemoveGroups(ids);
         }
-        if (!groups2) {
+        if (!groups) {
           this.groupsData = null;
-        } else if (isDataViewLike(groups2)) {
-          this.groupsData = groups2;
+        } else if (isDataViewLike(groups)) {
+          this.groupsData = groups;
         } else {
           throw new TypeError("Data must implement the interface of DataSet or DataView");
         }
@@ -36139,12 +36139,12 @@
           groupIds = this._orderNestedGroups(groupIds);
           var changed = !availableUtils.equalArray(groupIds, this.groupIds);
           if (changed) {
-            var groups2 = this.groups;
+            var groups = this.groups;
             _forEachInstanceProperty(groupIds).call(groupIds, function(groupId) {
-              groups2[groupId].hide();
+              groups[groupId].hide();
             });
             _forEachInstanceProperty(groupIds).call(groupIds, function(groupId) {
-              groups2[groupId].show();
+              groups[groupId].show();
             });
             this.groupIds = groupIds;
           }
@@ -40022,7 +40022,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var Timeline = /* @__PURE__ */ function(_Core) {
     _inherits(Timeline2, _Core);
     var _super = _createSuper$1(Timeline2);
-    function Timeline2(container2, items2, groups2, options2) {
+    function Timeline2(container2, items2, groups, options2) {
       var _context2, _context3, _context4, _context5, _context6, _context7, _context8;
       var _this;
       _classCallCheck(this, Timeline2);
@@ -40032,10 +40032,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       if (!(_assertThisInitialized(_this) instanceof Timeline2)) {
         throw new SyntaxError("Constructor must be called with the new operator");
       }
-      if (!(_Array$isArray(groups2) || isDataViewLike(groups2)) && groups2 instanceof Object) {
+      if (!(_Array$isArray(groups) || isDataViewLike(groups)) && groups instanceof Object) {
         var forthArgument = options2;
-        options2 = groups2;
-        groups2 = forthArgument;
+        options2 = groups;
+        groups = forthArgument;
       }
       if (options2 && options2.throttleRedraw) {
         console.warn('Timeline option "throttleRedraw" is DEPRICATED and no longer supported. It will be removed in the next MAJOR release.');
@@ -40215,8 +40215,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         _this._onFit(args);
         _this.redraw();
       });
-      if (groups2) {
-        _this.setGroups(groups2);
+      if (groups) {
+        _this.setGroups(groups);
       }
       if (items2) {
         _this.setItems(items2);
@@ -40297,16 +40297,16 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
        */
     }, {
       key: "setGroups",
-      value: function setGroups(groups2) {
+      value: function setGroups(groups) {
         var newDataSet;
         var filter3 = function filter4(group) {
           return group.visible !== false;
         };
-        if (!groups2) {
+        if (!groups) {
           newDataSet = null;
         } else {
-          if (_Array$isArray(groups2)) groups2 = new DataSet(groups2);
-          newDataSet = new DataView(groups2, {
+          if (_Array$isArray(groups)) groups = new DataSet(groups);
+          newDataSet = new DataView(groups, {
             filter: filter3
           });
         }
@@ -42574,7 +42574,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       this._onAdd(ids);
     }
   };
-  LineGraph.prototype.setGroups = function(groups2) {
+  LineGraph.prototype.setGroups = function(groups) {
     var me = this;
     var ids;
     if (this.groupsData) {
@@ -42587,10 +42587,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         this._removeGroup(ids[i2]);
       }
     }
-    if (!groups2) {
+    if (!groups) {
       this.groupsData = null;
-    } else if (isDataViewLike(groups2)) {
-      this.groupsData = groups2;
+    } else if (isDataViewLike(groups)) {
+      this.groupsData = groups;
     } else {
       throw new TypeError("Data must implement the interface of DataSet or DataView");
     }
@@ -43779,12 +43779,12 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       zIndex: 0
     }
   };
-  function Graph2d(container2, items2, groups2, options2) {
+  function Graph2d(container2, items2, groups, options2) {
     var _context, _context2, _context3, _context4, _context5, _context6, _context7;
-    if (!(_Array$isArray(groups2) || isDataViewLike(groups2)) && groups2 instanceof Object) {
+    if (!(_Array$isArray(groups) || isDataViewLike(groups)) && groups instanceof Object) {
       var forthArgument = options2;
-      options2 = groups2;
-      groups2 = forthArgument;
+      options2 = groups;
+      groups = forthArgument;
     }
     if (options2 && options2.throttleRedraw) {
       console.warn('Graph2d option "throttleRedraw" is DEPRICATED and no longer supported. It will be removed in the next MAJOR release.');
@@ -43886,8 +43886,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     if (options2) {
       this.setOptions(options2);
     }
-    if (groups2) {
-      this.setGroups(groups2);
+    if (groups) {
+      this.setGroups(groups);
     }
     if (items2) {
       this.setItems(items2);
@@ -43931,14 +43931,14 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       }
     }
   };
-  Graph2d.prototype.setGroups = function(groups2) {
+  Graph2d.prototype.setGroups = function(groups) {
     var newDataSet;
-    if (!groups2) {
+    if (!groups) {
       newDataSet = null;
-    } else if (isDataViewLike(groups2)) {
-      newDataSet = groups2;
+    } else if (isDataViewLike(groups)) {
+      newDataSet = groups;
     } else {
-      newDataSet = new DataSet(groups2);
+      newDataSet = new DataSet(groups);
     }
     this.groupsData = newDataSet;
     this.linegraph.setGroups(newDataSet);
@@ -44040,17 +44040,53 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
 
   // index.ts
   import_moment_timezone.default.locale("en-gb");
+  var container = document.getElementById("visualization");
+  var itemSet = new DataSet([]);
+  var groupSet = new DataSet([]);
+  var records = observable([]);
+  var order = /* @__PURE__ */ new Map();
+  var editCard = observable(false);
+  var zoomOnClick = observable(false);
+  var currentScale = observable("day");
+  var items = observable([]);
+  var byStart = /* @__PURE__ */ new Map();
+  var byEnd = /* @__PURE__ */ new Map();
+  function startKey(item, days = 0) {
+    const start = (0, import_moment_timezone.default)(item.start).add({ days }).format("YYYY-MM-DD");
+    return `${item.group}-${start}`;
+  }
+  function endKey(item, days = 0) {
+    const end = (0, import_moment_timezone.default)(item.end).add({ days }).format("YYYY-MM-DD");
+    return `${item.group}-${end}`;
+  }
+  items.subscribe((list) => {
+    byStart.clear();
+    byEnd.clear();
+    for (const item of list) {
+      byStart.set(startKey(item), item);
+      byEnd.set(endKey(item), item);
+    }
+  });
   grist.ready({
     allowSelectBy: true,
     requiredAccess: "read table",
     columns: [
       {
-        name: "Columns",
+        name: "Group",
         allowMultiple: true
+      },
+      {
+        name: "Columns",
+        allowMultiple: true,
+        optional: true
       },
       {
         name: "Title",
         allowMultiple: true,
+        optional: true
+      },
+      {
+        name: "Readonly",
         optional: true
       },
       {
@@ -44061,9 +44097,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       }
     ]
   });
-  var container = document.getElementById("visualization");
-  var items = new DataSet([]);
-  var groups = new DataSet([]);
   var options = {
     groupOrder: function(a, b2) {
       return a.id - b2.id;
@@ -44073,7 +44106,22 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       if (parts.length === 1) {
         return parts[0];
       }
-      return `${parts[0]} (${parts[1] || "no subject"})`;
+      const text = `${parts[0]} (${parts[1] || "no subject"})`;
+      const div = document.createElement("div");
+      div.className = "item-template";
+      const span = document.createElement("span");
+      span.innerText = text;
+      div.appendChild(span);
+      const someoneOnLeft = byEnd.get(startKey(item, -1));
+      const someoneOnRight = byStart.get(endKey(item, 1));
+      div.classList.add("item-template");
+      if (someoneOnLeft) {
+        div.classList.add("item-left");
+      }
+      if (someoneOnRight) {
+        div.classList.add("item-right");
+      }
+      return div;
     },
     async onRemove(item, callback) {
       if (confirm("Are you sure you want to delete this item?")) {
@@ -44084,6 +44132,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     async onMove(item, callback) {
       let { start, end } = item;
       const format = (date2) => (0, import_moment_timezone.default)(date2).format("YYYY-MM-DD");
+      if (!confirm("Are you sure you want to move this item?")) {
+        callback(null);
+        return;
+      }
       if (end.getHours() === 0 && end.getMinutes() === 0) {
         end = (0, import_moment_timezone.default)(end).subtract(1, "minute").toDate();
       }
@@ -44091,15 +44143,17 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         [mappings().From]: format(start),
         [mappings().To]: format(end)
       };
-      await grist.selectedTable.update({ id: item.id, fields });
-      callback(item);
+      await withIdSpinner(item.id, async () => {
+        callback(item);
+        await grist.selectedTable.update({ id: item.id, fields });
+      });
     },
     async onAdd(item, callback) {
       const group = idToName.get(item.group).split("|").map(formatValue);
       const start = (0, import_moment_timezone.default)(item.start).format("YYYY-MM-DD");
       const end = (0, import_moment_timezone.default)(defaultEnd(item.start)).format("YYYY-MM-DD");
       const values3 = [...group, start, end];
-      const columns = [...mappings().Columns, mappings().From, mappings().To];
+      const columns = [...mappings().Group, mappings().From, mappings().To];
       const rawFields = Object.fromEntries(zip(columns, values3));
       const fields = await liftFields(rawFields);
       const { id: id2 } = await grist.selectedTable.create({ fields });
@@ -44120,12 +44174,11 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     groupTemplate: function(group) {
       const container2 = document.createElement("div");
       container2.classList.add("group-template");
-      const parts = group.content.split("|");
-      const partsHtml = parts.map((part) => {
+      const partsHtml = group.columns.map((col) => {
         const div = document.createElement("div");
-        const value = formatValue(part);
-        if (typeof value === "string") {
-          div.innerText = String(value) || "-";
+        const value = formatValue(col);
+        if (typeof value === "string" || value === null) {
+          div.innerText = String(value ?? "") || "-";
         } else if (typeof value === "number") {
           div.innerText = formatCurrency.format(value);
         } else if (typeof value === "boolean") {
@@ -44136,14 +44189,18 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         return div;
       });
       container2.append(...partsHtml);
+      container2.addEventListener("click", function() {
+        const first = itemSet.get().find((i2) => i2.group === group.id);
+        if (first) {
+          timeline.focus(first.id);
+        }
+      });
       return container2;
     },
     editable: {
       add: true,
       updateTime: true,
-      updateGroup: false,
-      remove: true,
-      overrideItems: true
+      updateGroup: false
     },
     showCurrentTime: true,
     showWeekScale: true,
@@ -44185,22 +44242,18 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       // Adjusts the space between items and the axis
     }
   };
-  var records = observable([]);
-  var order = /* @__PURE__ */ new Map();
-  var editCard = observable(false);
-  var zoomOnClick = observable(false);
   window.editCard = editCard;
   var show = () => {
   };
   var mappings = observable({}, { deep: true });
-  var timeline = new Timeline(container, items, options);
+  var timeline = new Timeline(container, itemSet, options);
   grist.onRecords((recs, maps) => {
     mappings(maps);
     records(grist.mapColumnNames(recs));
     order.clear();
     recs.forEach((r, i2) => order.set(r.id, i2));
     show();
-    updateHeader();
+    updateHeader(true);
   });
   function getFrom(r) {
     return r.From && r.From instanceof Date ? r.From : null;
@@ -44216,16 +44269,21 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       end: appendEnd(trimTime(getTo(r))),
       type: "range",
       group: void 0,
-      className: "item_" + r.id
+      className: "item_" + r.id,
+      data: r,
+      editable: void 0
     };
-    result.group = r.Columns.join("|");
+    result.group = r.Group.join("|");
     result.group = nameToId.get(result.group);
     result.content = r.Title.join("|");
+    if (r.Readonly) {
+      result.editable = false;
+    }
     return result;
   }
   function recToRow(rec) {
-    const groupValues = rec.Columns;
-    const columns = mappings().Columns;
+    const groupValues = rec.Group;
+    const columns = mappings().Group;
     const allColumns = [...columns, mappings().From, mappings().To];
     const newStart = (0, import_moment_timezone.default)(rec.From).add(1, "day").toDate();
     const newEnd = (0, import_moment_timezone.default)(rec.To).add(1, "week").subtract(-1).toDate();
@@ -44320,16 +44378,18 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       }
       nameToId.set(groupName, i2);
       idToName.set(i2, groupName);
+      idToCols.set(i2, rec.Columns);
       i2++;
     }
     const newIds = new Set(recs.map((x2) => x2.id));
-    const existing = items.getIds();
+    const existing = itemSet.getIds();
     const removed = existing.filter((x2) => !newIds.has(x2));
-    items.remove(removed);
+    itemSet.remove(removed);
     const newItems = u(recs).filter((r) => getFrom(r) && getTo(r)).map((r) => {
       const result = recToItem(r);
       return result;
     });
+    items(newItems);
     const changedItems = oldRecs.size > 0 ? newItems.filter((newOne) => {
       const old = oldRecs.get(newOne.id);
       const LEAVE = true, REMOVE = false;
@@ -44342,7 +44402,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const array2 = changedItems.toArray();
     oldRecs.clear();
     array2.forEach((x2) => oldRecs.set(x2.id, x2));
-    items.update(array2);
+    itemSet.update(array2);
   }
   var formatCurrency = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -44354,22 +44414,24 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   }
   var nameToId = /* @__PURE__ */ new Map();
   var idToName = /* @__PURE__ */ new Map();
+  var idToCols = /* @__PURE__ */ new Map();
   function calcGroup(rec) {
-    return rec.Columns.join("|");
+    return rec.Group.join("|");
   }
   function renderGroups() {
-    const existingGroups = groups.getIds();
+    const existingGroups = groupSet.getIds();
     const groupsToRemove = existingGroups.filter((id2) => !idToName.has(id2));
-    groups.remove(groupsToRemove);
-    groups.update(
+    groupSet.remove(groupsToRemove);
+    groupSet.update(
       Array.from(idToName.entries()).map((c2) => ({
         id: c2[0],
         content: c2[1],
         editable: true,
-        className: "group_" + c2[1]
+        className: "group_" + c2[1],
+        columns: idToCols.get(c2[0])
       }))
     );
-    timeline.setGroups(groups);
+    timeline.setGroups(groupSet);
   }
   show = showCampaings;
   var select = document.getElementById("locale");
@@ -44407,14 +44469,14 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
           timeline.setGroups(null);
         } catch (ex) {
         }
-        timeline.setGroups(groups);
+        timeline.setGroups(groupSet);
         timeline.redraw();
       } else {
         timeline.setOptions({
           cluster: false,
           stack: false
         });
-        timeline.setGroups(groups);
+        timeline.setGroups(groupSet);
         timeline.redraw();
       }
     }
@@ -44450,7 +44512,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         timeline.setOptions({
           cluster: false
         });
-        timeline.setGroups(groups);
+        timeline.setGroups(groupSet);
         timeline.redraw();
       }
     } else if (schema === "local") {
@@ -44495,8 +44557,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   async function main() {
   }
   main();
-  timeline.setGroups(groups);
-  var currentScale = observable("day");
+  timeline.setGroups(groupSet);
   document.addEventListener("DOMContentLoaded", function() {
     new VanillaContextMenu({
       scope: document.querySelector(".vis-panel.vis-left "),
@@ -44508,8 +44569,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
               [mappings().From]: (0, import_moment_timezone.default)().startOf("day").toDate(),
               [mappings().To]: (0, import_moment_timezone.default)().endOf("isoWeek").toDate()
             };
-            const { id: id2 } = await grist.selectedTable.create({ fields });
-            await grist.setCursorPos({ rowId: id2 });
+            await grist.setCursorPos({ rowId: "new" });
             await openCard();
           }
         },
@@ -44532,7 +44592,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         e.stopImmediatePropagation();
       }
     });
-    currentScale("week");
     timeline.setOptions({
       stack: false,
       timeAxis: {
@@ -44667,8 +44726,16 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
             clone2.To = (0, import_moment_timezone.default)(clone2.From).add(diff).toDate();
             const row = recToRow(clone2);
             delete row.id;
-            const fields = await liftFields(row);
-            await grist.selectedTable.create({ fields });
+            const element = (
+              /* div with item_x */
+              document.querySelector(
+                `.item_${selected[0]}`
+              )
+            );
+            await withElementSpinner(element, async () => {
+              const fields = await liftFields(row);
+              await grist.selectedTable.create({ fields });
+            });
           }
         }
       ]
@@ -44684,9 +44751,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     }
   });
   var lastMappings = "";
-  function updateHeader() {
+  function updateHeader(force) {
     const newMappings = JSON.stringify(mappings());
-    if (newMappings === lastMappings) {
+    if (newMappings === lastMappings && !force) {
       return;
     }
     lastMappings = newMappings;
@@ -44718,11 +44785,14 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       console.error("No first line found");
       return;
     }
-    const sizesFromFirstLine = Array.from(firstLine.children).map((el) => el.getBoundingClientRect().width).map(Math.ceil);
+    const sizesFromFirstLine = Array.from(firstLine.children).map(
+      (el) => el.getBoundingClientRect().width
+    );
     const templateColumns2 = sizesFromFirstLine.map((w2) => `${w2}px`).join(" ");
     groupHeader.style.setProperty("grid-template-columns", templateColumns2);
   }
   var lastTop = 0;
+  window.updateHeader = updateHeader;
   function anchorHeader() {
     const panel = document.querySelector(".vis-panel.vis-left");
     const header = document.getElementById("groupHeader");
@@ -44810,8 +44880,44 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       await openCard();
     }
   });
-  window.items = items;
-  window.groups = groups;
+  window.items = itemSet;
+  window.groups = groupSet;
+  async function withElementSpinner(element, callback) {
+    const spinner = document.createElement("sl-spinner");
+    element.appendChild(spinner);
+    try {
+      await callback();
+    } finally {
+      spinner.remove();
+    }
+  }
+  async function withIdSpinner(id2, callback) {
+    const element = document.querySelector(`.item_${id2}`);
+    const spinner = document.createElement("sl-spinner");
+    element.appendChild(spinner);
+    try {
+      await callback();
+    } finally {
+      spinner.remove();
+    }
+  }
+  window.onunhandledrejection = function(event2) {
+    console.error(event2);
+    showAlert("danger", event2.reason);
+  };
+  window.onerror = function(event2) {
+    console.error(event2);
+    const message = event2.message ?? event2;
+    showAlert("danger", message);
+  };
+  function showAlert(variant, message) {
+    const alert2 = document.querySelector(`sl-alert[variant="${variant}"]`);
+    const title = alert2.querySelector("#title");
+    const text = alert2.querySelector("#text");
+    title.innerText = "Error occured";
+    text.innerText = message;
+    alert2.toast();
+  }
 })();
 /*! Bundled license information:
 

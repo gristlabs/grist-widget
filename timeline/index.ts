@@ -9,17 +9,62 @@ declare global {
   var VanillaContextMenu: any;
 }
 
+
+// DOM element where the Timeline will be attached
+const container = document.getElementById('visualization')!;
+const itemSet = new DataSet([]);
+const groupSet = new DataSet<any>([]);
+const records = observable([]);
+const order = new Map();
+const editCard = observable(false);
+const zoomOnClick = observable(false);
+const currentScale = observable('day');
+const items = observable([]);
+
+// Two indexes to quickly find group name by id and vice versa.
+const byStart = new Map();
+const byEnd = new Map();
+
+function startKey(item, days: number = 0) {
+  const start = moment(item.start).add({days}).format('YYYY-MM-DD');
+  return `${item.group}-${start}`;
+}
+
+function endKey(item, days: number = 0) {
+  const end = moment(item.end).add({days}).format('YYYY-MM-DD');
+  return `${item.group}-${end}`;
+}
+
+items.subscribe(list => {
+  byStart.clear();
+  byEnd.clear();
+  for (const item of list) {
+    byStart.set(startKey(item), item);
+    byEnd.set(endKey(item), item);
+  }
+});
+
+
 grist.ready({
   allowSelectBy: true,
   requiredAccess: 'read table',
   columns: [
     {
+      name: 'Group',
+      allowMultiple: true,
+    },
+    {
       name: 'Columns',
       allowMultiple: true,
+      optional: true,
     },
     {
       name: 'Title',
       allowMultiple: true,
+      optional: true,
+    },
+    {
+      name: 'Readonly',
       optional: true,
     },
     {
@@ -31,13 +76,6 @@ grist.ready({
   ],
 });
 
-// DOM element where the Timeline will be attached
-const container = document.getElementById('visualization')!;
-
-// { id: 6, content: 'item 6', start: '2014-04-27', type: 'point' },
-
-const items = new DataSet([]);
-const groups = new DataSet<any>([]);
 
 // Configuration for the Timeline
 const options: TimelineOptions = {
@@ -49,7 +87,26 @@ const options: TimelineOptions = {
     if (parts.length === 1) {
       return parts[0];
     }
-    return `${parts[0]} (${parts[1] || 'no subject'})`;
+    const text = `${parts[0]} (${parts[1] || 'no subject'})`;
+    const div = document.createElement('div');
+    div.className = 'item-template';
+    const span = document.createElement('span');
+    span.innerText = text;
+    div.appendChild(span);
+
+    const someoneOnLeft = byEnd.get(startKey(item, -1));
+    const someoneOnRight = byStart.get(endKey(item, +1));
+
+    div.classList.add('item-template');
+    if (someoneOnLeft) {
+      div.classList.add('item-left');
+    }
+    if (someoneOnRight) {
+      div.classList.add('item-right');
+    }
+
+
+    return div;
   },
   async onRemove(item, callback) {
     if (confirm('Are you sure you want to delete this item?')) {
@@ -61,17 +118,23 @@ const options: TimelineOptions = {
     let { start, end } = item;
     const format = (date: Date) => moment(date).format('YYYY-MM-DD');
 
+    if (!confirm('Are you sure you want to move this item?')) {
+      callback(null);
+      return;
+    }
+
     // If end is at midnignt (0:00) it means we were extending or shrinking, in that case move 1 minute before.
     if (end.getHours() === 0 && end.getMinutes() === 0) {
       end = moment(end).subtract(1, 'minute').toDate();
     }
-
     const fields = {
       [mappings().From]: format(start),
       [mappings().To]: format(end),
     };
-    await grist.selectedTable.update({ id: item.id, fields });
-    callback(item);
+    await withIdSpinner(item.id, async () => {
+      callback(item);
+      await grist.selectedTable.update({ id: item.id, fields });
+    });
   },
   async onAdd(item, callback) {
     const group = idToName.get(item.group).split('|').map(formatValue);
@@ -81,7 +144,7 @@ const options: TimelineOptions = {
 
     const end = moment(defaultEnd(item.start)).format('YYYY-MM-DD');
     const values = [...group, start, end];
-    const columns = [...mappings().Columns, mappings().From, mappings().To];
+    const columns = [...mappings().Group, mappings().From, mappings().To];
     const rawFields = Object.fromEntries(zip(columns, values));
 
     const fields = await liftFields(rawFields);
@@ -111,12 +174,11 @@ const options: TimelineOptions = {
     const container = document.createElement('div');
 
     container.classList.add('group-template');
-    const parts = group.content.split('|');
-    const partsHtml = parts.map(part => {
+    const partsHtml = group.columns.map(col => {
       const div = document.createElement('div');
-      const value = formatValue(part);
-      if (typeof value === 'string') {
-        div.innerText = String(value) || '-';
+      const value = formatValue(col);
+      if (typeof value === 'string' || value === null) {
+        div.innerText = String(value ?? '') || '-';
       } else if (typeof value === 'number') {
         div.innerText = formatCurrency.format(value);
       } else if (typeof value === 'boolean') {
@@ -130,6 +192,15 @@ const options: TimelineOptions = {
     });
     container.append(...partsHtml);
 
+    container.addEventListener('click', function () {
+      // Find first item in that group.
+      const first = itemSet.get().find(i => i.group === group.id);
+      if (first) {
+        timeline.focus(first.id);
+      }
+
+    });
+
     // Return the container as the group's template
     return container;
   },
@@ -138,8 +209,6 @@ const options: TimelineOptions = {
     add: true,
     updateTime: true,
     updateGroup: false,
-    remove: true,
-    overrideItems: true,
   },
   showCurrentTime: true,
   showWeekScale: true,
@@ -185,21 +254,16 @@ const options: TimelineOptions = {
   },
 };
 
-
 let lastGroups = new Set();
 let lastRows = new Set();
-const records = observable([]);
-const order = new Map();
-const editCard = observable(false);
-const zoomOnClick = observable(false);
+
 (window as any).editCard = editCard;
 
 let show = () => {};
 let mappings = observable({}, { deep: true });
 
-
 // Create a Timeline
-const timeline = new Timeline(container, items, options);
+const timeline = new Timeline(container, itemSet, options);
 
 grist.onRecords((recs, maps) => {
   mappings(maps);
@@ -207,7 +271,7 @@ grist.onRecords((recs, maps) => {
   order.clear();
   recs.forEach((r, i) => order.set(r.id, i));
   show();
-  updateHeader();
+  updateHeader(true);
 });
 
 function getFrom(r: any) {
@@ -227,10 +291,15 @@ function recToItem(r) {
     type: 'range',
     group: undefined,
     className: 'item_' + r.id,
+    data: r,
+    editable: undefined as any,
   };
-  result.group = r.Columns.join('|');
+  result.group = r.Group.join('|');
   result.group = nameToId.get(result.group);
   result.content = r.Title.join('|');
+  if (r.Readonly) {
+    result.editable = false;
+  }
 
   return result;
 }
@@ -241,7 +310,7 @@ function itemToRec(item) {
   const titleValues = item.content?.split('|') ?? [];
 
   return {
-    Columns: groupValues,
+    Group: groupValues,
     Title: titleValues,
     From: item.start,
     To: item.end,
@@ -250,8 +319,8 @@ function itemToRec(item) {
 }
 
 function recToRow(rec) {
-  const groupValues = rec.Columns;
-  const columns = mappings().Columns;
+  const groupValues = rec.Group;
+  const columns = mappings().Group;
   const allColumns = [...columns, mappings().From, mappings().To];
   const newStart = moment(rec.From).add(1, 'day').toDate();
   const newEnd = moment(rec.To).add(1, 'week').subtract(-1).toDate();
@@ -372,19 +441,22 @@ function renderItems() {
     }
     nameToId.set(groupName, i);
     idToName.set(i, groupName);
+    idToCols.set(i, rec.Columns);
     i++;
   }
 
   const newIds = new Set(recs.map(x => x.id));
-  const existing = items.getIds();
+  const existing = itemSet.getIds();
   const removed = existing.filter(x => !newIds.has(x));
-  items.remove(removed);
+  itemSet.remove(removed);
   const newItems = from(recs as any[])
     .filter(r => getFrom(r) && getTo(r))
     .map(r => {
       const result = recToItem(r);
       return result;
     });
+  
+  items(newItems);
 
   const changedItems =
     oldRecs.size > 0
@@ -404,7 +476,7 @@ function renderItems() {
   oldRecs.clear();
   array.forEach(x => oldRecs.set(x.id, x));
 
-  items.update(array);
+  itemSet.update(array);
 }
 const formatCurrency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -416,26 +488,28 @@ function showCampaings() {
   renderGroups();
 }
 
-const nameToId = new Map();
-const idToName = new Map();
+const nameToId = new Map(); // keys to id
+const idToName = new Map(); // id to keys
+const idToCols = new Map(); // visible columns
 
 function calcGroup(rec: any) {
-  return rec.Columns.join('|');
+  return rec.Group.join('|');
 }
 
 function renderGroups() {
-  const existingGroups = groups.getIds();
+  const existingGroups = groupSet.getIds();
   const groupsToRemove = existingGroups.filter(id => !idToName.has(id));
-  groups.remove(groupsToRemove);
-  groups.update(
+  groupSet.remove(groupsToRemove);
+  groupSet.update(
     Array.from(idToName.entries()).map(c => ({
       id: c[0],
       content: c[1],
       editable: true,
       className: 'group_' + c[1],
+      columns: idToCols.get(c[0]),
     }))
   );
-  timeline.setGroups(groups);
+  timeline.setGroups(groupSet);
 }
 
 show = showCampaings;
@@ -498,14 +572,14 @@ const functions = {
       try {
         timeline.setGroups(null);
       } catch (ex) {}
-      timeline.setGroups(groups);
+      timeline.setGroups(groupSet);
       timeline.redraw();
     } else {
       timeline.setOptions({
         cluster: false,
         stack: false,
       });
-      timeline.setGroups(groups);
+      timeline.setGroups(groupSet);
       timeline.redraw();
     }
   },
@@ -543,10 +617,9 @@ function updateConfig(elementId: string, value: any) {
       timeline.setOptions({
         cluster: false,
       });
-      timeline.setGroups(groups);
+      timeline.setGroups(groupSet);
       timeline.redraw();
     }
-
   } else if (schema === 'local') {
     if (!(parent in window)) {
       console.error(`Local variable ${parent} not found in window`);
@@ -599,9 +672,8 @@ async function main() {
 }
 
 main();
-timeline.setGroups(groups);
+timeline.setGroups(groupSet);
 
-const currentScale = observable('day');
 
 document.addEventListener('DOMContentLoaded', function () {
   new VanillaContextMenu({
@@ -614,8 +686,8 @@ document.addEventListener('DOMContentLoaded', function () {
             [mappings().From]: moment().startOf('day').toDate(),
             [mappings().To]: moment().endOf('isoWeek').toDate(),
           };
-          const { id } = await grist.selectedTable.create({ fields });
-          await grist.setCursorPos({ rowId: id });
+          // const { id } = await grist.selectedTable.create({ fields });
+          await grist.setCursorPos({ rowId: 'new' });
           // Open the card.
           await openCard();
         },
@@ -644,7 +716,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // e.preventDefault();
   });
-  currentScale('week');
   // Set defaults.
   timeline.setOptions({
     stack: false,
@@ -809,7 +880,7 @@ document.addEventListener('DOMContentLoaded', function () {
       {
         label: 'Duplicate',
         callback: async () => {
-          const selected = timeline.getSelection();
+          const selected = timeline.getSelection() as number[];
           if (selected.length === 0) {
             return;
           }
@@ -829,9 +900,14 @@ document.addEventListener('DOMContentLoaded', function () {
           const row = recToRow(clone);
           delete row.id;
 
-          const fields = await liftFields(row);
+          const element = /* div with item_x */ document.querySelector(
+            `.item_${selected[0]}`
+          )!;
 
-          await grist.selectedTable.create({ fields });
+          await withElementSpinner(element, async () => {
+            const fields = await liftFields(row);
+            await grist.selectedTable.create({ fields });
+          });
         },
       },
     ],
@@ -853,16 +929,16 @@ grist.onOptions((options: any) => {
 
 let lastMappings = '';
 
-function updateHeader() {
+function updateHeader(force) {
   const newMappings = JSON.stringify(mappings());
-  if (newMappings === lastMappings) {
+  if (newMappings === lastMappings && !force) {
     return;
   }
   lastMappings = newMappings;
 
   // We have this element  <div class="group-header" id="groupHeader"></div>
 
-  // Maps has somegint like this { Columns: [ 'Campaign', 'Model', 'Reseller' ] }
+  // Maps has somegint like this { Group: [ 'Campaign', 'Model', 'Reseller' ] }
 
   // So generate elements and insert it into the groupHeader, so that it looks like this
   // Campaign | Model | Reseller
@@ -909,13 +985,15 @@ function updateHeader() {
     console.error('No first line found');
     return;
   }
-  const sizesFromFirstLine = Array.from(firstLine.children)
-    .map((el: Element) => el.getBoundingClientRect().width)
-    .map(Math.ceil);
+  const sizesFromFirstLine = Array.from(firstLine.children).map(
+    (el: Element) => el.getBoundingClientRect().width
+  );
   const templateColumns2 = sizesFromFirstLine.map(w => `${w}px`).join(' ');
   groupHeader.style.setProperty('grid-template-columns', templateColumns2);
 }
 let lastTop = 0;
+
+(window as any).updateHeader = updateHeader;
 
 function anchorHeader() {
   const panel = document.querySelector('.vis-panel.vis-left')!;
@@ -1035,5 +1113,51 @@ timeline.on('doubleClick', async function (props) {
   }
 });
 
-(window as any).items = items;
-(window as any).groups = groups;
+(window as any).items = itemSet;
+(window as any).groups = groupSet;
+
+
+async function withElementSpinner(element: Element, callback: () => Promise<void>) {
+  const spinner = document.createElement('sl-spinner');
+  element.appendChild(spinner);
+  try {
+    await callback();
+  } finally {
+    spinner.remove();
+  }
+}
+
+
+async function withIdSpinner(id: number, callback: () => Promise<void>) {
+  const element = document.querySelector(`.item_${id}`)!;
+  const spinner = document.createElement('sl-spinner');
+  element.appendChild(spinner);
+  try {
+    await callback();
+  } finally {
+    spinner.remove();
+  }
+}
+
+
+window.onunhandledrejection = function (event) {
+  console.error(event);
+
+  showAlert('danger', event.reason);
+};
+
+window.onerror = function (event) {
+  console.error(event);
+  const message = (event as any).message ?? event;
+  showAlert('danger', message);
+
+};
+
+function showAlert(variant: string, message: string) {
+  const alert = document.querySelector(`sl-alert[variant="${variant}"]`) as any;
+  const title = alert.querySelector('#title') as any;
+  const text = alert.querySelector('#text') as any;
+  title.innerText = "Error occured";
+  text.innerText = message;
+  alert.toast();
+}
