@@ -44049,6 +44049,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var zoomOnClick = observable(false);
   var currentScale = observable("day");
   var items = observable([]);
+  var groupSelected = observable(null);
   var byStart = /* @__PURE__ */ new Map();
   var byEnd = /* @__PURE__ */ new Map();
   function startKey(item, days = 0) {
@@ -44194,6 +44195,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         if (first) {
           timeline.focus(first.id);
         }
+        groupSelected(group);
       });
       return container2;
     },
@@ -44209,7 +44211,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     zoomKey: "ctrlKey",
     height: "100%",
     orientation: "top",
-    cluster: true,
     timeAxis: {
       scale: "day"
     },
@@ -44563,7 +44564,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       scope: document.querySelector(".vis-panel.vis-left "),
       menuItems: [
         {
-          label: "Add new campaign",
+          label: "Add new",
           callback: async () => {
             const fields = {
               [mappings().From]: (0, import_moment_timezone.default)().startOf("day").toDate(),
@@ -44573,7 +44574,25 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
             await openCard();
           }
         },
-        "hr"
+        "hr",
+        {
+          label: "More information",
+          callback: async (...args) => {
+            const drawer = document.querySelector(".drawer-overview");
+            const infor = drawer.querySelector(".drawer-info");
+            infor.innerHTML = ``;
+            debugger;
+            const selected = timeline.getSelection();
+            const item = itemSet.get(selected[0]);
+            const labels = mappings().Columns;
+            const values3 = item.data.Columns;
+            const obj = zip(labels, values3);
+            for (const [label, value] of obj) {
+              infor.innerHTML += `<div>${label}: ${value}</div>`;
+            }
+            drawer.show();
+          }
+        }
       ]
     });
     const fore = document.querySelector(

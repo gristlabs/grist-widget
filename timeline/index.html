@@ -154,6 +154,18 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       <option value="year">year</option>
     </select>
 
+    <sl-drawer label="Info" class="drawer-overview">
+      <div class="drawer-info">
+
+      </div>
+      <sl-button id="close-drawer" slot="footer" variant="success">Close</sl-button>
+    </sl-drawer>
+
+    <script>
+      const closeButton = document.querySelector('#close-drawer');
+      const drawer = document.querySelector('.drawer-overview');
+      closeButton.addEventListener('click', () => drawer.hide());
+    </script>
 
     <select class="conf-select config" id="timeline:stack">
       <option value="false" selected>overlap</option>
@@ -162,7 +174,7 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
 
     <sl-switch class="config" id="local:editCard" size="small">Edit card</sl-switch>
     <sl-switch class="config" id="local:zoomOnClick" size="small">Zoom on click</sl-switch>
-    <sl-switch class="config" id="timeline:cluster" checked="true" size="small">Cluster</sl-switch>
+    <sl-switch class="config" id="timeline:cluster" size="small">Cluster</sl-switch>
 
 
     <sl-icon-button id="focusButton" name="arrows-collapse-vertical" label="Settings" style="margin-left: auto"></sl-icon-button>

@@ -20,6 +20,7 @@ const editCard = observable(false);
 const zoomOnClick = observable(false);
 const currentScale = observable('day');
 const items = observable([]);
+const groupSelected = observable(null);
 
 // Two indexes to quickly find group name by id and vice versa.
 const byStart = new Map();
@@ -198,7 +199,7 @@ const options: TimelineOptions = {
       if (first) {
         timeline.focus(first.id);
       }
-
+      groupSelected(group);
     });
 
     // Return the container as the group's template
@@ -219,7 +220,6 @@ const options: TimelineOptions = {
   height: '100%',
 
   orientation: 'top',
-  cluster: true,
 
   timeAxis: {
     scale: 'day',
@@ -680,7 +680,7 @@ document.addEventListener('DOMContentLoaded', function () {
     scope: document.querySelector('.vis-panel.vis-left '),
     menuItems: [
       {
-        label: 'Add new campaign',
+        label: 'Add new',
         callback: async () => {
           const fields = {
             [mappings().From]: moment().startOf('day').toDate(),
@@ -693,6 +693,32 @@ document.addEventListener('DOMContentLoaded', function () {
         },
       },
       'hr',
+      {
+        label: 'More information',
+        callback: async (...args) => {
+          const drawer = document.querySelector('.drawer-overview') as any;
+          const infor = drawer.querySelector('.drawer-info') as any;
+          infor.innerHTML = ``;
+
+          debugger;
+
+          // Get selected item.
+          const selected = timeline.getSelection();
+          const item = itemSet.get(selected[0]);
+
+          const labels = mappings().Columns;
+          const values = item.data.Columns;
+          const obj = zip(labels, values);
+
+          for (const [label, value] of obj) {
+            infor.innerHTML += `<div>${label}: ${value}</div>`;
+          }
+
+
+
+          drawer.show();
+        },
+      },
     ],
   });
 
