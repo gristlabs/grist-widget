@@ -1,17 +1,17 @@
 {
-  "name": "@berhalak/js-fiddle",
+  "name": "@berhalak/custom-widget-builder",
   "description": "Editor for building widgets with HTML and JS inside Grist.",
-  "homePage": "https://github.com/gristlabs/grist-widget/tree/master/js-fiddle",
+  "homePage": "https://github.com/gristlabs/grist-widget/tree/master/custom-widget-builder",
   "version": "0.0.1",
   "grist": [
     {
       "name": "JS Fiddle",
-      "url": "https://gristlabs.github.io/grist-widget/js-fiddle/index.html",
-      "widgetId": "@berhalak/js-fiddle",
+      "url": "https://gristlabs.github.io/grist-widget/custom-widget-builder/index.html",
+      "widgetId": "@berhalak/custom-widget-builder",
       "published": true,
       "accessLevel": "read table",
       "renderAfterReady": true,
-      "description": "Editor for building widgets with HTML and JS inside Grist.",
+      "description": "Build custom widgets with HTML and JavaScript, right inside Grist.",
       "isGristLabsMaintained": false,
       "authors": [
         {
