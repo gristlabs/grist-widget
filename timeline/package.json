@@ -1,0 +1,14 @@
+{
+  "name": "@gristlabs/timeline",
+  "description": "Widget for visualizing data as an timeline",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Timeline",
+    "url": "timeline/index.html",
+    "widgetId": "@gristlabs/timeline",
+    "published": true,
+    "accessLevel": "full",
+    "renderAfterReady": true
+  }
+}
