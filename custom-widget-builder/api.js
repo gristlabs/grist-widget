@@ -37,7 +37,7 @@ const DEFAULT_HTML = `<html>
 <body>
   <div style="font-family: sans-serif; padding: 1em;">
     <h2>
-      Custom widget builder.
+      Custom widget builder
     </h2>
     <p>
       For instructions on how to use this widget, click the "Open configuration" button on the creator panel and select the "Help" tab.
