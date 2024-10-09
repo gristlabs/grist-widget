@@ -26,18 +26,26 @@ const currentJs = memory('js');
 const currentHtml = memory('html');
 const state = memory('state'); // null, 'installed', 'editor'
 
+const COLORS = {
+  green: '#16b378',
+}
+
 const DEFAULT_HTML = `<html>
 <head>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 </head>
 <body>
-  <pre>
-    To edit this widget press the "Open configuration" button on the creator panel.
-
-    After editing this widget, press the "Preview" button to see it live.
-
-    If you finish your work, press the "Save" button to remember your changes.
-  </pre>
+  <div style="font-family: sans-serif; padding: 1em;">
+    <h2>
+      Custom widget builder.
+    </h2>
+    <p>
+      For instructions on how to use this widget, click the "Open configuration" button on the creator panel and select the "Help" tab.
+    </p>
+    <p>
+      Remember: there is no autosaving! Always save changes before closing/refreshing the page.
+    </p>  
+  </div>
 </body>
 </html>
 `.trim();
@@ -150,6 +158,14 @@ const page_help = document.getElementById('page_help');
 const btnTabJs = document.getElementById('tab_js');
 const btnTabHtml = document.getElementById('tab_html');
 const btnTabHelp = document.getElementById('tab_help');
+const tabs = [btnTabJs, btnTabHtml, btnTabHelp];
+function resetTabs() {
+  // Remove .selected class from all tabs.
+  tabs.forEach(e => e.classList.remove('selected'));
+}
+function selectTab(tab) {
+  tab.classList.add('selected');
+}
 const btnReset = document.getElementById('btnReset');
 const btnInstall = document.getElementById('btnInstall');
 const bar = document.getElementById('_bar');
@@ -225,7 +241,7 @@ function init() {
 }
 
 function cleanUi() {
-  bntTabs.forEach(e => (e.style.background = 'unset'));
+  resetTabs();
   pages.forEach(e => (e.style.display = 'none'));
 }
 
@@ -233,14 +249,14 @@ function changeTab(lang) {
   if (lang === 'help') {
     cleanUi();
     page_help.style.display = 'block';
-    btnTabHelp.style.background = 'green';
+    selectTab(btnTabHelp);
     return;
   }
   cleanUi();
   page_editor.style.display = 'block';
   page_help.style.display = 'none';
   editor.setModel(lang === 'js' ? jsModel : htmlModel);
-  (lang == 'js' ? btnTabJs : btnTabHtml).style.background = 'green';
+  selectTab(lang == 'js' ? btnTabJs : btnTabHtml);
 }
 
 function installWidget(code, html) {
