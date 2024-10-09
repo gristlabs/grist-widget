@@ -41,3 +41,13 @@ Next start Grist with an URL pointing to a local widget manifest file:
 ```bash
 GRIST_WIDGET_LIST_URL=http://localhost:8585/manifest.json npm start
 ```
+
+
+Alternatively you can run the widget repository development server alongside with the Grist docker image preconfigured to use it:
+
+```bash
+yarn install
+yarn run grist:dev
+# or without watching
+yarn run grist:serve
+```
