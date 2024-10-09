@@ -700,11 +700,13 @@ document.addEventListener('DOMContentLoaded', function () {
           const infor = drawer.querySelector('.drawer-info') as any;
           infor.innerHTML = ``;
 
-          debugger;
 
           // Get selected item.
           const selected = timeline.getSelection();
           const item = itemSet.get(selected[0]);
+          if (!item) {
+            return;
+          }
 
           const labels = mappings().Columns;
           const values = item.data.Columns;

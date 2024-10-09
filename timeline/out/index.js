@@ -44581,9 +44581,11 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
             const drawer = document.querySelector(".drawer-overview");
             const infor = drawer.querySelector(".drawer-info");
             infor.innerHTML = ``;
-            debugger;
             const selected = timeline.getSelection();
             const item = itemSet.get(selected[0]);
+            if (!item) {
+              return;
+            }
             const labels = mappings().Columns;
             const values3 = item.data.Columns;
             const obj = zip(labels, values3);
