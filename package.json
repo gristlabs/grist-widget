@@ -14,8 +14,8 @@
     "pretest": "docker pull gristlabs/grist && tsc --build && node ./buildtools/publish.js manifest.json http://localhost:9998",
     "prepack": "node ./buildtools/bundle.js --name grist-bundled --unlisted",
     "grist": "docker run --add-host host.docker.internal:host-gateway --rm --env PORT=8484 --env GRIST_WIDGET_LIST_URL=http://host.docker.internal:8585/manifest.json -p 8484:8484 -v $PWD/_build/persist:/persist -it gristlabs/grist",
-    "grist:dev": "npm run dev & npm run grist && fg",
-    "grist:serve": "yarn && yarn build:dev && yarn serve & yarn grist && fg"
+    "grist:dev": "npm run dev & npm run grist",
+    "grist:serve": "yarn && npm run build:dev && npm run serve & npm run grist"
   },
   "devDependencies": {
     "@types/chai": "^4.3.5",

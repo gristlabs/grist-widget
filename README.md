@@ -48,7 +48,7 @@ Alternatively you can run the widget repository development server alongside wit
 yarn run grist:serve
 ```
 
-or run it with live preview:
+or run it in development mode with automatic reload:
 
 ```bash
 yarn install
