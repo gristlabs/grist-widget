@@ -178,12 +178,10 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
     </select>
 
     <sl-switch class="config" id="local:editCard" size="small">Edit card</sl-switch>
-    <sl-switch class="config" id="local:zoomOnClick" size="small">Zoom on click</sl-switch>
+    <sl-switch class="config" id="local:confirmChanges" size="small">Confirm changes</sl-switch>
     <sl-switch class="config" id="timeline:cluster" size="small">Cluster</sl-switch>
 
-
     <sl-icon-button id="focusButton" name="arrows-collapse-vertical" label="Settings" style="margin-left: auto"></sl-icon-button>
-
 
   </div>
 
@@ -319,6 +317,10 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       background-color: rgba(22, 179, 120, 0.15);
     }
 
+    .group-empty {
+      height: 32px;
+    }
+
     .vis-item:has(.item-right) {
       border-right: 0px;
       border-top-right-radius: 0px;
@@ -331,7 +333,7 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
     }
 
     .vis-item {
-      mix-blend-mode: difference;
+      /* mix-blend-mode: difference; */
     }
 
     .vis-item.vis-selected:active {
@@ -342,6 +344,36 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       background-color: #eeeeee;
       border-color: #777777;
       color: darkgray;
+    }
+
+    .vis-item:has(.item-clash), .vis-item.vis-selected:active:has(.item-clash) {
+      
+      /* danger style */
+
+      background-color: #f8d7da !important;
+      border-color: #f5c6cb !important;
+      color: #721c24 !important;
+      border-style: dashed;
+    }
+
+
+
+    .vis-item.vis-selected:has(.item-clash) {
+      transition: box-shadow 0.1s;
+      box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+
+      /* dagner styel but darker */
+      background-color: #f5eb5b !important;
+      border-color: #f5c6cb !important;
+      color: #721c24 !important;
+    }
+
+    .vis-item:has(.item-clash) {
+      /* dagner styel but darker */
+      background-color: #f5eb5b !important;
+      border-color: #f5c6cb !important;
+      color: #721c24 !important;
+      border-style: dashed;
     }
 
 
@@ -403,6 +435,13 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
     .vis-timeline-custom .vis-item {
       background-color: transparent;
     } */
+
+    .item-clash {
+      background-color: #f8d7da !important;
+      border-color: #f5c6cb !important;
+      color: #721c24 !important
+    }
+
   </style>
 
 

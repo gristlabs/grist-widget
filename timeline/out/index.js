@@ -44046,10 +44046,15 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var records = observable([]);
   var order = /* @__PURE__ */ new Map();
   var editCard = observable(false);
-  var zoomOnClick = observable(false);
+  var confirmChanges = observable(false);
   var currentScale = observable("day");
   var items = observable([]);
   var groupSelected = observable(null);
+  Object.assign(window, {
+    currentScale,
+    confirmChanges,
+    editCard
+  });
   var byStart = /* @__PURE__ */ new Map();
   var byEnd = /* @__PURE__ */ new Map();
   function startKey(item, days = 0) {
@@ -44100,8 +44105,44 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   });
   var options = {
     groupOrder: function(a, b2) {
+      if (a.id === 0) {
+        return 1;
+      }
+      if (b2.id === 0) {
+        return -1;
+      }
       return a.id - b2.id;
     },
+    // onMoving(item, callback) {
+    //   // Need to highlight if element clashes with any other element.
+    //   if (!item.element) {
+    //     return;
+    //   }
+    //   const all = items() as Item[];
+    //   const {start, end} = item;
+    //   item.element.classList.remove('item-clash');
+    //   let clashing = false;
+    //   for (const other of all) {
+    //     if (other.id === item.id) {
+    //       continue;
+    //     }
+    //     if (start >= other.data.To || end <= other.data.From) {
+    //       continue;
+    //     }
+    //     console.log(Math.random());
+    //     clashing = true;
+    //     break;
+    //   }
+    //   if (clashing) {
+    //     item.element.classList.add('item-clash');
+    //     console.log(item.element);
+    //     item.element.innerText = 'Clashing';
+    //   } else {
+    //     item.element.innerText = 'not clushing';
+    //   }
+    //   // By default we allow it, we are here only to highlight it.
+    //   callback(item);
+    // },
     template: function(item, element, data2) {
       const parts = data2.content.split("|");
       if (parts.length === 1) {
@@ -44122,10 +44163,27 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       if (someoneOnRight) {
         div.classList.add("item-right");
       }
+      const { start, end } = data2;
+      const all2 = items();
+      div.classList.remove("item-clash");
+      for (const other of all2) {
+        if (other.group !== item.group) {
+          continue;
+        }
+        if (other.id === item.id) {
+          continue;
+        }
+        if (start >= other.data.To || end <= other.data.From) {
+          continue;
+        }
+        div.classList.add("item-clash");
+        break;
+      }
+      item.element = div;
       return div;
     },
     async onRemove(item, callback) {
-      if (confirm("Are you sure you want to delete this item?")) {
+      if (!confirmChanges() || confirm("Are you sure you want to delete this item?")) {
         await grist.selectedTable.destroy(item.id);
         callback(null);
       }
@@ -44133,7 +44191,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     async onMove(item, callback) {
       let { start, end } = item;
       const format = (date2) => (0, import_moment_timezone.default)(date2).format("YYYY-MM-DD");
-      if (!confirm("Are you sure you want to move this item?")) {
+      if (confirmChanges() && !confirm("Are you sure you want to move this item?")) {
         callback(null);
         return;
       }
@@ -44157,7 +44215,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       const columns = [...mappings().Group, mappings().From, mappings().To];
       const rawFields = Object.fromEntries(zip(columns, values3));
       const fields = await liftFields(rawFields);
-      console.log(`Adding item with fields`, fields);
       const { id: id2 } = await grist.selectedTable.create({ fields });
       await grist.setCursorPos({ rowId: id2 });
       callback(null);
@@ -44173,9 +44230,17 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         remove: true
       },
       */
+    // onMoving(item, callback) {
+    //   const {id, start, end} = item;
+    //   // If this item clashes with any other item, mark it 
+    // },
     groupTemplate: function(group) {
       const container2 = document.createElement("div");
       container2.classList.add("group-template");
+      if (group.id === 0) {
+        container2.classList.add("group-empty");
+        return container2;
+      }
       const partsHtml = group.columns.map((col) => {
         const div = document.createElement("div");
         const value = formatValue(col);
@@ -44230,11 +44295,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     },
     snap: function(date2, scale, step) {
       const snappedDate = (0, import_moment_timezone.default)(date2);
-      if (scale === "week") {
-        snappedDate.startOf("isoWeek");
-      } else if (scale === "day") {
-        snappedDate.startOf("day");
-      }
+      snappedDate.startOf("day");
       return snappedDate.toDate();
     },
     margin: {
@@ -44244,7 +44305,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       // Adjusts the space between items and the axis
     }
   };
-  window.editCard = editCard;
   var show = () => {
   };
   var mappings = observable({}, { deep: true });
@@ -44424,15 +44484,21 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const existingGroups = groupSet.getIds();
     const groupsToRemove = existingGroups.filter((id2) => !idToName.has(id2));
     groupSet.remove(groupsToRemove);
-    groupSet.update(
-      Array.from(idToName.entries()).map((c2) => ({
-        id: c2[0],
-        content: c2[1],
-        editable: true,
-        className: "group_" + c2[1],
-        columns: idToCols.get(c2[0])
-      }))
-    );
+    const rawGroups = Array.from(idToName.entries()).map((c2) => ({
+      id: c2[0],
+      content: c2[1],
+      editable: true,
+      className: "group_" + c2[1],
+      columns: idToCols.get(c2[0])
+    }));
+    rawGroups.push({
+      id: 0,
+      content: "Unassigned",
+      editable: false,
+      className: "group_unassigned",
+      columns: []
+    });
+    groupSet.update(rawGroups);
     timeline.setGroups(groupSet);
   }
   show = showCampaings;
@@ -44446,7 +44512,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   function bindConfig() {
     const configElements = document.querySelectorAll(".config");
     for (const el of configElements) {
-      console.debug(`Binding config element: ${el}`);
       el.onchange = function() {
         const elementId = el.getAttribute("id");
         const value = el.value;
@@ -44560,6 +44625,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   }
   main();
   timeline.setGroups(groupSet);
+  var cursorBox = document.createElement("div");
   document.addEventListener("DOMContentLoaded", function() {
     new VanillaContextMenu({
       scope: document.querySelector(".vis-panel.vis-left "),
@@ -44643,11 +44709,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     });
     observer.observe(panel, { attributes: true });
     const foreground = document.querySelector(".vis-center .vis-foreground");
-    const selection = document.createElement("div");
-    selection.className = "cursor-selection";
-    foreground.appendChild(selection);
+    cursorBox.className = "cursor-selection";
+    foreground.appendChild(cursorBox);
     foreground.addEventListener("mouseleave", function() {
-      selection.style.display = "none";
+      cursorBox.style.display = "none";
     });
     timeline.on("select", function(properties) {
       if (properties.items.length === 0) {
@@ -44658,47 +44723,45 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     foreground.addEventListener("mousemove", function(e) {
       const x2 = e.clientX - foreground.getBoundingClientRect().left;
       const target = e.target;
-      if (target === selection) {
+      if (target === cursorBox) {
         return;
       }
       if (!target.classList.contains("vis-group")) {
-        selection.style.display = "none";
+        cursorBox.style.display = "none";
         return;
       }
-      selection.style.display = "block";
+      cursorBox.style.display = "block";
       const anotherDiv = document.querySelector(
         "div.vis-panel.vis-background.vis-vertical > div.vis-time-axis.vis-background"
       );
       const anotherDivPos = anotherDiv.getBoundingClientRect().left;
-      const children = Array.from(anotherDiv.children);
-      const weekFromElement = (el) => {
-        const classList = Array.from(el.classList);
-        const scale = currentScale();
-        const weekClass = classList.find((c2) => c2.startsWith("vis-" + scale));
-        if (!weekClass) {
-          return null;
-        }
-        const week = parseInt(weekClass.replace("vis-" + scale, ""), 10);
-        return week;
-      };
-      const grouped = u(children).groupBy((e2) => weekFromElement(e2)).toArray();
-      const leftPoints = grouped.map((group) => {
-        const left = group.first().getBoundingClientRect().left;
-        const width = group.reduce(
-          (acc, el) => acc + el.getBoundingClientRect().width,
-          0
-        );
-        const adjustedWidth = left - anotherDivPos;
-        return { left: adjustedWidth, width };
-      });
+      if (!leftPoints.length) {
+        const children = Array.from(anotherDiv.children);
+        const weekFromElement = (el) => {
+          const classList = Array.from(el.classList).filter((f2) => !["vis-even", "vis-odd", "vis-minor", "vis-major"].includes(f2));
+          return classList.join(" ");
+        };
+        const grouped = u(children).groupBy((e2) => weekFromElement(e2)).toArray();
+        const points = grouped.map((group) => {
+          const left = group.first().getBoundingClientRect().left;
+          const width = group.reduce(
+            (acc, el) => acc + el.getBoundingClientRect().width,
+            0
+          );
+          const adjustedWidth = left - anotherDivPos;
+          return { left: adjustedWidth, width };
+        });
+        leftPoints = points;
+      }
       const index = leftPoints.findLastIndex((c2) => c2.left < x2);
       const closest = leftPoints[index];
       const element = anotherDiv.children[index];
-      selection.style.left = `${closest.left}px`;
-      selection.style.width = `${closest.width}px`;
+      cursorBox.style.left = `${closest.left}px`;
+      cursorBox.style.width = `${closest.width}px`;
+      cursorBox.style.transform = "";
       try {
-        if (selection.parentElement !== target) {
-          target.prepend(selection);
+        if (cursorBox.parentElement !== target) {
+          target.prepend(cursorBox);
         }
       } catch (ex) {
       }
@@ -44725,7 +44788,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
               return;
             }
             setTimeout(async () => {
-              if (confirm("Are you sure you want to delete this item?")) {
+              if (!confirmChanges() || confirm("Are you sure you want to delete this item?")) {
                 await grist.selectedTable.destroy(selected[0]);
               }
             }, 10);
@@ -44941,6 +45004,35 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     text.innerText = message;
     alert2.toast();
   }
+  var leftPoints = [];
+  timeline.on("rangechange", ({ start, end, byUser, event: event2 }) => {
+    leftPoints = [];
+    if (!byUser) {
+      return;
+    }
+    if (!event2 || !event2.deltaX) {
+      return;
+    }
+    const deltaX = event2.deltaX;
+    cursorBox.style.transform = `translateX(${deltaX}px)`;
+    if (!byUser) {
+      return;
+    }
+  });
+  timeline.on("rangechanged", () => {
+    const transform = cursorBox.style.transform;
+    if (!transform) {
+      return;
+    }
+    const match2 = transform.match(/translateX\(([^)]+)\)/);
+    if (!match2) {
+      return;
+    }
+    const x2 = parseFloat(match2[1]);
+    const left = parseFloat(cursorBox.style.left);
+    cursorBox.style.left = `${left + x2}px`;
+    cursorBox.style.transform = "";
+  });
 })();
 /*! Bundled license information:
 

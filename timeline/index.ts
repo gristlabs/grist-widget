@@ -1,7 +1,7 @@
-import { from } from 'fromit';
+import {from} from 'fromit';
 import moment from 'moment-timezone';
 import 'moment/locale/en-gb';
-import { DataSet, Timeline, TimelineOptions } from 'vis-timeline/standalone';
+import {DataSet, Timeline, TimelineOptions} from 'vis-timeline/standalone';
 moment.locale('en-gb');
 
 declare global {
@@ -17,10 +17,31 @@ const groupSet = new DataSet<any>([]);
 const records = observable([]);
 const order = new Map();
 const editCard = observable(false);
-const zoomOnClick = observable(false);
+const confirmChanges = observable(false);
 const currentScale = observable('day');
 const items = observable([]);
 const groupSelected = observable(null);
+
+interface Item {
+  id: number;
+  content: string;
+  start: string;
+  end: string;
+  type: string;
+  group: number;
+  className: string;
+  data: any;
+  element: HTMLElement;
+  editable: boolean;
+}
+
+
+Object.assign((window as any), {
+  currentScale,
+  confirmChanges,
+  editCard,
+});
+
 
 // Two indexes to quickly find group name by id and vice versa.
 const byStart = new Map();
@@ -80,10 +101,55 @@ grist.ready({
 
 // Configuration for the Timeline
 const options: TimelineOptions = {
-  groupOrder: function (a, b) {
+  groupOrder: function(a, b) {
+    if (a.id === 0) {
+      // This is last group, so it should be last.
+      return 1;
+    }
+    if (b.id === 0) {
+      return -1;
+    }
     return a.id - b.id;
   },
-  template: function (item, element, data) {
+
+  // onMoving(item, callback) {
+  //   // Need to highlight if element clashes with any other element.
+
+
+  //   if (!item.element) {
+  //     return;
+  //   }
+
+  //   const all = items() as Item[];
+  //   const {start, end} = item;
+
+  //   item.element.classList.remove('item-clash');
+
+  //   let clashing = false;
+  //   for (const other of all) {
+  //     if (other.id === item.id) {
+  //       continue;
+  //     }
+  //     if (start >= other.data.To || end <= other.data.From) {
+  //       continue;
+  //     }
+  //     console.log(Math.random());
+  //     clashing = true;
+  //     break;
+  //   }
+  //   if (clashing) {
+  //     item.element.classList.add('item-clash');
+  //     console.log(item.element);
+  //     item.element.innerText = 'Clashing';
+  //   } else {
+  //     item.element.innerText = 'not clushing';
+  //   }
+
+  //   // By default we allow it, we are here only to highlight it.
+  //   callback(item);
+  // },
+
+  template: function(item, element, data) {
     const parts = data.content.split('|');
     if (parts.length === 1) {
       return parts[0];
@@ -107,19 +173,41 @@ const options: TimelineOptions = {
     }
 
 
+    // if this item clashes with any other item, mark it as clash (add class item-clash)
+    const {start, end} = data;
+
+    const all = items() as Item[];
+
+    div.classList.remove('item-clash');
+    for (const other of all) {
+      if (other.group !== item.group) {
+        continue;
+      }
+      if (other.id === item.id) {
+        continue;
+      }
+      if (start >= other.data.To || end <= other.data.From) {
+        continue;
+      }
+      div.classList.add('item-clash');
+      break;
+    }
+
+
+    item.element = div;
     return div;
   },
   async onRemove(item, callback) {
-    if (confirm('Are you sure you want to delete this item?')) {
+    if (!confirmChanges() || confirm('Are you sure you want to delete this item?')) {
       await grist.selectedTable.destroy(item.id);
       callback(null);
     }
   },
   async onMove(item, callback) {
-    let { start, end } = item;
+    let {start, end} = item;
     const format = (date: Date) => moment(date).format('YYYY-MM-DD');
 
-    if (!confirm('Are you sure you want to move this item?')) {
+    if (confirmChanges() && !confirm('Are you sure you want to move this item?')) {
       callback(null);
       return;
     }
@@ -134,7 +222,7 @@ const options: TimelineOptions = {
     };
     await withIdSpinner(item.id, async () => {
       callback(item);
-      await grist.selectedTable.update({ id: item.id, fields });
+      await grist.selectedTable.update({id: item.id, fields});
     });
   },
   async onAdd(item, callback) {
@@ -150,11 +238,10 @@ const options: TimelineOptions = {
 
     const fields = await liftFields(rawFields);
 
-    console.log(`Adding item with fields`, fields);
 
-    const { id } = await grist.selectedTable.create({ fields });
+    const {id} = await grist.selectedTable.create({fields});
 
-    await grist.setCursorPos({ rowId: id });
+    await grist.setCursorPos({rowId: id});
 
     callback(null);
   },
@@ -172,11 +259,24 @@ const options: TimelineOptions = {
   },
   */
 
-  groupTemplate: function (group) {
+  // onMoving(item, callback) {
+  //   const {id, start, end} = item;
+
+  //   // If this item clashes with any other item, mark it 
+  // },
+
+  groupTemplate: function(group) {
     // Create a container for the group
     const container = document.createElement('div');
 
     container.classList.add('group-template');
+
+    if (group.id === 0) {
+      container.classList.add('group-empty');
+      return container;
+    }
+
+
     const partsHtml = group.columns.map(col => {
       const div = document.createElement('div');
       const value = formatValue(col);
@@ -185,9 +285,8 @@ const options: TimelineOptions = {
       } else if (typeof value === 'number') {
         div.innerText = formatCurrency.format(value);
       } else if (typeof value === 'boolean') {
-        div.innerHTML = `<input type="checkbox" ${
-          value ? 'checked' : ''
-        } disabled>`;
+        div.innerHTML = `<input type="checkbox" ${value ? 'checked' : ''
+          } disabled>`;
       }
       div.classList.add('group-part');
       div.style.padding = '5px';
@@ -195,7 +294,7 @@ const options: TimelineOptions = {
     });
     container.append(...partsHtml);
 
-    container.addEventListener('click', function () {
+    container.addEventListener('click', function() {
       // Find first item in that group.
       const first = itemSet.get().find(i => i.group === group.id);
       if (first) {
@@ -234,18 +333,20 @@ const options: TimelineOptions = {
   },
   zoomMin: 1000 * 60 * 60 * 24 * 7 * 4, // about three months in milliseconds
   zoomMax: 1000 * 60 * 60 * 24 * 31 * 12, // about three months in milliseconds
-  moment: function (date) {
+  moment: function(date) {
     return moment(date); // Use moment with the 'en-gb' locale setting
   },
-  snap: function (date, scale, step) {
+  snap: function(date, scale, step) {
     const snappedDate = moment(date);
 
     // Adjust snapping to always align with Mondays
-    if (scale === 'week') {
-      snappedDate.startOf('isoWeek'); // Start of the ISO week, i.e., Monday
-    } else if (scale === 'day') {
-      snappedDate.startOf('day');
-    }
+    // if (scale === 'week') {
+    //   snappedDate.startOf('isoWeek'); // Start of the ISO week, i.e., Monday
+    // } else if (scale === 'day') {
+    //   snappedDate.startOf('day');
+    // }
+    snappedDate.startOf('day');
+
 
     return snappedDate.toDate();
   },
@@ -259,10 +360,9 @@ const options: TimelineOptions = {
 let lastGroups = new Set();
 let lastRows = new Set();
 
-(window as any).editCard = editCard;
 
 let show = () => {};
-let mappings = observable({}, { deep: true });
+let mappings = observable({}, {deep: true});
 
 // Create a Timeline
 const timeline = new Timeline(container, itemSet, options);
@@ -400,7 +500,7 @@ function observable(
   }
 ) {
   let listeners = [] as any[];
-  const obj = function (arg?: any) {
+  const obj = function(arg?: any) {
     if (arg === undefined) {
       return value;
     } else {
@@ -416,12 +516,12 @@ function observable(
     }
   };
 
-  obj.subscribe = function (clb: any) {
+  obj.subscribe = function(clb: any) {
     listeners.push(clb);
     return () => void listeners.splice(listeners.indexOf(clb), 1);
   };
 
-  obj.dispose = function () {
+  obj.dispose = function() {
     listeners = [];
   };
 
@@ -457,21 +557,21 @@ function renderItems() {
       const result = recToItem(r);
       return result;
     });
-  
+
   items(newItems);
 
   const changedItems =
     oldRecs.size > 0
       ? newItems.filter(newOne => {
-          const old = oldRecs.get(newOne.id);
-          const LEAVE = true,
-            REMOVE = false;
-          if (!old) {
-            return LEAVE;
-          }
-          const same = compareItems(old, newOne);
-          return same ? REMOVE : LEAVE;
-        })
+        const old = oldRecs.get(newOne.id);
+        const LEAVE = true,
+          REMOVE = false;
+        if (!old) {
+          return LEAVE;
+        }
+        const same = compareItems(old, newOne);
+        return same ? REMOVE : LEAVE;
+      })
       : newItems;
 
   const array = changedItems.toArray();
@@ -502,15 +602,23 @@ function renderGroups() {
   const existingGroups = groupSet.getIds();
   const groupsToRemove = existingGroups.filter(id => !idToName.has(id));
   groupSet.remove(groupsToRemove);
-  groupSet.update(
-    Array.from(idToName.entries()).map(c => ({
-      id: c[0],
-      content: c[1],
-      editable: true,
-      className: 'group_' + c[1],
-      columns: idToCols.get(c[0]),
-    }))
-  );
+  const rawGroups = Array.from(idToName.entries()).map(c => ({
+    id: c[0],
+    content: c[1],
+    editable: true,
+    className: 'group_' + c[1],
+    columns: idToCols.get(c[0]),
+  }));
+
+  rawGroups.push({
+    id: 0,
+    content: 'Unassigned',
+    editable: false,
+    className: 'group_unassigned',
+    columns: [],
+  })
+
+  groupSet.update(rawGroups);
   timeline.setGroups(groupSet);
 }
 
@@ -518,7 +626,7 @@ show = showCampaings;
 
 // update the locale when changing the select box value
 const select = document.getElementById('locale') as HTMLSelectElement;
-select.onchange = function () {
+select.onchange = function() {
   timeline.setOptions({
     locale: select.value as any,
   });
@@ -548,9 +656,8 @@ function bindConfig() {
   const configElements = document.querySelectorAll('.config');
 
   for (const el of configElements) {
-    console.debug(`Binding config element: ${el}`);
     // Subscribe to change event.
-    (el as HTMLSelectElement).onchange = function () {
+    (el as HTMLSelectElement).onchange = function() {
       const elementId = el.getAttribute('id')!;
       const value = (el as HTMLSelectElement).value;
       updateConfig(elementId, value);
@@ -677,7 +784,10 @@ main();
 timeline.setGroups(groupSet);
 
 
-document.addEventListener('DOMContentLoaded', function () {
+const cursorBox = document.createElement('div');
+
+
+document.addEventListener('DOMContentLoaded', function() {
   new VanillaContextMenu({
     scope: document.querySelector('.vis-panel.vis-left '),
     menuItems: [
@@ -688,8 +798,8 @@ document.addEventListener('DOMContentLoaded', function () {
             [mappings().From]: moment().startOf('day').toDate(),
             [mappings().To]: moment().endOf('isoWeek').toDate(),
           };
-          const { id } = await grist.selectedTable.create({ fields });
-          await grist.setCursorPos({ rowId: id });
+          const {id} = await grist.selectedTable.create({fields});
+          await grist.setCursorPos({rowId: id});
           // Open the card.
           await openCard();
         },
@@ -729,7 +839,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const fore = document.querySelector(
     '#visualization > div.vis-timeline.vis-bottom.vis-ltr > div.vis-panel.vis-center > div.vis-content > div > div.vis-foreground'
   );
-  fore?.addEventListener('contextmenu', function (e) {
+  fore?.addEventListener('contextmenu', function(e) {
     // If we clicked in the .vis-item.vis-range it is ok, else stopImmediatePropagation
     const item = (e.target as HTMLElement).closest('.vis-item.vis-range');
     if (item) {
@@ -755,7 +865,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   const button = document.getElementById('focusButton')!;
-  button.addEventListener('click', function () {
+  button.addEventListener('click', function() {
     timeline.fit();
   });
 
@@ -780,41 +890,40 @@ document.addEventListener('DOMContentLoaded', function () {
     const left = content.getBoundingClientRect().left;
     header.style.setProperty('left', `${left}px`);
   });
-  observer.observe(panel, { attributes: true });
+  observer.observe(panel, {attributes: true});
 
   const foreground = document.querySelector('.vis-center .vis-foreground')!;
 
-  const selection = document.createElement('div');
-  selection.className = 'cursor-selection';
-  foreground.appendChild(selection);
+  cursorBox.className = 'cursor-selection';
+  foreground.appendChild(cursorBox);
 
-  foreground.addEventListener('mouseleave', function () {
-    selection.style.display = 'none';
+  foreground.addEventListener('mouseleave', function() {
+    cursorBox.style.display = 'none';
   });
 
-  timeline.on('select', function (properties) {
+  timeline.on('select', function(properties) {
     if (properties.items.length === 0) {
       return;
     }
-    grist.setCursorPos({ rowId: properties.items[0] });
+    grist.setCursorPos({rowId: properties.items[0]});
   });
 
-  (foreground as any).addEventListener('mousemove', function (e: MouseEvent) {
+  (foreground as any).addEventListener('mousemove', function(e: MouseEvent) {
     // Get the x position in regards of the parent.
     const x = e.clientX - foreground.getBoundingClientRect().left;
 
     const target = e.target as HTMLElement;
 
-    if (target === selection) {
+    if (target === cursorBox) {
       return;
     }
 
     // Make sure target has vis-group class.
     if (!target.classList.contains('vis-group')) {
-      selection.style.display = 'none';
+      cursorBox.style.display = 'none';
       return;
     }
-    selection.style.display = 'block';
+    cursorBox.style.display = 'block';
 
     // Now get the element at that position but in another div.
     const anotherDiv = document.querySelector(
@@ -823,40 +932,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const anotherDivPos = anotherDiv.getBoundingClientRect().left;
 
-    const children = Array.from(anotherDiv.children);
+    if (!leftPoints.length) {
+      const children = Array.from(anotherDiv.children);
+      // Group by week number, element will have class like vis-week4
 
-    // Group by week number, element will have class like vis-week4
+      // Get current scale from timeline.
+      const weekFromElement = (el: Element) => {
+        const classList = Array.from(el.classList)
+          .filter(f => !['vis-even', 'vis-odd', 'vis-minor', 'vis-major'].includes(f))
+        return classList.join(' ');
+      };
 
-    // Get current scale from timeline.
+      // Group by class attribute.
+      const grouped = from(children)
+        .groupBy(e => weekFromElement(e))
+        .toArray();
 
-    const weekFromElement = (el: Element) => {
-      const classList = Array.from(el.classList);
+      // Map to { left: the left of the first element in group, width: total width of the group }
+      const points = grouped.map(group => {
+        const left = group.first().getBoundingClientRect().left;
+        const width = group.reduce(
+          (acc, el) => acc + el.getBoundingClientRect().width,
+          0
+        );
+        const adjustedWidth = left - anotherDivPos;
+        return {left: adjustedWidth, width};
+      });
 
-      const scale = currentScale();
-
-      const weekClass = classList.find(c => c.startsWith('vis-' + scale));
-      if (!weekClass) {
-        return null;
-      }
-      const week = parseInt(weekClass.replace('vis-' + scale, ''), 10);
-      return week;
-    };
-
-    // Group by class attribute.
-    const grouped = from(children)
-      .groupBy(e => weekFromElement(e))
-      .toArray();
-
-    // Map to { left: the left of the first element in group, width: total width of the group }
-    const leftPoints = grouped.map(group => {
-      const left = group.first().getBoundingClientRect().left;
-      const width = group.reduce(
-        (acc, el) => acc + el.getBoundingClientRect().width,
-        0
-      );
-      const adjustedWidth = left - anotherDivPos;
-      return { left: adjustedWidth, width };
-    });
+      leftPoints = points;
+    }
 
     // Find the one that is closest to the x position, so the first after.
     const index = leftPoints.findLastIndex(c => c.left < x);
@@ -868,12 +972,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const element = anotherDiv.children[index];
 
     // Now reposition selection.
-    selection.style.left = `${closest.left}px`;
-    selection.style.width = `${closest.width}px`;
+    cursorBox.style.left = `${closest.left}px`;
+    cursorBox.style.width = `${closest.width}px`;
+    cursorBox.style.transform = '';
+
 
     try {
-      if (selection.parentElement !== target) {
-        target.prepend(selection);
+      if (cursorBox.parentElement !== target) {
+        target.prepend(cursorBox);
       }
     } catch (ex) {}
   });
@@ -889,7 +995,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (selected.length === 0) {
             return;
           }
-          await grist.setCursorPos({ rowId: selected[0] });
+          await grist.setCursorPos({rowId: selected[0]});
           await openCard();
         },
       },
@@ -901,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
           }
           setTimeout(async () => {
-            if (confirm('Are you sure you want to delete this item?')) {
+            if (!confirmChanges() || confirm('Are you sure you want to delete this item?')) {
               await grist.selectedTable.destroy(selected[0]);
             }
           }, 10);
@@ -936,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
           await withElementSpinner(element, async () => {
             const fields = await liftFields(row);
-            await grist.selectedTable.create({ fields });
+            await grist.selectedTable.create({fields});
           });
         },
       },
@@ -1128,7 +1234,7 @@ async function liftFields(fields: any) {
       const visibleColValues = table[visibleColId];
       const rowIndex = visibleColValues.indexOf(fields[colId]);
       const rowId = table.id[rowIndex];
-      clone ??= { ...fields };
+      clone ??= {...fields};
       clone[colId] = rowId;
     }
   }
@@ -1136,8 +1242,8 @@ async function liftFields(fields: any) {
   return clone ?? fields;
 }
 
-timeline.on('doubleClick', async function (props) {
-  const { item, event } = props;
+timeline.on('doubleClick', async function(props) {
+  const {item, event} = props;
   if (event?.type === 'dblclick' && item) {
     await openCard();
   }
@@ -1170,13 +1276,13 @@ async function withIdSpinner(id: number, callback: () => Promise<void>) {
 }
 
 
-window.onunhandledrejection = function (event) {
+window.onunhandledrejection = function(event) {
   console.error(event);
 
   showAlert('danger', event.reason);
 };
 
-window.onerror = function (event) {
+window.onerror = function(event) {
   console.error(event);
   const message = (event as any).message ?? event;
   showAlert('danger', message);
@@ -1191,3 +1297,41 @@ function showAlert(variant: string, message: string) {
   text.innerText = message;
   alert.toast();
 }
+
+const spy = (name: string) => timeline.on(name, (...args: any[]) => console.log(name, ...args));
+
+let leftPoints = [] as {left: number; width: number}[];
+
+timeline.on('rangechange', ({start, end, byUser, event}) => {
+  leftPoints = [];
+
+  if (!byUser) {
+    return;
+  }
+  if (!event || !event.deltaX) {
+    return;
+  }
+  const deltaX = event.deltaX;
+  cursorBox.style.transform = `translateX(${deltaX}px)`;
+  if (!byUser) {
+    return;
+  }
+});
+
+timeline.on('rangechanged', () => {
+  // Try to parse transform, and get the x value.
+  const transform = cursorBox.style.transform;
+  if (!transform) {
+    return;
+  }
+  const match = transform.match(/translateX\(([^)]+)\)/);
+  if (!match) {
+    return;
+  }
+  const x = parseFloat(match[1]);
+
+  // Update left property of the cursorBox, by adding the delta.
+  const left = parseFloat(cursorBox.style.left);
+  cursorBox.style.left = `${left + x}px`;
+  cursorBox.style.transform = '';
+})
