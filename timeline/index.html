@@ -1,0 +1,448 @@
+<body>
+
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/themes/light.css" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/shoelace.js"></script>
+  <script src="https://unpkg.com/vanilla-context-menu@1.4.1/dist/vanilla-context-menu.js"></script>
+
+  <!--
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
+  <script
+    type="text/javascript"
+    src="https://unpkg.com/vis-timeline@latest/peer/umd/vis-timeline-graph2d.min.js"
+  ></script>
+  <script type="text/javascript" src="https://unpkg.com/vis-data@latest/peer/umd/vis-data.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/vis-timeline/styles/vis-timeline-graph2d.min.css" />
+  
+  -->
+  <style type="text/css">
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      font-size: 13px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Liberation Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      background-color: var(--grist-theme-page-panels-main-panel-bg, #f7f7f7);
+      color: var(--grist-theme-text, black);
+      height: 100%;
+    }
+
+    div {
+      scrollbar-width: thin;
+    }
+
+    :root {
+      --buttons-height: 0px;
+      --status-height: 24px;
+    }
+
+    #visualization {
+      width: 100%;
+      height: calc(100% - var(--buttons-height) - var(--status-height));
+      margin-top: var(--buttons-height);
+    }
+
+    #status-bar {
+      height: var(--status-height);
+      border-top: 1px solid #d3d3d3;
+      display: flex;
+      align-items: center;
+      padding-right: 8px;
+      min-height: 0px;
+      max-height: var(--status-height);
+      overflow: hidden;
+      gap: 4px;
+    }
+
+    select.config {
+      border-color: rgb(217, 217, 217);
+    }
+
+    body,
+    html {
+      padding: 0px;
+      margin: 0px;
+    }
+
+    #buttons {
+      position: absolute;
+      background-color: var(--grist-theme-page-panels-main-panel-bg, white);
+      overflow: hidden;
+
+      border-bottom: 1px solid #d3d3d3;
+      top: 0px;
+      left: 0px;
+      z-index: 10;
+      display: flex;
+      height: var(--buttons-height);
+      gap: 4px;
+      justify-content: flex-end;
+      align-items: center;
+      width: 100%;
+      padding-right: 8px;
+    }
+
+    .btn {
+      font-size: x-small;
+    }
+
+    .selected {
+      --background-color: #007bff;
+    }
+
+    .group-template {
+      border-bottom: 1px solid #d3d3d3;
+
+    }
+
+    .vertical-bar {
+      /* vertical bar that splits columns */
+      width: 1px;
+      background-color: #d3d3d3;
+    }
+
+    .group-header {
+      background-color: var(--grist-theme-table-header-bg, #f7f7f7);
+      position: absolute;
+      top: calc(46px - 1.9em);
+      left: 0px;
+      overflow: hidden;
+      display: grid;
+      grid-auto-flow: column;
+      border-top: 1px solid var(--grist-theme-table-header-border, #d3d3d3);;
+      font-weight: 600;
+    }
+    
+    .item-template {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+  </style>
+
+
+  <div id="visualization">
+
+    <div class="group-header" id="groupHeader">
+    </div>
+  </div>
+
+  <div id="buttons" style="text-align: right; display: none;">
+    <button class="btn" style="min-width: 60px" id="btnAll">All</button>
+    <button class="btn" id="btnAlCampaign">Campaign</button>
+    <button class="btn" id="btnModel">Model</button>
+    <button class="btn" id="btnReseller">Reseller </button>
+    <label for="locale">Select a locale:</label>
+    <select id="locale">
+      <option value="en">en</option>
+      <option value="fr">fr</option>
+      <option value="en-UK">UK</option>
+      <option value="nl">nl</option>
+      <option value="de" selected>de</option>
+    </select>
+  </div>
+
+  <div id="status-bar">
+
+    <!-- <input type="range" id="range" min="0" max="100" value="0" style="width: 100px; margin-right: 8px;"> -->
+
+    <!--
+Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 'second', 'minute', 'hour', 'weekday', 'week', 'day', 'month', 'year'. Example usage:
+-->
+
+    <select class="conf-select config" id="timeline:timeAxis.scale">
+      <option value="day" selected>day</option>
+      <option value="week">week</option>
+      <option value="month">month</option>
+      <option value="year">year</option>
+    </select>
+
+    <sl-drawer label="Info" class="drawer-overview">
+      <div class="drawer-info">
+
+      </div>
+      <sl-button id="close-drawer" slot="footer" variant="success">Close</sl-button>
+    </sl-drawer>
+
+    <script>
+      const closeButton = document.querySelector('#close-drawer');
+      const drawer = document.querySelector('.drawer-overview');
+      closeButton.addEventListener('click', () => drawer.hide());
+    </script>
+
+    <select class="conf-select config" id="timeline:stack">
+      <option value="false" selected>overlap</option>
+      <option value="true">stack</option>
+    </select>
+
+    <sl-switch class="config" id="local:editCard" size="small">Edit card</sl-switch>
+    <sl-switch class="config" id="local:confirmChanges" size="small">Confirm changes</sl-switch>
+    <sl-switch class="config" id="timeline:cluster" size="small">Cluster</sl-switch>
+
+    <sl-icon-button id="focusButton" name="arrows-collapse-vertical" label="Settings" style="margin-left: auto"></sl-icon-button>
+
+  </div>
+
+  <script src="out/index.js"></script>
+
+
+
+  <sl-alert variant="danger" duration="10000" closable>
+    <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
+    <strong id="title">Your account has been deleted</strong><br />
+    <div id="text"></div>
+  </sl-alert>
+
+
+
+  <style type="text/css">
+    .conf-select {
+      font-size: 11px;
+      margin: 1px;
+      border-radius: 3px;
+    }
+
+    .vis-timeline {
+      border: none;
+    }
+
+
+    .vis-grid.vis-odd {
+      background: var(--grist-theme-page-panels-main-panel-bg, white);
+    }
+
+    .vis-grid.vis-even {
+      background: var(--grist-theme-page-panels-left-panel-bg, red);
+    }
+
+    .vis-labelset .vis-label {
+      color: var(--grist-theme-text, black) !important;
+    }
+
+    .vis-item {
+      border-width: 1px;
+      border-radius: 0px;
+      background-color: var(--grist-theme-page-panels-main-panel-bg, white);
+      border-color: #16b378;
+      color: #16b378;
+      cursor: pointer;
+    }
+
+    .vis-item:hover {
+      border-color: #009058;
+      color: #009058;
+    }
+
+    .vis-item.vis-selected {
+      background-color: #16b378;
+      border-color: #009058;
+      color: white;
+    }
+
+    .grist_row {
+      user-select: all;
+      display: flex;
+      gap: 4px;
+    }
+
+    .grist_row input {
+      user-select: all;
+      border: 1px solid #d3d3d3;
+      border-radius: 4px;
+      z-index: 200;
+      outline-color: #16b378;
+    }
+
+    .vis-labelset .vis-label .vis-inner {
+      padding: 0px;
+    }
+
+    .vis-labelset {
+      display: grid;
+      grid-template-columns: var(--group-columns, repeat(12, max-content));
+      min-width: var(--group-header-width, 100px);
+    }
+
+    .vis-labelset>div,
+    .vis-labelset>div>div,
+    .vis-labelset>div>div>div {
+      display: grid !important;
+      grid-column: 1/-1;
+      grid-template-columns: subgrid;
+    }
+
+    .group-part {
+      padding: 5px;
+      border-right: 1px solid #d3d3d3;
+    }
+
+    .group-part:last-child {
+      border-right: none;
+    }
+
+    .vis-time-axis .vis-text {
+      color: var(--grist-theme-text, black);
+    }
+
+    .vis-time-axis .vis-text {
+      padding: 6px 6px;
+    }
+
+    .vis-labelset .vis-label {
+      border-bottom: 0px solid #bfbfbf;
+    }
+
+    .vis-foreground .vis-group:last-child {
+      border-bottom: 1px solid #bfbfbf;
+    }
+
+    .cursor-selection {
+      background-color: rgba(22, 179, 120, 0.15);
+      position: absolute;
+      top: 0px;
+      height: 100%;
+    }
+
+    .vis-item sl-spinner {
+      position: absolute;
+      top: 6px;
+      right: 5px;
+      --indicator-color: white;
+      --track-color: gray;
+    }
+
+    .group-template:hover {
+      background-color: rgba(22, 179, 120, 0.15);
+    }
+
+    .group-empty {
+      height: 32px;
+    }
+
+    .vis-item:has(.item-right) {
+      border-right: 0px;
+      border-top-right-radius: 0px;
+      border-bottom-right-radius: 0px;
+    }
+
+    .vis-item:has(.item-left) {
+      border-top-left-radius: 0px;
+      border-bottom-left-radius: 0px;
+    }
+
+    .vis-item {
+      /* mix-blend-mode: difference; */
+    }
+
+    .vis-item.vis-selected:active {
+      background-color: #0f8558;
+    }
+
+    .vis-item.vis-readonly {
+      background-color: #eeeeee;
+      border-color: #777777;
+      color: darkgray;
+    }
+
+    .vis-item:has(.item-clash), .vis-item.vis-selected:active:has(.item-clash) {
+      
+      /* danger style */
+
+      background-color: #f8d7da !important;
+      border-color: #f5c6cb !important;
+      color: #721c24 !important;
+      border-style: dashed;
+    }
+
+
+
+    .vis-item.vis-selected:has(.item-clash) {
+      transition: box-shadow 0.1s;
+      box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+
+      /* dagner styel but darker */
+      background-color: #f5eb5b !important;
+      border-color: #f5c6cb !important;
+      color: #721c24 !important;
+    }
+
+    .vis-item:has(.item-clash) {
+      /* dagner styel but darker */
+      background-color: #f5eb5b !important;
+      border-color: #f5c6cb !important;
+      color: #721c24 !important;
+      border-style: dashed;
+    }
+
+
+    /* 
+
+
+
+    .vis-timeline {
+      border-color: var(--bs-border-color) !important;
+    }
+
+    .vis-timeline .vis-labelset .vis-label {
+      color: var(--bs-gray-900)
+    }
+
+    .vis-timeline .vis-foreground .vis-group {}
+
+    .vis-timeline .vis-item {
+      color: var(--bs-gray-700);
+      border-color: var(--bs-primary);
+      background-color: var(--bs-gray-100);
+    }
+
+    .vis-timeline .vis-item.vis-selected {
+      background-color: var(--bs-warning-light);
+      color: var(--bs-gray-700);
+      border-color: var(--bs-warning)
+    }
+
+    .vis-timeline .vis-time-axis .vis-text {
+      color: var(--bs-gray-400)
+    }
+
+    .vis-timeline .vis-time-axis .vis-grid.vis-minor {
+      border-left-color: var(--bs-border-dashed-color) !important
+    }
+
+    .vis-timeline .vis-time-axis .vis-grid.vis-vertical {
+      border-left-style: dashed !important
+    }
+
+    .vis-timeline .vis-panel .vis-shadow {
+      box-shadow: none !important
+    }
+
+    .vis-timeline .vis-panel.vis-bottom,
+    .vis-timeline .vis-panel.vis-center,
+    .vis-timeline .vis-panel.vis-left,
+    .vis-timeline .vis-panel.vis-right,
+    .vis-timeline .vis-panel.vis-top {
+      border-color: var(--bs-border-color) !important
+    }
+
+    .vis-timeline .vis-current-time {
+      background-color: var(--bs-success)
+    }
+
+
+    .vis-timeline-custom .vis-item {
+      background-color: transparent;
+    } */
+
+    .item-clash {
+      background-color: #f8d7da !important;
+      border-color: #f5c6cb !important;
+      color: #721c24 !important
+    }
+
+  </style>
+
+
+</body>
