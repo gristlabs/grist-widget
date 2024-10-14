@@ -150,6 +150,8 @@ const options: TimelineOptions = {
 
     const fields = await liftFields(rawFields);
 
+    console.log(`Adding item with fields`, fields);
+
     const { id } = await grist.selectedTable.create({ fields });
 
     await grist.setCursorPos({ rowId: id });
@@ -687,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function () {
             [mappings().To]: moment().endOf('isoWeek').toDate(),
           };
           // const { id } = await grist.selectedTable.create({ fields });
-          await grist.setCursorPos({ rowId: 'new' });
+          await grist.setCursorPos({ rowId: 0 });
           // Open the card.
           await openCard();
         },

@@ -44157,6 +44157,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       const columns = [...mappings().Group, mappings().From, mappings().To];
       const rawFields = Object.fromEntries(zip(columns, values3));
       const fields = await liftFields(rawFields);
+      console.log(`Adding item with fields`, fields);
       const { id: id2 } = await grist.selectedTable.create({ fields });
       await grist.setCursorPos({ rowId: id2 });
       callback(null);
@@ -44570,7 +44571,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
               [mappings().From]: (0, import_moment_timezone.default)().startOf("day").toDate(),
               [mappings().To]: (0, import_moment_timezone.default)().endOf("isoWeek").toDate()
             };
-            await grist.setCursorPos({ rowId: "new" });
+            await grist.setCursorPos({ rowId: 0 });
             await openCard();
           }
         },
