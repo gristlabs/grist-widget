@@ -44571,7 +44571,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
               [mappings().From]: (0, import_moment_timezone.default)().startOf("day").toDate(),
               [mappings().To]: (0, import_moment_timezone.default)().endOf("isoWeek").toDate()
             };
-            await grist.setCursorPos({ rowId: 0 });
+            const { id: id2 } = await grist.selectedTable.create({ fields });
+            await grist.setCursorPos({ rowId: id2 });
             await openCard();
           }
         },

@@ -688,8 +688,8 @@ document.addEventListener('DOMContentLoaded', function () {
             [mappings().From]: moment().startOf('day').toDate(),
             [mappings().To]: moment().endOf('isoWeek').toDate(),
           };
-          // const { id } = await grist.selectedTable.create({ fields });
-          await grist.setCursorPos({ rowId: 0 });
+          const { id } = await grist.selectedTable.create({ fields });
+          await grist.setCursorPos({ rowId: id });
           // Open the card.
           await openCard();
         },
