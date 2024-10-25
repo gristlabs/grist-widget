@@ -49062,6 +49062,12 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     },
     async onMove(item, callback) {
       let { start, end } = item;
+      if (!end || !start) {
+        return;
+      }
+      if (!(end instanceof Date) || !(start instanceof Date)) {
+        return;
+      }
       const format = (date2) => (0, import_moment_timezone.default)(date2).format("YYYY-MM-DD");
       if (confirmChanges() && !confirm("Are you sure you want to move this item?")) {
         callback(null);
@@ -49082,6 +49088,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     async onAdd(item, callback) {
       const group = idToName.get(item.group).split("|").map(formatValue);
       const start = (0, import_moment_timezone.default)(item.start).format("YYYY-MM-DD");
+      if (!(item.end instanceof Date) || !(item.start instanceof Date)) {
+        return;
+      }
       const end = (0, import_moment_timezone.default)(defaultEnd(item.start)).format("YYYY-MM-DD");
       const values3 = [...group, start, end];
       const columns = [...mappings().Group, mappings().From, mappings().To];
@@ -49318,7 +49327,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       const result = recToItem(r7);
       return result;
     });
-    items(newItems);
+    items(newItems.toArray());
     const changedItems = oldRecs.size > 0 ? newItems.filter((newOne) => {
       const old = oldRecs.get(newOne.id);
       const LEAVE = true, REMOVE = false;
@@ -49389,7 +49398,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     ["timeline:cluster"](value) {
       if (value) {
         timeline.setOptions({
-          cluster: true,
+          cluster: false,
           stack: false
         });
         try {
