@@ -371,7 +371,10 @@ const options: TimelineOptions = {
     return snappedDate.toDate();
   },
 
-  margin: 0
+  margin: {
+    item: 3,
+    axis: 1
+  }
 };
 
 

@@ -49558,7 +49558,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       snappedDate.startOf("day");
       return snappedDate.toDate();
     },
-    margin: 0
+    margin: {
+      item: 3,
+      axis: 1
+    }
   };
   var show = () => {
   };
