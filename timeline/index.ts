@@ -81,13 +81,8 @@ grist.ready({
   requiredAccess: 'read table',
   columns: [
     {
-      name: 'Group',
-      allowMultiple: true,
-    },
-    {
       name: 'Columns',
       allowMultiple: true,
-      optional: true,
     },
     {
       name: 'Title',
@@ -120,43 +115,6 @@ const options: TimelineOptions = {
     }
     return a.id - b.id;
   },
-
-  // onMoving(item, callback) {
-  //   // Need to highlight if element clashes with any other element.
-
-
-  //   if (!item.element) {
-  //     return;
-  //   }
-
-  //   const all = items() as Item[];
-  //   const {start, end} = item;
-
-  //   item.element.classList.remove('item-clash');
-
-  //   let clashing = false;
-  //   for (const other of all) {
-  //     if (other.id === item.id) {
-  //       continue;
-  //     }
-  //     if (start >= other.data.To || end <= other.data.From) {
-  //       continue;
-  //     }
-  //     console.log(Math.random());
-  //     clashing = true;
-  //     break;
-  //   }
-  //   if (clashing) {
-  //     item.element.classList.add('item-clash');
-  //     console.log(item.element);
-  //     item.element.innerText = 'Clashing';
-  //   } else {
-  //     item.element.innerText = 'not clushing';
-  //   }
-
-  //   // By default we allow it, we are here only to highlight it.
-  //   callback(item);
-  // },
 
   template: function(item, element, data) {
     const parts = data.content.split('|');
@@ -248,7 +206,7 @@ const options: TimelineOptions = {
 
     const end = moment(defaultEnd(item.start)).format('YYYY-MM-DD');
     const values = [...group, start, end];
-    const columns = [...mappings().Group, mappings().From, mappings().To];
+    const columns = [...mappings().Columns, mappings().From, mappings().To];
     const rawFields = Object.fromEntries(zip(columns, values));
 
     const fields = await liftFields(rawFields);
@@ -411,7 +369,7 @@ function recToItem(r) {
     data: r,
     editable: undefined as any,
   };
-  result.group = r.Group.join('|');
+  result.group = r.Columns.join('|');
   result.group = nameToId.get(result.group);
   result.content = (r.Title ?? ['no title']).join('|');
   if (r.Readonly) {
@@ -423,8 +381,8 @@ function recToItem(r) {
 
 
 function recToRow(rec) {
-  const groupValues = rec.Group;
-  const columns = mappings().Group;
+  const groupValues = rec.Columns;
+  const columns = mappings().Columns;
   const allColumns = [...columns, mappings().From, mappings().To];
   const newStart = moment(rec.From).add(1, 'day').toDate();
   const newEnd = moment(rec.To).add(1, 'week').subtract(-1).toDate();
@@ -591,7 +549,7 @@ const idToName = new Map(); // id to keys
 const idToCols = new Map(); // visible columns
 
 function calcGroup(rec: any) {
-  return rec.Group.join('|');
+  return rec.Columns.join('|');
 }
 
 function renderGroups() {
