@@ -19239,8 +19239,8 @@
     }, {
       key: "_makeDropdown",
       value: function _makeDropdown(arr, value, path2) {
-        var select2 = document.createElement("select");
-        select2.className = "vis-configuration vis-config-select";
+        var select = document.createElement("select");
+        select.className = "vis-configuration vis-config-select";
         var selectedValue = 0;
         if (value !== void 0) {
           if (_indexOfInstanceProperty(arr).call(arr, value) !== -1) {
@@ -19254,14 +19254,14 @@
             _option2.selected = "selected";
           }
           _option2.innerText = arr[i8];
-          select2.appendChild(_option2);
+          select.appendChild(_option2);
         }
         var me = this;
-        select2.onchange = function() {
+        select.onchange = function() {
           me._update(this.value, path2);
         };
         var label = this._makeLabel(path2[path2.length - 1], path2);
-        this._makeItem(path2, label, select2);
+        this._makeItem(path2, label, select);
       }
       /**
        * make a range object for numeric options
@@ -32626,7 +32626,7 @@
     }
     _createClass(Item2, [{
       key: "select",
-      value: function select2() {
+      value: function select() {
         if (this.selectable) {
           this.selected = true;
           this.dirty = true;
@@ -40242,8 +40242,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     }, {
       key: "_makeDropdown",
       value: function _makeDropdown(arr, value, path2) {
-        var select2 = document.createElement("select");
-        select2.className = "vis-configuration vis-config-select";
+        var select = document.createElement("select");
+        select.className = "vis-configuration vis-config-select";
         var selectedValue = 0;
         if (value !== void 0) {
           if (_indexOfInstanceProperty(arr).call(arr, value) !== -1) {
@@ -40257,14 +40257,14 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
             option2.selected = "selected";
           }
           option2.innerHTML = arr[i8];
-          select2.appendChild(option2);
+          select.appendChild(option2);
         }
         var me = this;
-        select2.onchange = function() {
+        select.onchange = function() {
           me._update(this.value, path2);
         };
         var label = this._makeLabel(path2[path2.length - 1], path2);
-        this._makeItem(path2, label, select2);
+        this._makeItem(path2, label, select);
       }
       /**
        * make a range object for numeric options
@@ -49371,12 +49371,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     timeline.setGroups(groupSet);
   }
   show = showCampaings;
-  var select = document.getElementById("locale");
-  select.onchange = function() {
-    timeline.setOptions({
-      locale: select.value
-    });
-  };
   window.timeline = timeline;
   function bindConfig() {
     const configElements = document.querySelectorAll(".config");
@@ -49696,7 +49690,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     });
   });
   editCard.subscribe(async (value) => {
-    await grist.setOption("editCard", value);
     document.getElementById("local:editCard").checked = value;
   });
   grist.onOptions((options2) => {

@@ -179,8 +179,6 @@ const options: TimelineOptions = {
       div.classList.add('item-right');
     }
 
-
-    // if this item clashes with any other item, mark it as clash (add class item-clash)
     const {start, end} = data;
 
     const all = items() as Item[];
@@ -199,7 +197,6 @@ const options: TimelineOptions = {
       div.classList.add('item-clash');
       break;
     }
-
 
     item.element = div;
     return div;
@@ -618,12 +615,12 @@ function renderGroups() {
 show = showCampaings;
 
 // update the locale when changing the select box value
-const select = document.getElementById('locale') as HTMLSelectElement;
-select.onchange = function() {
-  timeline.setOptions({
-    locale: select.value as any,
-  });
-};
+// const select = document.getElementById('locale') as HTMLSelectElement;
+// select.onchange = function() {
+//   timeline.setOptions({
+//     locale: select.value as any,
+//   });
+// };
 
 
 (window as any).timeline = timeline;
@@ -1039,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 editCard.subscribe(async (value: any) => {
-  await grist.setOption('editCard', value);
+  // await grist.setOption('editCard', value);
   (document.getElementById('local:editCard') as any)!.checked = value;
 });
 
@@ -1059,14 +1056,6 @@ function updateHeader(force) {
     return;
   }
   lastMappings = newMappings;
-
-  // We have this element  <div class="group-header" id="groupHeader"></div>
-
-  // Maps has somegint like this { Group: [ 'Campaign', 'Model', 'Reseller' ] }
-
-  // So generate elements and insert it into the groupHeader, so that it looks like this
-  // Campaign | Model | Reseller
-
   const groupHeader = document.getElementById('groupHeader')!;
   if (!groupHeader) {
     return;
@@ -1090,8 +1079,8 @@ function updateHeader(force) {
   // Set custom property --group-header-width to the width of the groupHeader
   visualization.style.setProperty('--group-header-width', `${width}px`);
 
-  // Now measer each individual line, and provide grisd-template-columns variable with minimum
-  // width to acomodate column and header width.
+  // Now measure each individual line, and provide grid-template-columns variable with minimum
+  // width to make up for a column and header width.
   // grid-template-columns: var(--group-columns,  repeat(12, max-content));
 
   const widths = parts.map(part =>
@@ -1166,12 +1155,6 @@ function defaultEnd(start: Date) {
   }
   throw new Error('Unknown scale');
 }
-
-// timeline.on('contextmenu', function (props) {
-//   alert('Right click!');
-
-//   props.event.preventDefault();
-// });
 
 function openCard() {
   return grist.commandApi.run('viewAsCard');
