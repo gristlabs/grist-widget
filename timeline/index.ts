@@ -160,10 +160,7 @@ const options: TimelineOptions = {
 
   template: function(item, element, data) {
     const parts = data.content.split('|');
-    if (parts.length === 1) {
-      return parts[0];
-    }
-    const text = `${parts[0]} (${parts[1] || 'no subject'})`;
+    const text = parts[1] ? `${parts[0]} (${parts[1] || 'no subject'})` : parts[0];
     const div = document.createElement('div');
     div.className = 'item-template';
     const span = document.createElement('span');
