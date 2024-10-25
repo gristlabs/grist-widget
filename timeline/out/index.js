@@ -49088,7 +49088,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     async onAdd(item, callback) {
       const group = idToName.get(item.group).split("|").map(formatValue);
       const start = (0, import_moment_timezone.default)(item.start).format("YYYY-MM-DD");
-      if (!(item.end instanceof Date) || !(item.start instanceof Date)) {
+      if (!(item.start instanceof Date)) {
+        console.error("Invalid date");
         return;
       }
       const end = (0, import_moment_timezone.default)(defaultEnd(item.start)).format("YYYY-MM-DD");
@@ -49099,6 +49100,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       const { id: id2 } = await grist.selectedTable.create({ fields });
       await grist.setCursorPos({ rowId: id2 });
       callback(null);
+      openCard();
     },
     // allow manipulation of items
     // editable: true,

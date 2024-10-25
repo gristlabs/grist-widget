@@ -239,9 +239,11 @@ const options: TimelineOptions = {
     const group = idToName.get(item.group).split('|').map(formatValue);
     const start = moment(item.start).format('YYYY-MM-DD');
 
-    if (!(item.end instanceof Date) || !(item.start instanceof Date)) {
+    if (!(item.start instanceof Date)) {
+      console.error('Invalid date');
       return;
     }
+  
 
     // In group we have list of values, we need to create an object from it (zip it with columns).
 
@@ -258,6 +260,8 @@ const options: TimelineOptions = {
     await grist.setCursorPos({rowId: id});
 
     callback(null);
+
+    openCard();
   },
 
   // allow manipulation of items
