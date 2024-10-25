@@ -2,11 +2,18 @@ import {from} from 'fromit';
 import moment from 'moment-timezone';
 import 'moment/locale/en-gb';
 import {DataSet, Timeline, TimelineOptions} from 'vis-timeline/standalone';
+
+import '@shoelace-style/shoelace/dist/themes/light.css';
+import '@shoelace-style/shoelace/dist/components/drawer/drawer.js';
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/switch/switch.js';
+import VanillaContextMenu from 'vanilla-context-menu';
+
+
 moment.locale('en-gb');
 
 declare global {
   var grist: any;
-  var VanillaContextMenu: any;
 }
 
 
@@ -205,6 +212,12 @@ const options: TimelineOptions = {
   },
   async onMove(item, callback) {
     let {start, end} = item;
+    if (!end || !start) {
+      return;
+    }
+    if (!(end instanceof Date) || !(start instanceof Date)) {
+      return;
+    }
     const format = (date: Date) => moment(date).format('YYYY-MM-DD');
 
     if (confirmChanges() && !confirm('Are you sure you want to move this item?')) {
@@ -228,6 +241,10 @@ const options: TimelineOptions = {
   async onAdd(item, callback) {
     const group = idToName.get(item.group).split('|').map(formatValue);
     const start = moment(item.start).format('YYYY-MM-DD');
+
+    if (!(item.end instanceof Date) || !(item.start instanceof Date)) {
+      return;
+    }
 
     // In group we have list of values, we need to create an object from it (zip it with columns).
 
@@ -331,12 +348,12 @@ const options: TimelineOptions = {
   xss: {
     disabled: true,
   },
-  zoomMin: 1000 * 60 * 60 * 24 * 7 * 4, // about three months in milliseconds
-  zoomMax: 1000 * 60 * 60 * 24 * 31 * 12, // about three months in milliseconds
+  zoomMin: 1000 * 60 * 60 * 24 * 7 * 6, // about four weeks in milliseconds
+  zoomMax: 1000 * 60 * 60 * 24 * 31 * 3, // about  12 months in milliseconds
   moment: function(date) {
     return moment(date); // Use moment with the 'en-gb' locale setting
   },
-  snap: function(date, scale, step) {
+  snap: function(date) {
     const snappedDate = moment(date);
 
     // Adjust snapping to always align with Mondays
@@ -351,14 +368,9 @@ const options: TimelineOptions = {
     return snappedDate.toDate();
   },
 
-  margin: {
-    item: 4, // Adjusts the space around each item
-    axis: 2, // Adjusts the space between items and the axis
-  },
+  margin: 0
 };
 
-let lastGroups = new Set();
-let lastRows = new Set();
 
 
 let show = () => {};
@@ -398,7 +410,7 @@ function recToItem(r) {
   };
   result.group = r.Group.join('|');
   result.group = nameToId.get(result.group);
-  result.content = r.Title.join('|');
+  result.content = (r.Title ?? ['no title']).join('|');
   if (r.Readonly) {
     result.editable = false;
   }
@@ -406,19 +418,6 @@ function recToItem(r) {
   return result;
 }
 
-function itemToRec(item) {
-  const groupName = idToName.get(item.group);
-  const groupValues = groupName.split('|');
-  const titleValues = item.content?.split('|') ?? [];
-
-  return {
-    Group: groupValues,
-    Title: titleValues,
-    From: item.start,
-    To: item.end,
-    id: item.id,
-  };
-}
 
 function recToRow(rec) {
   const groupValues = rec.Group;
@@ -470,12 +469,6 @@ onClick('#btnAlCampaign', () => {
   show();
 });
 
-function same(a: any, b: any) {
-  if (!a || !b) {
-    return false;
-  }
-  return a.getTime() === b.getTime();
-}
 
 function trimTime(date?: Date) {
   if (!date) {
@@ -558,7 +551,7 @@ function renderItems() {
       return result;
     });
 
-  items(newItems);
+  items(newItems.toArray());
 
   const changedItems =
     oldRecs.size > 0
@@ -610,13 +603,13 @@ function renderGroups() {
     columns: idToCols.get(c[0]),
   }));
 
-  rawGroups.push({
-    id: 0,
-    content: 'Unassigned',
-    editable: false,
-    className: 'group_unassigned',
-    columns: [],
-  })
+  // rawGroups.push({
+  //   id: 0,
+  //   content: 'Unassigned',
+  //   editable: false,
+  //   className: 'group_unassigned',
+  //   columns: [],
+  // })
 
   groupSet.update(rawGroups);
   timeline.setGroups(groupSet);
@@ -632,10 +625,6 @@ select.onchange = function() {
   });
 };
 
-function dump(arg: any) {
-  const div = document.getElementById('status-bar')!;
-  div.innerText = JSON.stringify(arg);
-}
 
 (window as any).timeline = timeline;
 
@@ -675,7 +664,7 @@ const functions = {
   ['timeline:cluster'](value: boolean) {
     if (value) {
       timeline.setOptions({
-        cluster: true,
+        cluster: false as any,
         stack: false,
       });
       try {
@@ -685,7 +674,7 @@ const functions = {
       timeline.redraw();
     } else {
       timeline.setOptions({
-        cluster: false,
+        cluster: false as any,
         stack: false,
       });
       timeline.setGroups(groupSet);
@@ -724,7 +713,7 @@ function updateConfig(elementId: string, value: any) {
 
     if (parent === 'stack') {
       timeline.setOptions({
-        cluster: false,
+        cluster: false as any,
       });
       timeline.setGroups(groupSet);
       timeline.redraw();
@@ -789,7 +778,7 @@ const cursorBox = document.createElement('div');
 
 document.addEventListener('DOMContentLoaded', function() {
   new VanillaContextMenu({
-    scope: document.querySelector('.vis-panel.vis-left '),
+    scope: document.querySelector('.vis-panel.vis-left ')!,
     menuItems: [
       {
         label: 'Add new',
@@ -807,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
       'hr',
       {
         label: 'More information',
-        callback: async (...args) => {
+        callback: async () => {
           const drawer = document.querySelector('.drawer-overview') as any;
           const infor = drawer.querySelector('.drawer-info') as any;
           infor.innerHTML = ``;
@@ -875,7 +864,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const panel = document.querySelector('.vis-panel.vis-left')!;
   const header = document.getElementById('groupHeader')!;
   let lastTop = 0;
-  const observer = new MutationObserver(mutations => {
+  const observer = new MutationObserver(() => {
     const content = panel.querySelector('.vis-labelset')!;
     const top = panel.getBoundingClientRect().top;
     if (top === lastTop) {
@@ -969,7 +958,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const closest = leftPoints[index];
 
     // Now get the element from the other div.
-    const element = anotherDiv.children[index];
 
     // Now reposition selection.
     cursorBox.style.left = `${closest.left}px`;
@@ -986,7 +974,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // same manu for .vis-item.vis-range
   const itemMenu = new VanillaContextMenu({
-    scope: fore,
+    scope: fore as HTMLElement,
     menuItems: [
       {
         label: 'Edit',
@@ -1141,7 +1129,7 @@ function anchorHeader() {
   }
   lastTop = top;
   const headerHeight = header.getBoundingClientRect().height;
-  const newTop = top - headerHeight;
+  const newTop = top - headerHeight +1;
   header.style.setProperty('top', `${newTop}px`);
 
   // Also adjust the left property of the group-header, as it may have a scrool element.
@@ -1264,7 +1252,7 @@ async function withElementSpinner(element: Element, callback: () => Promise<void
 }
 
 
-async function withIdSpinner(id: number, callback: () => Promise<void>) {
+async function withIdSpinner(id: any, callback: () => Promise<void>) {
   const element = document.querySelector(`.item_${id}`)!;
   const spinner = document.createElement('sl-spinner');
   element.appendChild(spinner);
@@ -1298,11 +1286,10 @@ function showAlert(variant: string, message: string) {
   alert.toast();
 }
 
-const spy = (name: string) => timeline.on(name, (...args: any[]) => console.log(name, ...args));
 
 let leftPoints = [] as {left: number; width: number}[];
 
-timeline.on('rangechange', ({start, end, byUser, event}) => {
+timeline.on('rangechange', ({byUser, event}) => {
   leftPoints = [];
 
   if (!byUser) {

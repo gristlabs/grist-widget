@@ -1,20 +1,7 @@
 <body>
 
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/themes/light.css" />
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/shoelace.js"></script>
-  <script src="https://unpkg.com/vanilla-context-menu@1.4.1/dist/vanilla-context-menu.js"></script>
-
-  <!--
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
-  <script
-    type="text/javascript"
-    src="https://unpkg.com/vis-timeline@latest/peer/umd/vis-timeline-graph2d.min.js"
-  ></script>
-  <script type="text/javascript" src="https://unpkg.com/vis-data@latest/peer/umd/vis-data.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="https://unpkg.com/vis-timeline/styles/vis-timeline-graph2d.min.css" />
-  
-  -->
+  <link rel="stylesheet" href="out/index.css"></link>
   <style type="text/css">
     * {
       box-sizing: border-box;
@@ -111,10 +98,12 @@
       overflow: hidden;
       display: grid;
       grid-auto-flow: column;
-      border-top: 1px solid var(--grist-theme-table-header-border, #d3d3d3);;
+      border-top: 1px solid var(--grist-theme-table-header-border, #d3d3d3);
+      ;
       font-weight: 600;
+      height: 30px;
     }
-    
+
     .item-template {
       display: flex;
       align-items: baseline;
@@ -172,12 +161,12 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       closeButton.addEventListener('click', () => drawer.hide());
     </script>
 
-    <select class="conf-select config" id="timeline:stack">
+    <!-- <select class="conf-select config" id="timeline:stack">
       <option value="false" selected>overlap</option>
       <option value="true">stack</option>
-    </select>
+    </select> -->
 
-    <sl-switch class="config" id="local:editCard" size="small">Edit card</sl-switch>
+    <sl-switch class="config" checked id="local:editCard" size="small">Edit card</sl-switch>
     <sl-switch class="config" id="local:confirmChanges" size="small">Confirm changes</sl-switch>
     <sl-switch class="config" id="timeline:cluster" size="small">Cluster</sl-switch>
 
@@ -186,8 +175,6 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
   </div>
 
   <script src="out/index.js"></script>
-
-
 
   <sl-alert variant="danger" duration="10000" closable>
     <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
@@ -208,18 +195,19 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       border: none;
     }
 
-
+    /* 
     .vis-grid.vis-odd {
       background: var(--grist-theme-page-panels-main-panel-bg, white);
     }
 
     .vis-grid.vis-even {
-      background: var(--grist-theme-page-panels-left-panel-bg, red);
-    }
+      background: var(--grist-theme-page-panels-left-panel-bg, white);
+    } */
 
     .vis-labelset .vis-label {
       color: var(--grist-theme-text, black) !important;
     }
+
 
     .vis-item {
       border-width: 1px;
@@ -346,8 +334,9 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       color: darkgray;
     }
 
-    .vis-item:has(.item-clash), .vis-item.vis-selected:active:has(.item-clash) {
-      
+    .vis-item:has(.item-clash),
+    .vis-item.vis-selected:active:has(.item-clash) {
+
       /* danger style */
 
       background-color: #f8d7da !important;
@@ -363,85 +352,34 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
 
       /* dagner styel but darker */
-      background-color: #f5eb5b !important;
+      background-color: #e498a0 !important;
       border-color: #f5c6cb !important;
       color: #721c24 !important;
     }
 
     .vis-item:has(.item-clash) {
       /* dagner styel but darker */
-      background-color: #f5eb5b !important;
+      background-color: #e498a0 !important;
       border-color: #f5c6cb !important;
-      color: #721c24 !important;
-      border-style: dashed;
+      color: #3b1014 !important;
     }
 
-
-    /* 
-
-
-
-    .vis-timeline {
-      border-color: var(--bs-border-color) !important;
+    .vis-time-axis.vis-foreground {
+      background-color: var(--grist-theme-table-header-bg, #f7f7f7);
     }
 
-    .vis-timeline .vis-labelset .vis-label {
-      color: var(--bs-gray-900)
+    .vis-text.vis-minor {
+      border-top: 1px solid var(--grist-theme-table-header-border, #d3d3d3);
     }
-
-    .vis-timeline .vis-foreground .vis-group {}
-
-    .vis-timeline .vis-item {
-      color: var(--bs-gray-700);
-      border-color: var(--bs-primary);
-      background-color: var(--bs-gray-100);
-    }
-
-    .vis-timeline .vis-item.vis-selected {
-      background-color: var(--bs-warning-light);
-      color: var(--bs-gray-700);
-      border-color: var(--bs-warning)
-    }
-
-    .vis-timeline .vis-time-axis .vis-text {
-      color: var(--bs-gray-400)
-    }
-
-    .vis-timeline .vis-time-axis .vis-grid.vis-minor {
-      border-left-color: var(--bs-border-dashed-color) !important
-    }
-
-    .vis-timeline .vis-time-axis .vis-grid.vis-vertical {
-      border-left-style: dashed !important
-    }
-
-    .vis-timeline .vis-panel .vis-shadow {
-      box-shadow: none !important
-    }
-
-    .vis-timeline .vis-panel.vis-bottom,
-    .vis-timeline .vis-panel.vis-center,
-    .vis-timeline .vis-panel.vis-left,
-    .vis-timeline .vis-panel.vis-right,
-    .vis-timeline .vis-panel.vis-top {
-      border-color: var(--bs-border-color) !important
-    }
-
-    .vis-timeline .vis-current-time {
-      background-color: var(--bs-success)
-    }
-
-
-    .vis-timeline-custom .vis-item {
-      background-color: transparent;
-    } */
 
     .item-clash {
-      background-color: #f8d7da !important;
       border-color: #f5c6cb !important;
-      color: #721c24 !important
     }
 
+    .vis-time-axis .vis-text.vis-minor {
+      border-left: 1px solid #d3d3d3;
+      box-sizing: border-box;
+    }
   </style>
 
 

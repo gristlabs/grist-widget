@@ -19,8 +19,10 @@
     ]
   },
   "dependencies": {
+    "@shoelace-style/shoelace": "^2.18.0",
     "fromit": "^2.2.11",
     "moment-timezone": "0.5.45",
+    "vanilla-context-menu": "^1.6.0",
     "vis-timeline": "^7.7.3"
   },
   "devDependencies": {
@@ -31,7 +33,7 @@
   "scripts": {
     "build": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js",
     "watch": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch",
-    "dev": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch",
+    "dev": "npm run watch",
     "serve": "reload -p 8585"
   }
 }
