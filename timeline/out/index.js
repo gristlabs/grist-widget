@@ -49169,7 +49169,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     xss: {
       disabled: true
     },
-    zoomMin: 1e3 * 60 * 60 * 24 * 7 * 6,
+    zoomMin: 1e3 * 60 * 60 * 24 * 7 * 2,
     // about four weeks in milliseconds
     zoomMax: 1e3 * 60 * 60 * 24 * 31 * 3,
     // about  12 months in milliseconds
