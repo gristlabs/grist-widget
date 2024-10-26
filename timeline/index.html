@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+	<title>Timeline</title>
+	<meta charset="utf8">
+	<script src="https://docs.getgrist.com/grist-plugin-api.js"></script> <!-- change to https://docs.getgrist.com/grist-plugin-api.js or your own -->
+	<script type="text/javascript" src="vis-timeline-graph2d.min.js"></script>
+	<link type="text/css" href="vis-timeline-graph2d.min.css" rel="stylesheet" />
+	<style type="text/css">
+		body, html {
+		  font-family: arial, sans-serif;
+		  font-size: 10pt;
+		}
+		#visualization {
+			border: 1px solid lightgray;
+		}
+	</style>
+</head>
+<body>
+	<div id="visualization"></div>
+	
+	<script type="text/javascript">
+	
+		var container = document.getElementById('visualization');
+		var options = {
+			stack: false
+		};
+		var timeline = new vis.Timeline(container, null, options);
+				
+		grist.ready({columns: [
+			{ name: "content", title: "Texte", optional: false, description: "Texte affiché dans la bulle.", allowMultiple: false },
+			{ name: "start", title: "Début", optional: false, type: "Date,DateTime", description: "Moment du début", allowMultiple: false },
+			{ name: "end", title: "Fin", optional: true, type: "Date,DateTime", description: "Moment final", allowMultiple: false },
+			{ name: "group", title: "Groupe", optional: true, description: "Champ de regroupement, affiche une entete horizontale.", allowMultiple: false },
+			{ name: "type", title: "Type", optional: true, description: "The type of the item. Can be 'box' (default), 'point', 'range', or 'background'. Types 'box' and 'point' need a start date, the types 'range' and 'background' needs both a start and end date.", allowMultiple: false },
+			{ name: "style", title: "Style CSS", optional: true, description: "A css text string to apply custom styling for an individual item, for example \"color: red; background-color: pink;\".", allowMultiple: false },
+			{ name: "title", title: "Popup", optional: true, description: "Add a title for the item, displayed when holding the mouse on the item. The title can be an HTML element or a string containing plain text or HTML.", allowMultiple: false },
+		], requiredAccess: 'full'});
+		
+		grist.onRecords(function (records, mappings) {
+			const items = grist.mapColumnNames(records);
+			const groups = Array.from(new Set(items.map(item => item.group))).map((group, index) => ({id: index, content: group}));
+			
+			items.forEach(item => {
+				const helper = groups.find(g => g.content === item.group);
+				if (helper) {
+					item.group = helper.id; // replace the group name with the ID from helperList
+				}
+			});
+			
+			const items_dataset = new vis.DataSet(items);
+			const groups_dataset = new vis.DataSet(groups);
+			timeline.setItems(items_dataset);
+			timeline.setGroups(groups_dataset);
+			timeline.fit();
+		});
+		
+	</script>
+
+</body>
+</html>
