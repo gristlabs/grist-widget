@@ -7023,6 +7023,120 @@
   var import_moment_timezone = __toESM(require_moment_timezone2());
   var import_en_gb = __toESM(require_en_gb());
 
+  // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.3Y6SB6QS.js
+  var basePath = "";
+  function setBasePath(path2) {
+    basePath = path2;
+  }
+  function getBasePath(subpath = "") {
+    if (!basePath) {
+      const scripts = [...document.getElementsByTagName("script")];
+      const configScript = scripts.find((script) => script.hasAttribute("data-shoelace"));
+      if (configScript) {
+        setBasePath(configScript.getAttribute("data-shoelace"));
+      } else {
+        const fallbackScript = scripts.find((s3) => {
+          return /shoelace(\.min)?\.js($|\?)/.test(s3.src) || /shoelace-autoloader(\.min)?\.js($|\?)/.test(s3.src);
+        });
+        let path2 = "";
+        if (fallbackScript) {
+          path2 = fallbackScript.getAttribute("src");
+        }
+        setBasePath(path2.split("/").slice(0, -1).join("/"));
+      }
+    }
+    return basePath.replace(/\/$/, "") + (subpath ? `/${subpath.replace(/^\//, "")}` : ``);
+  }
+
+  // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.B3BW2AY6.js
+  var __defProp2 = Object.defineProperty;
+  var __defProps = Object.defineProperties;
+  var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
+  var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+  var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+  var __propIsEnum = Object.prototype.propertyIsEnumerable;
+  var __knownSymbol = (name, symbol2) => {
+    return (symbol2 = Symbol[name]) ? symbol2 : Symbol.for("Symbol." + name);
+  };
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __spreadValues = (a4, b4) => {
+    for (var prop in b4 || (b4 = {}))
+      if (__hasOwnProp2.call(b4, prop))
+        __defNormalProp(a4, prop, b4[prop]);
+    if (__getOwnPropSymbols)
+      for (var prop of __getOwnPropSymbols(b4)) {
+        if (__propIsEnum.call(b4, prop))
+          __defNormalProp(a4, prop, b4[prop]);
+      }
+    return a4;
+  };
+  var __spreadProps = (a4, b4) => __defProps(a4, __getOwnPropDescs(b4));
+  var __decorateClass = (decorators, target, key, kind) => {
+    var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc2(target, key) : target;
+    for (var i8 = decorators.length - 1, decorator; i8 >= 0; i8--)
+      if (decorator = decorators[i8])
+        result = (kind ? decorator(target, key, result) : decorator(result)) || result;
+    if (kind && result)
+      __defProp2(target, key, result);
+    return result;
+  };
+  var __accessCheck = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet = (obj, member, getter) => {
+    __accessCheck(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet = (obj, member, value, setter) => {
+    __accessCheck(obj, member, "write to private field");
+    setter ? setter.call(obj, value) : member.set(obj, value);
+    return value;
+  };
+  var __await = function(promise2, isYieldStar) {
+    this[0] = promise2;
+    this[1] = isYieldStar;
+  };
+  var __yieldStar = (value) => {
+    var obj = value[__knownSymbol("asyncIterator")];
+    var isAwait = false;
+    var method2;
+    var it2 = {};
+    if (obj == null) {
+      obj = value[__knownSymbol("iterator")]();
+      method2 = (k3) => it2[k3] = (x3) => obj[k3](x3);
+    } else {
+      obj = obj.call(value);
+      method2 = (k3) => it2[k3] = (v3) => {
+        if (isAwait) {
+          isAwait = false;
+          if (k3 === "throw")
+            throw v3;
+          return v3;
+        }
+        isAwait = true;
+        return {
+          done: false,
+          value: new __await(new Promise((resolve2) => {
+            var x3 = obj[k3](v3);
+            if (!(x3 instanceof Object))
+              throw TypeError("Object expected");
+            resolve2(x3);
+          }), 1)
+        };
+      };
+    }
+    return it2[__knownSymbol("iterator")] = () => it2, method2("next"), "throw" in obj ? method2("throw") : it2.throw = (x3) => {
+      throw x3;
+    }, "return" in obj && method2("return"), it2;
+  };
+
   // node_modules/vis-timeline/standalone/esm/vis-timeline-graph2d.js
   var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};
   function getDefaultExportFromCjs(x3) {
@@ -44759,6 +44873,56 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var defaultLanguage = getNavigatorLanguage();
   moment$4.locale(defaultLanguage);
 
+  // lib.ts
+  var currentObservers = [];
+  function observable(value, options2) {
+    let listeners = [];
+    const obj = function(arg) {
+      if (arg === void 0) {
+        currentObservers.forEach((clb) => clb(obj));
+        return value;
+      } else {
+        if (options2?.deep) {
+          if (JSON.stringify(value) !== JSON.stringify(arg)) {
+            value = arg;
+            listeners.forEach((clb) => clb(arg));
+          }
+        } else if (value !== arg) {
+          value = arg;
+          listeners.forEach((clb) => clb(arg));
+        }
+        return arg;
+      }
+    };
+    obj.subscribe = function(clb) {
+      listeners.push(clb);
+      return { dispose() {
+        listeners.splice(listeners.indexOf(clb), 1);
+      } };
+    };
+    obj.dispose = function() {
+      listeners = [];
+    };
+    return obj;
+  }
+  function computed(clb) {
+    const value = observable();
+    const listeners = [];
+    function recompute() {
+      try {
+        listeners.forEach((l6) => l6.dispose());
+        currentObservers.push((obs) => {
+          listeners.push(obs.subscribe(recompute));
+        });
+        value(clb());
+      } finally {
+        currentObservers.pop();
+      }
+    }
+    recompute();
+    return value;
+  }
+
   // node_modules/@lit/reactive-element/css-tag.js
   var t = globalThis;
   var e = t.ShadowRoot && (void 0 === t.ShadyCSS || t.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype;
@@ -45580,95 +45744,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     });
   }
 
-  // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.B3BW2AY6.js
-  var __defProp2 = Object.defineProperty;
-  var __defProps = Object.defineProperties;
-  var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
-  var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-  var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
-  var __propIsEnum = Object.prototype.propertyIsEnumerable;
-  var __knownSymbol = (name, symbol2) => {
-    return (symbol2 = Symbol[name]) ? symbol2 : Symbol.for("Symbol." + name);
-  };
-  var __defNormalProp = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-  var __spreadValues = (a4, b4) => {
-    for (var prop in b4 || (b4 = {}))
-      if (__hasOwnProp2.call(b4, prop))
-        __defNormalProp(a4, prop, b4[prop]);
-    if (__getOwnPropSymbols)
-      for (var prop of __getOwnPropSymbols(b4)) {
-        if (__propIsEnum.call(b4, prop))
-          __defNormalProp(a4, prop, b4[prop]);
-      }
-    return a4;
-  };
-  var __spreadProps = (a4, b4) => __defProps(a4, __getOwnPropDescs(b4));
-  var __decorateClass = (decorators, target, key, kind) => {
-    var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc2(target, key) : target;
-    for (var i8 = decorators.length - 1, decorator; i8 >= 0; i8--)
-      if (decorator = decorators[i8])
-        result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-    if (kind && result)
-      __defProp2(target, key, result);
-    return result;
-  };
-  var __accessCheck = (obj, member, msg) => {
-    if (!member.has(obj))
-      throw TypeError("Cannot " + msg);
-  };
-  var __privateGet = (obj, member, getter) => {
-    __accessCheck(obj, member, "read from private field");
-    return getter ? getter.call(obj) : member.get(obj);
-  };
-  var __privateAdd = (obj, member, value) => {
-    if (member.has(obj))
-      throw TypeError("Cannot add the same private member more than once");
-    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-  };
-  var __privateSet = (obj, member, value, setter) => {
-    __accessCheck(obj, member, "write to private field");
-    setter ? setter.call(obj, value) : member.set(obj, value);
-    return value;
-  };
-  var __await = function(promise2, isYieldStar) {
-    this[0] = promise2;
-    this[1] = isYieldStar;
-  };
-  var __yieldStar = (value) => {
-    var obj = value[__knownSymbol("asyncIterator")];
-    var isAwait = false;
-    var method2;
-    var it2 = {};
-    if (obj == null) {
-      obj = value[__knownSymbol("iterator")]();
-      method2 = (k3) => it2[k3] = (x3) => obj[k3](x3);
-    } else {
-      obj = obj.call(value);
-      method2 = (k3) => it2[k3] = (v3) => {
-        if (isAwait) {
-          isAwait = false;
-          if (k3 === "throw")
-            throw v3;
-          return v3;
-        }
-        isAwait = true;
-        return {
-          done: false,
-          value: new __await(new Promise((resolve2) => {
-            var x3 = obj[k3](v3);
-            if (!(x3 instanceof Object))
-              throw TypeError("Object expected");
-            resolve2(x3);
-          }), 1)
-        };
-      };
-    }
-    return it2[__knownSymbol("iterator")] = () => it2, method2("next"), "throw" in obj ? method2("throw") : it2.throw = (x3) => {
-      throw x3;
-    }, "return" in obj && method2("return"), it2;
-  };
-
   // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.5EJHXPFX.js
   function* activeElements(activeElement = document.activeElement) {
     if (activeElement === null || activeElement === void 0)
@@ -45879,31 +45954,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     pointer-events: none;
   }
 `;
-
-  // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.3Y6SB6QS.js
-  var basePath = "";
-  function setBasePath(path2) {
-    basePath = path2;
-  }
-  function getBasePath(subpath = "") {
-    if (!basePath) {
-      const scripts = [...document.getElementsByTagName("script")];
-      const configScript = scripts.find((script) => script.hasAttribute("data-shoelace"));
-      if (configScript) {
-        setBasePath(configScript.getAttribute("data-shoelace"));
-      } else {
-        const fallbackScript = scripts.find((s3) => {
-          return /shoelace(\.min)?\.js($|\?)/.test(s3.src) || /shoelace-autoloader(\.min)?\.js($|\?)/.test(s3.src);
-        });
-        let path2 = "";
-        if (fallbackScript) {
-          path2 = fallbackScript.getAttribute("src");
-        }
-        setBasePath(path2.split("/").slice(0, -1).join("/"));
-      }
-    }
-    return basePath.replace(/\/$/, "") + (subpath ? `/${subpath.replace(/^\//, "")}` : ``);
-  }
 
   // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.P7ZG6EMR.js
   var library = {
@@ -49286,8 +49336,12 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.Z4ZMTHRX.js
   SlAlert.define("sl-alert");
 
+  // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.HBPNMM7A.js
+  SlIcon.define("sl-icon");
+
   // index.ts
   var import_vanilla_context_menu = __toESM(require_vanilla_context_menu());
+  setBasePath("./node_modules/@shoelace-style/shoelace/dist");
   import_moment_timezone.default.locale("en-gb");
   var container = document.getElementById("visualization");
   var itemSet = new DataSet([]);
@@ -49302,7 +49356,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   Object.assign(window, {
     currentScale,
     confirmChanges,
-    editCard
+    editCard,
+    observable,
+    computed
   });
   var byStart = /* @__PURE__ */ new Map();
   var byEnd = /* @__PURE__ */ new Map();
@@ -49441,21 +49497,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       callback(null);
       openCard();
     },
-    // allow manipulation of items
-    // editable: true,
-    /* alternatively, enable/disable individual actions:
-    
-      editable: {
-        add: true,
-        updateTime: true,
-        updateGroup: true,
-        remove: true
-      },
-      */
-    // onMoving(item, callback) {
-    //   const {id, start, end} = item;
-    //   // If this item clashes with any other item, mark it 
-    // },
     groupTemplate: function(group) {
       const container2 = document.createElement("div");
       container2.classList.add("group-template");
@@ -49477,6 +49518,12 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         div.style.padding = "5px";
         return div;
       });
+      partsHtml.push((() => {
+        const div = document.createElement("div");
+        div.innerHTML = '<sl-icon name="three-dots"></sl-icon>';
+        div.className = "center cursor";
+        return div;
+      })());
       container2.append(...partsHtml);
       container2.addEventListener("click", function() {
         const first = itemSet.get().find((i8) => i8.group === group.id);
@@ -49620,32 +49667,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   }
   function appendEnd(yyyy_mm_dd) {
     return `${yyyy_mm_dd}T23:59:59`;
-  }
-  function observable(value, options2) {
-    let listeners = [];
-    const obj = function(arg) {
-      if (arg === void 0) {
-        return value;
-      } else {
-        if (options2?.deep) {
-          if (JSON.stringify(value) !== JSON.stringify(arg)) {
-            listeners.forEach((clb) => clb(arg));
-            value = arg;
-          }
-        } else if (value !== arg) {
-          listeners.forEach((clb) => clb(arg));
-          value = arg;
-        }
-      }
-    };
-    obj.subscribe = function(clb) {
-      listeners.push(clb);
-      return () => void listeners.splice(listeners.indexOf(clb), 1);
-    };
-    obj.dispose = function() {
-      listeners = [];
-    };
-    return obj;
   }
   var oldRecs = /* @__PURE__ */ new Map();
   function renderItems() {
@@ -50061,6 +50082,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       return div;
     });
     groupHeader.style.setProperty("grid-template-columns", "auto");
+    const moreDiv = document.createElement("div");
+    moreDiv.style.width = "20px";
+    parts.push(moreDiv);
     groupHeader.append(...parts);
     const width = Math.ceil(groupHeader.getBoundingClientRect().width);
     const visualization = document.getElementById("visualization");
@@ -50128,27 +50152,52 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         return cache;
       }
       lastMappings2 = newMappings;
-      const columns = await getAllColumns2();
+      const columns = await fetchColumnsFromGrist();
       cache = columns;
       return columns;
     };
-    async function getAllColumns2() {
-      const columns = await grist.docApi.fetchTable("_grist_Tables_column");
-      const fields = Object.keys(columns);
-      const tableColumns = [];
-      for (const index in columns.parentId) {
-        tableColumns.push(
-          Object.fromEntries(fields.map((f5) => [f5, columns[f5][index]]))
-        );
-      }
-      return tableColumns;
+    async function fetchColumnsFromGrist() {
+      const columns = toRecords(await grist.docApi.fetchTable("_grist_Tables_column"));
+      return columns;
     }
+  }
+  var tablesCache = [];
+  async function fetchTables() {
+    if (!tablesCache.length) {
+      tablesCache = toRecords(await grist.docApi.fetchTable("_grist_Tables"));
+    }
+    return tablesCache;
+  }
+  async function selectedTable() {
+    const tables = await fetchTables();
+    const tableId = await grist.selectedTable.getTableId();
+    return tables.find((t5) => t5.tableId === tableId);
+  }
+  function toRecords(bulk) {
+    const fields = Object.keys(bulk);
+    const records2 = [];
+    for (const index in bulk.id) {
+      records2.push(
+        Object.fromEntries(fields.map((f5) => [f5, bulk[f5][index]]))
+      );
+    }
+    return records2;
   }
   async function liftFields(fields) {
     const allColumns = await getAllColumns();
+    const myTable = await selectedTable();
+    const myColumns = allColumns.filter((c6) => c6.parentId === myTable.id);
     let clone2 = null;
     for (const colId in fields) {
-      const col = allColumns.find((c6) => c6.colId === colId);
+      const col = myColumns.find((c6) => c6.colId === colId);
+      if (!col) {
+        throw new Error(`Column with id ${colId} not found`);
+      }
+      if (col.isFormula && col.formula) {
+        clone2 ??= { ...fields };
+        delete clone2[colId];
+        continue;
+      }
       const type = col?.type;
       if (type.startsWith("Ref:")) {
         const tableId = type.split(":")[1];

@@ -1,13 +1,17 @@
 <html>
 
 <head>
-
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <link rel="stylesheet" href="out/index.css">
   </link>
   <style type="text/css">
     * {
       box-sizing: border-box;
+    }
+
+    :root {
+      --buttons-height: 0px;
+      --status-height: 24px;
     }
 
     html,
@@ -17,15 +21,22 @@
       background-color: var(--grist-theme-page-panels-main-panel-bg, #f7f7f7);
       color: var(--grist-theme-text, black);
       height: 100%;
+      padding: 0px;
+      margin: 0px;
     }
 
     div {
       scrollbar-width: thin;
     }
 
-    :root {
-      --buttons-height: 0px;
-      --status-height: 24px;
+    .center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .cursor {
+      cursor: pointer;
     }
 
     #visualization {
@@ -48,12 +59,6 @@
 
     select.config {
       border-color: rgb(217, 217, 217);
-    }
-
-    body,
-    html {
-      padding: 0px;
-      margin: 0px;
     }
 
     #buttons {
@@ -115,14 +120,11 @@
   </style>
 
 </head>
-
 </html>
 
 <body>
 
-
   <div id="visualization">
-
     <div class="group-header" id="groupHeader">
     </div>
   </div>
@@ -143,44 +145,26 @@
   </div>
 
   <div id="status-bar">
-
-    <!-- <input type="range" id="range" min="0" max="100" value="0" style="width: 100px; margin-right: 8px;"> -->
-
-    <!--
-Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 'second', 'minute', 'hour', 'weekday', 'week', 'day', 'month', 'year'. Example usage:
--->
-
     <select class="conf-select config" id="timeline:timeAxis.scale">
       <option value="day" selected>day</option>
       <option value="week">week</option>
       <option value="month">month</option>
       <option value="year">year</option>
     </select>
-
     <sl-drawer label="Info" class="drawer-overview">
       <div class="drawer-info">
-
       </div>
       <sl-button id="close-drawer" slot="footer" variant="success">Close</sl-button>
     </sl-drawer>
-
     <script>
       const closeButton = document.querySelector('#close-drawer');
       const drawer = document.querySelector('.drawer-overview');
       closeButton.addEventListener('click', () => drawer.hide());
     </script>
-
-    <!-- <select class="conf-select config" id="timeline:stack">
-      <option value="false" selected>overlap</option>
-      <option value="true">stack</option>
-    </select> -->
-
     <sl-switch class="config" checked id="local:editCard" size="small">Edit card</sl-switch>
     <sl-switch class="config" id="local:confirmChanges" size="small">Confirm changes</sl-switch>
     <sl-switch class="config" id="timeline:cluster" size="small">Cluster</sl-switch>
-
     <sl-icon-button id="focusButton" name="arrows-collapse-vertical" label="Settings" style="margin-left: auto"></sl-icon-button>
-
   </div>
 
 
@@ -192,13 +176,8 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
 
   <script src="out/index.js"></script>
 
-
-
-
-
   <style type="text/css">
-    /* Those styles are here as they are meant to override others */
-
+    /* Those styles are here as they are meant to override styles dynamically added just now by index.js */
     .conf-select {
       font-size: 11px;
       margin: 1px;
@@ -208,15 +187,6 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
     .vis-timeline {
       border: none;
     }
-
-    /* 
-  .vis-grid.vis-odd {
-    background: var(--grist-theme-page-panels-main-panel-bg, white);
-  }
-
-  .vis-grid.vis-even {
-    background: var(--grist-theme-page-panels-left-panel-bg, white);
-  } */
 
     .vis-labelset .vis-label {
       color: var(--grist-theme-text, black) !important;
@@ -334,10 +304,6 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       border-bottom-left-radius: 0px;
     }
 
-    .vis-item {
-      /* mix-blend-mode: difference; */
-    }
-
     .vis-item.vis-selected:active {
       background-color: #0f8558;
     }
@@ -350,29 +316,21 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
 
     .vis-item:has(.item-clash),
     .vis-item.vis-selected:active:has(.item-clash) {
-
-      /* danger style */
-
       background-color: #f8d7da !important;
       border-color: #f5c6cb !important;
       color: #721c24 !important;
       border-style: dashed;
     }
 
-
-
     .vis-item.vis-selected:has(.item-clash) {
       transition: box-shadow 0.1s;
       box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
-
-      /* dagner styel but darker */
       background-color: #e498a0 !important;
       border-color: #f5c6cb !important;
       color: #721c24 !important;
     }
 
     .vis-item:has(.item-clash) {
-      /* dagner styel but darker */
       background-color: #e498a0 !important;
       border-color: #f5c6cb !important;
       color: #3b1014 !important;
@@ -395,9 +353,5 @@ Set a fixed scale for the time axis of the Timeline. Choose from 'millisecond', 
       box-sizing: border-box;
     }
   </style>
-
-
-
 </body>
-
 </html>

@@ -32,8 +32,7 @@
   },
   "scripts": {
     "build": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js",
-    "watch": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch",
-    "dev": "npm run watch",
-    "serve": "reload -p 8585"
+    "dev": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch",
+    "serve": "(cd ../ && npm run grist:serve)"
   }
 }

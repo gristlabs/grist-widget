@@ -1,34 +1,41 @@
 import {from} from 'fromit';
 import moment from 'moment-timezone';
 import 'moment/locale/en-gb';
+import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
 import {DataSet, Timeline, TimelineOptions} from 'vis-timeline/standalone';
+import {computed, observable} from './lib.js';
 
 import '@shoelace-style/shoelace/dist/themes/light.css';
 import '@shoelace-style/shoelace/dist/components/drawer/drawer.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
+// icon
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
+
+// Set the base path to the folder you copied Shoelace's assets to
+setBasePath('./node_modules/@shoelace-style/shoelace/dist');
 
 import VanillaContextMenu from 'vanilla-context-menu';
 
-
+// Make sure we have monday as the first day of the week.
 moment.locale('en-gb');
 
 declare global {
   var grist: any;
 }
 
-
 // DOM element where the Timeline will be attached
 const container = document.getElementById('visualization')!;
+
 const itemSet = new DataSet([]);
 const groupSet = new DataSet<any>([]);
-const records = observable([]);
+const records = observable([] as any[]);
 const order = new Map();
 const editCard = observable(false);
 const confirmChanges = observable(false);
 const currentScale = observable('day');
-const items = observable([]);
+const items = observable([] as Item[]);
 const groupSelected = observable(null);
 
 interface Item {
@@ -37,18 +44,20 @@ interface Item {
   start: string;
   end: string;
   type: string;
-  group: number;
   className: string;
   data: any;
-  element: HTMLElement;
   editable: boolean;
+  
+  group?: number;
+  element?: HTMLElement;
 }
-
 
 Object.assign((window as any), {
   currentScale,
   confirmChanges,
   editCard,
+  observable,
+  computed,
 });
 
 
@@ -56,12 +65,13 @@ Object.assign((window as any), {
 const byStart = new Map();
 const byEnd = new Map();
 
-function startKey(item, days: number = 0) {
+function startKey(item: Item, days: number = 0) {
   const start = moment(item.start).add({days}).format('YYYY-MM-DD');
   return `${item.group}-${start}`;
 }
 
-function endKey(item, days: number = 0) {
+
+function endKey(item: Item, days: number = 0): string {
   const end = moment(item.end).add({days}).format('YYYY-MM-DD');
   return `${item.group}-${end}`;
 }
@@ -107,7 +117,7 @@ grist.ready({
 const options: TimelineOptions = {
   groupOrder: function(a, b) {
     if (a.id === 0) {
-      // This is last group, so it should be last.
+      // This is last group, so it should bgroupHeadere last.
       return 1;
     }
     if (b.id === 0) {
@@ -221,24 +231,6 @@ const options: TimelineOptions = {
     openCard();
   },
 
-  // allow manipulation of items
-  // editable: true,
-
-  /* alternatively, enable/disable individual actions:
-
-  editable: {
-    add: true,
-    updateTime: true,
-    updateGroup: true,
-    remove: true
-  },
-  */
-
-  // onMoving(item, callback) {
-  //   const {id, start, end} = item;
-
-  //   // If this item clashes with any other item, mark it 
-  // },
 
   groupTemplate: function(group) {
     // Create a container for the group
@@ -251,8 +243,7 @@ const options: TimelineOptions = {
       return container;
     }
 
-
-    const partsHtml = group.columns.map(col => {
+    const partsHtml: HTMLDivElement[] = group.columns.map(col => {
       const div = document.createElement('div');
       const value = formatValue(col);
       if (typeof value === 'string' || value === null) {
@@ -267,6 +258,15 @@ const options: TimelineOptions = {
       div.style.padding = '5px';
       return div;
     });
+
+    // Add 3 dots menu.
+    partsHtml.push((() => {
+      const div = document.createElement('div');
+      div.innerHTML = '<sl-icon name="three-dots"></sl-icon>';
+      div.className = 'center cursor';
+      return div;
+    })());
+
     container.append(...partsHtml);
 
     container.addEventListener('click', function() {
@@ -335,7 +335,7 @@ const options: TimelineOptions = {
 
 
 let show = () => {};
-let mappings = observable({}, {deep: true});
+let mappings = observable<any>({}, {deep: true});
 
 // Create a Timeline
 const timeline = new Timeline(container, itemSet, options);
@@ -357,7 +357,7 @@ function getTo(r: any) {
   return r.To && r.To instanceof Date ? r.To : null;
 }
 
-function recToItem(r) {
+function recToItem(r): Item {
   const result = {
     id: r.id,
     content: '',
@@ -447,40 +447,7 @@ function appendEnd(yyyy_mm_dd: string) {
   return `${yyyy_mm_dd}T23:59:59`;
 }
 
-function observable(
-  value?: any,
-  options?: {
-    deep?: boolean;
-  }
-) {
-  let listeners = [] as any[];
-  const obj = function(arg?: any) {
-    if (arg === undefined) {
-      return value;
-    } else {
-      if (options?.deep) {
-        if (JSON.stringify(value) !== JSON.stringify(arg)) {
-          listeners.forEach((clb: any) => clb(arg));
-          value = arg;
-        }
-      } else if (value !== arg) {
-        listeners.forEach((clb: any) => clb(arg));
-        value = arg;
-      }
-    }
-  };
 
-  obj.subscribe = function(clb: any) {
-    listeners.push(clb);
-    return () => void listeners.splice(listeners.indexOf(clb), 1);
-  };
-
-  obj.dispose = function() {
-    listeners = [];
-  };
-
-  return obj;
-}
 
 const oldRecs = new Map();
 
@@ -1033,6 +1000,11 @@ function updateHeader(force) {
     return div;
   });
   groupHeader.style.setProperty('grid-template-columns', 'auto');
+
+  const moreDiv = document.createElement('div');
+  moreDiv.style.width = '20px';
+
+  parts.push(moreDiv);
   groupHeader.append(...parts);
 
   // Now we need to update its width, we can't break lines and anything like that.
@@ -1124,7 +1096,19 @@ function openCard() {
   return grist.commandApi.run('viewAsCard');
 }
 
-const getAllColumns = buildColumns();
+const getAllColumns: () => Promise<Column[]> = buildColumns();
+
+interface BulkColumns {
+  id: number[];
+  colId: string[];
+  parentId: number[];
+  type: string[];
+  displayCol: string[];
+  isFormula: boolean[];
+  formula: string[];
+  visibleCol: string[];
+}
+interface Column extends Record<keyof BulkColumns, any> {};
 
 function buildColumns() {
   let cache = [] as any[];
@@ -1135,30 +1119,62 @@ function buildColumns() {
       return cache;
     }
     lastMappings = newMappings;
-    const columns = await getAllColumns();
+    const columns = await fetchColumnsFromGrist();
     cache = columns;
     return columns;
   };
 
-  async function getAllColumns() {
-    const columns = await grist.docApi.fetchTable('_grist_Tables_column');
-    const fields = Object.keys(columns);
-    const tableColumns = [] as any[];
-    for (const index in columns.parentId) {
-      tableColumns.push(
-        Object.fromEntries(fields.map(f => [f, columns[f][index]]))
-      );
-    }
-    return tableColumns;
+
+
+  async function fetchColumnsFromGrist() {
+    const columns: Column[] = toRecords(await grist.docApi.fetchTable('_grist_Tables_column'));
+    return columns;
   }
 }
 
-async function liftFields(fields: any) {
+let tablesCache = [] as any[];
+
+async function fetchTables() {
+  if (!tablesCache.length) {
+    tablesCache = toRecords(await grist.docApi.fetchTable('_grist_Tables'));
+  }
+  return tablesCache;
+}
+
+async function selectedTable() {
+  const tables = await fetchTables();
+  const tableId = await grist.selectedTable.getTableId();
+  return tables.find(t => t.tableId === tableId);
+}
+
+function toRecords(bulk: Record<string, any[]>) {
+  const fields = Object.keys(bulk);
+  const records = [] as any[];
+  for (const index in bulk.id) {
+    records.push(
+      Object.fromEntries(fields.map(f => [f, bulk[f][index]]))
+    );
+  }
+  return records;
+}
+
+async function liftFields(fields: Record<string, any>) {
   const allColumns = await getAllColumns();
+  const myTable = await selectedTable();
+  const myColumns = allColumns.filter(c => c.parentId === myTable.id);
   let clone = null as any;
 
   for (const colId in fields) {
-    const col = allColumns.find(c => c.colId === colId);
+    const col = myColumns.find(c => c.colId === colId);
+    if (!col) {
+      throw new Error(`Column with id ${colId} not found`);
+    }
+    // If this is formula column, omit it.
+    if (col.isFormula && col.formula) {
+      clone ??= {...fields};
+      delete clone[colId];
+      continue;
+    }
     const type = col?.type;
     if (type.startsWith('Ref:')) {
       const tableId = type.split(':')[1];
@@ -1269,3 +1285,4 @@ timeline.on('rangechanged', () => {
   cursorBox.style.left = `${left + x}px`;
   cursorBox.style.transform = '';
 })
+
