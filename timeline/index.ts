@@ -1,20 +1,20 @@
 import {from} from 'fromit';
 import moment from 'moment-timezone';
 import 'moment/locale/en-gb';
-import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
 import {DataSet, Timeline, TimelineOptions} from 'vis-timeline/standalone';
 import {computed, observable} from './lib.js';
+import {registerIconLibrary} from '@shoelace-style/shoelace/dist/utilities/icon-library.js';
+registerIconLibrary('default', {
+  resolver: name => `./out/${name}.svg`
+});
+
 
 import '@shoelace-style/shoelace/dist/themes/light.css';
 import '@shoelace-style/shoelace/dist/components/drawer/drawer.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
-// icon
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
-
-// Set the base path to the folder you copied Shoelace's assets to
-setBasePath('./node_modules/@shoelace-style/shoelace/dist');
 
 import VanillaContextMenu from 'vanilla-context-menu';
 
@@ -47,7 +47,7 @@ interface Item {
   className: string;
   data: any;
   editable: boolean;
-  
+
   group?: number;
   element?: HTMLElement;
 }
@@ -210,7 +210,7 @@ const options: TimelineOptions = {
       console.error('Invalid date');
       return;
     }
-  
+
 
     // In group we have list of values, we need to create an object from it (zip it with columns).
 
@@ -1054,7 +1054,7 @@ function anchorHeader() {
   }
   lastTop = top;
   const headerHeight = header.getBoundingClientRect().height;
-  const newTop = top - headerHeight +1;
+  const newTop = top - headerHeight + 1;
   header.style.setProperty('top', `${newTop}px`);
 
   // Also adjust the left property of the group-header, as it may have a scrool element.

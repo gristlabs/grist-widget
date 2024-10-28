@@ -31,8 +31,8 @@
     "reload": "^3.3.0"
   },
   "scripts": {
-    "build": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js",
-    "dev": "esbuild index.ts --bundle  --sourcemap --outfile=out/index.js --watch",
+    "build": "bash icons.sh && esbuild index.ts --bundle --sourcemap --outdir=out",
+    "dev": "esbuild index.ts --bundle  --sourcemap --outdir=out --watch",
     "serve": "(cd ../ && npm run grist:serve)"
   }
 }
