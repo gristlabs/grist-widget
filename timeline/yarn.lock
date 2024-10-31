@@ -470,6 +470,11 @@ glob-parent@~5.1.2:
   dependencies:
     is-glob "^4.0.1"
 
+grainjs@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/grainjs/-/grainjs-1.0.2.tgz#5ab9b03de21bdff8da0f98408276fcbd31de8f17"
+  integrity sha512-wrj8TqpgxTGOKHpTlMBxMeX2uS3lTvXj4ROLKC+EZNM7J6RHQLGjMzMqWtiryBnMhGIBlbCicMNFppCrK1zv9w==
+
 has-flag@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/has-flag/-/has-flag-3.0.0.tgz#b5d454dc2199ae225699f3467e5a07f3b955bafd"

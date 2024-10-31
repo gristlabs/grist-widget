@@ -98,28 +98,19 @@
       background-color: #d3d3d3;
     }
 
-    .group-header {
-      background-color: var(--grist-theme-table-header-bg, #f7f7f7);
-      position: absolute;
-      top: calc(46px - 1.9em);
-      left: 0px;
-      overflow: hidden;
-      display: grid;
-      grid-auto-flow: column;
-      border-top: 1px solid var(--grist-theme-table-header-border, #d3d3d3);
-      ;
-      font-weight: 600;
-      height: 30px;
-    }
-
     .item-template {
       display: flex;
-      align-items: baseline;
       justify-content: space-between;
+      min-height: 0px;
+      height: 23px;
+      line-height: 1em;
+      align-items: center;
+      padding: 2px 4px;
     }
   </style>
 
 </head>
+
 </html>
 
 <body>
@@ -163,7 +154,7 @@
     </script>
     <sl-switch class="config" checked id="local:editCard" size="small">Edit card</sl-switch>
     <sl-switch class="config" id="local:confirmChanges" size="small">Confirm changes</sl-switch>
-    <sl-switch class="config" id="timeline:cluster" size="small">Cluster</sl-switch>
+    <sl-switch class="config" id="local:focusOnSelect" size="small">Focus on select</sl-switch>
     <sl-icon-button id="focusButton" name="arrows-collapse-vertical" label="Settings" style="margin-left: auto"></sl-icon-button>
   </div>
 
@@ -235,6 +226,7 @@
       display: grid;
       grid-template-columns: var(--group-columns, repeat(12, max-content));
       min-width: var(--group-header-width, 100px);
+      max-width: var(--group-max-width, auto);
     }
 
     .vis-labelset>div,
@@ -275,14 +267,28 @@
       position: absolute;
       top: 0px;
       height: 100%;
+
+      display: grid;
+      place-content: center;
+
+      & sl-spinner {
+        display: none;
+      }
+
+      &.cursor-loading {
+        sl-spinner {
+          display: block;
+        }
+      }
     }
 
     .vis-item sl-spinner {
       position: absolute;
-      top: 6px;
+      top: 50%;
       right: 5px;
       --indicator-color: white;
       --track-color: gray;
+      transform: translateY(-50%);
     }
 
     .group-template:hover {
@@ -352,6 +358,66 @@
       border-left: 1px solid #d3d3d3;
       box-sizing: border-box;
     }
+
+    #visualization.collapsed {
+      --group-max-width: var(--group-first-width, 50px);
+
+      .vis-labelset {
+        min-width: auto;
+      }
+
+      .group-part {
+        display: none;
+      }
+
+      .group-part:first-child {
+        display: block;
+      }
+    }
+
+
+    .group-header {
+      background-color: var(--grist-theme-table-header-bg, #f7f7f7);
+      position: absolute;
+      left: 0px;
+      height: 59px;
+      overflow: hidden;
+      width: var(--group-header-width);
+      max-width: var(--group-max-width, auto);
+    }
+
+    .group-header-columns {
+      background-color: var(--grist-theme-table-header-bg, #f7f7f7);
+      display: grid;
+      grid-auto-flow: column;
+      border-top: 1px solid var(--grist-theme-table-header-border, #d3d3d3);
+      font-weight: 600;
+      height: 30px;
+      overflow: hidden;
+      grid-template-columns: var(--group-columns);
+      clear: both;
+    }
+
+    .havron {
+      position: relative;
+      float: right;
+      cursor: pointer;
+      height: 29px;
+      z-index: 100;
+      display: grid;
+      place-content: center;
+      width: 21px;
+      border-left: 1px solid var(--grist-theme-table-header-border, #d3d3d3);
+
+      &:hover {
+        background-color: var(--grist-theme-table-header-bg, #f7f7f7);
+      }
+    }
+
+    .vis-item .vis-item-content {
+      padding: 0px;
+    }
   </style>
 </body>
+
 </html>

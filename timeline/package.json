@@ -21,6 +21,7 @@
   "dependencies": {
     "@shoelace-style/shoelace": "^2.18.0",
     "fromit": "^2.2.11",
+    "grainjs": "^1.0.2",
     "moment-timezone": "0.5.45",
     "vanilla-context-menu": "^1.6.0",
     "vis-timeline": "^7.7.3"

@@ -1,25 +1,10 @@
+import {Column, fetchColumnsFromGrist, selectedTable} from './lib';
+import './vendor';
 import {from} from 'fromit';
+import {computed, dom, observable} from 'grainjs';
 import moment from 'moment-timezone';
-import 'moment/locale/en-gb';
-import {DataSet, Timeline, TimelineOptions} from 'vis-timeline/standalone';
-import {computed, observable} from './lib.js';
-import {registerIconLibrary} from '@shoelace-style/shoelace/dist/utilities/icon-library.js';
-registerIconLibrary('default', {
-  resolver: name => `./out/${name}.svg`
-});
-
-
-import '@shoelace-style/shoelace/dist/themes/light.css';
-import '@shoelace-style/shoelace/dist/components/drawer/drawer.js';
-import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '@shoelace-style/shoelace/dist/components/switch/switch.js';
-import '@shoelace-style/shoelace/dist/components/alert/alert.js';
-import '@shoelace-style/shoelace/dist/components/icon/icon.js';
-
 import VanillaContextMenu from 'vanilla-context-menu';
-
-// Make sure we have monday as the first day of the week.
-moment.locale('en-gb');
+import {DataSet, Timeline, TimelineOptions} from 'vis-timeline/standalone';
 
 declare global {
   var grist: any;
@@ -36,7 +21,8 @@ const editCard = observable(false);
 const confirmChanges = observable(false);
 const currentScale = observable('day');
 const items = observable([] as Item[]);
-const groupSelected = observable(null);
+const groupSelected = observable(null as number | null);
+const focusOnSelect = observable(false);
 
 interface Item {
   id: number;
@@ -52,12 +38,12 @@ interface Item {
   element?: HTMLElement;
 }
 
+// Exposed for configuration.
 Object.assign((window as any), {
   currentScale,
   confirmChanges,
   editCard,
-  observable,
-  computed,
+  focusOnSelect
 });
 
 
@@ -76,7 +62,7 @@ function endKey(item: Item, days: number = 0): string {
   return `${item.group}-${end}`;
 }
 
-items.subscribe(list => {
+items.addListener(list => {
   byStart.clear();
   byEnd.clear();
   for (const item of list) {
@@ -148,7 +134,7 @@ const options: TimelineOptions = {
 
     const {start, end} = data;
 
-    const all = items() as Item[];
+    const all = items.get() as Item[];
 
     div.classList.remove('item-clash');
     for (const other of all) {
@@ -169,7 +155,7 @@ const options: TimelineOptions = {
     return div;
   },
   async onRemove(item, callback) {
-    if (!confirmChanges() || confirm('Are you sure you want to delete this item?')) {
+    if (!confirmChanges.get() || confirm('Are you sure you want to delete this item?')) {
       await grist.selectedTable.destroy(item.id);
       callback(null);
     }
@@ -184,7 +170,7 @@ const options: TimelineOptions = {
     }
     const format = (date: Date) => moment(date).format('YYYY-MM-DD');
 
-    if (confirmChanges() && !confirm('Are you sure you want to move this item?')) {
+    if (confirmChanges.get() && !confirm('Are you sure you want to move this item?')) {
       callback(null);
       return;
     }
@@ -194,8 +180,8 @@ const options: TimelineOptions = {
       end = moment(end).subtract(1, 'minute').toDate();
     }
     const fields = {
-      [mappings().From]: format(start),
-      [mappings().To]: format(end),
+      [mappings.get().From]: format(start),
+      [mappings.get().To]: format(end),
     };
     await withIdSpinner(item.id, async () => {
       callback(item);
@@ -203,32 +189,33 @@ const options: TimelineOptions = {
     });
   },
   async onAdd(item, callback) {
-    const group = idToName.get(item.group).split('|').map(formatValue);
-    const start = moment(item.start).format('YYYY-MM-DD');
+    try {
+      const group = idToName.get(item.group).split('|').map(formatValue);
+      const start = moment(item.start).format('YYYY-MM-DD');
 
-    if (!(item.start instanceof Date)) {
-      console.error('Invalid date');
-      return;
+      if (!(item.start instanceof Date)) {
+        console.error('Invalid date');
+        return;
+      }
+
+      // In group we have list of values, we need to create an object from it (zip it with columns).
+      const end = moment(defaultEnd(item.start)).format('YYYY-MM-DD');
+      const values = [...group, start, end];
+      const columns = [...mappings.get().Columns, mappings.get().From, mappings.get().To];
+      const rawFields = Object.fromEntries(zip(columns, values));
+
+      const fields = await liftFields(rawFields);
+      const {id} = await grist.selectedTable.create({fields});
+
+      await grist.setCursorPos({rowId: id});
+
+      callback(null);
+
+      openCard();
+
+    } finally {
+      cursorBox.classList.remove('cursor-loading');
     }
-
-
-    // In group we have list of values, we need to create an object from it (zip it with columns).
-
-    const end = moment(defaultEnd(item.start)).format('YYYY-MM-DD');
-    const values = [...group, start, end];
-    const columns = [...mappings().Columns, mappings().From, mappings().To];
-    const rawFields = Object.fromEntries(zip(columns, values));
-
-    const fields = await liftFields(rawFields);
-
-
-    const {id} = await grist.selectedTable.create({fields});
-
-    await grist.setCursorPos({rowId: id});
-
-    callback(null);
-
-    openCard();
   },
 
 
@@ -271,11 +258,11 @@ const options: TimelineOptions = {
 
     container.addEventListener('click', function() {
       // Find first item in that group.
-      const first = itemSet.get().find(i => i.group === group.id);
-      if (first) {
-        timeline.focus(first.id);
+      const last = itemSet.get().filter(i => i.group === group.id).sort((a, b) => b.start - a.start)[0];
+      if (last) {
+        timeline.focus(last.id);
       }
-      groupSelected(group);
+      groupSelected.set(group);
     });
 
     // Return the container as the group's template
@@ -313,40 +300,62 @@ const options: TimelineOptions = {
   },
   snap: function(date) {
     const snappedDate = moment(date);
-
-    // Adjust snapping to always align with Mondays
-    // if (scale === 'week') {
-    //   snappedDate.startOf('isoWeek'); // Start of the ISO week, i.e., Monday
-    // } else if (scale === 'day') {
-    //   snappedDate.startOf('day');
-    // }
     snappedDate.startOf('day');
-
-
     return snappedDate.toDate();
   },
-
   margin: {
-    item: 3,
-    axis: 1
+    item: 1,
+    axis: 0
   }
 };
 
 
 
-let show = () => {};
-let mappings = observable<any>({}, {deep: true});
+let mappings = observable<any>({});
 
 // Create a Timeline
 const timeline = new Timeline(container, itemSet, options);
+timeline.setOptions({
+  ...options,
+  groupHeightMode: 'fixed',
+});
 
 grist.onRecords((recs, maps) => {
-  mappings(maps);
-  records(grist.mapColumnNames(recs));
+  mappings.set(maps);
+  records.set(grist.mapColumnNames(recs));
   order.clear();
   recs.forEach((r, i) => order.set(r.id, i));
-  show();
-  updateHeader(true);
+  showCampaigns();
+  rewriteHeader(true);
+});
+
+// We will ignore first onRecord event.
+let firstOnRecord = true;
+let lastId = 0;
+grist.onRecord(rec => {
+  console.error('Record', rec);
+  if (rec.id === lastId) {
+    return;
+  }
+  lastId = rec.id;
+  if (firstOnRecord) {
+    firstOnRecord = false;
+    return;
+  }
+  if (!rec || !rec.id) {
+    return;
+  }
+  // Get selected row.
+  const selected = timeline.getSelection();
+  if (selected[0] === rec.id) {
+    return;
+  }
+  timeline.setSelection(Number(rec.id), {
+    focus: focusOnSelect.get(),
+    animation: {
+      animation: false,
+    },
+  });
 });
 
 function getFrom(r: any) {
@@ -382,8 +391,8 @@ function recToItem(r): Item {
 
 function recToRow(rec) {
   const groupValues = rec.Columns;
-  const columns = mappings().Columns;
-  const allColumns = [...columns, mappings().From, mappings().To];
+  const columns = mappings.get().Columns;
+  const allColumns = [...columns, mappings.get().From, mappings.get().To];
   const newStart = moment(rec.From).add(1, 'day').toDate();
   const newEnd = moment(rec.To).add(1, 'week').subtract(-1).toDate();
   const allValues = [
@@ -426,8 +435,7 @@ function onClick(selector: string, callback: () => void) {
 }
 
 onClick('#btnAlCampaign', () => {
-  show = showCampaings;
-  show();
+  showCampaigns();
 });
 
 
@@ -452,7 +460,7 @@ function appendEnd(yyyy_mm_dd: string) {
 const oldRecs = new Map();
 
 function renderItems() {
-  const recs = records();
+  const recs = records.get();
 
   let i = 1;
   nameToId.clear();
@@ -479,7 +487,7 @@ function renderItems() {
       return result;
     });
 
-  items(newItems.toArray());
+  items.set(newItems.toArray());
 
   const changedItems =
     oldRecs.size > 0
@@ -506,7 +514,7 @@ const formatCurrency = new Intl.NumberFormat('en-US', {
   currency: 'USD',
 });
 
-function showCampaings() {
+function showCampaigns() {
   renderItems();
   renderGroups();
 }
@@ -543,31 +551,7 @@ function renderGroups() {
   timeline.setGroups(groupSet);
 }
 
-show = showCampaings;
 
-// update the locale when changing the select box value
-// const select = document.getElementById('locale') as HTMLSelectElement;
-// select.onchange = function() {
-//   timeline.setOptions({
-//     locale: select.value as any,
-//   });
-// };
-
-
-(window as any).timeline = timeline;
-
-// const range = document.getElementById('range') as HTMLInputElement;
-// range.oninput = function () {
-//   const visi = document.getElementById('visualization')!;
-//   const margin = parseInt(range.value, 10);
-//   visi.setAttribute(
-//     'style',
-//     `--group-columns: ${
-//       margin * 3
-//     }px minmax(57px, max-content) minmax(86px, max-content)`
-//   );
-//   timeline.redraw();
-// };
 
 function bindConfig() {
   const configElements = document.querySelectorAll('.config');
@@ -589,26 +573,7 @@ function bindConfig() {
 bindConfig();
 
 const functions = {
-  ['timeline:cluster'](value: boolean) {
-    if (value) {
-      timeline.setOptions({
-        cluster: false as any,
-        stack: false,
-      });
-      try {
-        timeline.setGroups(null);
-      } catch (ex) {}
-      timeline.setGroups(groupSet);
-      timeline.redraw();
-    } else {
-      timeline.setOptions({
-        cluster: false as any,
-        stack: false,
-      });
-      timeline.setGroups(groupSet);
-      timeline.redraw();
-    }
-  },
+
 };
 
 function updateConfig(elementId: string, value: any) {
@@ -621,7 +586,7 @@ function updateConfig(elementId: string, value: any) {
   const [parent, child] = elementId.split(':')[1].split('.');
   if (child && schema === 'timeline') {
     if (child === 'scale') {
-      currentScale(formatedValue);
+      currentScale.set(formatedValue);
       timeline.setOptions({
         [parent]: {
           [child]: formatedValue,
@@ -652,7 +617,7 @@ function updateConfig(elementId: string, value: any) {
       return;
     }
 
-    (window as any)[parent](formatedValue);
+    (window as any)[parent].set(formatedValue);
   } else {
     console.error(`Unknown schema ${schema}`);
   }
@@ -672,36 +637,17 @@ function formatValue(value: any) {
   return value;
 }
 
-grist.onRecord(rec => {
-  if (!rec || !rec.id) {
-    return;
-  }
-  setTimeout(() => {
-    // Get selected row.
-    const selected = timeline.getSelection();
 
-    if (selected[0] === rec.id) {
-      return;
-    }
-
-    timeline.setSelection(Number(rec.id), {
-      focus: true,
-      animation: {
-        animation: false,
-      },
-    });
-  }, 10);
-});
-
-async function main() {
-  // await grist.allowSelectBy();
-}
-
-main();
 timeline.setGroups(groupSet);
 
 
 const cursorBox = document.createElement('div');
+cursorBox.append(document.createElement('sl-spinner'));
+
+
+cursorBox.addEventListener('dblclick', async function(e) {
+  cursorBox.classList.add('cursor-loading');
+});
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -712,8 +658,8 @@ document.addEventListener('DOMContentLoaded', function() {
         label: 'Add new',
         callback: async () => {
           const fields = {
-            [mappings().From]: moment().startOf('day').toDate(),
-            [mappings().To]: moment().endOf('isoWeek').toDate(),
+            [mappings.get().From]: moment().startOf('day').toDate(),
+            [mappings.get().To]: moment().endOf('isoWeek').toDate(),
           };
           const {id} = await grist.selectedTable.create({fields});
           await grist.setCursorPos({rowId: id});
@@ -737,16 +683,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
           }
 
-          const labels = mappings().Columns;
+          const labels = mappings.get().Columns;
           const values = item.data.Columns;
           const obj = zip(labels, values);
 
           for (const [label, value] of obj) {
             infor.innerHTML += `<div>${label}: ${value}</div>`;
           }
-
-
-
           drawer.show();
         },
       },
@@ -787,7 +730,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // We need to track the .vis-panel.vis-left element top property changed, and adjust
-  // group-header acordingly.
+  // group-header accordingly.
 
   const panel = document.querySelector('.vis-panel.vis-left')!;
   const header = document.getElementById('groupHeader')!;
@@ -826,8 +769,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   (foreground as any).addEventListener('mousemove', function(e: MouseEvent) {
-    // Get the x position in regards of the parent.
-    const x = e.clientX - foreground.getBoundingClientRect().left;
 
     const target = e.target as HTMLElement;
 
@@ -835,12 +776,22 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
+    // If the target is inside the cursorBox also do nothing.
+    if (cursorBox.contains(target)) {
+      return;
+    }
+
+    // Get the x position in regards of the parent.
+    const x = e.clientX - foreground.getBoundingClientRect().left;
+
+
+
     // Make sure target has vis-group class.
     if (!target.classList.contains('vis-group')) {
       cursorBox.style.display = 'none';
       return;
     }
-    cursorBox.style.display = 'block';
+    cursorBox.style.display = 'grid';
 
     // Now get the element at that position but in another div.
     const anotherDiv = document.querySelector(
@@ -887,12 +838,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Now get the element from the other div.
 
+
     // Now reposition selection.
     cursorBox.style.left = `${closest.left}px`;
     cursorBox.style.width = `${closest.width}px`;
     cursorBox.style.transform = '';
-
-
     try {
       if (cursorBox.parentElement !== target) {
         target.prepend(cursorBox);
@@ -923,7 +873,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
           }
           setTimeout(async () => {
-            if (!confirmChanges() || confirm('Are you sure you want to delete this item?')) {
+            if (!confirmChanges.get() || confirm('Are you sure you want to delete this item?')) {
               await grist.selectedTable.destroy(selected[0]);
             }
           }, 10);
@@ -936,7 +886,7 @@ document.addEventListener('DOMContentLoaded', function() {
           if (selected.length === 0) {
             return;
           }
-          const recs = records();
+          const recs = records.get();
           const rec = recs.find(r => r.id === selected[0]);
           if (!rec) {
             return;
@@ -966,23 +916,20 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-editCard.subscribe(async (value: any) => {
-  // await grist.setOption('editCard', value);
+editCard.addListener(async (value: any) => {
   (document.getElementById('local:editCard') as any)!.checked = value;
 });
 
 grist.onOptions((options: any) => {
   if (options?.editCard !== undefined) {
-    editCard(options.editCard ?? false);
+    editCard.set(options.editCard ?? false);
   }
 });
 
-// Hihgligh group if clicked
-
 let lastMappings = '';
 
-function updateHeader(force) {
-  const newMappings = JSON.stringify(mappings());
+function rewriteHeader(force?: boolean) {
+  const newMappings = JSON.stringify(mappings.get());
   if (newMappings === lastMappings && !force) {
     return;
   }
@@ -992,28 +939,50 @@ function updateHeader(force) {
     return;
   }
   groupHeader.innerHTML = '';
-  const parts = mappings().Columns.map((col: string) => {
+
+  const wrapper = dom('div');
+  wrapper.classList.add('group-header-columns');
+
+  const parts = mappings.get().Columns.map((col: string) => {
     const div = document.createElement('div');
     div.innerText = col;
     div.classList.add('group-part');
     div.style.padding = '5px';
     return div;
   });
-  groupHeader.style.setProperty('grid-template-columns', 'auto');
+  wrapper.style.setProperty('grid-template-columns', 'auto');
 
   const moreDiv = document.createElement('div');
   moreDiv.style.width = '20px';
 
   parts.push(moreDiv);
-  groupHeader.append(...parts);
+
+  groupHeader.append(dom('div',
+    // Icon to hide or show drawer.
+    dom('sl-icon', {name: 'chevron-bar-left'}),
+    dom.cls('havron'),
+    dom.on('click', () => collapsed.set(!collapsed.get())),
+  ));
+  wrapper.append(...parts);
+
+  const collapsed = observable(false);
+
+  collapsed.addListener(() => {
+    timeline.redraw();
+  });
+
+
 
   // Now we need to update its width, we can't break lines and anything like that.
-  const width = Math.ceil(groupHeader.getBoundingClientRect().width);
-
+  groupHeader.append(wrapper);
   // And set this width as minimum for the table rendered below.
   const visualization = document.getElementById('visualization')!;
-  // Set custom property --group-header-width to the width of the groupHeader
-  visualization.style.setProperty('--group-header-width', `${width}px`);
+
+
+  dom.update(visualization,
+    dom.cls('collapsed', collapsed),
+  );
+
 
   // Now measure each individual line, and provide grid-template-columns variable with minimum
   // width to make up for a column and header width.
@@ -1038,21 +1007,28 @@ function updateHeader(force) {
     (el: Element) => el.getBoundingClientRect().width
   );
   const templateColumns2 = sizesFromFirstLine.map(w => `${w}px`).join(' ');
-  groupHeader.style.setProperty('grid-template-columns', templateColumns2);
-}
-let lastTop = 0;
+  wrapper.style.setProperty('grid-template-columns', templateColumns2);
 
-(window as any).updateHeader = updateHeader;
+  const firstPartWidth = Math.ceil(parts[0].getBoundingClientRect().width);
+
+  const width = Math.ceil(wrapper.getBoundingClientRect().width);
+  // Set custom property --group-header-width to the width of the groupHeader
+  visualization.style.setProperty('--group-header-width', `${width - 1}px`);
+  visualization.style.setProperty('--group-first-width', `${firstPartWidth - 1}px`);
+
+}
 
 function anchorHeader() {
+  const store = anchorHeader as any as {lastTop: number};
+  store.lastTop = store.lastTop ?? 0;
   const panel = document.querySelector('.vis-panel.vis-left')!;
   const header = document.getElementById('groupHeader')!;
   const content = panel.querySelector('.vis-labelset')!;
   const top = panel.getBoundingClientRect().top;
-  if (top === lastTop) {
+  if (top === store.lastTop) {
     return;
   }
-  lastTop = top;
+  store.lastTop = top;
   const headerHeight = header.getBoundingClientRect().height;
   const newTop = top - headerHeight + 1;
   header.style.setProperty('top', `${newTop}px`);
@@ -1067,7 +1043,7 @@ function zip<T, V>(a: T[], b: V[]): [T, V][] {
 }
 
 function defaultEnd(start: Date) {
-  switch (currentScale()) {
+  switch (currentScale.get()) {
     case 'day':
       return moment(start).endOf('day').toDate();
     case 'week':
@@ -1098,23 +1074,11 @@ function openCard() {
 
 const getAllColumns: () => Promise<Column[]> = buildColumns();
 
-interface BulkColumns {
-  id: number[];
-  colId: string[];
-  parentId: number[];
-  type: string[];
-  displayCol: string[];
-  isFormula: boolean[];
-  formula: string[];
-  visibleCol: string[];
-}
-interface Column extends Record<keyof BulkColumns, any> {};
-
 function buildColumns() {
   let cache = [] as any[];
-  let lastMappings = JSON.stringify(mappings());
+  let lastMappings = JSON.stringify(mappings.get());
   return async () => {
-    const newMappings = JSON.stringify(mappings());
+    const newMappings = JSON.stringify(mappings.get());
     if (newMappings === lastMappings) {
       return cache;
     }
@@ -1124,40 +1088,11 @@ function buildColumns() {
     return columns;
   };
 
-
-
-  async function fetchColumnsFromGrist() {
-    const columns: Column[] = toRecords(await grist.docApi.fetchTable('_grist_Tables_column'));
-    return columns;
-  }
 }
 
-let tablesCache = [] as any[];
-
-async function fetchTables() {
-  if (!tablesCache.length) {
-    tablesCache = toRecords(await grist.docApi.fetchTable('_grist_Tables'));
-  }
-  return tablesCache;
-}
-
-async function selectedTable() {
-  const tables = await fetchTables();
-  const tableId = await grist.selectedTable.getTableId();
-  return tables.find(t => t.tableId === tableId);
-}
-
-function toRecords(bulk: Record<string, any[]>) {
-  const fields = Object.keys(bulk);
-  const records = [] as any[];
-  for (const index in bulk.id) {
-    records.push(
-      Object.fromEntries(fields.map(f => [f, bulk[f][index]]))
-    );
-  }
-  return records;
-}
-
+/**
+ * When creating a row in Grist we need to change values for Ref columns to row ids.
+ */
 async function liftFields(fields: Record<string, any>) {
   const allColumns = await getAllColumns();
   const myTable = await selectedTable();
@@ -1195,14 +1130,13 @@ async function liftFields(fields: Record<string, any>) {
 
 timeline.on('doubleClick', async function(props) {
   const {item, event} = props;
+
   if (event?.type === 'dblclick' && item) {
-    await openCard();
+    await withIdSpinner(item, async () => {
+      await openCard();
+    })
   }
 });
-
-(window as any).items = itemSet;
-(window as any).groups = groupSet;
-
 
 async function withElementSpinner(element: Element, callback: () => Promise<void>) {
   const spinner = document.createElement('sl-spinner');
@@ -1217,13 +1151,7 @@ async function withElementSpinner(element: Element, callback: () => Promise<void
 
 async function withIdSpinner(id: any, callback: () => Promise<void>) {
   const element = document.querySelector(`.item_${id}`)!;
-  const spinner = document.createElement('sl-spinner');
-  element.appendChild(spinner);
-  try {
-    await callback();
-  } finally {
-    spinner.remove();
-  }
+  await withElementSpinner(element, callback);
 }
 
 
@@ -1237,7 +1165,6 @@ window.onerror = function(event) {
   console.error(event);
   const message = (event as any).message ?? event;
   showAlert('danger', message);
-
 };
 
 function showAlert(variant: string, message: string) {
@@ -1250,11 +1177,10 @@ function showAlert(variant: string, message: string) {
 }
 
 
+// Helper to track cursor box on the timeline while scrolling.
 let leftPoints = [] as {left: number; width: number}[];
-
 timeline.on('rangechange', ({byUser, event}) => {
   leftPoints = [];
-
   if (!byUser) {
     return;
   }
@@ -1263,11 +1189,7 @@ timeline.on('rangechange', ({byUser, event}) => {
   }
   const deltaX = event.deltaX;
   cursorBox.style.transform = `translateX(${deltaX}px)`;
-  if (!byUser) {
-    return;
-  }
 });
-
 timeline.on('rangechanged', () => {
   // Try to parse transform, and get the x value.
   const transform = cursorBox.style.transform;
@@ -1285,4 +1207,3 @@ timeline.on('rangechanged', () => {
   cursorBox.style.left = `${left + x}px`;
   cursorBox.style.transform = '';
 })
-
