@@ -17,9 +17,9 @@
   };
   var __copyProps = (to, from3, except, desc) => {
     if (from3 && typeof from3 === "object" || typeof from3 === "function") {
-      for (let key of __getOwnPropNames(from3))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from3[key], enumerable: !(desc = __getOwnPropDesc(from3, key)) || desc.enumerable });
+      for (let key2 of __getOwnPropNames(from3))
+        if (!__hasOwnProp.call(to, key2) && key2 !== except)
+          __defProp(to, key2, { get: () => from3[key2], enumerable: !(desc = __getOwnPropDesc(from3, key2)) || desc.enumerable });
     }
     return to;
   };
@@ -213,9 +213,9 @@
           }
           return to2;
         }
-        function Moment(config) {
-          copyConfig(this, config);
-          this._d = new Date(config._d != null ? config._d.getTime() : NaN);
+        function Moment(config2) {
+          copyConfig(this, config2);
+          this._d = new Date(config2._d != null ? config2._d.getTime() : NaN);
           if (!this.isValid()) {
             this._d = /* @__PURE__ */ new Date(NaN);
           }
@@ -240,14 +240,14 @@
               hooks.deprecationHandler(null, msg);
             }
             if (firstTime) {
-              var args = [], arg, i8, key, argLen = arguments.length;
+              var args = [], arg, i8, key2, argLen = arguments.length;
               for (i8 = 0; i8 < argLen; i8++) {
                 arg = "";
                 if (typeof arguments[i8] === "object") {
                   arg += "\n[" + i8 + "] ";
-                  for (key in arguments[0]) {
-                    if (hasOwnProp(arguments[0], key)) {
-                      arg += key + ": " + arguments[0][key] + ", ";
+                  for (key2 in arguments[0]) {
+                    if (hasOwnProp(arguments[0], key2)) {
+                      arg += key2 + ": " + arguments[0][key2] + ", ";
                     }
                   }
                   arg = arg.slice(0, -2);
@@ -276,22 +276,22 @@
         }
         hooks.suppressDeprecationWarnings = false;
         hooks.deprecationHandler = null;
-        function isFunction(input) {
+        function isFunction2(input) {
           return typeof Function !== "undefined" && input instanceof Function || Object.prototype.toString.call(input) === "[object Function]";
         }
-        function set2(config) {
+        function set2(config2) {
           var prop2, i8;
-          for (i8 in config) {
-            if (hasOwnProp(config, i8)) {
-              prop2 = config[i8];
-              if (isFunction(prop2)) {
+          for (i8 in config2) {
+            if (hasOwnProp(config2, i8)) {
+              prop2 = config2[i8];
+              if (isFunction2(prop2)) {
                 this[i8] = prop2;
               } else {
                 this["_" + i8] = prop2;
               }
             }
           }
-          this._config = config;
+          this._config = config2;
           this._dayOfMonthOrdinalParseLenient = new RegExp(
             (this._dayOfMonthOrdinalParse.source || this._ordinalParse.source) + "|" + /\d{1,2}/.source
           );
@@ -318,9 +318,9 @@
           }
           return res;
         }
-        function Locale(config) {
-          if (config != null) {
-            this.set(config);
+        function Locale(config2) {
+          if (config2 != null) {
+            this.set(config2);
           }
         }
         var keys4;
@@ -345,9 +345,9 @@
           lastWeek: "[Last] dddd [at] LT",
           sameElse: "L"
         };
-        function calendar(key, mom, now4) {
-          var output = this._calendar[key] || this._calendar["sameElse"];
-          return isFunction(output) ? output.call(mom, now4) : output;
+        function calendar(key2, mom, now4) {
+          var output = this._calendar[key2] || this._calendar["sameElse"];
+          return isFunction2(output) ? output.call(mom, now4) : output;
         }
         function zeroFill(number2, targetLength, forceSign) {
           var absNumber = "" + Math.abs(number2), zerosToFill = targetLength - absNumber.length, sign2 = number2 >= 0;
@@ -396,7 +396,7 @@
           return function(mom) {
             var output = "", i9;
             for (i9 = 0; i9 < length; i9++) {
-              output += isFunction(array2[i9]) ? array2[i9].call(mom, format2) : array2[i9];
+              output += isFunction2(array2[i9]) ? array2[i9].call(mom, format2) : array2[i9];
             }
             return output;
           };
@@ -433,18 +433,18 @@
           LLL: "MMMM D, YYYY h:mm A",
           LLLL: "dddd, MMMM D, YYYY h:mm A"
         };
-        function longDateFormat(key) {
-          var format2 = this._longDateFormat[key], formatUpper = this._longDateFormat[key.toUpperCase()];
+        function longDateFormat(key2) {
+          var format2 = this._longDateFormat[key2], formatUpper = this._longDateFormat[key2.toUpperCase()];
           if (format2 || !formatUpper) {
             return format2;
           }
-          this._longDateFormat[key] = formatUpper.match(formattingTokens).map(function(tok) {
+          this._longDateFormat[key2] = formatUpper.match(formattingTokens).map(function(tok) {
             if (tok === "MMMM" || tok === "MM" || tok === "DD" || tok === "dddd") {
               return tok.slice(1);
             }
             return tok;
           }).join("");
-          return this._longDateFormat[key];
+          return this._longDateFormat[key2];
         }
         var defaultInvalidDate = "Invalid date";
         function invalidDate() {
@@ -474,11 +474,11 @@
         };
         function relativeTime(number2, withoutSuffix, string2, isFuture) {
           var output = this._relativeTime[string2];
-          return isFunction(output) ? output(number2, withoutSuffix, string2, isFuture) : output.replace(/%d/i, number2);
+          return isFunction2(output) ? output(number2, withoutSuffix, string2, isFuture) : output.replace(/%d/i, number2);
         }
         function pastFuture(diff2, output) {
           var format2 = this._relativeTime[diff2 > 0 ? "future" : "past"];
-          return isFunction(format2) ? format2(output) : format2.replace(/%s/i, output);
+          return isFunction2(format2) ? format2(output) : format2.replace(/%s/i, output);
         }
         var aliases = {
           D: "date",
@@ -578,15 +578,15 @@
         var match1 = /\d/, match2 = /\d\d/, match3 = /\d{3}/, match4 = /\d{4}/, match6 = /[+-]?\d{6}/, match1to2 = /\d\d?/, match3to4 = /\d\d\d\d?/, match5to6 = /\d\d\d\d\d\d?/, match1to3 = /\d{1,3}/, match1to4 = /\d{1,4}/, match1to6 = /[+-]?\d{1,6}/, matchUnsigned = /\d+/, matchSigned = /[+-]?\d+/, matchOffset = /Z|[+-]\d\d:?\d\d/gi, matchShortOffset = /Z|[+-]\d\d(?::?\d\d)?/gi, matchTimestamp = /[+-]?\d+(\.\d{1,3})?/, matchWord = /[0-9]{0,256}['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFF07\uFF10-\uFFEF]{1,256}|[\u0600-\u06FF\/]{1,256}(\s*?[\u0600-\u06FF]{1,256}){1,2}/i, match1to2NoLeadingZero = /^[1-9]\d?/, match1to2HasZero = /^([1-9]\d|\d)/, regexes;
         regexes = {};
         function addRegexToken(token2, regex, strictRegex) {
-          regexes[token2] = isFunction(regex) ? regex : function(isStrict, localeData2) {
+          regexes[token2] = isFunction2(regex) ? regex : function(isStrict, localeData2) {
             return isStrict && strictRegex ? strictRegex : regex;
           };
         }
-        function getParseRegexForToken(token2, config) {
+        function getParseRegexForToken(token2, config2) {
           if (!hasOwnProp(regexes, token2)) {
             return new RegExp(unescapeFormat(token2));
           }
-          return regexes[token2](config._strict, config._locale);
+          return regexes[token2](config2._strict, config2._locale);
         }
         function unescapeFormat(s3) {
           return regexEscape(
@@ -632,14 +632,14 @@
           }
         }
         function addWeekParseToken(token2, callback) {
-          addParseToken(token2, function(input, array2, config, token3) {
-            config._w = config._w || {};
-            callback(input, config._w, config, token3);
+          addParseToken(token2, function(input, array2, config2, token3) {
+            config2._w = config2._w || {};
+            callback(input, config2._w, config2, token3);
           });
         }
-        function addTimeToArrayFromToken(token2, input, config) {
+        function addTimeToArrayFromToken(token2, input, config2) {
           if (input != null && hasOwnProp(tokens, token2)) {
-            tokens[token2](input, config._a, config, token2);
+            tokens[token2](input, config2._a, config2, token2);
           }
         }
         function isLeapYear(year) {
@@ -754,7 +754,7 @@
         }
         function stringGet(units) {
           units = normalizeUnits(units);
-          if (isFunction(this[units])) {
+          if (isFunction2(this[units])) {
             return this[units]();
           }
           return this;
@@ -768,7 +768,7 @@
             }
           } else {
             units = normalizeUnits(units);
-            if (isFunction(this[units])) {
+            if (isFunction2(this[units])) {
               return this[units](value);
             }
           }
@@ -819,12 +819,12 @@
         addParseToken(["M", "MM"], function(input, array2) {
           array2[MONTH] = toInt(input) - 1;
         });
-        addParseToken(["MMM", "MMMM"], function(input, array2, config, token2) {
-          var month = config._locale.monthsParse(input, token2, config._strict);
+        addParseToken(["MMM", "MMMM"], function(input, array2, config2, token2) {
+          var month = config2._locale.monthsParse(input, token2, config2._strict);
           if (month != null) {
             array2[MONTH] = month;
           } else {
-            getParsingFlags(config).invalidMonth = input;
+            getParsingFlags(config2).invalidMonth = input;
           }
         });
         var defaultLocaleMonths = "January_February_March_April_May_June_July_August_September_October_November_December".split(
@@ -1087,7 +1087,7 @@
         addRegexToken("WW", match1to2, match2);
         addWeekParseToken(
           ["w", "ww", "W", "WW"],
-          function(input, week, config, token2) {
+          function(input, week, config2, token2) {
             week[token2.substr(0, 1)] = toInt(input);
           }
         );
@@ -1138,15 +1138,15 @@
         addRegexToken("dddd", function(isStrict, locale2) {
           return locale2.weekdaysRegex(isStrict);
         });
-        addWeekParseToken(["dd", "ddd", "dddd"], function(input, week, config, token2) {
-          var weekday = config._locale.weekdaysParse(input, token2, config._strict);
+        addWeekParseToken(["dd", "ddd", "dddd"], function(input, week, config2, token2) {
+          var weekday = config2._locale.weekdaysParse(input, token2, config2._strict);
           if (weekday != null) {
             week.d = weekday;
           } else {
-            getParsingFlags(config).invalidWeekday = input;
+            getParsingFlags(config2).invalidWeekday = input;
           }
         });
-        addWeekParseToken(["d", "e", "E"], function(input, week, config, token2) {
+        addWeekParseToken(["d", "e", "E"], function(input, week, config2, token2) {
           week[token2] = toInt(input);
         });
         function parseWeekday(input, locale2) {
@@ -1457,37 +1457,37 @@
         addRegexToken("Hmm", match3to4);
         addRegexToken("Hmmss", match5to6);
         addParseToken(["H", "HH"], HOUR);
-        addParseToken(["k", "kk"], function(input, array2, config) {
+        addParseToken(["k", "kk"], function(input, array2, config2) {
           var kInput = toInt(input);
           array2[HOUR] = kInput === 24 ? 0 : kInput;
         });
-        addParseToken(["a", "A"], function(input, array2, config) {
-          config._isPm = config._locale.isPM(input);
-          config._meridiem = input;
+        addParseToken(["a", "A"], function(input, array2, config2) {
+          config2._isPm = config2._locale.isPM(input);
+          config2._meridiem = input;
         });
-        addParseToken(["h", "hh"], function(input, array2, config) {
+        addParseToken(["h", "hh"], function(input, array2, config2) {
           array2[HOUR] = toInt(input);
-          getParsingFlags(config).bigHour = true;
+          getParsingFlags(config2).bigHour = true;
         });
-        addParseToken("hmm", function(input, array2, config) {
+        addParseToken("hmm", function(input, array2, config2) {
           var pos = input.length - 2;
           array2[HOUR] = toInt(input.substr(0, pos));
           array2[MINUTE] = toInt(input.substr(pos));
-          getParsingFlags(config).bigHour = true;
+          getParsingFlags(config2).bigHour = true;
         });
-        addParseToken("hmmss", function(input, array2, config) {
+        addParseToken("hmmss", function(input, array2, config2) {
           var pos1 = input.length - 4, pos2 = input.length - 2;
           array2[HOUR] = toInt(input.substr(0, pos1));
           array2[MINUTE] = toInt(input.substr(pos1, 2));
           array2[SECOND] = toInt(input.substr(pos2));
-          getParsingFlags(config).bigHour = true;
+          getParsingFlags(config2).bigHour = true;
         });
-        addParseToken("Hmm", function(input, array2, config) {
+        addParseToken("Hmm", function(input, array2, config2) {
           var pos = input.length - 2;
           array2[HOUR] = toInt(input.substr(0, pos));
           array2[MINUTE] = toInt(input.substr(pos));
         });
-        addParseToken("Hmmss", function(input, array2, config) {
+        addParseToken("Hmmss", function(input, array2, config2) {
           var pos1 = input.length - 4, pos2 = input.length - 2;
           array2[HOUR] = toInt(input.substr(0, pos1));
           array2[MINUTE] = toInt(input.substr(pos1, 2));
@@ -1529,8 +1529,8 @@
           }
           return minl;
         }
-        function normalizeLocale(key) {
-          return key ? key.toLowerCase().replace("_", "-") : key;
+        function normalizeLocale(key2) {
+          return key2 ? key2.toLowerCase().replace("_", "-") : key2;
         }
         function chooseLocale(names) {
           var i8 = 0, j3, next2, locale2, split2;
@@ -1570,56 +1570,56 @@
           }
           return locales2[name];
         }
-        function getSetGlobalLocale(key, values3) {
+        function getSetGlobalLocale(key2, values3) {
           var data3;
-          if (key) {
+          if (key2) {
             if (isUndefined(values3)) {
-              data3 = getLocale(key);
+              data3 = getLocale(key2);
             } else {
-              data3 = defineLocale(key, values3);
+              data3 = defineLocale(key2, values3);
             }
             if (data3) {
               globalLocale = data3;
             } else {
               if (typeof console !== "undefined" && console.warn) {
                 console.warn(
-                  "Locale " + key + " not found. Did you forget to load it?"
+                  "Locale " + key2 + " not found. Did you forget to load it?"
                 );
               }
             }
           }
           return globalLocale._abbr;
         }
-        function defineLocale(name, config) {
-          if (config !== null) {
+        function defineLocale(name, config2) {
+          if (config2 !== null) {
             var locale2, parentConfig = baseConfig;
-            config.abbr = name;
+            config2.abbr = name;
             if (locales2[name] != null) {
               deprecateSimple(
                 "defineLocaleOverride",
                 "use moment.updateLocale(localeName, config) to change an existing locale. moment.defineLocale(localeName, config) should only be used for creating a new locale See http://momentjs.com/guides/#/warnings/define-locale/ for more info."
               );
               parentConfig = locales2[name]._config;
-            } else if (config.parentLocale != null) {
-              if (locales2[config.parentLocale] != null) {
-                parentConfig = locales2[config.parentLocale]._config;
+            } else if (config2.parentLocale != null) {
+              if (locales2[config2.parentLocale] != null) {
+                parentConfig = locales2[config2.parentLocale]._config;
               } else {
-                locale2 = loadLocale(config.parentLocale);
+                locale2 = loadLocale(config2.parentLocale);
                 if (locale2 != null) {
                   parentConfig = locale2._config;
                 } else {
-                  if (!localeFamilies[config.parentLocale]) {
-                    localeFamilies[config.parentLocale] = [];
+                  if (!localeFamilies[config2.parentLocale]) {
+                    localeFamilies[config2.parentLocale] = [];
                   }
-                  localeFamilies[config.parentLocale].push({
+                  localeFamilies[config2.parentLocale].push({
                     name,
-                    config
+                    config: config2
                   });
                   return null;
                 }
               }
             }
-            locales2[name] = new Locale(mergeConfigs(parentConfig, config));
+            locales2[name] = new Locale(mergeConfigs(parentConfig, config2));
             if (localeFamilies[name]) {
               localeFamilies[name].forEach(function(x3) {
                 defineLocale(x3.name, x3.config);
@@ -1632,21 +1632,21 @@
             return null;
           }
         }
-        function updateLocale(name, config) {
-          if (config != null) {
+        function updateLocale(name, config2) {
+          if (config2 != null) {
             var locale2, tmpLocale, parentConfig = baseConfig;
             if (locales2[name] != null && locales2[name].parentLocale != null) {
-              locales2[name].set(mergeConfigs(locales2[name]._config, config));
+              locales2[name].set(mergeConfigs(locales2[name]._config, config2));
             } else {
               tmpLocale = loadLocale(name);
               if (tmpLocale != null) {
                 parentConfig = tmpLocale._config;
               }
-              config = mergeConfigs(parentConfig, config);
+              config2 = mergeConfigs(parentConfig, config2);
               if (tmpLocale == null) {
-                config.abbr = name;
+                config2.abbr = name;
               }
-              locale2 = new Locale(config);
+              locale2 = new Locale(config2);
               locale2.parentLocale = locales2[name];
               locales2[name] = locale2;
             }
@@ -1665,22 +1665,22 @@
           }
           return locales2[name];
         }
-        function getLocale(key) {
+        function getLocale(key2) {
           var locale2;
-          if (key && key._locale && key._locale._abbr) {
-            key = key._locale._abbr;
+          if (key2 && key2._locale && key2._locale._abbr) {
+            key2 = key2._locale._abbr;
           }
-          if (!key) {
+          if (!key2) {
             return globalLocale;
           }
-          if (!isArray3(key)) {
-            locale2 = loadLocale(key);
+          if (!isArray3(key2)) {
+            locale2 = loadLocale(key2);
             if (locale2) {
               return locale2;
             }
-            key = [key];
+            key2 = [key2];
           }
-          return chooseLocale(key);
+          return chooseLocale(key2);
         }
         function listLocales() {
           return keys4(locales2);
@@ -1738,10 +1738,10 @@
           PDT: -7 * 60,
           PST: -8 * 60
         };
-        function configFromISO(config) {
-          var i8, l6, string2 = config._i, match5 = extendedIsoRegex.exec(string2) || basicIsoRegex.exec(string2), allowTime, dateFormat, timeFormat, tzFormat, isoDatesLen = isoDates.length, isoTimesLen = isoTimes.length;
+        function configFromISO(config2) {
+          var i8, l6, string2 = config2._i, match5 = extendedIsoRegex.exec(string2) || basicIsoRegex.exec(string2), allowTime, dateFormat, timeFormat, tzFormat, isoDatesLen = isoDates.length, isoTimesLen = isoTimes.length;
           if (match5) {
-            getParsingFlags(config).iso = true;
+            getParsingFlags(config2).iso = true;
             for (i8 = 0, l6 = isoDatesLen; i8 < l6; i8++) {
               if (isoDates[i8][1].exec(match5[1])) {
                 dateFormat = isoDates[i8][0];
@@ -1750,7 +1750,7 @@
               }
             }
             if (dateFormat == null) {
-              config._isValid = false;
+              config2._isValid = false;
               return;
             }
             if (match5[3]) {
@@ -1761,26 +1761,26 @@
                 }
               }
               if (timeFormat == null) {
-                config._isValid = false;
+                config2._isValid = false;
                 return;
               }
             }
             if (!allowTime && timeFormat != null) {
-              config._isValid = false;
+              config2._isValid = false;
               return;
             }
             if (match5[4]) {
               if (tzRegex.exec(match5[4])) {
                 tzFormat = "Z";
               } else {
-                config._isValid = false;
+                config2._isValid = false;
                 return;
               }
             }
-            config._f = dateFormat + (timeFormat || "") + (tzFormat || "");
-            configFromStringAndFormat(config);
+            config2._f = dateFormat + (timeFormat || "") + (tzFormat || "");
+            configFromStringAndFormat(config2);
           } else {
-            config._isValid = false;
+            config2._isValid = false;
           }
         }
         function extractFromRFC2822Strings(yearStr, monthStr, dayStr, hourStr, minuteStr, secondStr) {
@@ -1808,7 +1808,7 @@
         function preprocessRFC2822(s3) {
           return s3.replace(/\([^()]*\)|[\n\t]/g, " ").replace(/(\s\s+)/g, " ").replace(/^\s\s*/, "").replace(/\s\s*$/, "");
         }
-        function checkWeekday(weekdayStr, parsedInput, config) {
+        function checkWeekday(weekdayStr, parsedInput, config2) {
           if (weekdayStr) {
             var weekdayProvided = defaultLocaleWeekdaysShort.indexOf(weekdayStr), weekdayActual = new Date(
               parsedInput[0],
@@ -1816,8 +1816,8 @@
               parsedInput[2]
             ).getDay();
             if (weekdayProvided !== weekdayActual) {
-              getParsingFlags(config).weekdayMismatch = true;
-              config._isValid = false;
+              getParsingFlags(config2).weekdayMismatch = true;
+              config2._isValid = false;
               return false;
             }
           }
@@ -1833,8 +1833,8 @@
             return h4 * 60 + m4;
           }
         }
-        function configFromRFC2822(config) {
-          var match5 = rfc2822.exec(preprocessRFC2822(config._i)), parsedArray;
+        function configFromRFC2822(config2) {
+          var match5 = rfc2822.exec(preprocessRFC2822(config2._i)), parsedArray;
           if (match5) {
             parsedArray = extractFromRFC2822Strings(
               match5[4],
@@ -1844,46 +1844,46 @@
               match5[6],
               match5[7]
             );
-            if (!checkWeekday(match5[1], parsedArray, config)) {
+            if (!checkWeekday(match5[1], parsedArray, config2)) {
               return;
             }
-            config._a = parsedArray;
-            config._tzm = calculateOffset(match5[8], match5[9], match5[10]);
-            config._d = createUTCDate.apply(null, config._a);
-            config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
-            getParsingFlags(config).rfc2822 = true;
+            config2._a = parsedArray;
+            config2._tzm = calculateOffset(match5[8], match5[9], match5[10]);
+            config2._d = createUTCDate.apply(null, config2._a);
+            config2._d.setUTCMinutes(config2._d.getUTCMinutes() - config2._tzm);
+            getParsingFlags(config2).rfc2822 = true;
           } else {
-            config._isValid = false;
+            config2._isValid = false;
           }
         }
-        function configFromString(config) {
-          var matched = aspNetJsonRegex.exec(config._i);
+        function configFromString(config2) {
+          var matched = aspNetJsonRegex.exec(config2._i);
           if (matched !== null) {
-            config._d = /* @__PURE__ */ new Date(+matched[1]);
+            config2._d = /* @__PURE__ */ new Date(+matched[1]);
             return;
           }
-          configFromISO(config);
-          if (config._isValid === false) {
-            delete config._isValid;
+          configFromISO(config2);
+          if (config2._isValid === false) {
+            delete config2._isValid;
           } else {
             return;
           }
-          configFromRFC2822(config);
-          if (config._isValid === false) {
-            delete config._isValid;
+          configFromRFC2822(config2);
+          if (config2._isValid === false) {
+            delete config2._isValid;
           } else {
             return;
           }
-          if (config._strict) {
-            config._isValid = false;
+          if (config2._strict) {
+            config2._isValid = false;
           } else {
-            hooks.createFromInputFallback(config);
+            hooks.createFromInputFallback(config2);
           }
         }
         hooks.createFromInputFallback = deprecate2(
           "value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), which is not reliable across all browsers and versions. Non RFC2822/ISO date formats are discouraged. Please refer to http://momentjs.com/guides/#/warnings/js-date/ for more info.",
-          function(config) {
-            config._d = /* @__PURE__ */ new Date(config._i + (config._useUTC ? " UTC" : ""));
+          function(config2) {
+            config2._d = /* @__PURE__ */ new Date(config2._i + (config2._useUTC ? " UTC" : ""));
           }
         );
         function defaults2(a4, b4, c6) {
@@ -1895,9 +1895,9 @@
           }
           return c6;
         }
-        function currentDateArray(config) {
+        function currentDateArray(config2) {
           var nowValue = new Date(hooks.now());
-          if (config._useUTC) {
+          if (config2._useUTC) {
             return [
               nowValue.getUTCFullYear(),
               nowValue.getUTCMonth(),
@@ -1906,58 +1906,58 @@
           }
           return [nowValue.getFullYear(), nowValue.getMonth(), nowValue.getDate()];
         }
-        function configFromArray(config) {
+        function configFromArray(config2) {
           var i8, date2, input = [], currentDate, expectedWeekday, yearToUse;
-          if (config._d) {
+          if (config2._d) {
             return;
           }
-          currentDate = currentDateArray(config);
-          if (config._w && config._a[DATE] == null && config._a[MONTH] == null) {
-            dayOfYearFromWeekInfo(config);
+          currentDate = currentDateArray(config2);
+          if (config2._w && config2._a[DATE] == null && config2._a[MONTH] == null) {
+            dayOfYearFromWeekInfo(config2);
           }
-          if (config._dayOfYear != null) {
-            yearToUse = defaults2(config._a[YEAR], currentDate[YEAR]);
-            if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
-              getParsingFlags(config)._overflowDayOfYear = true;
+          if (config2._dayOfYear != null) {
+            yearToUse = defaults2(config2._a[YEAR], currentDate[YEAR]);
+            if (config2._dayOfYear > daysInYear(yearToUse) || config2._dayOfYear === 0) {
+              getParsingFlags(config2)._overflowDayOfYear = true;
             }
-            date2 = createUTCDate(yearToUse, 0, config._dayOfYear);
-            config._a[MONTH] = date2.getUTCMonth();
-            config._a[DATE] = date2.getUTCDate();
+            date2 = createUTCDate(yearToUse, 0, config2._dayOfYear);
+            config2._a[MONTH] = date2.getUTCMonth();
+            config2._a[DATE] = date2.getUTCDate();
           }
-          for (i8 = 0; i8 < 3 && config._a[i8] == null; ++i8) {
-            config._a[i8] = input[i8] = currentDate[i8];
+          for (i8 = 0; i8 < 3 && config2._a[i8] == null; ++i8) {
+            config2._a[i8] = input[i8] = currentDate[i8];
           }
           for (; i8 < 7; i8++) {
-            config._a[i8] = input[i8] = config._a[i8] == null ? i8 === 2 ? 1 : 0 : config._a[i8];
+            config2._a[i8] = input[i8] = config2._a[i8] == null ? i8 === 2 ? 1 : 0 : config2._a[i8];
           }
-          if (config._a[HOUR] === 24 && config._a[MINUTE] === 0 && config._a[SECOND] === 0 && config._a[MILLISECOND] === 0) {
-            config._nextDay = true;
-            config._a[HOUR] = 0;
+          if (config2._a[HOUR] === 24 && config2._a[MINUTE] === 0 && config2._a[SECOND] === 0 && config2._a[MILLISECOND] === 0) {
+            config2._nextDay = true;
+            config2._a[HOUR] = 0;
           }
-          config._d = (config._useUTC ? createUTCDate : createDate).apply(
+          config2._d = (config2._useUTC ? createUTCDate : createDate).apply(
             null,
             input
           );
-          expectedWeekday = config._useUTC ? config._d.getUTCDay() : config._d.getDay();
-          if (config._tzm != null) {
-            config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
+          expectedWeekday = config2._useUTC ? config2._d.getUTCDay() : config2._d.getDay();
+          if (config2._tzm != null) {
+            config2._d.setUTCMinutes(config2._d.getUTCMinutes() - config2._tzm);
           }
-          if (config._nextDay) {
-            config._a[HOUR] = 24;
+          if (config2._nextDay) {
+            config2._a[HOUR] = 24;
           }
-          if (config._w && typeof config._w.d !== "undefined" && config._w.d !== expectedWeekday) {
-            getParsingFlags(config).weekdayMismatch = true;
+          if (config2._w && typeof config2._w.d !== "undefined" && config2._w.d !== expectedWeekday) {
+            getParsingFlags(config2).weekdayMismatch = true;
           }
         }
-        function dayOfYearFromWeekInfo(config) {
+        function dayOfYearFromWeekInfo(config2) {
           var w3, weekYear, week, weekday, dow, doy, temp, weekdayOverflow, curWeek;
-          w3 = config._w;
+          w3 = config2._w;
           if (w3.GG != null || w3.W != null || w3.E != null) {
             dow = 1;
             doy = 4;
             weekYear = defaults2(
               w3.GG,
-              config._a[YEAR],
+              config2._a[YEAR],
               weekOfYear(createLocal(), 1, 4).year
             );
             week = defaults2(w3.W, 1);
@@ -1966,10 +1966,10 @@
               weekdayOverflow = true;
             }
           } else {
-            dow = config._locale._week.dow;
-            doy = config._locale._week.doy;
+            dow = config2._locale._week.dow;
+            doy = config2._locale._week.doy;
             curWeek = weekOfYear(createLocal(), dow, doy);
-            weekYear = defaults2(w3.gg, config._a[YEAR], curWeek.year);
+            weekYear = defaults2(w3.gg, config2._a[YEAR], curWeek.year);
             week = defaults2(w3.w, curWeek.week);
             if (w3.d != null) {
               weekday = w3.d;
@@ -1986,40 +1986,40 @@
             }
           }
           if (week < 1 || week > weeksInYear(weekYear, dow, doy)) {
-            getParsingFlags(config)._overflowWeeks = true;
+            getParsingFlags(config2)._overflowWeeks = true;
           } else if (weekdayOverflow != null) {
-            getParsingFlags(config)._overflowWeekday = true;
+            getParsingFlags(config2)._overflowWeekday = true;
           } else {
             temp = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy);
-            config._a[YEAR] = temp.year;
-            config._dayOfYear = temp.dayOfYear;
+            config2._a[YEAR] = temp.year;
+            config2._dayOfYear = temp.dayOfYear;
           }
         }
         hooks.ISO_8601 = function() {
         };
         hooks.RFC_2822 = function() {
         };
-        function configFromStringAndFormat(config) {
-          if (config._f === hooks.ISO_8601) {
-            configFromISO(config);
+        function configFromStringAndFormat(config2) {
+          if (config2._f === hooks.ISO_8601) {
+            configFromISO(config2);
             return;
           }
-          if (config._f === hooks.RFC_2822) {
-            configFromRFC2822(config);
+          if (config2._f === hooks.RFC_2822) {
+            configFromRFC2822(config2);
             return;
           }
-          config._a = [];
-          getParsingFlags(config).empty = true;
-          var string2 = "" + config._i, i8, parsedInput, tokens2, token2, skipped, stringLength = string2.length, totalParsedInputLength = 0, era, tokenLen;
-          tokens2 = expandFormat(config._f, config._locale).match(formattingTokens) || [];
+          config2._a = [];
+          getParsingFlags(config2).empty = true;
+          var string2 = "" + config2._i, i8, parsedInput, tokens2, token2, skipped, stringLength = string2.length, totalParsedInputLength = 0, era, tokenLen;
+          tokens2 = expandFormat(config2._f, config2._locale).match(formattingTokens) || [];
           tokenLen = tokens2.length;
           for (i8 = 0; i8 < tokenLen; i8++) {
             token2 = tokens2[i8];
-            parsedInput = (string2.match(getParseRegexForToken(token2, config)) || [])[0];
+            parsedInput = (string2.match(getParseRegexForToken(token2, config2)) || [])[0];
             if (parsedInput) {
               skipped = string2.substr(0, string2.indexOf(parsedInput));
               if (skipped.length > 0) {
-                getParsingFlags(config).unusedInput.push(skipped);
+                getParsingFlags(config2).unusedInput.push(skipped);
               }
               string2 = string2.slice(
                 string2.indexOf(parsedInput) + parsedInput.length
@@ -2028,35 +2028,35 @@
             }
             if (formatTokenFunctions[token2]) {
               if (parsedInput) {
-                getParsingFlags(config).empty = false;
+                getParsingFlags(config2).empty = false;
               } else {
-                getParsingFlags(config).unusedTokens.push(token2);
+                getParsingFlags(config2).unusedTokens.push(token2);
               }
-              addTimeToArrayFromToken(token2, parsedInput, config);
-            } else if (config._strict && !parsedInput) {
-              getParsingFlags(config).unusedTokens.push(token2);
+              addTimeToArrayFromToken(token2, parsedInput, config2);
+            } else if (config2._strict && !parsedInput) {
+              getParsingFlags(config2).unusedTokens.push(token2);
             }
           }
-          getParsingFlags(config).charsLeftOver = stringLength - totalParsedInputLength;
+          getParsingFlags(config2).charsLeftOver = stringLength - totalParsedInputLength;
           if (string2.length > 0) {
-            getParsingFlags(config).unusedInput.push(string2);
+            getParsingFlags(config2).unusedInput.push(string2);
           }
-          if (config._a[HOUR] <= 12 && getParsingFlags(config).bigHour === true && config._a[HOUR] > 0) {
-            getParsingFlags(config).bigHour = void 0;
+          if (config2._a[HOUR] <= 12 && getParsingFlags(config2).bigHour === true && config2._a[HOUR] > 0) {
+            getParsingFlags(config2).bigHour = void 0;
           }
-          getParsingFlags(config).parsedDateParts = config._a.slice(0);
-          getParsingFlags(config).meridiem = config._meridiem;
-          config._a[HOUR] = meridiemFixWrap(
-            config._locale,
-            config._a[HOUR],
-            config._meridiem
+          getParsingFlags(config2).parsedDateParts = config2._a.slice(0);
+          getParsingFlags(config2).meridiem = config2._meridiem;
+          config2._a[HOUR] = meridiemFixWrap(
+            config2._locale,
+            config2._a[HOUR],
+            config2._meridiem
           );
-          era = getParsingFlags(config).era;
+          era = getParsingFlags(config2).era;
           if (era !== null) {
-            config._a[YEAR] = config._locale.erasConvertYear(era, config._a[YEAR]);
+            config2._a[YEAR] = config2._locale.erasConvertYear(era, config2._a[YEAR]);
           }
-          configFromArray(config);
-          checkOverflow(config);
+          configFromArray(config2);
+          checkOverflow(config2);
         }
         function meridiemFixWrap(locale2, hour, meridiem2) {
           var isPm;
@@ -2078,21 +2078,21 @@
             return hour;
           }
         }
-        function configFromStringAndArray(config) {
-          var tempConfig, bestMoment, scoreToBeat, i8, currentScore, validFormatFound, bestFormatIsValid = false, configfLen = config._f.length;
+        function configFromStringAndArray(config2) {
+          var tempConfig, bestMoment, scoreToBeat, i8, currentScore, validFormatFound, bestFormatIsValid = false, configfLen = config2._f.length;
           if (configfLen === 0) {
-            getParsingFlags(config).invalidFormat = true;
-            config._d = /* @__PURE__ */ new Date(NaN);
+            getParsingFlags(config2).invalidFormat = true;
+            config2._d = /* @__PURE__ */ new Date(NaN);
             return;
           }
           for (i8 = 0; i8 < configfLen; i8++) {
             currentScore = 0;
             validFormatFound = false;
-            tempConfig = copyConfig({}, config);
-            if (config._useUTC != null) {
-              tempConfig._useUTC = config._useUTC;
+            tempConfig = copyConfig({}, config2);
+            if (config2._useUTC != null) {
+              tempConfig._useUTC = config2._useUTC;
             }
-            tempConfig._f = config._f[i8];
+            tempConfig._f = config2._f[i8];
             configFromStringAndFormat(tempConfig);
             if (isValid(tempConfig)) {
               validFormatFound = true;
@@ -2115,73 +2115,73 @@
               }
             }
           }
-          extend2(config, bestMoment || tempConfig);
+          extend2(config2, bestMoment || tempConfig);
         }
-        function configFromObject(config) {
-          if (config._d) {
+        function configFromObject(config2) {
+          if (config2._d) {
             return;
           }
-          var i8 = normalizeObjectUnits(config._i), dayOrDate = i8.day === void 0 ? i8.date : i8.day;
-          config._a = map3(
+          var i8 = normalizeObjectUnits(config2._i), dayOrDate = i8.day === void 0 ? i8.date : i8.day;
+          config2._a = map3(
             [i8.year, i8.month, dayOrDate, i8.hour, i8.minute, i8.second, i8.millisecond],
             function(obj) {
               return obj && parseInt(obj, 10);
             }
           );
-          configFromArray(config);
+          configFromArray(config2);
         }
-        function createFromConfig(config) {
-          var res = new Moment(checkOverflow(prepareConfig(config)));
+        function createFromConfig(config2) {
+          var res = new Moment(checkOverflow(prepareConfig(config2)));
           if (res._nextDay) {
             res.add(1, "d");
             res._nextDay = void 0;
           }
           return res;
         }
-        function prepareConfig(config) {
-          var input = config._i, format2 = config._f;
-          config._locale = config._locale || getLocale(config._l);
+        function prepareConfig(config2) {
+          var input = config2._i, format2 = config2._f;
+          config2._locale = config2._locale || getLocale(config2._l);
           if (input === null || format2 === void 0 && input === "") {
             return createInvalid({ nullInput: true });
           }
           if (typeof input === "string") {
-            config._i = input = config._locale.preparse(input);
+            config2._i = input = config2._locale.preparse(input);
           }
           if (isMoment(input)) {
             return new Moment(checkOverflow(input));
           } else if (isDate2(input)) {
-            config._d = input;
+            config2._d = input;
           } else if (isArray3(format2)) {
-            configFromStringAndArray(config);
+            configFromStringAndArray(config2);
           } else if (format2) {
-            configFromStringAndFormat(config);
+            configFromStringAndFormat(config2);
           } else {
-            configFromInput(config);
+            configFromInput(config2);
           }
-          if (!isValid(config)) {
-            config._d = null;
+          if (!isValid(config2)) {
+            config2._d = null;
           }
-          return config;
+          return config2;
         }
-        function configFromInput(config) {
-          var input = config._i;
+        function configFromInput(config2) {
+          var input = config2._i;
           if (isUndefined(input)) {
-            config._d = new Date(hooks.now());
+            config2._d = new Date(hooks.now());
           } else if (isDate2(input)) {
-            config._d = new Date(input.valueOf());
+            config2._d = new Date(input.valueOf());
           } else if (typeof input === "string") {
-            configFromString(config);
+            configFromString(config2);
           } else if (isArray3(input)) {
-            config._a = map3(input.slice(0), function(obj) {
+            config2._a = map3(input.slice(0), function(obj) {
               return parseInt(obj, 10);
             });
-            configFromArray(config);
+            configFromArray(config2);
           } else if (isObject2(input)) {
-            configFromObject(config);
+            configFromObject(config2);
           } else if (isNumber2(input)) {
-            config._d = new Date(input);
+            config2._d = new Date(input);
           } else {
-            hooks.createFromInputFallback(config);
+            hooks.createFromInputFallback(config2);
           }
         }
         function createLocalOrUTC(input, format2, locale2, strict, isUTC) {
@@ -2268,9 +2268,9 @@
           "millisecond"
         ];
         function isDurationValid(m4) {
-          var key, unitHasDecimal = false, i8, orderLen = ordering.length;
-          for (key in m4) {
-            if (hasOwnProp(m4, key) && !(indexOf3.call(ordering, key) !== -1 && (m4[key] == null || !isNaN(m4[key])))) {
+          var key2, unitHasDecimal = false, i8, orderLen = ordering.length;
+          for (key2 in m4) {
+            if (hasOwnProp(m4, key2) && !(indexOf3.call(ordering, key2) !== -1 && (m4[key2] == null || !isNaN(m4[key2])))) {
               return false;
             }
           }
@@ -2337,9 +2337,9 @@
         offset("ZZ", "");
         addRegexToken("Z", matchShortOffset);
         addRegexToken("ZZ", matchShortOffset);
-        addParseToken(["Z", "ZZ"], function(input, array2, config) {
-          config._useUTC = true;
-          config._tzm = offsetFromString(matchShortOffset, input);
+        addParseToken(["Z", "ZZ"], function(input, array2, config2) {
+          config2._useUTC = true;
+          config2._tzm = offsetFromString(matchShortOffset, input);
         });
         var chunkOffset = /([\+\-]|\d\d)/gi;
         function offsetFromString(matcher, string2) {
@@ -2482,7 +2482,7 @@
           return this.isValid() ? this._isUTC && this._offset === 0 : false;
         }
         var aspNetRegex = /^(-|\+)?(?:(\d*)[. ])?(\d+):(\d+)(?::(\d+)(\.\d*)?)?$/, isoRegex = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/;
-        function createDuration(input, key) {
+        function createDuration(input, key2) {
           var duration = input, match5 = null, sign2, ret, diffRes;
           if (isDuration(input)) {
             duration = {
@@ -2492,8 +2492,8 @@
             };
           } else if (isNumber2(input) || !isNaN(+input)) {
             duration = {};
-            if (key) {
-              duration[key] = +input;
+            if (key2) {
+              duration[key2] = +input;
             } else {
               duration.milliseconds = +input;
             }
@@ -2686,7 +2686,7 @@
               time = void 0;
             }
           }
-          var now4 = time || createLocal(), sod = cloneWithOffset(now4, this).startOf("day"), format2 = hooks.calendarFormat(this, sod) || "sameElse", output = formats && (isFunction(formats[format2]) ? formats[format2].call(this, now4) : formats[format2]);
+          var now4 = time || createLocal(), sod = cloneWithOffset(now4, this).startOf("day"), format2 = hooks.calendarFormat(this, sod) || "sameElse", output = formats && (isFunction2(formats[format2]) ? formats[format2].call(this, now4) : formats[format2]);
           return this.format(
             output || this.localeData().calendar(format2, this, createLocal(now4))
           );
@@ -2821,7 +2821,7 @@
               utc ? "YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]" : "YYYYYY-MM-DD[T]HH:mm:ss.SSSZ"
             );
           }
-          if (isFunction(Date.prototype.toISOString)) {
+          if (isFunction2(Date.prototype.toISOString)) {
             if (utc) {
               return this.toDate().toISOString();
             } else {
@@ -2875,12 +2875,12 @@
         function toNow(withoutSuffix) {
           return this.to(createLocal(), withoutSuffix);
         }
-        function locale(key) {
+        function locale(key2) {
           var newLocaleData;
-          if (key === void 0) {
+          if (key2 === void 0) {
             return this._locale._abbr;
           } else {
-            newLocaleData = getLocale(key);
+            newLocaleData = getLocale(key2);
             if (newLocaleData != null) {
               this._locale = newLocaleData;
             }
@@ -2889,11 +2889,11 @@
         }
         var lang = deprecate2(
           "moment().lang() is deprecated. Instead, use moment().localeData() to get the language configuration. Use moment().locale() to change languages.",
-          function(key) {
-            if (key === void 0) {
+          function(key2) {
+            if (key2 === void 0) {
               return this.localeData();
             } else {
-              return this.locale(key);
+              return this.locale(key2);
             }
           }
         );
@@ -3106,12 +3106,12 @@
         addRegexToken("NNNNN", matchEraNarrow);
         addParseToken(
           ["N", "NN", "NNN", "NNNN", "NNNNN"],
-          function(input, array2, config, token2) {
-            var era = config._locale.erasParse(input, token2, config._strict);
+          function(input, array2, config2, token2) {
+            var era = config2._locale.erasParse(input, token2, config2._strict);
             if (era) {
-              getParsingFlags(config).era = era;
+              getParsingFlags(config2).era = era;
             } else {
-              getParsingFlags(config).invalidEra = input;
+              getParsingFlags(config2).invalidEra = input;
             }
           }
         );
@@ -3121,13 +3121,13 @@
         addRegexToken("yyyy", matchUnsigned);
         addRegexToken("yo", matchEraYearOrdinal);
         addParseToken(["y", "yy", "yyy", "yyyy"], YEAR);
-        addParseToken(["yo"], function(input, array2, config, token2) {
+        addParseToken(["yo"], function(input, array2, config2, token2) {
           var match5;
-          if (config._locale._eraYearOrdinalRegex) {
-            match5 = input.match(config._locale._eraYearOrdinalRegex);
+          if (config2._locale._eraYearOrdinalRegex) {
+            match5 = input.match(config2._locale._eraYearOrdinalRegex);
           }
-          if (config._locale.eraYearOrdinalParse) {
-            array2[YEAR] = config._locale.eraYearOrdinalParse(input, match5);
+          if (config2._locale.eraYearOrdinalParse) {
+            array2[YEAR] = config2._locale.eraYearOrdinalParse(input, match5);
           } else {
             array2[YEAR] = parseInt(input, 10);
           }
@@ -3317,11 +3317,11 @@
         addRegexToken("ggggg", match1to6, match6);
         addWeekParseToken(
           ["gggg", "ggggg", "GGGG", "GGGGG"],
-          function(input, week, config, token2) {
+          function(input, week, config2, token2) {
             week[token2.substr(0, 2)] = toInt(input);
           }
         );
-        addWeekParseToken(["gg", "GG"], function(input, week, config, token2) {
+        addWeekParseToken(["gg", "GG"], function(input, week, config2, token2) {
           week[token2] = hooks.parseTwoDigitYear(input);
         });
         function getSetWeekYear(input) {
@@ -3399,8 +3399,8 @@
         addFormatToken("DDD", ["DDDD", 3], "DDDo", "dayOfYear");
         addRegexToken("DDD", match1to3);
         addRegexToken("DDDD", match3);
-        addParseToken(["DDD", "DDDD"], function(input, array2, config) {
-          config._dayOfYear = toInt(input);
+        addParseToken(["DDD", "DDDD"], function(input, array2, config2) {
+          config2._dayOfYear = toInt(input);
         });
         function getSetDayOfYear(input) {
           var dayOfYear = Math.round(
@@ -3972,11 +3972,11 @@
         addFormatToken("x", 0, 0, "valueOf");
         addRegexToken("x", matchSigned);
         addRegexToken("X", matchTimestamp);
-        addParseToken("X", function(input, array2, config) {
-          config._d = new Date(parseFloat(input) * 1e3);
+        addParseToken("X", function(input, array2, config2) {
+          config2._d = new Date(parseFloat(input) * 1e3);
         });
-        addParseToken("x", function(input, array2, config) {
-          config._d = new Date(toInt(input));
+        addParseToken("x", function(input, array2, config2) {
+          config2._d = new Date(toInt(input));
         });
         hooks.version = "2.30.1";
         setHookCallback(createLocal);
@@ -6212,34 +6212,6 @@
     }
   });
 
-  // lib.ts
-  async function fetchColumnsFromGrist() {
-    const columns = toRecords(await grist.docApi.fetchTable("_grist_Tables_column"));
-    return columns;
-  }
-  var tablesCache = [];
-  async function fetchTables() {
-    if (!tablesCache.length) {
-      tablesCache = toRecords(await grist.docApi.fetchTable("_grist_Tables"));
-    }
-    return tablesCache;
-  }
-  function toRecords(bulk) {
-    const fields = Object.keys(bulk);
-    const records2 = [];
-    for (const index in bulk.id) {
-      records2.push(
-        Object.fromEntries(fields.map((f5) => [f5, bulk[f5][index]]))
-      );
-    }
-    return records2;
-  }
-  async function selectedTable() {
-    const tables = await fetchTables();
-    const tableId = await grist.selectedTable.getTableId();
-    return tables.find((t5) => t5.tableId === tableId);
-  }
-
   // vendor.ts
   var import_moment_timezone = __toESM(require_moment_timezone2());
   var import_en_gb = __toESM(require_en_gb());
@@ -6441,7 +6413,7 @@
   var __knownSymbol = (name, symbol2) => {
     return (symbol2 = Symbol[name]) ? symbol2 : Symbol.for("Symbol." + name);
   };
-  var __defNormalProp = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __defNormalProp = (obj, key2, value) => key2 in obj ? __defProp2(obj, key2, { enumerable: true, configurable: true, writable: true, value }) : obj[key2] = value;
   var __spreadValues = (a4, b4) => {
     for (var prop2 in b4 || (b4 = {}))
       if (__hasOwnProp2.call(b4, prop2))
@@ -6454,13 +6426,13 @@
     return a4;
   };
   var __spreadProps = (a4, b4) => __defProps(a4, __getOwnPropDescs(b4));
-  var __decorateClass = (decorators, target, key, kind) => {
-    var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc2(target, key) : target;
+  var __decorateClass = (decorators, target, key2, kind) => {
+    var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc2(target, key2) : target;
     for (var i8 = decorators.length - 1, decorator; i8 >= 0; i8--)
       if (decorator = decorators[i8])
-        result = (kind ? decorator(target, key, result) : decorator(result)) || result;
+        result = (kind ? decorator(target, key2, result) : decorator(result)) || result;
     if (kind && result)
-      __defProp2(target, key, result);
+      __defProp2(target, key2, result);
     return result;
   };
   var __accessCheck = (obj, member, msg) => {
@@ -7577,10 +7549,10 @@
       const watchedProperties = Array.isArray(propertyName) ? propertyName : [propertyName];
       proto.update = function(changedProps) {
         watchedProperties.forEach((property) => {
-          const key = property;
-          if (changedProps.has(key)) {
-            const oldValue = changedProps.get(key);
-            const newValue = this[key];
+          const key2 = property;
+          if (changedProps.has(key2)) {
+            const oldValue = changedProps.get(key2);
+            const newValue = this[key2];
             if (oldValue !== newValue) {
               if (!resolvedOptions.waitUntilFirstUpdate || this.hasUpdated) {
                 this[decoratedFnName](oldValue, newValue);
@@ -8238,27 +8210,27 @@
       const secondary = translations.get(language);
       return { locale, language, region, primary, secondary };
     }
-    exists(key, options2) {
+    exists(key2, options2) {
       var _a;
       const { primary, secondary } = this.getTranslationData((_a = options2.lang) !== null && _a !== void 0 ? _a : this.lang());
       options2 = Object.assign({ includeFallback: false }, options2);
-      if (primary && primary[key] || secondary && secondary[key] || options2.includeFallback && fallback && fallback[key]) {
+      if (primary && primary[key2] || secondary && secondary[key2] || options2.includeFallback && fallback && fallback[key2]) {
         return true;
       }
       return false;
     }
-    term(key, ...args) {
+    term(key2, ...args) {
       const { primary, secondary } = this.getTranslationData(this.lang());
       let term;
-      if (primary && primary[key]) {
-        term = primary[key];
-      } else if (secondary && secondary[key]) {
-        term = secondary[key];
-      } else if (fallback && fallback[key]) {
-        term = fallback[key];
+      if (primary && primary[key2]) {
+        term = primary[key2];
+      } else if (secondary && secondary[key2]) {
+        term = secondary[key2];
+      } else if (fallback && fallback[key2]) {
+        term = fallback[key2];
       } else {
-        console.error(`No translation found for: ${String(key)}`);
-        return String(key);
+        console.error(`No translation found for: ${String(key2)}`);
+        return String(key2);
       }
       if (typeof term === "function") {
         return term(...args);
@@ -10098,7 +10070,7 @@
 `;
 
   // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.GI7VDIWX.js
-  var defaultValue = (propertyName = "value") => (proto, key) => {
+  var defaultValue = (propertyName = "value") => (proto, key2) => {
     const ctor = proto.constructor;
     const attributeChangedCallback = ctor.prototype.attributeChangedCallback;
     ctor.prototype.attributeChangedCallback = function(name, old, value) {
@@ -10110,7 +10082,7 @@
         const fromAttribute = typeof converter === "function" ? converter : (_a = converter == null ? void 0 : converter.fromAttribute) != null ? _a : u.fromAttribute;
         const newValue = fromAttribute(value, options2.type);
         if (this[propertyName] !== newValue) {
-          this[key] = newValue;
+          this[key2] = newValue;
         }
       }
       attributeChangedCallback.call(this, name, old, value);
@@ -10799,6 +10771,74 @@
     resolver: (name) => `./out/${name}.svg`
   });
   import_moment_timezone.default.locale("en-gb");
+
+  // lib.ts
+  async function fetchColumnsFromGrist() {
+    const columns = toRecords(await grist.docApi.fetchTable("_grist_Tables_column"));
+    return columns;
+  }
+  var tablesCache = [];
+  async function fetchTables() {
+    if (!tablesCache.length) {
+      tablesCache = toRecords(await grist.docApi.fetchTable("_grist_Tables"));
+    }
+    return tablesCache;
+  }
+  function toRecords(bulk) {
+    const fields = Object.keys(bulk);
+    const records2 = [];
+    for (const index in bulk.id) {
+      records2.push(
+        Object.fromEntries(fields.map((f5) => [f5, bulk[f5][index]]))
+      );
+    }
+    return records2;
+  }
+  async function selectedTable() {
+    const tables = await fetchTables();
+    const tableId = await grist.selectedTable.getTableId();
+    return tables.find((t5) => t5.tableId === tableId);
+  }
+  function showAlert(variant, message) {
+    const alert2 = document.querySelector(`sl-alert[variant="${variant}"]`);
+    const title = alert2.querySelector("#title");
+    const text2 = alert2.querySelector("#text");
+    title.innerText = "Error occured";
+    text2.innerText = message;
+    alert2.toast();
+  }
+  async function withElementSpinner(element, callback) {
+    const spinner = document.createElement("sl-spinner");
+    element.appendChild(spinner);
+    try {
+      await callback();
+    } finally {
+      spinner.remove();
+    }
+  }
+  async function withIdSpinner(id2, callback) {
+    const element = document.querySelector(`.item_${id2}`);
+    await withElementSpinner(element, callback);
+  }
+  function onClick(selector, callback) {
+    window.document.querySelector(selector).addEventListener("click", callback);
+  }
+  var Command = class {
+    listeners = [];
+    async invoke(arg) {
+      for (const listener of this.listeners) {
+        await listener(arg);
+      }
+    }
+    subscribe(observer) {
+      this.listeners.push(observer);
+      return {
+        dispose: () => {
+          this.listeners.splice(this.listeners.indexOf(observer), 1);
+        }
+      };
+    }
+  };
 
   // node_modules/fromit/dist/fromit.mjs
   var Q = (s3) => !!s3;
@@ -11702,11 +11742,11 @@
     }
   };
   var Listener = class extends LLink {
-    constructor(emitter, callback, context) {
+    constructor(emitter, callback, context2) {
       super();
       this.emitter = emitter;
       this.callback = callback;
-      this.context = context;
+      this.context = context2;
       this._insertBefore(emitter, this);
       emitter._triggerChangeCB();
     }
@@ -11770,8 +11810,8 @@
       return obj;
     }
     /** Call the given callback when this.dispose() is called. */
-    onDispose(callback, context) {
-      return this._disposalList.addListener(callback, context);
+    onDispose(callback, context2) {
+      return this._disposalList.addListener(callback, context2);
     }
     /**
      * Wipe out this object when it is disposed, i.e. set all its properties to null. It is
@@ -11911,10 +11951,10 @@
     }
   };
   var DisposeListener = class extends LLink {
-    constructor(callback, context) {
+    constructor(callback, context2) {
       super();
       this.callback = callback;
-      this.context = context;
+      this.context = context2;
     }
     static callAll(begin, end, owner) {
       while (begin !== end) {
@@ -12215,12 +12255,12 @@
   function _disposeNode(node2) {
     let disposer = _disposeMap.get(node2);
     if (disposer) {
-      let key = node2;
+      let key2 = node2;
       do {
-        _disposeMap.delete(key);
+        _disposeMap.delete(key2);
         disposer(node2);
-        key = disposer;
-        disposer = _disposeMap.get(key);
+        key2 = disposer;
+        disposer = _disposeMap.get(key2);
       } while (disposer);
     }
   }
@@ -12496,10 +12536,10 @@
   // node_modules/grainjs/dist/esm/lib/domMethods.js
   var _dataMap = /* @__PURE__ */ new WeakMap();
   function attrsElem(elem, attrsObj) {
-    for (const key of Object.keys(attrsObj)) {
-      const val = attrsObj[key];
+    for (const key2 of Object.keys(attrsObj)) {
+      const val = attrsObj[key2];
       if (val != null && val !== false) {
-        elem.setAttribute(key, val === true ? "" : val);
+        elem.setAttribute(key2, val === true ? "" : val);
       }
     }
   }
@@ -12591,21 +12631,21 @@
       });
     };
   }
-  function dataElem(elem, key, value) {
+  function dataElem(elem, key2, value) {
     const obj = _dataMap.get(elem);
     if (obj) {
-      obj[key] = value;
+      obj[key2] = value;
     } else {
       onDisposeElem(elem, () => _dataMap.delete(elem));
-      _dataMap.set(elem, { [key]: value });
+      _dataMap.set(elem, { [key2]: value });
     }
   }
-  function data(key, valueObs) {
-    return (elem) => subscribeElem(elem, valueObs, (val) => dataElem(elem, key, val));
+  function data(key2, valueObs) {
+    return (elem) => subscribeElem(elem, valueObs, (val) => dataElem(elem, key2, val));
   }
-  function getData(elem, key) {
+  function getData(elem, key2) {
     const obj = _dataMap.get(elem);
-    return obj && obj[key];
+    return obj && obj[key2];
   }
 
   // node_modules/grainjs/dist/esm/lib/domImpl.js
@@ -13266,9 +13306,9 @@ ${nestedRules}`.replace(/&/g, className);
           }
           return to2;
         }
-        function Moment(config) {
-          copyConfig(this, config);
-          this._d = new Date(config._d != null ? config._d.getTime() : NaN);
+        function Moment(config2) {
+          copyConfig(this, config2);
+          this._d = new Date(config2._d != null ? config2._d.getTime() : NaN);
           if (!this.isValid()) {
             this._d = /* @__PURE__ */ new Date(NaN);
           }
@@ -13293,14 +13333,14 @@ ${nestedRules}`.replace(/&/g, className);
               hooks.deprecationHandler(null, msg);
             }
             if (firstTime) {
-              var args = [], arg, i8, key, argLen = arguments.length;
+              var args = [], arg, i8, key2, argLen = arguments.length;
               for (i8 = 0; i8 < argLen; i8++) {
                 arg = "";
                 if (typeof arguments[i8] === "object") {
                   arg += "\n[" + i8 + "] ";
-                  for (key in arguments[0]) {
-                    if (hasOwnProp(arguments[0], key)) {
-                      arg += key + ": " + arguments[0][key] + ", ";
+                  for (key2 in arguments[0]) {
+                    if (hasOwnProp(arguments[0], key2)) {
+                      arg += key2 + ": " + arguments[0][key2] + ", ";
                     }
                   }
                   arg = arg.slice(0, -2);
@@ -13329,22 +13369,22 @@ ${nestedRules}`.replace(/&/g, className);
         }
         hooks.suppressDeprecationWarnings = false;
         hooks.deprecationHandler = null;
-        function isFunction(input) {
+        function isFunction2(input) {
           return typeof Function !== "undefined" && input instanceof Function || Object.prototype.toString.call(input) === "[object Function]";
         }
-        function set2(config) {
+        function set2(config2) {
           var prop2, i8;
-          for (i8 in config) {
-            if (hasOwnProp(config, i8)) {
-              prop2 = config[i8];
-              if (isFunction(prop2)) {
+          for (i8 in config2) {
+            if (hasOwnProp(config2, i8)) {
+              prop2 = config2[i8];
+              if (isFunction2(prop2)) {
                 this[i8] = prop2;
               } else {
                 this["_" + i8] = prop2;
               }
             }
           }
-          this._config = config;
+          this._config = config2;
           this._dayOfMonthOrdinalParseLenient = new RegExp(
             (this._dayOfMonthOrdinalParse.source || this._ordinalParse.source) + "|" + /\d{1,2}/.source
           );
@@ -13371,9 +13411,9 @@ ${nestedRules}`.replace(/&/g, className);
           }
           return res;
         }
-        function Locale(config) {
-          if (config != null) {
-            this.set(config);
+        function Locale(config2) {
+          if (config2 != null) {
+            this.set(config2);
           }
         }
         var keys4;
@@ -13398,9 +13438,9 @@ ${nestedRules}`.replace(/&/g, className);
           lastWeek: "[Last] dddd [at] LT",
           sameElse: "L"
         };
-        function calendar(key, mom, now4) {
-          var output = this._calendar[key] || this._calendar["sameElse"];
-          return isFunction(output) ? output.call(mom, now4) : output;
+        function calendar(key2, mom, now4) {
+          var output = this._calendar[key2] || this._calendar["sameElse"];
+          return isFunction2(output) ? output.call(mom, now4) : output;
         }
         function zeroFill(number2, targetLength, forceSign) {
           var absNumber = "" + Math.abs(number2), zerosToFill = targetLength - absNumber.length, sign2 = number2 >= 0;
@@ -13449,7 +13489,7 @@ ${nestedRules}`.replace(/&/g, className);
           return function(mom) {
             var output = "", i9;
             for (i9 = 0; i9 < length; i9++) {
-              output += isFunction(array2[i9]) ? array2[i9].call(mom, format2) : array2[i9];
+              output += isFunction2(array2[i9]) ? array2[i9].call(mom, format2) : array2[i9];
             }
             return output;
           };
@@ -13486,18 +13526,18 @@ ${nestedRules}`.replace(/&/g, className);
           LLL: "MMMM D, YYYY h:mm A",
           LLLL: "dddd, MMMM D, YYYY h:mm A"
         };
-        function longDateFormat(key) {
-          var format2 = this._longDateFormat[key], formatUpper = this._longDateFormat[key.toUpperCase()];
+        function longDateFormat(key2) {
+          var format2 = this._longDateFormat[key2], formatUpper = this._longDateFormat[key2.toUpperCase()];
           if (format2 || !formatUpper) {
             return format2;
           }
-          this._longDateFormat[key] = formatUpper.match(formattingTokens).map(function(tok) {
+          this._longDateFormat[key2] = formatUpper.match(formattingTokens).map(function(tok) {
             if (tok === "MMMM" || tok === "MM" || tok === "DD" || tok === "dddd") {
               return tok.slice(1);
             }
             return tok;
           }).join("");
-          return this._longDateFormat[key];
+          return this._longDateFormat[key2];
         }
         var defaultInvalidDate = "Invalid date";
         function invalidDate() {
@@ -13527,11 +13567,11 @@ ${nestedRules}`.replace(/&/g, className);
         };
         function relativeTime(number2, withoutSuffix, string2, isFuture) {
           var output = this._relativeTime[string2];
-          return isFunction(output) ? output(number2, withoutSuffix, string2, isFuture) : output.replace(/%d/i, number2);
+          return isFunction2(output) ? output(number2, withoutSuffix, string2, isFuture) : output.replace(/%d/i, number2);
         }
         function pastFuture(diff2, output) {
           var format2 = this._relativeTime[diff2 > 0 ? "future" : "past"];
-          return isFunction(format2) ? format2(output) : format2.replace(/%s/i, output);
+          return isFunction2(format2) ? format2(output) : format2.replace(/%s/i, output);
         }
         var aliases = {};
         function addUnitAlias(unit, shorthand) {
@@ -13616,7 +13656,7 @@ ${nestedRules}`.replace(/&/g, className);
         }
         function stringGet(units) {
           units = normalizeUnits(units);
-          if (isFunction(this[units])) {
+          if (isFunction2(this[units])) {
             return this[units]();
           }
           return this;
@@ -13630,7 +13670,7 @@ ${nestedRules}`.replace(/&/g, className);
             }
           } else {
             units = normalizeUnits(units);
-            if (isFunction(this[units])) {
+            if (isFunction2(this[units])) {
               return this[units](value);
             }
           }
@@ -13639,15 +13679,15 @@ ${nestedRules}`.replace(/&/g, className);
         var match1 = /\d/, match2 = /\d\d/, match3 = /\d{3}/, match4 = /\d{4}/, match6 = /[+-]?\d{6}/, match1to2 = /\d\d?/, match3to4 = /\d\d\d\d?/, match5to6 = /\d\d\d\d\d\d?/, match1to3 = /\d{1,3}/, match1to4 = /\d{1,4}/, match1to6 = /[+-]?\d{1,6}/, matchUnsigned = /\d+/, matchSigned = /[+-]?\d+/, matchOffset = /Z|[+-]\d\d:?\d\d/gi, matchShortOffset = /Z|[+-]\d\d(?::?\d\d)?/gi, matchTimestamp = /[+-]?\d+(\.\d{1,3})?/, matchWord = /[0-9]{0,256}['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFF07\uFF10-\uFFEF]{1,256}|[\u0600-\u06FF\/]{1,256}(\s*?[\u0600-\u06FF]{1,256}){1,2}/i, regexes;
         regexes = {};
         function addRegexToken(token2, regex, strictRegex) {
-          regexes[token2] = isFunction(regex) ? regex : function(isStrict, localeData2) {
+          regexes[token2] = isFunction2(regex) ? regex : function(isStrict, localeData2) {
             return isStrict && strictRegex ? strictRegex : regex;
           };
         }
-        function getParseRegexForToken(token2, config) {
+        function getParseRegexForToken(token2, config2) {
           if (!hasOwnProp(regexes, token2)) {
             return new RegExp(unescapeFormat(token2));
           }
-          return regexes[token2](config._strict, config._locale);
+          return regexes[token2](config2._strict, config2._locale);
         }
         function unescapeFormat(s3) {
           return regexEscape(
@@ -13679,14 +13719,14 @@ ${nestedRules}`.replace(/&/g, className);
           }
         }
         function addWeekParseToken(token2, callback) {
-          addParseToken(token2, function(input, array2, config, token3) {
-            config._w = config._w || {};
-            callback(input, config._w, config, token3);
+          addParseToken(token2, function(input, array2, config2, token3) {
+            config2._w = config2._w || {};
+            callback(input, config2._w, config2, token3);
           });
         }
-        function addTimeToArrayFromToken(token2, input, config) {
+        function addTimeToArrayFromToken(token2, input, config2) {
           if (input != null && hasOwnProp(tokens, token2)) {
-            tokens[token2](input, config._a, config, token2);
+            tokens[token2](input, config2._a, config2, token2);
           }
         }
         var YEAR = 0, MONTH = 1, DATE = 2, HOUR = 3, MINUTE = 4, SECOND = 5, MILLISECOND = 6, WEEK = 7, WEEKDAY = 8;
@@ -13737,12 +13777,12 @@ ${nestedRules}`.replace(/&/g, className);
         addParseToken(["M", "MM"], function(input, array2) {
           array2[MONTH] = toInt(input) - 1;
         });
-        addParseToken(["MMM", "MMMM"], function(input, array2, config, token2) {
-          var month = config._locale.monthsParse(input, token2, config._strict);
+        addParseToken(["MMM", "MMMM"], function(input, array2, config2, token2) {
+          var month = config2._locale.monthsParse(input, token2, config2._strict);
           if (month != null) {
             array2[MONTH] = month;
           } else {
-            getParsingFlags(config).invalidMonth = input;
+            getParsingFlags(config2).invalidMonth = input;
           }
         });
         var defaultLocaleMonths = "January_February_March_April_May_June_July_August_September_October_November_December".split(
@@ -14051,7 +14091,7 @@ ${nestedRules}`.replace(/&/g, className);
         addRegexToken("WW", match1to2, match2);
         addWeekParseToken(
           ["w", "ww", "W", "WW"],
-          function(input, week, config, token2) {
+          function(input, week, config2, token2) {
             week[token2.substr(0, 1)] = toInt(input);
           }
         );
@@ -14108,15 +14148,15 @@ ${nestedRules}`.replace(/&/g, className);
         addRegexToken("dddd", function(isStrict, locale2) {
           return locale2.weekdaysRegex(isStrict);
         });
-        addWeekParseToken(["dd", "ddd", "dddd"], function(input, week, config, token2) {
-          var weekday = config._locale.weekdaysParse(input, token2, config._strict);
+        addWeekParseToken(["dd", "ddd", "dddd"], function(input, week, config2, token2) {
+          var weekday = config2._locale.weekdaysParse(input, token2, config2._strict);
           if (weekday != null) {
             week.d = weekday;
           } else {
-            getParsingFlags(config).invalidWeekday = input;
+            getParsingFlags(config2).invalidWeekday = input;
           }
         });
-        addWeekParseToken(["d", "e", "E"], function(input, week, config, token2) {
+        addWeekParseToken(["d", "e", "E"], function(input, week, config2, token2) {
           week[token2] = toInt(input);
         });
         function parseWeekday(input, locale2) {
@@ -14429,37 +14469,37 @@ ${nestedRules}`.replace(/&/g, className);
         addRegexToken("Hmm", match3to4);
         addRegexToken("Hmmss", match5to6);
         addParseToken(["H", "HH"], HOUR);
-        addParseToken(["k", "kk"], function(input, array2, config) {
+        addParseToken(["k", "kk"], function(input, array2, config2) {
           var kInput = toInt(input);
           array2[HOUR] = kInput === 24 ? 0 : kInput;
         });
-        addParseToken(["a", "A"], function(input, array2, config) {
-          config._isPm = config._locale.isPM(input);
-          config._meridiem = input;
+        addParseToken(["a", "A"], function(input, array2, config2) {
+          config2._isPm = config2._locale.isPM(input);
+          config2._meridiem = input;
         });
-        addParseToken(["h", "hh"], function(input, array2, config) {
+        addParseToken(["h", "hh"], function(input, array2, config2) {
           array2[HOUR] = toInt(input);
-          getParsingFlags(config).bigHour = true;
+          getParsingFlags(config2).bigHour = true;
         });
-        addParseToken("hmm", function(input, array2, config) {
+        addParseToken("hmm", function(input, array2, config2) {
           var pos = input.length - 2;
           array2[HOUR] = toInt(input.substr(0, pos));
           array2[MINUTE] = toInt(input.substr(pos));
-          getParsingFlags(config).bigHour = true;
+          getParsingFlags(config2).bigHour = true;
         });
-        addParseToken("hmmss", function(input, array2, config) {
+        addParseToken("hmmss", function(input, array2, config2) {
           var pos1 = input.length - 4, pos2 = input.length - 2;
           array2[HOUR] = toInt(input.substr(0, pos1));
           array2[MINUTE] = toInt(input.substr(pos1, 2));
           array2[SECOND] = toInt(input.substr(pos2));
-          getParsingFlags(config).bigHour = true;
+          getParsingFlags(config2).bigHour = true;
         });
-        addParseToken("Hmm", function(input, array2, config) {
+        addParseToken("Hmm", function(input, array2, config2) {
           var pos = input.length - 2;
           array2[HOUR] = toInt(input.substr(0, pos));
           array2[MINUTE] = toInt(input.substr(pos));
         });
-        addParseToken("Hmmss", function(input, array2, config) {
+        addParseToken("Hmmss", function(input, array2, config2) {
           var pos1 = input.length - 4, pos2 = input.length - 2;
           array2[HOUR] = toInt(input.substr(0, pos1));
           array2[MINUTE] = toInt(input.substr(pos1, 2));
@@ -14501,8 +14541,8 @@ ${nestedRules}`.replace(/&/g, className);
           }
           return minl;
         }
-        function normalizeLocale(key) {
-          return key ? key.toLowerCase().replace("_", "-") : key;
+        function normalizeLocale(key2) {
+          return key2 ? key2.toLowerCase().replace("_", "-") : key2;
         }
         function chooseLocale(names) {
           var i8 = 0, j3, next2, locale2, split2;
@@ -14542,56 +14582,56 @@ ${nestedRules}`.replace(/&/g, className);
           }
           return locales2[name];
         }
-        function getSetGlobalLocale(key, values3) {
+        function getSetGlobalLocale(key2, values3) {
           var data3;
-          if (key) {
+          if (key2) {
             if (isUndefined(values3)) {
-              data3 = getLocale(key);
+              data3 = getLocale(key2);
             } else {
-              data3 = defineLocale(key, values3);
+              data3 = defineLocale(key2, values3);
             }
             if (data3) {
               globalLocale = data3;
             } else {
               if (typeof console !== "undefined" && console.warn) {
                 console.warn(
-                  "Locale " + key + " not found. Did you forget to load it?"
+                  "Locale " + key2 + " not found. Did you forget to load it?"
                 );
               }
             }
           }
           return globalLocale._abbr;
         }
-        function defineLocale(name, config) {
-          if (config !== null) {
+        function defineLocale(name, config2) {
+          if (config2 !== null) {
             var locale2, parentConfig = baseConfig;
-            config.abbr = name;
+            config2.abbr = name;
             if (locales2[name] != null) {
               deprecateSimple(
                 "defineLocaleOverride",
                 "use moment.updateLocale(localeName, config) to change an existing locale. moment.defineLocale(localeName, config) should only be used for creating a new locale See http://momentjs.com/guides/#/warnings/define-locale/ for more info."
               );
               parentConfig = locales2[name]._config;
-            } else if (config.parentLocale != null) {
-              if (locales2[config.parentLocale] != null) {
-                parentConfig = locales2[config.parentLocale]._config;
+            } else if (config2.parentLocale != null) {
+              if (locales2[config2.parentLocale] != null) {
+                parentConfig = locales2[config2.parentLocale]._config;
               } else {
-                locale2 = loadLocale(config.parentLocale);
+                locale2 = loadLocale(config2.parentLocale);
                 if (locale2 != null) {
                   parentConfig = locale2._config;
                 } else {
-                  if (!localeFamilies[config.parentLocale]) {
-                    localeFamilies[config.parentLocale] = [];
+                  if (!localeFamilies[config2.parentLocale]) {
+                    localeFamilies[config2.parentLocale] = [];
                   }
-                  localeFamilies[config.parentLocale].push({
+                  localeFamilies[config2.parentLocale].push({
                     name,
-                    config
+                    config: config2
                   });
                   return null;
                 }
               }
             }
-            locales2[name] = new Locale(mergeConfigs(parentConfig, config));
+            locales2[name] = new Locale(mergeConfigs(parentConfig, config2));
             if (localeFamilies[name]) {
               localeFamilies[name].forEach(function(x3) {
                 defineLocale(x3.name, x3.config);
@@ -14604,21 +14644,21 @@ ${nestedRules}`.replace(/&/g, className);
             return null;
           }
         }
-        function updateLocale(name, config) {
-          if (config != null) {
+        function updateLocale(name, config2) {
+          if (config2 != null) {
             var locale2, tmpLocale, parentConfig = baseConfig;
             if (locales2[name] != null && locales2[name].parentLocale != null) {
-              locales2[name].set(mergeConfigs(locales2[name]._config, config));
+              locales2[name].set(mergeConfigs(locales2[name]._config, config2));
             } else {
               tmpLocale = loadLocale(name);
               if (tmpLocale != null) {
                 parentConfig = tmpLocale._config;
               }
-              config = mergeConfigs(parentConfig, config);
+              config2 = mergeConfigs(parentConfig, config2);
               if (tmpLocale == null) {
-                config.abbr = name;
+                config2.abbr = name;
               }
-              locale2 = new Locale(config);
+              locale2 = new Locale(config2);
               locale2.parentLocale = locales2[name];
               locales2[name] = locale2;
             }
@@ -14637,22 +14677,22 @@ ${nestedRules}`.replace(/&/g, className);
           }
           return locales2[name];
         }
-        function getLocale(key) {
+        function getLocale(key2) {
           var locale2;
-          if (key && key._locale && key._locale._abbr) {
-            key = key._locale._abbr;
+          if (key2 && key2._locale && key2._locale._abbr) {
+            key2 = key2._locale._abbr;
           }
-          if (!key) {
+          if (!key2) {
             return globalLocale;
           }
-          if (!isArray3(key)) {
-            locale2 = loadLocale(key);
+          if (!isArray3(key2)) {
+            locale2 = loadLocale(key2);
             if (locale2) {
               return locale2;
             }
-            key = [key];
+            key2 = [key2];
           }
-          return chooseLocale(key);
+          return chooseLocale(key2);
         }
         function listLocales() {
           return keys4(locales2);
@@ -14710,10 +14750,10 @@ ${nestedRules}`.replace(/&/g, className);
           PDT: -7 * 60,
           PST: -8 * 60
         };
-        function configFromISO(config) {
-          var i8, l6, string2 = config._i, match5 = extendedIsoRegex.exec(string2) || basicIsoRegex.exec(string2), allowTime, dateFormat, timeFormat, tzFormat, isoDatesLen = isoDates.length, isoTimesLen = isoTimes.length;
+        function configFromISO(config2) {
+          var i8, l6, string2 = config2._i, match5 = extendedIsoRegex.exec(string2) || basicIsoRegex.exec(string2), allowTime, dateFormat, timeFormat, tzFormat, isoDatesLen = isoDates.length, isoTimesLen = isoTimes.length;
           if (match5) {
-            getParsingFlags(config).iso = true;
+            getParsingFlags(config2).iso = true;
             for (i8 = 0, l6 = isoDatesLen; i8 < l6; i8++) {
               if (isoDates[i8][1].exec(match5[1])) {
                 dateFormat = isoDates[i8][0];
@@ -14722,7 +14762,7 @@ ${nestedRules}`.replace(/&/g, className);
               }
             }
             if (dateFormat == null) {
-              config._isValid = false;
+              config2._isValid = false;
               return;
             }
             if (match5[3]) {
@@ -14733,26 +14773,26 @@ ${nestedRules}`.replace(/&/g, className);
                 }
               }
               if (timeFormat == null) {
-                config._isValid = false;
+                config2._isValid = false;
                 return;
               }
             }
             if (!allowTime && timeFormat != null) {
-              config._isValid = false;
+              config2._isValid = false;
               return;
             }
             if (match5[4]) {
               if (tzRegex.exec(match5[4])) {
                 tzFormat = "Z";
               } else {
-                config._isValid = false;
+                config2._isValid = false;
                 return;
               }
             }
-            config._f = dateFormat + (timeFormat || "") + (tzFormat || "");
-            configFromStringAndFormat(config);
+            config2._f = dateFormat + (timeFormat || "") + (tzFormat || "");
+            configFromStringAndFormat(config2);
           } else {
-            config._isValid = false;
+            config2._isValid = false;
           }
         }
         function extractFromRFC2822Strings(yearStr, monthStr, dayStr, hourStr, minuteStr, secondStr) {
@@ -14780,7 +14820,7 @@ ${nestedRules}`.replace(/&/g, className);
         function preprocessRFC2822(s3) {
           return s3.replace(/\([^()]*\)|[\n\t]/g, " ").replace(/(\s\s+)/g, " ").replace(/^\s\s*/, "").replace(/\s\s*$/, "");
         }
-        function checkWeekday(weekdayStr, parsedInput, config) {
+        function checkWeekday(weekdayStr, parsedInput, config2) {
           if (weekdayStr) {
             var weekdayProvided = defaultLocaleWeekdaysShort.indexOf(weekdayStr), weekdayActual = new Date(
               parsedInput[0],
@@ -14788,8 +14828,8 @@ ${nestedRules}`.replace(/&/g, className);
               parsedInput[2]
             ).getDay();
             if (weekdayProvided !== weekdayActual) {
-              getParsingFlags(config).weekdayMismatch = true;
-              config._isValid = false;
+              getParsingFlags(config2).weekdayMismatch = true;
+              config2._isValid = false;
               return false;
             }
           }
@@ -14805,8 +14845,8 @@ ${nestedRules}`.replace(/&/g, className);
             return h4 * 60 + m4;
           }
         }
-        function configFromRFC2822(config) {
-          var match5 = rfc2822.exec(preprocessRFC2822(config._i)), parsedArray;
+        function configFromRFC2822(config2) {
+          var match5 = rfc2822.exec(preprocessRFC2822(config2._i)), parsedArray;
           if (match5) {
             parsedArray = extractFromRFC2822Strings(
               match5[4],
@@ -14816,46 +14856,46 @@ ${nestedRules}`.replace(/&/g, className);
               match5[6],
               match5[7]
             );
-            if (!checkWeekday(match5[1], parsedArray, config)) {
+            if (!checkWeekday(match5[1], parsedArray, config2)) {
               return;
             }
-            config._a = parsedArray;
-            config._tzm = calculateOffset(match5[8], match5[9], match5[10]);
-            config._d = createUTCDate.apply(null, config._a);
-            config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
-            getParsingFlags(config).rfc2822 = true;
+            config2._a = parsedArray;
+            config2._tzm = calculateOffset(match5[8], match5[9], match5[10]);
+            config2._d = createUTCDate.apply(null, config2._a);
+            config2._d.setUTCMinutes(config2._d.getUTCMinutes() - config2._tzm);
+            getParsingFlags(config2).rfc2822 = true;
           } else {
-            config._isValid = false;
+            config2._isValid = false;
           }
         }
-        function configFromString(config) {
-          var matched = aspNetJsonRegex.exec(config._i);
+        function configFromString(config2) {
+          var matched = aspNetJsonRegex.exec(config2._i);
           if (matched !== null) {
-            config._d = /* @__PURE__ */ new Date(+matched[1]);
+            config2._d = /* @__PURE__ */ new Date(+matched[1]);
             return;
           }
-          configFromISO(config);
-          if (config._isValid === false) {
-            delete config._isValid;
+          configFromISO(config2);
+          if (config2._isValid === false) {
+            delete config2._isValid;
           } else {
             return;
           }
-          configFromRFC2822(config);
-          if (config._isValid === false) {
-            delete config._isValid;
+          configFromRFC2822(config2);
+          if (config2._isValid === false) {
+            delete config2._isValid;
           } else {
             return;
           }
-          if (config._strict) {
-            config._isValid = false;
+          if (config2._strict) {
+            config2._isValid = false;
           } else {
-            hooks.createFromInputFallback(config);
+            hooks.createFromInputFallback(config2);
           }
         }
         hooks.createFromInputFallback = deprecate2(
           "value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), which is not reliable across all browsers and versions. Non RFC2822/ISO date formats are discouraged. Please refer to http://momentjs.com/guides/#/warnings/js-date/ for more info.",
-          function(config) {
-            config._d = /* @__PURE__ */ new Date(config._i + (config._useUTC ? " UTC" : ""));
+          function(config2) {
+            config2._d = /* @__PURE__ */ new Date(config2._i + (config2._useUTC ? " UTC" : ""));
           }
         );
         function defaults2(a4, b4, c6) {
@@ -14867,9 +14907,9 @@ ${nestedRules}`.replace(/&/g, className);
           }
           return c6;
         }
-        function currentDateArray(config) {
+        function currentDateArray(config2) {
           var nowValue = new Date(hooks.now());
-          if (config._useUTC) {
+          if (config2._useUTC) {
             return [
               nowValue.getUTCFullYear(),
               nowValue.getUTCMonth(),
@@ -14878,58 +14918,58 @@ ${nestedRules}`.replace(/&/g, className);
           }
           return [nowValue.getFullYear(), nowValue.getMonth(), nowValue.getDate()];
         }
-        function configFromArray(config) {
+        function configFromArray(config2) {
           var i8, date2, input = [], currentDate, expectedWeekday, yearToUse;
-          if (config._d) {
+          if (config2._d) {
             return;
           }
-          currentDate = currentDateArray(config);
-          if (config._w && config._a[DATE] == null && config._a[MONTH] == null) {
-            dayOfYearFromWeekInfo(config);
+          currentDate = currentDateArray(config2);
+          if (config2._w && config2._a[DATE] == null && config2._a[MONTH] == null) {
+            dayOfYearFromWeekInfo(config2);
           }
-          if (config._dayOfYear != null) {
-            yearToUse = defaults2(config._a[YEAR], currentDate[YEAR]);
-            if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
-              getParsingFlags(config)._overflowDayOfYear = true;
+          if (config2._dayOfYear != null) {
+            yearToUse = defaults2(config2._a[YEAR], currentDate[YEAR]);
+            if (config2._dayOfYear > daysInYear(yearToUse) || config2._dayOfYear === 0) {
+              getParsingFlags(config2)._overflowDayOfYear = true;
             }
-            date2 = createUTCDate(yearToUse, 0, config._dayOfYear);
-            config._a[MONTH] = date2.getUTCMonth();
-            config._a[DATE] = date2.getUTCDate();
+            date2 = createUTCDate(yearToUse, 0, config2._dayOfYear);
+            config2._a[MONTH] = date2.getUTCMonth();
+            config2._a[DATE] = date2.getUTCDate();
           }
-          for (i8 = 0; i8 < 3 && config._a[i8] == null; ++i8) {
-            config._a[i8] = input[i8] = currentDate[i8];
+          for (i8 = 0; i8 < 3 && config2._a[i8] == null; ++i8) {
+            config2._a[i8] = input[i8] = currentDate[i8];
           }
           for (; i8 < 7; i8++) {
-            config._a[i8] = input[i8] = config._a[i8] == null ? i8 === 2 ? 1 : 0 : config._a[i8];
+            config2._a[i8] = input[i8] = config2._a[i8] == null ? i8 === 2 ? 1 : 0 : config2._a[i8];
           }
-          if (config._a[HOUR] === 24 && config._a[MINUTE] === 0 && config._a[SECOND] === 0 && config._a[MILLISECOND] === 0) {
-            config._nextDay = true;
-            config._a[HOUR] = 0;
+          if (config2._a[HOUR] === 24 && config2._a[MINUTE] === 0 && config2._a[SECOND] === 0 && config2._a[MILLISECOND] === 0) {
+            config2._nextDay = true;
+            config2._a[HOUR] = 0;
           }
-          config._d = (config._useUTC ? createUTCDate : createDate).apply(
+          config2._d = (config2._useUTC ? createUTCDate : createDate).apply(
             null,
             input
           );
-          expectedWeekday = config._useUTC ? config._d.getUTCDay() : config._d.getDay();
-          if (config._tzm != null) {
-            config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
+          expectedWeekday = config2._useUTC ? config2._d.getUTCDay() : config2._d.getDay();
+          if (config2._tzm != null) {
+            config2._d.setUTCMinutes(config2._d.getUTCMinutes() - config2._tzm);
           }
-          if (config._nextDay) {
-            config._a[HOUR] = 24;
+          if (config2._nextDay) {
+            config2._a[HOUR] = 24;
           }
-          if (config._w && typeof config._w.d !== "undefined" && config._w.d !== expectedWeekday) {
-            getParsingFlags(config).weekdayMismatch = true;
+          if (config2._w && typeof config2._w.d !== "undefined" && config2._w.d !== expectedWeekday) {
+            getParsingFlags(config2).weekdayMismatch = true;
           }
         }
-        function dayOfYearFromWeekInfo(config) {
+        function dayOfYearFromWeekInfo(config2) {
           var w3, weekYear, week, weekday, dow, doy, temp, weekdayOverflow, curWeek;
-          w3 = config._w;
+          w3 = config2._w;
           if (w3.GG != null || w3.W != null || w3.E != null) {
             dow = 1;
             doy = 4;
             weekYear = defaults2(
               w3.GG,
-              config._a[YEAR],
+              config2._a[YEAR],
               weekOfYear(createLocal(), 1, 4).year
             );
             week = defaults2(w3.W, 1);
@@ -14938,10 +14978,10 @@ ${nestedRules}`.replace(/&/g, className);
               weekdayOverflow = true;
             }
           } else {
-            dow = config._locale._week.dow;
-            doy = config._locale._week.doy;
+            dow = config2._locale._week.dow;
+            doy = config2._locale._week.doy;
             curWeek = weekOfYear(createLocal(), dow, doy);
-            weekYear = defaults2(w3.gg, config._a[YEAR], curWeek.year);
+            weekYear = defaults2(w3.gg, config2._a[YEAR], curWeek.year);
             week = defaults2(w3.w, curWeek.week);
             if (w3.d != null) {
               weekday = w3.d;
@@ -14958,40 +14998,40 @@ ${nestedRules}`.replace(/&/g, className);
             }
           }
           if (week < 1 || week > weeksInYear(weekYear, dow, doy)) {
-            getParsingFlags(config)._overflowWeeks = true;
+            getParsingFlags(config2)._overflowWeeks = true;
           } else if (weekdayOverflow != null) {
-            getParsingFlags(config)._overflowWeekday = true;
+            getParsingFlags(config2)._overflowWeekday = true;
           } else {
             temp = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy);
-            config._a[YEAR] = temp.year;
-            config._dayOfYear = temp.dayOfYear;
+            config2._a[YEAR] = temp.year;
+            config2._dayOfYear = temp.dayOfYear;
           }
         }
         hooks.ISO_8601 = function() {
         };
         hooks.RFC_2822 = function() {
         };
-        function configFromStringAndFormat(config) {
-          if (config._f === hooks.ISO_8601) {
-            configFromISO(config);
+        function configFromStringAndFormat(config2) {
+          if (config2._f === hooks.ISO_8601) {
+            configFromISO(config2);
             return;
           }
-          if (config._f === hooks.RFC_2822) {
-            configFromRFC2822(config);
+          if (config2._f === hooks.RFC_2822) {
+            configFromRFC2822(config2);
             return;
           }
-          config._a = [];
-          getParsingFlags(config).empty = true;
-          var string2 = "" + config._i, i8, parsedInput, tokens2, token2, skipped, stringLength = string2.length, totalParsedInputLength = 0, era, tokenLen;
-          tokens2 = expandFormat(config._f, config._locale).match(formattingTokens) || [];
+          config2._a = [];
+          getParsingFlags(config2).empty = true;
+          var string2 = "" + config2._i, i8, parsedInput, tokens2, token2, skipped, stringLength = string2.length, totalParsedInputLength = 0, era, tokenLen;
+          tokens2 = expandFormat(config2._f, config2._locale).match(formattingTokens) || [];
           tokenLen = tokens2.length;
           for (i8 = 0; i8 < tokenLen; i8++) {
             token2 = tokens2[i8];
-            parsedInput = (string2.match(getParseRegexForToken(token2, config)) || [])[0];
+            parsedInput = (string2.match(getParseRegexForToken(token2, config2)) || [])[0];
             if (parsedInput) {
               skipped = string2.substr(0, string2.indexOf(parsedInput));
               if (skipped.length > 0) {
-                getParsingFlags(config).unusedInput.push(skipped);
+                getParsingFlags(config2).unusedInput.push(skipped);
               }
               string2 = string2.slice(
                 string2.indexOf(parsedInput) + parsedInput.length
@@ -15000,35 +15040,35 @@ ${nestedRules}`.replace(/&/g, className);
             }
             if (formatTokenFunctions[token2]) {
               if (parsedInput) {
-                getParsingFlags(config).empty = false;
+                getParsingFlags(config2).empty = false;
               } else {
-                getParsingFlags(config).unusedTokens.push(token2);
+                getParsingFlags(config2).unusedTokens.push(token2);
               }
-              addTimeToArrayFromToken(token2, parsedInput, config);
-            } else if (config._strict && !parsedInput) {
-              getParsingFlags(config).unusedTokens.push(token2);
+              addTimeToArrayFromToken(token2, parsedInput, config2);
+            } else if (config2._strict && !parsedInput) {
+              getParsingFlags(config2).unusedTokens.push(token2);
             }
           }
-          getParsingFlags(config).charsLeftOver = stringLength - totalParsedInputLength;
+          getParsingFlags(config2).charsLeftOver = stringLength - totalParsedInputLength;
           if (string2.length > 0) {
-            getParsingFlags(config).unusedInput.push(string2);
+            getParsingFlags(config2).unusedInput.push(string2);
           }
-          if (config._a[HOUR] <= 12 && getParsingFlags(config).bigHour === true && config._a[HOUR] > 0) {
-            getParsingFlags(config).bigHour = void 0;
+          if (config2._a[HOUR] <= 12 && getParsingFlags(config2).bigHour === true && config2._a[HOUR] > 0) {
+            getParsingFlags(config2).bigHour = void 0;
           }
-          getParsingFlags(config).parsedDateParts = config._a.slice(0);
-          getParsingFlags(config).meridiem = config._meridiem;
-          config._a[HOUR] = meridiemFixWrap(
-            config._locale,
-            config._a[HOUR],
-            config._meridiem
+          getParsingFlags(config2).parsedDateParts = config2._a.slice(0);
+          getParsingFlags(config2).meridiem = config2._meridiem;
+          config2._a[HOUR] = meridiemFixWrap(
+            config2._locale,
+            config2._a[HOUR],
+            config2._meridiem
           );
-          era = getParsingFlags(config).era;
+          era = getParsingFlags(config2).era;
           if (era !== null) {
-            config._a[YEAR] = config._locale.erasConvertYear(era, config._a[YEAR]);
+            config2._a[YEAR] = config2._locale.erasConvertYear(era, config2._a[YEAR]);
           }
-          configFromArray(config);
-          checkOverflow(config);
+          configFromArray(config2);
+          checkOverflow(config2);
         }
         function meridiemFixWrap(locale2, hour, meridiem2) {
           var isPm;
@@ -15050,21 +15090,21 @@ ${nestedRules}`.replace(/&/g, className);
             return hour;
           }
         }
-        function configFromStringAndArray(config) {
-          var tempConfig, bestMoment, scoreToBeat, i8, currentScore, validFormatFound, bestFormatIsValid = false, configfLen = config._f.length;
+        function configFromStringAndArray(config2) {
+          var tempConfig, bestMoment, scoreToBeat, i8, currentScore, validFormatFound, bestFormatIsValid = false, configfLen = config2._f.length;
           if (configfLen === 0) {
-            getParsingFlags(config).invalidFormat = true;
-            config._d = /* @__PURE__ */ new Date(NaN);
+            getParsingFlags(config2).invalidFormat = true;
+            config2._d = /* @__PURE__ */ new Date(NaN);
             return;
           }
           for (i8 = 0; i8 < configfLen; i8++) {
             currentScore = 0;
             validFormatFound = false;
-            tempConfig = copyConfig({}, config);
-            if (config._useUTC != null) {
-              tempConfig._useUTC = config._useUTC;
+            tempConfig = copyConfig({}, config2);
+            if (config2._useUTC != null) {
+              tempConfig._useUTC = config2._useUTC;
             }
-            tempConfig._f = config._f[i8];
+            tempConfig._f = config2._f[i8];
             configFromStringAndFormat(tempConfig);
             if (isValid(tempConfig)) {
               validFormatFound = true;
@@ -15087,73 +15127,73 @@ ${nestedRules}`.replace(/&/g, className);
               }
             }
           }
-          extend2(config, bestMoment || tempConfig);
+          extend2(config2, bestMoment || tempConfig);
         }
-        function configFromObject(config) {
-          if (config._d) {
+        function configFromObject(config2) {
+          if (config2._d) {
             return;
           }
-          var i8 = normalizeObjectUnits(config._i), dayOrDate = i8.day === void 0 ? i8.date : i8.day;
-          config._a = map3(
+          var i8 = normalizeObjectUnits(config2._i), dayOrDate = i8.day === void 0 ? i8.date : i8.day;
+          config2._a = map3(
             [i8.year, i8.month, dayOrDate, i8.hour, i8.minute, i8.second, i8.millisecond],
             function(obj) {
               return obj && parseInt(obj, 10);
             }
           );
-          configFromArray(config);
+          configFromArray(config2);
         }
-        function createFromConfig(config) {
-          var res = new Moment(checkOverflow(prepareConfig(config)));
+        function createFromConfig(config2) {
+          var res = new Moment(checkOverflow(prepareConfig(config2)));
           if (res._nextDay) {
             res.add(1, "d");
             res._nextDay = void 0;
           }
           return res;
         }
-        function prepareConfig(config) {
-          var input = config._i, format2 = config._f;
-          config._locale = config._locale || getLocale(config._l);
+        function prepareConfig(config2) {
+          var input = config2._i, format2 = config2._f;
+          config2._locale = config2._locale || getLocale(config2._l);
           if (input === null || format2 === void 0 && input === "") {
             return createInvalid({ nullInput: true });
           }
           if (typeof input === "string") {
-            config._i = input = config._locale.preparse(input);
+            config2._i = input = config2._locale.preparse(input);
           }
           if (isMoment(input)) {
             return new Moment(checkOverflow(input));
           } else if (isDate2(input)) {
-            config._d = input;
+            config2._d = input;
           } else if (isArray3(format2)) {
-            configFromStringAndArray(config);
+            configFromStringAndArray(config2);
           } else if (format2) {
-            configFromStringAndFormat(config);
+            configFromStringAndFormat(config2);
           } else {
-            configFromInput(config);
+            configFromInput(config2);
           }
-          if (!isValid(config)) {
-            config._d = null;
+          if (!isValid(config2)) {
+            config2._d = null;
           }
-          return config;
+          return config2;
         }
-        function configFromInput(config) {
-          var input = config._i;
+        function configFromInput(config2) {
+          var input = config2._i;
           if (isUndefined(input)) {
-            config._d = new Date(hooks.now());
+            config2._d = new Date(hooks.now());
           } else if (isDate2(input)) {
-            config._d = new Date(input.valueOf());
+            config2._d = new Date(input.valueOf());
           } else if (typeof input === "string") {
-            configFromString(config);
+            configFromString(config2);
           } else if (isArray3(input)) {
-            config._a = map3(input.slice(0), function(obj) {
+            config2._a = map3(input.slice(0), function(obj) {
               return parseInt(obj, 10);
             });
-            configFromArray(config);
+            configFromArray(config2);
           } else if (isObject2(input)) {
-            configFromObject(config);
+            configFromObject(config2);
           } else if (isNumber2(input)) {
-            config._d = new Date(input);
+            config2._d = new Date(input);
           } else {
-            hooks.createFromInputFallback(config);
+            hooks.createFromInputFallback(config2);
           }
         }
         function createLocalOrUTC(input, format2, locale2, strict, isUTC) {
@@ -15240,9 +15280,9 @@ ${nestedRules}`.replace(/&/g, className);
           "millisecond"
         ];
         function isDurationValid(m4) {
-          var key, unitHasDecimal = false, i8, orderLen = ordering.length;
-          for (key in m4) {
-            if (hasOwnProp(m4, key) && !(indexOf3.call(ordering, key) !== -1 && (m4[key] == null || !isNaN(m4[key])))) {
+          var key2, unitHasDecimal = false, i8, orderLen = ordering.length;
+          for (key2 in m4) {
+            if (hasOwnProp(m4, key2) && !(indexOf3.call(ordering, key2) !== -1 && (m4[key2] == null || !isNaN(m4[key2])))) {
               return false;
             }
           }
@@ -15309,9 +15349,9 @@ ${nestedRules}`.replace(/&/g, className);
         offset("ZZ", "");
         addRegexToken("Z", matchShortOffset);
         addRegexToken("ZZ", matchShortOffset);
-        addParseToken(["Z", "ZZ"], function(input, array2, config) {
-          config._useUTC = true;
-          config._tzm = offsetFromString(matchShortOffset, input);
+        addParseToken(["Z", "ZZ"], function(input, array2, config2) {
+          config2._useUTC = true;
+          config2._tzm = offsetFromString(matchShortOffset, input);
         });
         var chunkOffset = /([\+\-]|\d\d)/gi;
         function offsetFromString(matcher, string2) {
@@ -15454,7 +15494,7 @@ ${nestedRules}`.replace(/&/g, className);
           return this.isValid() ? this._isUTC && this._offset === 0 : false;
         }
         var aspNetRegex = /^(-|\+)?(?:(\d*)[. ])?(\d+):(\d+)(?::(\d+)(\.\d*)?)?$/, isoRegex = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/;
-        function createDuration(input, key) {
+        function createDuration(input, key2) {
           var duration = input, match5 = null, sign2, ret, diffRes;
           if (isDuration(input)) {
             duration = {
@@ -15464,8 +15504,8 @@ ${nestedRules}`.replace(/&/g, className);
             };
           } else if (isNumber2(input) || !isNaN(+input)) {
             duration = {};
-            if (key) {
-              duration[key] = +input;
+            if (key2) {
+              duration[key2] = +input;
             } else {
               duration.milliseconds = +input;
             }
@@ -15658,7 +15698,7 @@ ${nestedRules}`.replace(/&/g, className);
               time = void 0;
             }
           }
-          var now4 = time || createLocal(), sod = cloneWithOffset(now4, this).startOf("day"), format2 = hooks.calendarFormat(this, sod) || "sameElse", output = formats && (isFunction(formats[format2]) ? formats[format2].call(this, now4) : formats[format2]);
+          var now4 = time || createLocal(), sod = cloneWithOffset(now4, this).startOf("day"), format2 = hooks.calendarFormat(this, sod) || "sameElse", output = formats && (isFunction2(formats[format2]) ? formats[format2].call(this, now4) : formats[format2]);
           return this.format(
             output || this.localeData().calendar(format2, this, createLocal(now4))
           );
@@ -15793,7 +15833,7 @@ ${nestedRules}`.replace(/&/g, className);
               utc ? "YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]" : "YYYYYY-MM-DD[T]HH:mm:ss.SSSZ"
             );
           }
-          if (isFunction(Date.prototype.toISOString)) {
+          if (isFunction2(Date.prototype.toISOString)) {
             if (utc) {
               return this.toDate().toISOString();
             } else {
@@ -15847,12 +15887,12 @@ ${nestedRules}`.replace(/&/g, className);
         function toNow(withoutSuffix) {
           return this.to(createLocal(), withoutSuffix);
         }
-        function locale(key) {
+        function locale(key2) {
           var newLocaleData;
-          if (key === void 0) {
+          if (key2 === void 0) {
             return this._locale._abbr;
           } else {
-            newLocaleData = getLocale(key);
+            newLocaleData = getLocale(key2);
             if (newLocaleData != null) {
               this._locale = newLocaleData;
             }
@@ -15861,11 +15901,11 @@ ${nestedRules}`.replace(/&/g, className);
         }
         var lang = deprecate2(
           "moment().lang() is deprecated. Instead, use moment().localeData() to get the language configuration. Use moment().locale() to change languages.",
-          function(key) {
-            if (key === void 0) {
+          function(key2) {
+            if (key2 === void 0) {
               return this.localeData();
             } else {
-              return this.locale(key);
+              return this.locale(key2);
             }
           }
         );
@@ -16078,12 +16118,12 @@ ${nestedRules}`.replace(/&/g, className);
         addRegexToken("NNNNN", matchEraNarrow);
         addParseToken(
           ["N", "NN", "NNN", "NNNN", "NNNNN"],
-          function(input, array2, config, token2) {
-            var era = config._locale.erasParse(input, token2, config._strict);
+          function(input, array2, config2, token2) {
+            var era = config2._locale.erasParse(input, token2, config2._strict);
             if (era) {
-              getParsingFlags(config).era = era;
+              getParsingFlags(config2).era = era;
             } else {
-              getParsingFlags(config).invalidEra = input;
+              getParsingFlags(config2).invalidEra = input;
             }
           }
         );
@@ -16093,13 +16133,13 @@ ${nestedRules}`.replace(/&/g, className);
         addRegexToken("yyyy", matchUnsigned);
         addRegexToken("yo", matchEraYearOrdinal);
         addParseToken(["y", "yy", "yyy", "yyyy"], YEAR);
-        addParseToken(["yo"], function(input, array2, config, token2) {
+        addParseToken(["yo"], function(input, array2, config2, token2) {
           var match5;
-          if (config._locale._eraYearOrdinalRegex) {
-            match5 = input.match(config._locale._eraYearOrdinalRegex);
+          if (config2._locale._eraYearOrdinalRegex) {
+            match5 = input.match(config2._locale._eraYearOrdinalRegex);
           }
-          if (config._locale.eraYearOrdinalParse) {
-            array2[YEAR] = config._locale.eraYearOrdinalParse(input, match5);
+          if (config2._locale.eraYearOrdinalParse) {
+            array2[YEAR] = config2._locale.eraYearOrdinalParse(input, match5);
           } else {
             array2[YEAR] = parseInt(input, 10);
           }
@@ -16290,11 +16330,11 @@ ${nestedRules}`.replace(/&/g, className);
         addRegexToken("ggggg", match1to6, match6);
         addWeekParseToken(
           ["gggg", "ggggg", "GGGG", "GGGGG"],
-          function(input, week, config, token2) {
+          function(input, week, config2, token2) {
             week[token2.substr(0, 2)] = toInt(input);
           }
         );
-        addWeekParseToken(["gg", "GG"], function(input, week, config, token2) {
+        addWeekParseToken(["gg", "GG"], function(input, week, config2, token2) {
           week[token2] = hooks.parseTwoDigitYear(input);
         });
         function getSetWeekYear(input) {
@@ -16378,8 +16418,8 @@ ${nestedRules}`.replace(/&/g, className);
         addUnitPriority("dayOfYear", 4);
         addRegexToken("DDD", match1to3);
         addRegexToken("DDDD", match3);
-        addParseToken(["DDD", "DDDD"], function(input, array2, config) {
-          config._dayOfYear = toInt(input);
+        addParseToken(["DDD", "DDDD"], function(input, array2, config2) {
+          config2._dayOfYear = toInt(input);
         });
         function getSetDayOfYear(input) {
           var dayOfYear = Math.round(
@@ -16963,11 +17003,11 @@ ${nestedRules}`.replace(/&/g, className);
         addFormatToken("x", 0, 0, "valueOf");
         addRegexToken("x", matchSigned);
         addRegexToken("X", matchTimestamp);
-        addParseToken("X", function(input, array2, config) {
-          config._d = new Date(parseFloat(input) * 1e3);
+        addParseToken("X", function(input, array2, config2) {
+          config2._d = new Date(parseFloat(input) * 1e3);
         });
-        addParseToken("x", function(input, array2, config) {
-          config._d = new Date(toInt(input));
+        addParseToken("x", function(input, array2, config2) {
+          config2._d = new Date(toInt(input));
         });
         hooks.version = "2.29.4";
         setHookCallback(createLocal);
@@ -17027,7 +17067,7 @@ ${nestedRules}`.replace(/&/g, className);
     (function(global2, factory) {
       typeof commonjsRequire === "function" ? factory(requireMoment()) : factory(global2.moment);
     })(commonjsGlobal, function(moment4) {
-      function processRelativeTime(number2, withoutSuffix, key, isFuture) {
+      function processRelativeTime(number2, withoutSuffix, key2, isFuture) {
         var format = {
           m: ["eine Minute", "einer Minute"],
           h: ["eine Stunde", "einer Stunde"],
@@ -17039,7 +17079,7 @@ ${nestedRules}`.replace(/&/g, className);
           y: ["ein Jahr", "einem Jahr"],
           yy: [number2 + " Jahre", number2 + " Jahren"]
         };
-        return withoutSuffix ? format[key][0] : format[key][1];
+        return withoutSuffix ? format[key2][0] : format[key2][1];
       }
       var de2 = moment4.defineLocale("de", {
         months: "Januar_Februar_M\xE4rz_April_Mai_Juni_Juli_August_September_Oktober_November_Dezember".split(
@@ -17640,9 +17680,9 @@ ${nestedRules}`.replace(/&/g, className);
       function plural(n6) {
         return n6 % 10 < 5 && n6 % 10 > 1 && ~~(n6 / 10) % 10 !== 1;
       }
-      function translate(number2, withoutSuffix, key) {
+      function translate(number2, withoutSuffix, key2) {
         var result = number2 + " ";
-        switch (key) {
+        switch (key2) {
           case "ss":
             return result + (plural(number2) ? "sekundy" : "sekund");
           case "m":
@@ -17756,7 +17796,7 @@ ${nestedRules}`.replace(/&/g, className);
         var forms = word.split("_");
         return num % 10 === 1 && num % 100 !== 11 ? forms[0] : num % 10 >= 2 && num % 10 <= 4 && (num % 100 < 10 || num % 100 >= 20) ? forms[1] : forms[2];
       }
-      function relativeTimeWithPlural(number2, withoutSuffix, key) {
+      function relativeTimeWithPlural(number2, withoutSuffix, key2) {
         var format = {
           ss: withoutSuffix ? "\u0441\u0435\u043A\u0443\u043D\u0434\u0430_\u0441\u0435\u043A\u0443\u043D\u0434\u044B_\u0441\u0435\u043A\u0443\u043D\u0434" : "\u0441\u0435\u043A\u0443\u043D\u0434\u0443_\u0441\u0435\u043A\u0443\u043D\u0434\u044B_\u0441\u0435\u043A\u0443\u043D\u0434",
           mm: withoutSuffix ? "\u043C\u0438\u043D\u0443\u0442\u0430_\u043C\u0438\u043D\u0443\u0442\u044B_\u043C\u0438\u043D\u0443\u0442" : "\u043C\u0438\u043D\u0443\u0442\u0443_\u043C\u0438\u043D\u0443\u0442\u044B_\u043C\u0438\u043D\u0443\u0442",
@@ -17766,10 +17806,10 @@ ${nestedRules}`.replace(/&/g, className);
           MM: "\u043C\u0435\u0441\u044F\u0446_\u043C\u0435\u0441\u044F\u0446\u0430_\u043C\u0435\u0441\u044F\u0446\u0435\u0432",
           yy: "\u0433\u043E\u0434_\u0433\u043E\u0434\u0430_\u043B\u0435\u0442"
         };
-        if (key === "m") {
+        if (key2 === "m") {
           return withoutSuffix ? "\u043C\u0438\u043D\u0443\u0442\u0430" : "\u043C\u0438\u043D\u0443\u0442\u0443";
         } else {
-          return number2 + " " + plural(format[key], +number2);
+          return number2 + " " + plural(format[key2], +number2);
         }
       }
       var monthsParse = [
@@ -17951,7 +17991,7 @@ ${nestedRules}`.replace(/&/g, className);
         var forms = word.split("_");
         return num % 10 === 1 && num % 100 !== 11 ? forms[0] : num % 10 >= 2 && num % 10 <= 4 && (num % 100 < 10 || num % 100 >= 20) ? forms[1] : forms[2];
       }
-      function relativeTimeWithPlural(number2, withoutSuffix, key) {
+      function relativeTimeWithPlural(number2, withoutSuffix, key2) {
         var format = {
           ss: withoutSuffix ? "\u0441\u0435\u043A\u0443\u043D\u0434\u0430_\u0441\u0435\u043A\u0443\u043D\u0434\u0438_\u0441\u0435\u043A\u0443\u043D\u0434" : "\u0441\u0435\u043A\u0443\u043D\u0434\u0443_\u0441\u0435\u043A\u0443\u043D\u0434\u0438_\u0441\u0435\u043A\u0443\u043D\u0434",
           mm: withoutSuffix ? "\u0445\u0432\u0438\u043B\u0438\u043D\u0430_\u0445\u0432\u0438\u043B\u0438\u043D\u0438_\u0445\u0432\u0438\u043B\u0438\u043D" : "\u0445\u0432\u0438\u043B\u0438\u043D\u0443_\u0445\u0432\u0438\u043B\u0438\u043D\u0438_\u0445\u0432\u0438\u043B\u0438\u043D",
@@ -17960,12 +18000,12 @@ ${nestedRules}`.replace(/&/g, className);
           MM: "\u043C\u0456\u0441\u044F\u0446\u044C_\u043C\u0456\u0441\u044F\u0446\u0456_\u043C\u0456\u0441\u044F\u0446\u0456\u0432",
           yy: "\u0440\u0456\u043A_\u0440\u043E\u043A\u0438_\u0440\u043E\u043A\u0456\u0432"
         };
-        if (key === "m") {
+        if (key2 === "m") {
           return withoutSuffix ? "\u0445\u0432\u0438\u043B\u0438\u043D\u0430" : "\u0445\u0432\u0438\u043B\u0438\u043D\u0443";
-        } else if (key === "h") {
+        } else if (key2 === "h") {
           return withoutSuffix ? "\u0433\u043E\u0434\u0438\u043D\u0430" : "\u0433\u043E\u0434\u0438\u043D\u0443";
         } else {
-          return number2 + " " + plural(format[key], +number2);
+          return number2 + " " + plural(format[key2], +number2);
         }
       }
       function weekdaysCaseReplace(m4, format) {
@@ -18142,11 +18182,11 @@ ${nestedRules}`.replace(/&/g, className);
   var isPure = true;
   var global$p = global$q;
   var defineProperty$f = Object.defineProperty;
-  var defineGlobalProperty$1 = function(key, value) {
+  var defineGlobalProperty$1 = function(key2, value) {
     try {
-      defineProperty$f(global$p, key, { value, configurable: true, writable: true });
+      defineProperty$f(global$p, key2, { value, configurable: true, writable: true });
     } catch (error) {
-      global$p[key] = value;
+      global$p[key2] = value;
     }
     return value;
   };
@@ -18156,8 +18196,8 @@ ${nestedRules}`.replace(/&/g, className);
   var store$3 = global$o[SHARED] || defineGlobalProperty(SHARED, {});
   var sharedStore = store$3;
   var store$2 = sharedStore;
-  (shared$7.exports = function(key, value) {
-    return store$2[key] || (store$2[key] = value !== void 0 ? value : {});
+  (shared$7.exports = function(key2, value) {
+    return store$2[key2] || (store$2[key2] = value !== void 0 ? value : {});
   })("versions", []).push({
     version: "3.33.0",
     mode: "pure",
@@ -18183,15 +18223,15 @@ ${nestedRules}`.replace(/&/g, className);
   var uncurryThis$x = functionUncurryThis;
   var toObject$e = toObject$f;
   var hasOwnProperty = uncurryThis$x({}.hasOwnProperty);
-  var hasOwnProperty_1 = Object.hasOwn || function hasOwn(it2, key) {
-    return hasOwnProperty(toObject$e(it2), key);
+  var hasOwnProperty_1 = Object.hasOwn || function hasOwn(it2, key2) {
+    return hasOwnProperty(toObject$e(it2), key2);
   };
   var uncurryThis$w = functionUncurryThis;
   var id$1 = 0;
   var postfix = Math.random();
   var toString$e = uncurryThis$w(1 .toString);
-  var uid$4 = function(key) {
-    return "Symbol(" + (key === void 0 ? "" : key) + ")_" + toString$e(++id$1 + postfix, 36);
+  var uid$4 = function(key2) {
+    return "Symbol(" + (key2 === void 0 ? "" : key2) + ")_" + toString$e(++id$1 + postfix, 36);
   };
   var engineUserAgent = typeof navigator != "undefined" && String(navigator.userAgent) || "";
   var global$n = global$q;
@@ -18273,9 +18313,9 @@ ${nestedRules}`.replace(/&/g, className);
   var CORRECT_ARGUMENTS = classofRaw$1(/* @__PURE__ */ function() {
     return arguments;
   }()) === "Arguments";
-  var tryGet = function(it2, key) {
+  var tryGet = function(it2, key2) {
     try {
-      return it2[key];
+      return it2[key2];
     } catch (error) {
     }
   };
@@ -18451,8 +18491,8 @@ ${nestedRules}`.replace(/&/g, className);
   var toPrimitive$5 = toPrimitive$6;
   var isSymbol$3 = isSymbol$5;
   var toPropertyKey$4 = function(argument) {
-    var key = toPrimitive$5(argument, "string");
-    return isSymbol$3(key) ? key : key + "";
+    var key2 = toPrimitive$5(argument, "string");
+    return isSymbol$3(key2) ? key2 : key2 + "";
   };
   var DESCRIPTORS$g = descriptors;
   var IE8_DOM_DEFINE$1 = ie8DomDefine;
@@ -18504,17 +18544,17 @@ ${nestedRules}`.replace(/&/g, className);
   var DESCRIPTORS$f = descriptors;
   var definePropertyModule$4 = objectDefineProperty;
   var createPropertyDescriptor$6 = createPropertyDescriptor$7;
-  var createNonEnumerableProperty$9 = DESCRIPTORS$f ? function(object2, key, value) {
-    return definePropertyModule$4.f(object2, key, createPropertyDescriptor$6(1, value));
-  } : function(object2, key, value) {
-    object2[key] = value;
+  var createNonEnumerableProperty$9 = DESCRIPTORS$f ? function(object2, key2, value) {
+    return definePropertyModule$4.f(object2, key2, createPropertyDescriptor$6(1, value));
+  } : function(object2, key2, value) {
+    object2[key2] = value;
     return object2;
   };
   var shared$5 = sharedExports;
   var uid$2 = uid$4;
   var keys$7 = shared$5("keys");
-  var sharedKey$4 = function(key) {
-    return keys$7[key] || (keys$7[key] = uid$2(key));
+  var sharedKey$4 = function(key2) {
+    return keys$7[key2] || (keys$7[key2] = uid$2(key2));
   };
   var hiddenKeys$6 = {};
   var NATIVE_WEAK_MAP = weakMapBasicDetection;
@@ -18700,16 +18740,16 @@ ${nestedRules}`.replace(/&/g, className);
     var target = GLOBAL ? path$s : path$s[TARGET] || createNonEnumerableProperty$7(path$s, TARGET, {})[TARGET];
     var targetPrototype = target.prototype;
     var FORCED2, USE_NATIVE, VIRTUAL_PROTOTYPE;
-    var key, sourceProperty, targetProperty, nativeProperty, resultProperty, descriptor;
-    for (key in source) {
-      FORCED2 = isForced$1(GLOBAL ? key : TARGET + (STATIC ? "." : "#") + key, options2.forced);
-      USE_NATIVE = !FORCED2 && nativeSource && hasOwn$g(nativeSource, key);
-      targetProperty = target[key];
+    var key2, sourceProperty, targetProperty, nativeProperty, resultProperty, descriptor;
+    for (key2 in source) {
+      FORCED2 = isForced$1(GLOBAL ? key2 : TARGET + (STATIC ? "." : "#") + key2, options2.forced);
+      USE_NATIVE = !FORCED2 && nativeSource && hasOwn$g(nativeSource, key2);
+      targetProperty = target[key2];
       if (USE_NATIVE) if (options2.dontCallGetSet) {
-        descriptor = getOwnPropertyDescriptor$6(nativeSource, key);
+        descriptor = getOwnPropertyDescriptor$6(nativeSource, key2);
         nativeProperty = descriptor && descriptor.value;
-      } else nativeProperty = nativeSource[key];
-      sourceProperty = USE_NATIVE && nativeProperty ? nativeProperty : source[key];
+      } else nativeProperty = nativeSource[key2];
+      sourceProperty = USE_NATIVE && nativeProperty ? nativeProperty : source[key2];
       if (USE_NATIVE && typeof targetProperty == typeof sourceProperty) continue;
       if (options2.bind && USE_NATIVE) resultProperty = bind$h(sourceProperty, global$g);
       else if (options2.wrap && USE_NATIVE) resultProperty = wrapConstructor(sourceProperty);
@@ -18718,15 +18758,15 @@ ${nestedRules}`.replace(/&/g, className);
       if (options2.sham || sourceProperty && sourceProperty.sham || targetProperty && targetProperty.sham) {
         createNonEnumerableProperty$7(resultProperty, "sham", true);
       }
-      createNonEnumerableProperty$7(target, key, resultProperty);
+      createNonEnumerableProperty$7(target, key2, resultProperty);
       if (PROTO) {
         VIRTUAL_PROTOTYPE = TARGET + "Prototype";
         if (!hasOwn$g(path$s, VIRTUAL_PROTOTYPE)) {
           createNonEnumerableProperty$7(path$s, VIRTUAL_PROTOTYPE, {});
         }
-        createNonEnumerableProperty$7(path$s[VIRTUAL_PROTOTYPE], key, sourceProperty);
-        if (options2.real && targetPrototype && (FORCED2 || !targetPrototype[key])) {
-          createNonEnumerableProperty$7(targetPrototype, key, sourceProperty);
+        createNonEnumerableProperty$7(path$s[VIRTUAL_PROTOTYPE], key2, sourceProperty);
+        if (options2.real && targetPrototype && (FORCED2 || !targetPrototype[key2])) {
+          createNonEnumerableProperty$7(targetPrototype, key2, sourceProperty);
         }
       }
     }
@@ -18798,10 +18838,10 @@ ${nestedRules}`.replace(/&/g, className);
     var O = toIndexedObject$8(object2);
     var i8 = 0;
     var result = [];
-    var key;
-    for (key in O) !hasOwn$e(hiddenKeys$4, key) && hasOwn$e(O, key) && push$d(result, key);
-    while (names.length > i8) if (hasOwn$e(O, key = names[i8++])) {
-      ~indexOf$4(result, key) || push$d(result, key);
+    var key2;
+    for (key2 in O) !hasOwn$e(hiddenKeys$4, key2) && hasOwn$e(O, key2) && push$d(result, key2);
+    while (names.length > i8) if (hasOwn$e(O, key2 = names[i8++])) {
+      ~indexOf$4(result, key2) || push$d(result, key2);
     }
     return result;
   };
@@ -18831,8 +18871,8 @@ ${nestedRules}`.replace(/&/g, className);
     var keys4 = objectKeys$3(Properties);
     var length = keys4.length;
     var index = 0;
-    var key;
-    while (length > index) definePropertyModule$3.f(O, key = keys4[index++], props[key]);
+    var key2;
+    while (length > index) definePropertyModule$3.f(O, key2 = keys4[index++], props[key2]);
     return O;
   };
   var getBuiltIn$d = getBuiltIn$f;
@@ -18921,9 +18961,9 @@ ${nestedRules}`.replace(/&/g, className);
     return object2 instanceof $Object ? ObjectPrototype$2 : null;
   };
   var createNonEnumerableProperty$6 = createNonEnumerableProperty$9;
-  var defineBuiltIn$6 = function(target, key, value, options2) {
-    if (options2 && options2.enumerable) target[key] = value;
-    else createNonEnumerableProperty$6(target, key, value);
+  var defineBuiltIn$6 = function(target, key2, value, options2) {
+    if (options2 && options2.enumerable) target[key2] = value;
+    else createNonEnumerableProperty$6(target, key2, value);
     return target;
   };
   var fails$p = fails$y;
@@ -19002,9 +19042,9 @@ ${nestedRules}`.replace(/&/g, className);
   };
   var uncurryThis$n = functionUncurryThis;
   var aCallable$b = aCallable$e;
-  var functionUncurryThisAccessor = function(object2, key, method2) {
+  var functionUncurryThisAccessor = function(object2, key2, method2) {
     try {
-      return uncurryThis$n(aCallable$b(Object.getOwnPropertyDescriptor(object2, key)[method2]));
+      return uncurryThis$n(aCallable$b(Object.getOwnPropertyDescriptor(object2, key2)[method2]));
     } catch (error) {
     }
   };
@@ -19242,8 +19282,8 @@ ${nestedRules}`.replace(/&/g, className);
   var toPropertyKey$1 = toPropertyKey$4;
   var definePropertyModule$2 = objectDefineProperty;
   var createPropertyDescriptor$3 = createPropertyDescriptor$7;
-  var createProperty$6 = function(object2, key, value) {
-    var propertyKey = toPropertyKey$1(key);
+  var createProperty$6 = function(object2, key2, value) {
+    var propertyKey = toPropertyKey$1(key2);
     if (propertyKey in object2) definePropertyModule$2.f(object2, propertyKey, createPropertyDescriptor$3(0, value));
     else object2[propertyKey] = value;
   };
@@ -19480,8 +19520,8 @@ ${nestedRules}`.replace(/&/g, className);
   });
   var path$q = path$u;
   var Object$4 = path$q.Object;
-  var defineProperty$b = defineProperty$d.exports = function defineProperty3(it2, key, desc) {
-    return Object$4.defineProperty(it2, key, desc);
+  var defineProperty$b = defineProperty$d.exports = function defineProperty3(it2, key2, desc) {
+    return Object$4.defineProperty(it2, key2, desc);
   };
   if (Object$4.defineProperty.sham) defineProperty$b.sham = true;
   var definePropertyExports = defineProperty$d.exports;
@@ -19821,26 +19861,26 @@ ${nestedRules}`.replace(/&/g, className);
   var $defineProperty = function defineProperty4(O, P3, Attributes) {
     if (O === ObjectPrototype$1) $defineProperty(ObjectPrototypeSymbols, P3, Attributes);
     anObject$5(O);
-    var key = toPropertyKey(P3);
+    var key2 = toPropertyKey(P3);
     anObject$5(Attributes);
-    if (hasOwn$a(AllSymbols, key)) {
+    if (hasOwn$a(AllSymbols, key2)) {
       if (!Attributes.enumerable) {
         if (!hasOwn$a(O, HIDDEN)) nativeDefineProperty(O, HIDDEN, createPropertyDescriptor$2(1, {}));
-        O[HIDDEN][key] = true;
+        O[HIDDEN][key2] = true;
       } else {
-        if (hasOwn$a(O, HIDDEN) && O[HIDDEN][key]) O[HIDDEN][key] = false;
+        if (hasOwn$a(O, HIDDEN) && O[HIDDEN][key2]) O[HIDDEN][key2] = false;
         Attributes = nativeObjectCreate(Attributes, { enumerable: createPropertyDescriptor$2(0, false) });
       }
-      return setSymbolDescriptor(O, key, Attributes);
+      return setSymbolDescriptor(O, key2, Attributes);
     }
-    return nativeDefineProperty(O, key, Attributes);
+    return nativeDefineProperty(O, key2, Attributes);
   };
   var $defineProperties = function defineProperties2(O, Properties) {
     anObject$5(O);
     var properties = toIndexedObject$4(Properties);
     var keys4 = objectKeys$2(properties).concat($getOwnPropertySymbols(properties));
-    $forEach$1(keys4, function(key) {
-      if (!DESCRIPTORS$a || call$9($propertyIsEnumerable$1, properties, key)) $defineProperty(O, key, properties[key]);
+    $forEach$1(keys4, function(key2) {
+      if (!DESCRIPTORS$a || call$9($propertyIsEnumerable$1, properties, key2)) $defineProperty(O, key2, properties[key2]);
     });
     return O;
   };
@@ -19855,10 +19895,10 @@ ${nestedRules}`.replace(/&/g, className);
   };
   var $getOwnPropertyDescriptor = function getOwnPropertyDescriptor2(O, P3) {
     var it2 = toIndexedObject$4(O);
-    var key = toPropertyKey(P3);
-    if (it2 === ObjectPrototype$1 && hasOwn$a(AllSymbols, key) && !hasOwn$a(ObjectPrototypeSymbols, key)) return;
-    var descriptor = nativeGetOwnPropertyDescriptor$1(it2, key);
-    if (descriptor && hasOwn$a(AllSymbols, key) && !(hasOwn$a(it2, HIDDEN) && it2[HIDDEN][key])) {
+    var key2 = toPropertyKey(P3);
+    if (it2 === ObjectPrototype$1 && hasOwn$a(AllSymbols, key2) && !hasOwn$a(ObjectPrototypeSymbols, key2)) return;
+    var descriptor = nativeGetOwnPropertyDescriptor$1(it2, key2);
+    if (descriptor && hasOwn$a(AllSymbols, key2) && !(hasOwn$a(it2, HIDDEN) && it2[HIDDEN][key2])) {
       descriptor.enumerable = true;
     }
     return descriptor;
@@ -19866,8 +19906,8 @@ ${nestedRules}`.replace(/&/g, className);
   var $getOwnPropertyNames = function getOwnPropertyNames3(O) {
     var names = nativeGetOwnPropertyNames(toIndexedObject$4(O));
     var result = [];
-    $forEach$1(names, function(key) {
-      if (!hasOwn$a(AllSymbols, key) && !hasOwn$a(hiddenKeys$1, key)) push$b(result, key);
+    $forEach$1(names, function(key2) {
+      if (!hasOwn$a(AllSymbols, key2) && !hasOwn$a(hiddenKeys$1, key2)) push$b(result, key2);
     });
     return result;
   };
@@ -19875,9 +19915,9 @@ ${nestedRules}`.replace(/&/g, className);
     var IS_OBJECT_PROTOTYPE = O === ObjectPrototype$1;
     var names = nativeGetOwnPropertyNames(IS_OBJECT_PROTOTYPE ? ObjectPrototypeSymbols : toIndexedObject$4(O));
     var result = [];
-    $forEach$1(names, function(key) {
-      if (hasOwn$a(AllSymbols, key) && (!IS_OBJECT_PROTOTYPE || hasOwn$a(ObjectPrototype$1, key))) {
-        push$b(result, AllSymbols[key]);
+    $forEach$1(names, function(key2) {
+      if (hasOwn$a(AllSymbols, key2) && (!IS_OBJECT_PROTOTYPE || hasOwn$a(ObjectPrototype$1, key2))) {
+        push$b(result, AllSymbols[key2]);
       }
     });
     return result;
@@ -19973,8 +20013,8 @@ ${nestedRules}`.replace(/&/g, className);
   var StringToSymbolRegistry = shared$2("string-to-symbol-registry");
   var SymbolToStringRegistry$1 = shared$2("symbol-to-string-registry");
   $$X({ target: "Symbol", stat: true, forced: !NATIVE_SYMBOL_REGISTRY$1 }, {
-    "for": function(key) {
-      var string2 = toString$8(key);
+    "for": function(key2) {
+      var string2 = toString$8(key2);
       if (hasOwn$9(StringToSymbolRegistry, string2)) return StringToSymbolRegistry[string2];
       var symbol2 = getBuiltIn$a("Symbol")(string2);
       StringToSymbolRegistry[string2] = symbol2;
@@ -20015,13 +20055,13 @@ ${nestedRules}`.replace(/&/g, className);
     }
     var keysLength = keys4.length;
     var root = true;
-    return function(key, value) {
+    return function(key2, value) {
       if (root) {
         root = false;
         return value;
       }
       if (isArray$b(this)) return value;
-      for (var j3 = 0; j3 < keysLength; j3++) if (keys4[j3] === key) return value;
+      for (var j3 = 0; j3 < keysLength; j3++) if (keys4[j3] === key2) return value;
     };
   };
   var $$V = _export;
@@ -20056,8 +20096,8 @@ ${nestedRules}`.replace(/&/g, className);
     var args = arraySlice$4(arguments);
     var $replacer = getReplacerFunction(replacer);
     if (!isCallable$6($replacer) && (it2 === void 0 || isSymbol$1(it2))) return;
-    args[1] = function(key, value) {
-      if (isCallable$6($replacer)) value = call$8($replacer, this, $String(key), value);
+    args[1] = function(key2, value) {
+      if (isCallable$6($replacer)) value = call$8($replacer, this, $String(key2), value);
       if (!isSymbol$1(value)) return value;
     };
     return apply$4($stringify, null, args);
@@ -20266,8 +20306,8 @@ ${nestedRules}`.replace(/&/g, className);
     return (hint === "string" ? String : Number)(input);
   }
   function _toPropertyKey(arg) {
-    var key = _toPrimitive(arg, "string");
-    return _typeof$1(key) === "symbol" ? key : String(key);
+    var key2 = _toPrimitive(arg, "string");
+    return _typeof$1(key2) === "symbol" ? key2 : String(key2);
   }
   function _defineProperties(target, props) {
     for (var i8 = 0; i8 < props.length; i8++) {
@@ -20820,10 +20860,10 @@ ${nestedRules}`.replace(/&/g, className);
       var keys4 = getOwnPropertySymbols3 ? concat2(objectKeys$1(S4), getOwnPropertySymbols3(S4)) : objectKeys$1(S4);
       var length = keys4.length;
       var j3 = 0;
-      var key;
+      var key2;
       while (length > j3) {
-        key = keys4[j3++];
-        if (!DESCRIPTORS$8 || call$7(propertyIsEnumerable4, S4, key)) T3[key] = S4[key];
+        key2 = keys4[j3++];
+        if (!DESCRIPTORS$8 || call$7(propertyIsEnumerable4, S4, key2)) T3[key2] = S4[key2];
       }
     }
     return T3;
@@ -20981,11 +21021,11 @@ ${nestedRules}`.replace(/&/g, className);
       var length = keys4.length;
       var i8 = 0;
       var result = [];
-      var key;
+      var key2;
       while (length > i8) {
-        key = keys4[i8++];
-        if (!DESCRIPTORS$7 || (IE_WORKAROUND ? key in O : propertyIsEnumerable3(O, key))) {
-          push$3(result, TO_ENTRIES ? [key, O[key]] : O[key]);
+        key2 = keys4[i8++];
+        if (!DESCRIPTORS$7 || (IE_WORKAROUND ? key2 in O : propertyIsEnumerable3(O, key2))) {
+          push$3(result, TO_ENTRIES ? [key2, O[key2]] : O[key2]);
         }
       }
       return result;
@@ -21220,8 +21260,8 @@ ${nestedRules}`.replace(/&/g, className);
       if (obj) return mixin(obj);
     }
     function mixin(obj) {
-      for (var key in Emitter3.prototype) {
-        obj[key] = Emitter3.prototype[key];
+      for (var key2 in Emitter3.prototype) {
+        obj[key2] = Emitter3.prototype[key2];
       }
       return obj;
     }
@@ -21292,9 +21332,9 @@ ${nestedRules}`.replace(/&/g, className);
     _extends = Object.assign || function(target) {
       for (var i8 = 1; i8 < arguments.length; i8++) {
         var source = arguments[i8];
-        for (var key in source) {
-          if (Object.prototype.hasOwnProperty.call(source, key)) {
-            target[key] = source[key];
+        for (var key2 in source) {
+          if (Object.prototype.hasOwnProperty.call(source, key2)) {
+            target[key2] = source[key2];
           }
         }
       }
@@ -21408,22 +21448,22 @@ ${nestedRules}`.replace(/&/g, className);
   var DIRECTION_ALL = DIRECTION_HORIZONTAL | DIRECTION_VERTICAL;
   var PROPS_XY = ["x", "y"];
   var PROPS_CLIENT_XY = ["clientX", "clientY"];
-  function each(obj, iterator2, context) {
+  function each(obj, iterator2, context2) {
     var i8;
     if (!obj) {
       return;
     }
     if (obj.forEach) {
-      obj.forEach(iterator2, context);
+      obj.forEach(iterator2, context2);
     } else if (obj.length !== void 0) {
       i8 = 0;
       while (i8 < obj.length) {
-        iterator2.call(context, obj[i8], i8, obj);
+        iterator2.call(context2, obj[i8], i8, obj);
         i8++;
       }
     } else {
       for (i8 in obj) {
-        obj.hasOwnProperty(i8) && iterator2.call(context, obj[i8], i8, obj);
+        obj.hasOwnProperty(i8) && iterator2.call(context2, obj[i8], i8, obj);
       }
     }
   }
@@ -21829,12 +21869,12 @@ ${nestedRules}`.replace(/&/g, className);
   function toArray$1(obj) {
     return Array.prototype.slice.call(obj, 0);
   }
-  function uniqueArray(src, key, sort3) {
+  function uniqueArray(src, key2, sort3) {
     var results = [];
     var values3 = [];
     var i8 = 0;
     while (i8 < src.length) {
-      var val = key ? src[i8][key] : src[i8];
+      var val = key2 ? src[i8][key2] : src[i8];
       if (inArray(values3, val) < 0) {
         results.push(src[i8]);
       }
@@ -21842,11 +21882,11 @@ ${nestedRules}`.replace(/&/g, className);
       i8++;
     }
     if (sort3) {
-      if (!key) {
+      if (!key2) {
         results = results.sort();
       } else {
         results = results.sort(function(a4, b4) {
-          return a4[key] > b4[key];
+          return a4[key2] > b4[key2];
         });
       }
     }
@@ -22058,9 +22098,9 @@ ${nestedRules}`.replace(/&/g, className);
     }
     return new Type(manager, inputHandler);
   }
-  function invokeArrayArg(arg, fn, context) {
+  function invokeArrayArg(arg, fn, context2) {
     if (Array.isArray(arg)) {
-      each(arg, context[fn], context);
+      each(arg, context2[fn], context2);
       return true;
     }
     return false;
@@ -22938,9 +22978,9 @@ ${nestedRules}`.replace(/&/g, className);
       assign$1(childP, properties);
     }
   }
-  function bindFn(fn, context) {
+  function bindFn(fn, context2) {
     return function boundFn() {
-      return fn.apply(context, arguments);
+      return fn.apply(context2, arguments);
     };
   }
   var Hammer$3 = /* @__PURE__ */ function() {
@@ -23207,16 +23247,16 @@ ${nestedRules}`.replace(/&/g, className);
     };
   }
   function hammerMock$1() {
-    var noop2 = function noop3() {
+    var noop3 = function noop4() {
     };
     return {
-      on: noop2,
-      off: noop2,
-      destroy: noop2,
-      emit: noop2,
+      on: noop3,
+      off: noop3,
+      destroy: noop3,
+      emit: noop3,
       get: function get3() {
         return {
-          set: noop2
+          set: noop3
         };
       }
     };
@@ -23567,17 +23607,17 @@ ${nestedRules}`.replace(/&/g, className);
         callback(object2[i8], i8, object2);
       }
     } else {
-      for (var key in object2) {
-        if (Object.prototype.hasOwnProperty.call(object2, key)) {
-          callback(object2[key], key, object2);
+      for (var key2 in object2) {
+        if (Object.prototype.hasOwnProperty.call(object2, key2)) {
+          callback(object2[key2], key2, object2);
         }
       }
     }
   }
   var toArray = _Object$values2;
-  function updateProperty(object2, key, value) {
-    if (object2[key] !== value) {
-      object2[key] = value;
+  function updateProperty(object2, key2, value) {
+    if (object2[key2] !== value) {
+      object2[key2] = value;
       return true;
     } else {
       return false;
@@ -23921,15 +23961,15 @@ ${nestedRules}`.replace(/&/g, className);
   function addCssText(element, cssText) {
     var cssStyle = splitCSSText(cssText);
     for (var _i3 = 0, _Object$entries = _Object$entries2(cssStyle); _i3 < _Object$entries.length; _i3++) {
-      var _Object$entries$_i = _slicedToArray(_Object$entries[_i3], 2), key = _Object$entries$_i[0], value = _Object$entries$_i[1];
-      element.style.setProperty(key, value);
+      var _Object$entries$_i = _slicedToArray(_Object$entries[_i3], 2), key2 = _Object$entries$_i[0], value = _Object$entries$_i[1];
+      element.style.setProperty(key2, value);
     }
   }
   function removeCssText(element, cssText) {
     var cssStyle = splitCSSText(cssText);
     for (var _i4 = 0, _Object$keys3 = _Object$keys(cssStyle); _i4 < _Object$keys3.length; _i4++) {
-      var key = _Object$keys3[_i4];
-      element.style.removeProperty(key);
+      var key2 = _Object$keys3[_i4];
+      element.style.removeProperty(key2);
     }
   }
   function HSVToRGB(h4, s3, v3) {
@@ -26506,17 +26546,17 @@ ${nestedRules}`.replace(/&/g, className);
     };
     return _getPrototypeOf(o7);
   }
-  function _defineProperty(obj, key, value) {
-    key = _toPropertyKey(key);
-    if (key in obj) {
-      _Object$defineProperty$1(obj, key, {
+  function _defineProperty(obj, key2, value) {
+    key2 = _toPropertyKey(key2);
+    if (key2 in obj) {
+      _Object$defineProperty$1(obj, key2, {
         value,
         enumerable: true,
         configurable: true,
         writable: true
       });
     } else {
-      obj[key] = value;
+      obj[key2] = value;
     }
     return obj;
   }
@@ -26550,9 +26590,9 @@ ${nestedRules}`.replace(/&/g, className);
     var defineProperty6 = definePropertyModule.f;
     var getOwnPropertyDescriptor6 = getOwnPropertyDescriptorModule$1.f;
     for (var i8 = 0; i8 < keys4.length; i8++) {
-      var key = keys4[i8];
-      if (!hasOwn$5(target, key) && !(exceptions && hasOwn$5(exceptions, key))) {
-        defineProperty6(target, key, getOwnPropertyDescriptor6(source, key));
+      var key2 = keys4[i8];
+      if (!hasOwn$5(target, key2) && !(exceptions && hasOwn$5(exceptions, key2))) {
+        defineProperty6(target, key2, getOwnPropertyDescriptor6(source, key2));
       }
     }
   };
@@ -27449,14 +27489,14 @@ ${nestedRules}`.replace(/&/g, className);
   $$h({ target: "Promise", proto: true, real: true, forced: NON_GENERIC }, {
     "finally": function(onFinally) {
       var C3 = speciesConstructor(this, getBuiltIn$1("Promise"));
-      var isFunction = isCallable$1(onFinally);
+      var isFunction2 = isCallable$1(onFinally);
       return this.then(
-        isFunction ? function(x3) {
+        isFunction2 ? function(x3) {
           return promiseResolve(C3, onFinally()).then(function() {
             return x3;
           });
         } : onFinally,
-        isFunction ? function(e9) {
+        isFunction2 ? function(e9) {
           return promiseResolve(C3, onFinally()).then(function() {
             throw e9;
           });
@@ -27577,7 +27617,7 @@ ${nestedRules}`.replace(/&/g, className);
           });
         });
       }
-      function AsyncIterator(t6, e10) {
+      function AsyncIterator2(t6, e10) {
         function invoke(r9, o8, i9, a5) {
           var c7 = tryCatch(t6[r9], t6, o8);
           if ("throw" !== c7.type) {
@@ -27698,11 +27738,11 @@ ${nestedRules}`.replace(/&/g, className);
         return {
           __await: t6
         };
-      }, defineIteratorMethods(AsyncIterator.prototype), define2(AsyncIterator.prototype, c6, function() {
+      }, defineIteratorMethods(AsyncIterator2.prototype), define2(AsyncIterator2.prototype, c6, function() {
         return this;
-      }), e9.AsyncIterator = AsyncIterator, e9.async = function(t6, r8, n7, o8, i9) {
+      }), e9.AsyncIterator = AsyncIterator2, e9.async = function(t6, r8, n7, o8, i9) {
         void 0 === i9 && (i9 = _Promise);
-        var a5 = new AsyncIterator(wrap2(t6, r8, n7, o8), i9);
+        var a5 = new AsyncIterator2(wrap2(t6, r8, n7, o8), i9);
         return e9.isGeneratorFunction(r8) ? a5 : a5.next().then(function(t7) {
           return t7.done ? t7.value : a5.next();
         });
@@ -28101,9 +28141,9 @@ ${nestedRules}`.replace(/&/g, className);
   };
   var defineBuiltIn = defineBuiltIn$6;
   var defineBuiltIns$1 = function(target, src, options2) {
-    for (var key in src) {
-      if (options2 && options2.unsafe && target[key]) target[key] = src[key];
-      else defineBuiltIn(target, key, src[key], options2);
+    for (var key2 in src) {
+      if (options2 && options2.unsafe && target[key2]) target[key2] = src[key2];
+      else defineBuiltIn(target, key2, src[key2], options2);
     }
     return target;
   };
@@ -28138,16 +28178,16 @@ ${nestedRules}`.replace(/&/g, className);
       });
       var Prototype = Constructor.prototype;
       var getInternalState2 = internalStateGetterFor(CONSTRUCTOR_NAME);
-      var define2 = function(that, key, value) {
+      var define2 = function(that, key2, value) {
         var state = getInternalState2(that);
-        var entry = getEntry(that, key);
+        var entry = getEntry(that, key2);
         var previous, index;
         if (entry) {
           entry.value = value;
         } else {
           state.last = entry = {
-            index: index = fastKey(key, true),
-            key,
+            index: index = fastKey(key2, true),
+            key: key2,
             value,
             previous: previous = state.last,
             next: void 0,
@@ -28161,13 +28201,13 @@ ${nestedRules}`.replace(/&/g, className);
         }
         return that;
       };
-      var getEntry = function(that, key) {
+      var getEntry = function(that, key2) {
         var state = getInternalState2(that);
-        var index = fastKey(key);
+        var index = fastKey(key2);
         var entry;
         if (index !== "F") return state.index[index];
         for (entry = state.first; entry; entry = entry.next) {
-          if (entry.key === key) return entry;
+          if (entry.key === key2) return entry;
         }
       };
       defineBuiltIns(Prototype, {
@@ -28192,10 +28232,10 @@ ${nestedRules}`.replace(/&/g, className);
         // `{ Map, Set }.prototype.delete(key)` methods
         // https://tc39.es/ecma262/#sec-map.prototype.delete
         // https://tc39.es/ecma262/#sec-set.prototype.delete
-        "delete": function(key) {
+        "delete": function(key2) {
           var that = this;
           var state = getInternalState2(that);
-          var entry = getEntry(that, key);
+          var entry = getEntry(that, key2);
           if (entry) {
             var next2 = entry.next;
             var prev = entry.previous;
@@ -28225,21 +28265,21 @@ ${nestedRules}`.replace(/&/g, className);
         // `{ Map, Set}.prototype.has(key)` methods
         // https://tc39.es/ecma262/#sec-map.prototype.has
         // https://tc39.es/ecma262/#sec-set.prototype.has
-        has: function has2(key) {
-          return !!getEntry(this, key);
+        has: function has2(key2) {
+          return !!getEntry(this, key2);
         }
       });
       defineBuiltIns(Prototype, IS_MAP ? {
         // `Map.prototype.get(key)` method
         // https://tc39.es/ecma262/#sec-map.prototype.get
-        get: function get3(key) {
-          var entry = getEntry(this, key);
+        get: function get3(key2) {
+          var entry = getEntry(this, key2);
           return entry && entry.value;
         },
         // `Map.prototype.set(key, value)` method
         // https://tc39.es/ecma262/#sec-map.prototype.set
-        set: function set2(key, value) {
-          return define2(this, key === 0 ? 0 : key, value);
+        set: function set2(key2, value) {
+          return define2(this, key2 === 0 ? 0 : key2, value);
         }
       } : {
         // `Set.prototype.add(value)` method
@@ -28624,14 +28664,14 @@ ${nestedRules}`.replace(/&/g, className);
     nativeGetOwnPropertyDescriptor(1);
   });
   $$7({ target: "Object", stat: true, forced: FORCED$1, sham: !DESCRIPTORS$2 }, {
-    getOwnPropertyDescriptor: function getOwnPropertyDescriptor3(it2, key) {
-      return nativeGetOwnPropertyDescriptor(toIndexedObject$1(it2), key);
+    getOwnPropertyDescriptor: function getOwnPropertyDescriptor3(it2, key2) {
+      return nativeGetOwnPropertyDescriptor(toIndexedObject$1(it2), key2);
     }
   });
   var path$4 = path$u;
   var Object$2 = path$4.Object;
-  var getOwnPropertyDescriptor$2 = getOwnPropertyDescriptor$3.exports = function getOwnPropertyDescriptor4(it2, key) {
-    return Object$2.getOwnPropertyDescriptor(it2, key);
+  var getOwnPropertyDescriptor$2 = getOwnPropertyDescriptor$3.exports = function getOwnPropertyDescriptor4(it2, key2) {
+    return Object$2.getOwnPropertyDescriptor(it2, key2);
   };
   if (Object$2.getOwnPropertyDescriptor.sham) getOwnPropertyDescriptor$2.sham = true;
   var getOwnPropertyDescriptorExports = getOwnPropertyDescriptor$3.exports;
@@ -28652,10 +28692,10 @@ ${nestedRules}`.replace(/&/g, className);
       var keys4 = ownKeys$2(O);
       var result = {};
       var index = 0;
-      var key, descriptor;
+      var key2, descriptor;
       while (keys4.length > index) {
-        descriptor = getOwnPropertyDescriptor6(O, key = keys4[index++]);
-        if (descriptor !== void 0) createProperty(result, key, descriptor);
+        descriptor = getOwnPropertyDescriptor6(O, key2 = keys4[index++]);
+        if (descriptor !== void 0) createProperty(result, key2, descriptor);
       }
       return result;
     }
@@ -30802,8 +30842,8 @@ ${nestedRules}`.replace(/&/g, className);
         var _iterator14 = _createForOfIteratorHelper$6(_Reflect$ownKeys(DataView2.prototype)), _step14;
         try {
           for (_iterator14.s(); !(_step14 = _iterator14.n()).done; ) {
-            var key = _step14.value;
-            _Object$defineProperty(this, key, replacement2);
+            var key2 = _step14.value;
+            _Object$defineProperty(this, key2, replacement2);
           }
         } catch (err) {
           _iterator14.e(err);
@@ -32270,8 +32310,8 @@ ${nestedRules}`.replace(/&/g, className);
     });
     var pipe = _mapInstanceProperty(_context = createNewDataPipeFrom(rawDS)).call(_context, function(item) {
       var _context2;
-      return _reduceInstanceProperty(_context2 = _Object$keys(item)).call(_context2, function(acc, key) {
-        acc[key] = convert(item[key], type[key]);
+      return _reduceInstanceProperty(_context2 = _Object$keys(item)).call(_context2, function(acc, key2) {
+        acc[key2] = convert(item[key2], type[key2]);
         return acc;
       }, {});
     }).to(coercedDS);
@@ -33679,16 +33719,16 @@ ${nestedRules}`.replace(/&/g, className);
     return wrapper;
   }
   function hammerMock() {
-    var noop2 = function noop3() {
+    var noop3 = function noop4() {
     };
     return {
-      on: noop2,
-      off: noop2,
-      destroy: noop2,
-      emit: noop2,
+      on: noop3,
+      off: noop3,
+      destroy: noop3,
+      emit: noop3,
       get: function get3(m4) {
         return {
-          set: noop2
+          set: noop3
         };
       }
     };
@@ -35019,62 +35059,62 @@ ${nestedRules}`.replace(/&/g, className);
         }
       }
     };
-    _exportFunctions.bind = function(key, callback, type) {
+    _exportFunctions.bind = function(key2, callback, type) {
       if (type === void 0) {
         type = "keydown";
       }
-      if (_keys[key] === void 0) {
-        throw new Error("unsupported key: " + key);
+      if (_keys[key2] === void 0) {
+        throw new Error("unsupported key: " + key2);
       }
-      if (_bound[type][_keys[key].code] === void 0) {
-        _bound[type][_keys[key].code] = [];
+      if (_bound[type][_keys[key2].code] === void 0) {
+        _bound[type][_keys[key2].code] = [];
       }
-      _bound[type][_keys[key].code].push({ fn: callback, shift: _keys[key].shift });
+      _bound[type][_keys[key2].code].push({ fn: callback, shift: _keys[key2].shift });
     };
     _exportFunctions.bindAll = function(callback, type) {
       if (type === void 0) {
         type = "keydown";
       }
-      for (var key in _keys) {
-        if (_keys.hasOwnProperty(key)) {
-          _exportFunctions.bind(key, callback, type);
+      for (var key2 in _keys) {
+        if (_keys.hasOwnProperty(key2)) {
+          _exportFunctions.bind(key2, callback, type);
         }
       }
     };
     _exportFunctions.getKey = function(event2) {
-      for (var key in _keys) {
-        if (_keys.hasOwnProperty(key)) {
-          if (event2.shiftKey == true && _keys[key].shift == true && event2.keyCode == _keys[key].code) {
-            return key;
-          } else if (event2.shiftKey == false && _keys[key].shift == false && event2.keyCode == _keys[key].code) {
-            return key;
-          } else if (event2.keyCode == _keys[key].code && key == "shift") {
-            return key;
+      for (var key2 in _keys) {
+        if (_keys.hasOwnProperty(key2)) {
+          if (event2.shiftKey == true && _keys[key2].shift == true && event2.keyCode == _keys[key2].code) {
+            return key2;
+          } else if (event2.shiftKey == false && _keys[key2].shift == false && event2.keyCode == _keys[key2].code) {
+            return key2;
+          } else if (event2.keyCode == _keys[key2].code && key2 == "shift") {
+            return key2;
           }
         }
       }
       return "unknown key, currently not supported";
     };
-    _exportFunctions.unbind = function(key, callback, type) {
+    _exportFunctions.unbind = function(key2, callback, type) {
       if (type === void 0) {
         type = "keydown";
       }
-      if (_keys[key] === void 0) {
-        throw new Error("unsupported key: " + key);
+      if (_keys[key2] === void 0) {
+        throw new Error("unsupported key: " + key2);
       }
       if (callback !== void 0) {
         var newBindings = [];
-        var bound = _bound[type][_keys[key].code];
+        var bound = _bound[type][_keys[key2].code];
         if (bound !== void 0) {
           for (var i9 = 0; i9 < bound.length; i9++) {
-            if (!(bound[i9].fn == callback && bound[i9].shift == _keys[key].shift)) {
-              newBindings.push(_bound[type][_keys[key].code][i9]);
+            if (!(bound[i9].fn == callback && bound[i9].shift == _keys[key2].shift)) {
+              newBindings.push(_bound[type][_keys[key2].code][i9]);
             }
           }
         }
-        _bound[type][_keys[key].code] = newBindings;
+        _bound[type][_keys[key2].code] = newBindings;
       } else {
-        _bound[type][_keys[key].code] = [];
+        _bound[type][_keys[key2].code] = [];
       }
     };
     _exportFunctions.reset = function() {
@@ -37484,9 +37524,9 @@ ${nestedRules}`.replace(/&/g, className);
           this.doInnerStack = data3.subgroupStack;
           this.subgroupStackAll = data3.subgroupStack;
         } else {
-          for (var key in data3.subgroupStack) {
-            this.subgroupStack[key] = data3.subgroupStack[key];
-            this.doInnerStack = this.doInnerStack || data3.subgroupStack[key];
+          for (var key2 in data3.subgroupStack) {
+            this.subgroupStack[key2] = data3.subgroupStack[key2];
+            this.doInnerStack = this.doInnerStack || data3.subgroupStack[key2];
           }
         }
       }
@@ -37561,8 +37601,8 @@ ${nestedRules}`.replace(/&/g, className);
         var content;
         var templateFunction;
         if (data3 && data3.subgroupVisibility) {
-          for (var key in data3.subgroupVisibility) {
-            this.subgroupVisibility[key] = data3.subgroupVisibility[key];
+          for (var key2 in data3.subgroupVisibility) {
+            this.subgroupVisibility[key2] = data3.subgroupVisibility[key2];
           }
         }
         if (this.itemSet.options && this.itemSet.options.groupTemplate) {
@@ -37670,12 +37710,12 @@ ${nestedRules}`.replace(/&/g, className);
           this.lastMarkerHeight = markerHeight;
           var redrawQueue = {};
           var redrawQueueLength = 0;
-          _forEachInstanceProperty(availableUtils).call(availableUtils, this.items, function(item, key) {
+          _forEachInstanceProperty(availableUtils).call(availableUtils, this.items, function(item, key2) {
             item.dirty = true;
             if (item.displayed) {
               var returnQueue = true;
-              redrawQueue[key] = item.redraw(returnQueue);
-              redrawQueueLength = redrawQueue[key].length;
+              redrawQueue[key2] = item.redraw(returnQueue);
+              redrawQueueLength = redrawQueue[key2].length;
             }
           });
           var needRedraw = redrawQueueLength > 0;
@@ -38647,9 +38687,9 @@ ${nestedRules}`.replace(/&/g, className);
     return arr2;
   }
   var Item = /* @__PURE__ */ function() {
-    function Item2(data3, conversion, options2) {
+    function Item3(data3, conversion, options2) {
       var _context, _this = this;
-      _classCallCheck(this, Item2);
+      _classCallCheck(this, Item3);
       this.id = null;
       this.parent = null;
       this.data = data3;
@@ -38679,7 +38719,7 @@ ${nestedRules}`.replace(/&/g, className);
       this.editable = null;
       this._updateEditStatus();
     }
-    _createClass(Item2, [{
+    _createClass(Item3, [{
       key: "select",
       value: function select() {
         if (this.selectable) {
@@ -39168,7 +39208,7 @@ ${nestedRules}`.replace(/&/g, className);
         return this.data.title;
       }
     }]);
-    return Item2;
+    return Item3;
   }();
   Item.prototype.stack = true;
   function _createSuper$7(Derived) {
@@ -42056,9 +42096,9 @@ ${nestedRules}`.replace(/&/g, className);
               }
             }
           }
-          _forEachInstanceProperty(_context18 = ["locale", "locales"]).call(_context18, function(key) {
-            if (key in options2) {
-              _this3.options[key] = options2[key];
+          _forEachInstanceProperty(_context18 = ["locale", "locales"]).call(_context18, function(key2) {
+            if (key2 in options2) {
+              _this3.options[key2] = options2[key2];
             }
           });
           if ("editable" in options2) {
@@ -42139,8 +42179,8 @@ ${nestedRules}`.replace(/&/g, className);
             });
           }
           if (options2.restackGroups) {
-            _forEachInstanceProperty(availableUtils).call(availableUtils, this.groups, function(group, key) {
-              if (key === BACKGROUND) return;
+            _forEachInstanceProperty(availableUtils).call(availableUtils, this.groups, function(group, key2) {
+              if (key2 === BACKGROUND) return;
               group.stackDirty = true;
             });
           }
@@ -42470,27 +42510,27 @@ ${nestedRules}`.replace(/&/g, className);
         this.groups[BACKGROUND].redraw(range, nonFirstMargin, forceRestack);
         var redrawQueue = {};
         var redrawQueueLength = 0;
-        _forEachInstanceProperty(availableUtils).call(availableUtils, this.groups, function(group, key) {
-          if (key === BACKGROUND) return;
+        _forEachInstanceProperty(availableUtils).call(availableUtils, this.groups, function(group, key2) {
+          if (key2 === BACKGROUND) return;
           var groupMargin = group == firstGroup ? firstMargin : nonFirstMargin;
           var returnQueue = true;
-          redrawQueue[key] = group.redraw(range, groupMargin, forceRestack, returnQueue);
-          redrawQueueLength = redrawQueue[key].length;
+          redrawQueue[key2] = group.redraw(range, groupMargin, forceRestack, returnQueue);
+          redrawQueueLength = redrawQueue[key2].length;
         });
         var needRedraw = redrawQueueLength > 0;
         if (needRedraw) {
           var redrawResults = {};
           var _loop = function _loop2(i9) {
-            _forEachInstanceProperty(availableUtils).call(availableUtils, redrawQueue, function(fns, key) {
-              redrawResults[key] = fns[i9]();
+            _forEachInstanceProperty(availableUtils).call(availableUtils, redrawQueue, function(fns, key2) {
+              redrawResults[key2] = fns[i9]();
             });
           };
           for (var i8 = 0; i8 < redrawQueueLength; i8++) {
             _loop(i8);
           }
-          _forEachInstanceProperty(availableUtils).call(availableUtils, this.groups, function(group, key) {
-            if (key === BACKGROUND) return;
-            var groupResized = redrawResults[key];
+          _forEachInstanceProperty(availableUtils).call(availableUtils, this.groups, function(group, key2) {
+            if (key2 === BACKGROUND) return;
+            var groupResized = redrawResults[key2];
             resized = groupResized || resized;
             height += group.height;
           });
@@ -47278,11 +47318,11 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
           var factor = interval / this.props.center.width;
           var redrawQueue = {};
           var redrawQueueLength = 0;
-          _forEachInstanceProperty(availableUtils).call(availableUtils, this.itemSet.items, function(item, key) {
+          _forEachInstanceProperty(availableUtils).call(availableUtils, this.itemSet.items, function(item, key2) {
             if (item.groupShowing) {
               var returnQueue = true;
-              redrawQueue[key] = item.redraw(returnQueue);
-              redrawQueueLength = redrawQueue[key].length;
+              redrawQueue[key2] = item.redraw(returnQueue);
+              redrawQueueLength = redrawQueue[key2].length;
             }
           });
           var needRedraw = redrawQueueLength > 0;
@@ -48478,7 +48518,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     var combinedData = [];
     var intersections = {};
     var coreDistance;
-    var key, drawData;
+    var key2, drawData;
     var group;
     var i8, j3;
     var barPoints = 0;
@@ -48516,31 +48556,31 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     for (i8 = 0; i8 < combinedData.length; i8++) {
       group = framework.groups[combinedData[i8].groupId];
       var minWidth = group.options.barChart.minWidth != void 0 ? group.options.barChart.minWidth : 0.1 * group.options.barChart.width;
-      key = combinedData[i8].screen_x;
+      key2 = combinedData[i8].screen_x;
       var heightOffset = 0;
-      if (intersections[key] === void 0) {
+      if (intersections[key2] === void 0) {
         if (i8 + 1 < combinedData.length) {
-          coreDistance = Math.abs(combinedData[i8 + 1].screen_x - key);
+          coreDistance = Math.abs(combinedData[i8 + 1].screen_x - key2);
         }
         drawData = Bargraph._getSafeDrawData(coreDistance, group, minWidth);
       } else {
-        var nextKey = i8 + (intersections[key].amount - intersections[key].resolved);
+        var nextKey = i8 + (intersections[key2].amount - intersections[key2].resolved);
         if (nextKey < combinedData.length) {
-          coreDistance = Math.abs(combinedData[nextKey].screen_x - key);
+          coreDistance = Math.abs(combinedData[nextKey].screen_x - key2);
         }
         drawData = Bargraph._getSafeDrawData(coreDistance, group, minWidth);
-        intersections[key].resolved += 1;
+        intersections[key2].resolved += 1;
         if (group.options.stack === true && group.options.excludeFromStacking !== true) {
           if (combinedData[i8].screen_y < group.zeroPosition) {
-            heightOffset = intersections[key].accumulatedNegative;
-            intersections[key].accumulatedNegative += group.zeroPosition - combinedData[i8].screen_y;
+            heightOffset = intersections[key2].accumulatedNegative;
+            intersections[key2].accumulatedNegative += group.zeroPosition - combinedData[i8].screen_y;
           } else {
-            heightOffset = intersections[key].accumulatedPositive;
-            intersections[key].accumulatedPositive += group.zeroPosition - combinedData[i8].screen_y;
+            heightOffset = intersections[key2].accumulatedPositive;
+            intersections[key2].accumulatedPositive += group.zeroPosition - combinedData[i8].screen_y;
           }
         } else if (group.options.barChart.sideBySide === true) {
-          drawData.width = drawData.width / intersections[key].amount;
-          drawData.offset += intersections[key].resolved * drawData.width - 0.5 * drawData.width * (intersections[key].amount + 1);
+          drawData.width = drawData.width / intersections[key2].amount;
+          drawData.offset += intersections[key2].resolved * drawData.width - 0.5 * drawData.width * (intersections[key2].amount + 1);
         }
       }
       var dataWidth = drawData.width;
@@ -48628,19 +48668,19 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     }
   };
   Bargraph._getStackedYRange = function(intersections, combinedData) {
-    var key;
+    var key2;
     var yMin = combinedData[0].screen_y;
     var yMax = combinedData[0].screen_y;
     for (var i8 = 0; i8 < combinedData.length; i8++) {
-      key = combinedData[i8].screen_x;
-      if (intersections[key] === void 0) {
+      key2 = combinedData[i8].screen_x;
+      if (intersections[key2] === void 0) {
         yMin = yMin > combinedData[i8].screen_y ? combinedData[i8].screen_y : yMin;
         yMax = yMax < combinedData[i8].screen_y ? combinedData[i8].screen_y : yMax;
       } else {
         if (combinedData[i8].screen_y < 0) {
-          intersections[key].accumulatedNegative += combinedData[i8].screen_y;
+          intersections[key2].accumulatedNegative += combinedData[i8].screen_y;
         } else {
-          intersections[key].accumulatedPositive += combinedData[i8].screen_y;
+          intersections[key2].accumulatedPositive += combinedData[i8].screen_y;
         }
       }
     }
@@ -50814,6 +50854,1071 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var defaultLanguage = getNavigatorLanguage();
   moment$4.locale(defaultLanguage);
 
+  // cursor.ts
+  function buildCursor(timeline2, options2) {
+    const cursorBox = document.createElement("div");
+    cursorBox.append(document.createElement("sl-spinner"));
+    cursorBox.addEventListener("dblclick", async function(e9) {
+      cursorBox.classList.add("cursor-loading");
+    });
+    options2.eventAdd.subscribe(() => cursorBox.classList.remove("cursor-loading"));
+    const foreground = document.querySelector(".vis-center .vis-foreground");
+    cursorBox.className = "cursor-selection";
+    foreground.appendChild(cursorBox);
+    foreground.addEventListener("mouseleave", function() {
+      cursorBox.style.display = "none";
+    });
+    foreground.addEventListener("mousemove", function(e9) {
+      const target = e9.target;
+      if (target === cursorBox) {
+        return;
+      }
+      if (cursorBox.contains(target)) {
+        return;
+      }
+      const x3 = e9.clientX - foreground.getBoundingClientRect().left;
+      if (!target.classList.contains("vis-group")) {
+        cursorBox.style.display = "none";
+        return;
+      }
+      cursorBox.style.display = "grid";
+      const anotherDiv = document.querySelector(
+        "div.vis-panel.vis-background.vis-vertical > div.vis-time-axis.vis-background"
+      );
+      const anotherDivPos = anotherDiv.getBoundingClientRect().left;
+      if (!leftPoints.length) {
+        const children = Array.from(anotherDiv.children);
+        const weekFromElement = (el) => {
+          const classList = Array.from(el.classList).filter((f5) => !["vis-even", "vis-odd", "vis-minor", "vis-major"].includes(f5));
+          return classList.join(" ");
+        };
+        const grouped = u5(children).groupBy((e10) => weekFromElement(e10)).toArray();
+        const points = grouped.map((group) => {
+          const left = group.first().getBoundingClientRect().left;
+          const width = group.reduce(
+            (acc, el) => acc + el.getBoundingClientRect().width,
+            0
+          );
+          const adjustedWidth = left - anotherDivPos;
+          return { left: adjustedWidth, width };
+        });
+        leftPoints = points;
+      }
+      const index = leftPoints.findLastIndex((c6) => c6.left < x3);
+      const closest = leftPoints[index];
+      cursorBox.style.left = `${closest.left}px`;
+      cursorBox.style.width = `${closest.width}px`;
+      cursorBox.style.transform = "";
+      try {
+        if (cursorBox.parentElement !== target) {
+          target.prepend(cursorBox);
+        }
+      } catch (ex) {
+      }
+    });
+    let leftPoints = [];
+    timeline2.on("rangechange", ({ byUser, event: event2 }) => {
+      leftPoints = [];
+      if (!byUser) {
+        return;
+      }
+      if (!event2 || !event2.deltaX) {
+        return;
+      }
+      const deltaX = event2.deltaX;
+      cursorBox.style.transform = `translateX(${deltaX}px)`;
+    });
+    timeline2.on("rangechanged", () => {
+      const transform = cursorBox.style.transform;
+      if (!transform) {
+        return;
+      }
+      const match2 = transform.match(/translateX\(([^)]+)\)/);
+      if (!match2) {
+        return;
+      }
+      const x3 = parseFloat(match2[1]);
+      const left = parseFloat(cursorBox.style.left);
+      cursorBox.style.left = `${left + x3}px`;
+      cursorBox.style.transform = "";
+    });
+  }
+
+  // node_modules/tslib/tslib.es6.mjs
+  var extendStatics = function(d4, b4) {
+    extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d5, b5) {
+      d5.__proto__ = b5;
+    } || function(d5, b5) {
+      for (var p4 in b5) if (Object.prototype.hasOwnProperty.call(b5, p4)) d5[p4] = b5[p4];
+    };
+    return extendStatics(d4, b4);
+  };
+  function __extends(d4, b4) {
+    if (typeof b4 !== "function" && b4 !== null)
+      throw new TypeError("Class extends value " + String(b4) + " is not a constructor or null");
+    extendStatics(d4, b4);
+    function __() {
+      this.constructor = d4;
+    }
+    d4.prototype = b4 === null ? Object.create(b4) : (__.prototype = b4.prototype, new __());
+  }
+  function __values(o7) {
+    var s3 = typeof Symbol === "function" && Symbol.iterator, m4 = s3 && o7[s3], i8 = 0;
+    if (m4) return m4.call(o7);
+    if (o7 && typeof o7.length === "number") return {
+      next: function() {
+        if (o7 && i8 >= o7.length) o7 = void 0;
+        return { value: o7 && o7[i8++], done: !o7 };
+      }
+    };
+    throw new TypeError(s3 ? "Object is not iterable." : "Symbol.iterator is not defined.");
+  }
+  function __read(o7, n6) {
+    var m4 = typeof Symbol === "function" && o7[Symbol.iterator];
+    if (!m4) return o7;
+    var i8 = m4.call(o7), r7, ar = [], e9;
+    try {
+      while ((n6 === void 0 || n6-- > 0) && !(r7 = i8.next()).done) ar.push(r7.value);
+    } catch (error) {
+      e9 = { error };
+    } finally {
+      try {
+        if (r7 && !r7.done && (m4 = i8["return"])) m4.call(i8);
+      } finally {
+        if (e9) throw e9.error;
+      }
+    }
+    return ar;
+  }
+  function __spreadArray(to, from3, pack) {
+    if (pack || arguments.length === 2) for (var i8 = 0, l6 = from3.length, ar; i8 < l6; i8++) {
+      if (ar || !(i8 in from3)) {
+        if (!ar) ar = Array.prototype.slice.call(from3, 0, i8);
+        ar[i8] = from3[i8];
+      }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from3));
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/isFunction.js
+  function isFunction(value) {
+    return typeof value === "function";
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/createErrorClass.js
+  function createErrorClass(createImpl) {
+    var _super = function(instance) {
+      Error.call(instance);
+      instance.stack = new Error().stack;
+    };
+    var ctorFunc = createImpl(_super);
+    ctorFunc.prototype = Object.create(Error.prototype);
+    ctorFunc.prototype.constructor = ctorFunc;
+    return ctorFunc;
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/UnsubscriptionError.js
+  var UnsubscriptionError = createErrorClass(function(_super) {
+    return function UnsubscriptionErrorImpl(errors) {
+      _super(this);
+      this.message = errors ? errors.length + " errors occurred during unsubscription:\n" + errors.map(function(err, i8) {
+        return i8 + 1 + ") " + err.toString();
+      }).join("\n  ") : "";
+      this.name = "UnsubscriptionError";
+      this.errors = errors;
+    };
+  });
+
+  // node_modules/rxjs/dist/esm5/internal/util/arrRemove.js
+  function arrRemove(arr, item) {
+    if (arr) {
+      var index = arr.indexOf(item);
+      0 <= index && arr.splice(index, 1);
+    }
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/Subscription.js
+  var Subscription2 = function() {
+    function Subscription3(initialTeardown) {
+      this.initialTeardown = initialTeardown;
+      this.closed = false;
+      this._parentage = null;
+      this._finalizers = null;
+    }
+    Subscription3.prototype.unsubscribe = function() {
+      var e_1, _a, e_2, _b;
+      var errors;
+      if (!this.closed) {
+        this.closed = true;
+        var _parentage = this._parentage;
+        if (_parentage) {
+          this._parentage = null;
+          if (Array.isArray(_parentage)) {
+            try {
+              for (var _parentage_1 = __values(_parentage), _parentage_1_1 = _parentage_1.next(); !_parentage_1_1.done; _parentage_1_1 = _parentage_1.next()) {
+                var parent_1 = _parentage_1_1.value;
+                parent_1.remove(this);
+              }
+            } catch (e_1_1) {
+              e_1 = { error: e_1_1 };
+            } finally {
+              try {
+                if (_parentage_1_1 && !_parentage_1_1.done && (_a = _parentage_1.return)) _a.call(_parentage_1);
+              } finally {
+                if (e_1) throw e_1.error;
+              }
+            }
+          } else {
+            _parentage.remove(this);
+          }
+        }
+        var initialFinalizer = this.initialTeardown;
+        if (isFunction(initialFinalizer)) {
+          try {
+            initialFinalizer();
+          } catch (e9) {
+            errors = e9 instanceof UnsubscriptionError ? e9.errors : [e9];
+          }
+        }
+        var _finalizers = this._finalizers;
+        if (_finalizers) {
+          this._finalizers = null;
+          try {
+            for (var _finalizers_1 = __values(_finalizers), _finalizers_1_1 = _finalizers_1.next(); !_finalizers_1_1.done; _finalizers_1_1 = _finalizers_1.next()) {
+              var finalizer = _finalizers_1_1.value;
+              try {
+                execFinalizer(finalizer);
+              } catch (err) {
+                errors = errors !== null && errors !== void 0 ? errors : [];
+                if (err instanceof UnsubscriptionError) {
+                  errors = __spreadArray(__spreadArray([], __read(errors)), __read(err.errors));
+                } else {
+                  errors.push(err);
+                }
+              }
+            }
+          } catch (e_2_1) {
+            e_2 = { error: e_2_1 };
+          } finally {
+            try {
+              if (_finalizers_1_1 && !_finalizers_1_1.done && (_b = _finalizers_1.return)) _b.call(_finalizers_1);
+            } finally {
+              if (e_2) throw e_2.error;
+            }
+          }
+        }
+        if (errors) {
+          throw new UnsubscriptionError(errors);
+        }
+      }
+    };
+    Subscription3.prototype.add = function(teardown) {
+      var _a;
+      if (teardown && teardown !== this) {
+        if (this.closed) {
+          execFinalizer(teardown);
+        } else {
+          if (teardown instanceof Subscription3) {
+            if (teardown.closed || teardown._hasParent(this)) {
+              return;
+            }
+            teardown._addParent(this);
+          }
+          (this._finalizers = (_a = this._finalizers) !== null && _a !== void 0 ? _a : []).push(teardown);
+        }
+      }
+    };
+    Subscription3.prototype._hasParent = function(parent2) {
+      var _parentage = this._parentage;
+      return _parentage === parent2 || Array.isArray(_parentage) && _parentage.includes(parent2);
+    };
+    Subscription3.prototype._addParent = function(parent2) {
+      var _parentage = this._parentage;
+      this._parentage = Array.isArray(_parentage) ? (_parentage.push(parent2), _parentage) : _parentage ? [_parentage, parent2] : parent2;
+    };
+    Subscription3.prototype._removeParent = function(parent2) {
+      var _parentage = this._parentage;
+      if (_parentage === parent2) {
+        this._parentage = null;
+      } else if (Array.isArray(_parentage)) {
+        arrRemove(_parentage, parent2);
+      }
+    };
+    Subscription3.prototype.remove = function(teardown) {
+      var _finalizers = this._finalizers;
+      _finalizers && arrRemove(_finalizers, teardown);
+      if (teardown instanceof Subscription3) {
+        teardown._removeParent(this);
+      }
+    };
+    Subscription3.EMPTY = function() {
+      var empty2 = new Subscription3();
+      empty2.closed = true;
+      return empty2;
+    }();
+    return Subscription3;
+  }();
+  var EMPTY_SUBSCRIPTION = Subscription2.EMPTY;
+  function isSubscription(value) {
+    return value instanceof Subscription2 || value && "closed" in value && isFunction(value.remove) && isFunction(value.add) && isFunction(value.unsubscribe);
+  }
+  function execFinalizer(finalizer) {
+    if (isFunction(finalizer)) {
+      finalizer();
+    } else {
+      finalizer.unsubscribe();
+    }
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/config.js
+  var config = {
+    onUnhandledError: null,
+    onStoppedNotification: null,
+    Promise: void 0,
+    useDeprecatedSynchronousErrorHandling: false,
+    useDeprecatedNextContext: false
+  };
+
+  // node_modules/rxjs/dist/esm5/internal/scheduler/timeoutProvider.js
+  var timeoutProvider = {
+    setTimeout: function(handler, timeout) {
+      var args = [];
+      for (var _i = 2; _i < arguments.length; _i++) {
+        args[_i - 2] = arguments[_i];
+      }
+      var delegate = timeoutProvider.delegate;
+      if (delegate === null || delegate === void 0 ? void 0 : delegate.setTimeout) {
+        return delegate.setTimeout.apply(delegate, __spreadArray([handler, timeout], __read(args)));
+      }
+      return setTimeout.apply(void 0, __spreadArray([handler, timeout], __read(args)));
+    },
+    clearTimeout: function(handle) {
+      var delegate = timeoutProvider.delegate;
+      return ((delegate === null || delegate === void 0 ? void 0 : delegate.clearTimeout) || clearTimeout)(handle);
+    },
+    delegate: void 0
+  };
+
+  // node_modules/rxjs/dist/esm5/internal/util/reportUnhandledError.js
+  function reportUnhandledError(err) {
+    timeoutProvider.setTimeout(function() {
+      var onUnhandledError = config.onUnhandledError;
+      if (onUnhandledError) {
+        onUnhandledError(err);
+      } else {
+        throw err;
+      }
+    });
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/noop.js
+  function noop2() {
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/NotificationFactories.js
+  var COMPLETE_NOTIFICATION = function() {
+    return createNotification("C", void 0, void 0);
+  }();
+  function errorNotification(error) {
+    return createNotification("E", void 0, error);
+  }
+  function nextNotification(value) {
+    return createNotification("N", value, void 0);
+  }
+  function createNotification(kind, value, error) {
+    return {
+      kind,
+      value,
+      error
+    };
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/errorContext.js
+  var context = null;
+  function errorContext(cb) {
+    if (config.useDeprecatedSynchronousErrorHandling) {
+      var isRoot = !context;
+      if (isRoot) {
+        context = { errorThrown: false, error: null };
+      }
+      cb();
+      if (isRoot) {
+        var _a = context, errorThrown = _a.errorThrown, error = _a.error;
+        context = null;
+        if (errorThrown) {
+          throw error;
+        }
+      }
+    } else {
+      cb();
+    }
+  }
+  function captureError(err) {
+    if (config.useDeprecatedSynchronousErrorHandling && context) {
+      context.errorThrown = true;
+      context.error = err;
+    }
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/Subscriber.js
+  var Subscriber = function(_super) {
+    __extends(Subscriber2, _super);
+    function Subscriber2(destination) {
+      var _this = _super.call(this) || this;
+      _this.isStopped = false;
+      if (destination) {
+        _this.destination = destination;
+        if (isSubscription(destination)) {
+          destination.add(_this);
+        }
+      } else {
+        _this.destination = EMPTY_OBSERVER;
+      }
+      return _this;
+    }
+    Subscriber2.create = function(next2, error, complete) {
+      return new SafeSubscriber(next2, error, complete);
+    };
+    Subscriber2.prototype.next = function(value) {
+      if (this.isStopped) {
+        handleStoppedNotification(nextNotification(value), this);
+      } else {
+        this._next(value);
+      }
+    };
+    Subscriber2.prototype.error = function(err) {
+      if (this.isStopped) {
+        handleStoppedNotification(errorNotification(err), this);
+      } else {
+        this.isStopped = true;
+        this._error(err);
+      }
+    };
+    Subscriber2.prototype.complete = function() {
+      if (this.isStopped) {
+        handleStoppedNotification(COMPLETE_NOTIFICATION, this);
+      } else {
+        this.isStopped = true;
+        this._complete();
+      }
+    };
+    Subscriber2.prototype.unsubscribe = function() {
+      if (!this.closed) {
+        this.isStopped = true;
+        _super.prototype.unsubscribe.call(this);
+        this.destination = null;
+      }
+    };
+    Subscriber2.prototype._next = function(value) {
+      this.destination.next(value);
+    };
+    Subscriber2.prototype._error = function(err) {
+      try {
+        this.destination.error(err);
+      } finally {
+        this.unsubscribe();
+      }
+    };
+    Subscriber2.prototype._complete = function() {
+      try {
+        this.destination.complete();
+      } finally {
+        this.unsubscribe();
+      }
+    };
+    return Subscriber2;
+  }(Subscription2);
+  var _bind = Function.prototype.bind;
+  function bind3(fn, thisArg) {
+    return _bind.call(fn, thisArg);
+  }
+  var ConsumerObserver = function() {
+    function ConsumerObserver2(partialObserver) {
+      this.partialObserver = partialObserver;
+    }
+    ConsumerObserver2.prototype.next = function(value) {
+      var partialObserver = this.partialObserver;
+      if (partialObserver.next) {
+        try {
+          partialObserver.next(value);
+        } catch (error) {
+          handleUnhandledError(error);
+        }
+      }
+    };
+    ConsumerObserver2.prototype.error = function(err) {
+      var partialObserver = this.partialObserver;
+      if (partialObserver.error) {
+        try {
+          partialObserver.error(err);
+        } catch (error) {
+          handleUnhandledError(error);
+        }
+      } else {
+        handleUnhandledError(err);
+      }
+    };
+    ConsumerObserver2.prototype.complete = function() {
+      var partialObserver = this.partialObserver;
+      if (partialObserver.complete) {
+        try {
+          partialObserver.complete();
+        } catch (error) {
+          handleUnhandledError(error);
+        }
+      }
+    };
+    return ConsumerObserver2;
+  }();
+  var SafeSubscriber = function(_super) {
+    __extends(SafeSubscriber2, _super);
+    function SafeSubscriber2(observerOrNext, error, complete) {
+      var _this = _super.call(this) || this;
+      var partialObserver;
+      if (isFunction(observerOrNext) || !observerOrNext) {
+        partialObserver = {
+          next: observerOrNext !== null && observerOrNext !== void 0 ? observerOrNext : void 0,
+          error: error !== null && error !== void 0 ? error : void 0,
+          complete: complete !== null && complete !== void 0 ? complete : void 0
+        };
+      } else {
+        var context_1;
+        if (_this && config.useDeprecatedNextContext) {
+          context_1 = Object.create(observerOrNext);
+          context_1.unsubscribe = function() {
+            return _this.unsubscribe();
+          };
+          partialObserver = {
+            next: observerOrNext.next && bind3(observerOrNext.next, context_1),
+            error: observerOrNext.error && bind3(observerOrNext.error, context_1),
+            complete: observerOrNext.complete && bind3(observerOrNext.complete, context_1)
+          };
+        } else {
+          partialObserver = observerOrNext;
+        }
+      }
+      _this.destination = new ConsumerObserver(partialObserver);
+      return _this;
+    }
+    return SafeSubscriber2;
+  }(Subscriber);
+  function handleUnhandledError(error) {
+    if (config.useDeprecatedSynchronousErrorHandling) {
+      captureError(error);
+    } else {
+      reportUnhandledError(error);
+    }
+  }
+  function defaultErrorHandler(err) {
+    throw err;
+  }
+  function handleStoppedNotification(notification, subscriber) {
+    var onStoppedNotification = config.onStoppedNotification;
+    onStoppedNotification && timeoutProvider.setTimeout(function() {
+      return onStoppedNotification(notification, subscriber);
+    });
+  }
+  var EMPTY_OBSERVER = {
+    closed: true,
+    next: noop2,
+    error: defaultErrorHandler,
+    complete: noop2
+  };
+
+  // node_modules/rxjs/dist/esm5/internal/symbol/observable.js
+  var observable2 = function() {
+    return typeof Symbol === "function" && Symbol.observable || "@@observable";
+  }();
+
+  // node_modules/rxjs/dist/esm5/internal/util/identity.js
+  function identity2(x3) {
+    return x3;
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/pipe.js
+  function pipeFromArray(fns) {
+    if (fns.length === 0) {
+      return identity2;
+    }
+    if (fns.length === 1) {
+      return fns[0];
+    }
+    return function piped(input) {
+      return fns.reduce(function(prev, fn) {
+        return fn(prev);
+      }, input);
+    };
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/Observable.js
+  var Observable2 = function() {
+    function Observable4(subscribe2) {
+      if (subscribe2) {
+        this._subscribe = subscribe2;
+      }
+    }
+    Observable4.prototype.lift = function(operator) {
+      var observable3 = new Observable4();
+      observable3.source = this;
+      observable3.operator = operator;
+      return observable3;
+    };
+    Observable4.prototype.subscribe = function(observerOrNext, error, complete) {
+      var _this = this;
+      var subscriber = isSubscriber(observerOrNext) ? observerOrNext : new SafeSubscriber(observerOrNext, error, complete);
+      errorContext(function() {
+        var _a = _this, operator = _a.operator, source = _a.source;
+        subscriber.add(operator ? operator.call(subscriber, source) : source ? _this._subscribe(subscriber) : _this._trySubscribe(subscriber));
+      });
+      return subscriber;
+    };
+    Observable4.prototype._trySubscribe = function(sink) {
+      try {
+        return this._subscribe(sink);
+      } catch (err) {
+        sink.error(err);
+      }
+    };
+    Observable4.prototype.forEach = function(next2, promiseCtor) {
+      var _this = this;
+      promiseCtor = getPromiseCtor(promiseCtor);
+      return new promiseCtor(function(resolve2, reject2) {
+        var subscriber = new SafeSubscriber({
+          next: function(value) {
+            try {
+              next2(value);
+            } catch (err) {
+              reject2(err);
+              subscriber.unsubscribe();
+            }
+          },
+          error: reject2,
+          complete: resolve2
+        });
+        _this.subscribe(subscriber);
+      });
+    };
+    Observable4.prototype._subscribe = function(subscriber) {
+      var _a;
+      return (_a = this.source) === null || _a === void 0 ? void 0 : _a.subscribe(subscriber);
+    };
+    Observable4.prototype[observable2] = function() {
+      return this;
+    };
+    Observable4.prototype.pipe = function() {
+      var operations = [];
+      for (var _i = 0; _i < arguments.length; _i++) {
+        operations[_i] = arguments[_i];
+      }
+      return pipeFromArray(operations)(this);
+    };
+    Observable4.prototype.toPromise = function(promiseCtor) {
+      var _this = this;
+      promiseCtor = getPromiseCtor(promiseCtor);
+      return new promiseCtor(function(resolve2, reject2) {
+        var value;
+        _this.subscribe(function(x3) {
+          return value = x3;
+        }, function(err) {
+          return reject2(err);
+        }, function() {
+          return resolve2(value);
+        });
+      });
+    };
+    Observable4.create = function(subscribe2) {
+      return new Observable4(subscribe2);
+    };
+    return Observable4;
+  }();
+  function getPromiseCtor(promiseCtor) {
+    var _a;
+    return (_a = promiseCtor !== null && promiseCtor !== void 0 ? promiseCtor : config.Promise) !== null && _a !== void 0 ? _a : Promise;
+  }
+  function isObserver(value) {
+    return value && isFunction(value.next) && isFunction(value.error) && isFunction(value.complete);
+  }
+  function isSubscriber(value) {
+    return value && value instanceof Subscriber || isObserver(value) && isSubscription(value);
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/ObjectUnsubscribedError.js
+  var ObjectUnsubscribedError = createErrorClass(function(_super) {
+    return function ObjectUnsubscribedErrorImpl() {
+      _super(this);
+      this.name = "ObjectUnsubscribedError";
+      this.message = "object unsubscribed";
+    };
+  });
+
+  // node_modules/rxjs/dist/esm5/internal/Subject.js
+  var Subject = function(_super) {
+    __extends(Subject2, _super);
+    function Subject2() {
+      var _this = _super.call(this) || this;
+      _this.closed = false;
+      _this.currentObservers = null;
+      _this.observers = [];
+      _this.isStopped = false;
+      _this.hasError = false;
+      _this.thrownError = null;
+      return _this;
+    }
+    Subject2.prototype.lift = function(operator) {
+      var subject = new AnonymousSubject(this, this);
+      subject.operator = operator;
+      return subject;
+    };
+    Subject2.prototype._throwIfClosed = function() {
+      if (this.closed) {
+        throw new ObjectUnsubscribedError();
+      }
+    };
+    Subject2.prototype.next = function(value) {
+      var _this = this;
+      errorContext(function() {
+        var e_1, _a;
+        _this._throwIfClosed();
+        if (!_this.isStopped) {
+          if (!_this.currentObservers) {
+            _this.currentObservers = Array.from(_this.observers);
+          }
+          try {
+            for (var _b = __values(_this.currentObservers), _c = _b.next(); !_c.done; _c = _b.next()) {
+              var observer = _c.value;
+              observer.next(value);
+            }
+          } catch (e_1_1) {
+            e_1 = { error: e_1_1 };
+          } finally {
+            try {
+              if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            } finally {
+              if (e_1) throw e_1.error;
+            }
+          }
+        }
+      });
+    };
+    Subject2.prototype.error = function(err) {
+      var _this = this;
+      errorContext(function() {
+        _this._throwIfClosed();
+        if (!_this.isStopped) {
+          _this.hasError = _this.isStopped = true;
+          _this.thrownError = err;
+          var observers = _this.observers;
+          while (observers.length) {
+            observers.shift().error(err);
+          }
+        }
+      });
+    };
+    Subject2.prototype.complete = function() {
+      var _this = this;
+      errorContext(function() {
+        _this._throwIfClosed();
+        if (!_this.isStopped) {
+          _this.isStopped = true;
+          var observers = _this.observers;
+          while (observers.length) {
+            observers.shift().complete();
+          }
+        }
+      });
+    };
+    Subject2.prototype.unsubscribe = function() {
+      this.isStopped = this.closed = true;
+      this.observers = this.currentObservers = null;
+    };
+    Object.defineProperty(Subject2.prototype, "observed", {
+      get: function() {
+        var _a;
+        return ((_a = this.observers) === null || _a === void 0 ? void 0 : _a.length) > 0;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Subject2.prototype._trySubscribe = function(subscriber) {
+      this._throwIfClosed();
+      return _super.prototype._trySubscribe.call(this, subscriber);
+    };
+    Subject2.prototype._subscribe = function(subscriber) {
+      this._throwIfClosed();
+      this._checkFinalizedStatuses(subscriber);
+      return this._innerSubscribe(subscriber);
+    };
+    Subject2.prototype._innerSubscribe = function(subscriber) {
+      var _this = this;
+      var _a = this, hasError = _a.hasError, isStopped = _a.isStopped, observers = _a.observers;
+      if (hasError || isStopped) {
+        return EMPTY_SUBSCRIPTION;
+      }
+      this.currentObservers = null;
+      observers.push(subscriber);
+      return new Subscription2(function() {
+        _this.currentObservers = null;
+        arrRemove(observers, subscriber);
+      });
+    };
+    Subject2.prototype._checkFinalizedStatuses = function(subscriber) {
+      var _a = this, hasError = _a.hasError, thrownError = _a.thrownError, isStopped = _a.isStopped;
+      if (hasError) {
+        subscriber.error(thrownError);
+      } else if (isStopped) {
+        subscriber.complete();
+      }
+    };
+    Subject2.prototype.asObservable = function() {
+      var observable3 = new Observable2();
+      observable3.source = this;
+      return observable3;
+    };
+    Subject2.create = function(destination, source) {
+      return new AnonymousSubject(destination, source);
+    };
+    return Subject2;
+  }(Observable2);
+  var AnonymousSubject = function(_super) {
+    __extends(AnonymousSubject2, _super);
+    function AnonymousSubject2(destination, source) {
+      var _this = _super.call(this) || this;
+      _this.destination = destination;
+      _this.source = source;
+      return _this;
+    }
+    AnonymousSubject2.prototype.next = function(value) {
+      var _a, _b;
+      (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.next) === null || _b === void 0 ? void 0 : _b.call(_a, value);
+    };
+    AnonymousSubject2.prototype.error = function(err) {
+      var _a, _b;
+      (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.error) === null || _b === void 0 ? void 0 : _b.call(_a, err);
+    };
+    AnonymousSubject2.prototype.complete = function() {
+      var _a, _b;
+      (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.complete) === null || _b === void 0 ? void 0 : _b.call(_a);
+    };
+    AnonymousSubject2.prototype._subscribe = function(subscriber) {
+      var _a, _b;
+      return (_b = (_a = this.source) === null || _a === void 0 ? void 0 : _a.subscribe(subscriber)) !== null && _b !== void 0 ? _b : EMPTY_SUBSCRIPTION;
+    };
+    return AnonymousSubject2;
+  }(Subject);
+
+  // node_modules/ramda/es/internal/_isPlaceholder.js
+  function _isPlaceholder(a4) {
+    return a4 != null && typeof a4 === "object" && a4["@@functional/placeholder"] === true;
+  }
+
+  // node_modules/ramda/es/internal/_curry1.js
+  function _curry1(fn) {
+    return function f1(a4) {
+      if (arguments.length === 0 || _isPlaceholder(a4)) {
+        return f1;
+      } else {
+        return fn.apply(this, arguments);
+      }
+    };
+  }
+
+  // node_modules/ramda/es/internal/_curry2.js
+  function _curry2(fn) {
+    return function f22(a4, b4) {
+      switch (arguments.length) {
+        case 0:
+          return f22;
+        case 1:
+          return _isPlaceholder(a4) ? f22 : _curry1(function(_b) {
+            return fn(a4, _b);
+          });
+        default:
+          return _isPlaceholder(a4) && _isPlaceholder(b4) ? f22 : _isPlaceholder(a4) ? _curry1(function(_a) {
+            return fn(_a, b4);
+          }) : _isPlaceholder(b4) ? _curry1(function(_b) {
+            return fn(a4, _b);
+          }) : fn(a4, b4);
+      }
+    };
+  }
+
+  // node_modules/ramda/es/internal/_arity.js
+  function _arity(n6, fn) {
+    switch (n6) {
+      case 0:
+        return function() {
+          return fn.apply(this, arguments);
+        };
+      case 1:
+        return function(a0) {
+          return fn.apply(this, arguments);
+        };
+      case 2:
+        return function(a0, a1) {
+          return fn.apply(this, arguments);
+        };
+      case 3:
+        return function(a0, a1, a22) {
+          return fn.apply(this, arguments);
+        };
+      case 4:
+        return function(a0, a1, a22, a32) {
+          return fn.apply(this, arguments);
+        };
+      case 5:
+        return function(a0, a1, a22, a32, a4) {
+          return fn.apply(this, arguments);
+        };
+      case 6:
+        return function(a0, a1, a22, a32, a4, a5) {
+          return fn.apply(this, arguments);
+        };
+      case 7:
+        return function(a0, a1, a22, a32, a4, a5, a6) {
+          return fn.apply(this, arguments);
+        };
+      case 8:
+        return function(a0, a1, a22, a32, a4, a5, a6, a7) {
+          return fn.apply(this, arguments);
+        };
+      case 9:
+        return function(a0, a1, a22, a32, a4, a5, a6, a7, a8) {
+          return fn.apply(this, arguments);
+        };
+      case 10:
+        return function(a0, a1, a22, a32, a4, a5, a6, a7, a8, a9) {
+          return fn.apply(this, arguments);
+        };
+      default:
+        throw new Error("First argument to _arity must be a non-negative integer no greater than ten");
+    }
+  }
+
+  // node_modules/ramda/es/internal/_has.js
+  function _has(prop2, obj) {
+    return Object.prototype.hasOwnProperty.call(obj, prop2);
+  }
+
+  // node_modules/ramda/es/memoizeWith.js
+  var memoizeWith = /* @__PURE__ */ _curry2(function memoizeWith2(keyGen, fn) {
+    var cache = {};
+    return _arity(fn.length, function() {
+      var key2 = keyGen.apply(this, arguments);
+      if (!_has(key2, cache)) {
+        cache[key2] = fn.apply(this, arguments);
+      }
+      return cache[key2];
+    });
+  });
+  var memoizeWith_default = memoizeWith;
+
+  // header.ts
+  function monitorHeader() {
+    const panel = document.querySelector(".vis-panel.vis-left");
+    const header = document.getElementById("groupHeader");
+    const observer = new ResizeObserver((...args) => {
+      const { left } = panel.querySelector(".vis-labelset").getBoundingClientRect();
+      header.style.setProperty("--left-width", `${left}px`);
+      const width = args[0][0].borderBoxSize[0].inlineSize;
+      header.style.width = `${width}px`;
+    });
+    observer.observe(panel);
+  }
+  function rewriteHeader({ mappings: mappings2, timeline: timeline2, cmdAddBlank: cmdAddBlank2 }) {
+    const headerTop = document.querySelector("#groupHeader .top");
+    const headerRight = document.querySelector("#groupHeader .bottom .right");
+    const columnsDiv = dom2("div");
+    columnsDiv.classList.add("group-header-columns");
+    const parts = mappings2.get().Columns.map((col) => {
+      const div = document.createElement("div");
+      div.innerText = col;
+      div.classList.add("group-part");
+      div.style.padding = "5px";
+      return div;
+    });
+    columnsDiv.style.setProperty("grid-template-columns", "auto");
+    const moreDiv = document.createElement("div");
+    moreDiv.style.width = "20px";
+    parts.push(moreDiv);
+    const collapsed = observable(false);
+    const iconName = computed((use) => {
+      return use(collapsed) ? "chevron-bar-right" : "chevron-bar-left";
+    });
+    const resizer = headerTop.querySelector(".resizer");
+    const icon = headerTop.querySelector("sl-icon");
+    const button = headerTop.querySelector("sl-button");
+    const buttonLoading = observable(false);
+    dom2.update(
+      resizer,
+      dom2.on("click", () => collapsed.set(!collapsed.get()))
+    );
+    dom2.update(
+      icon,
+      // Icon to hide or show drawer.
+      dom2.prop("name", iconName)
+    );
+    dom2.update(
+      button,
+      dom2.prop("loading", buttonLoading),
+      dom2.on("click", async () => {
+        try {
+          buttonLoading.set(true);
+          await cmdAddBlank2.invoke(null);
+        } finally {
+          buttonLoading.set(false);
+        }
+      })
+    );
+    columnsDiv.append(...parts);
+    collapsed.addListener(() => {
+      timeline2.redraw();
+    });
+    headerRight.innerHTML = "";
+    headerRight.append(columnsDiv);
+    const visualization = document.getElementById("visualization");
+    dom2.update(
+      visualization,
+      dom2.cls("collapsed", collapsed)
+    );
+    const widths = parts.map(
+      (part) => Math.ceil(part.getBoundingClientRect().width)
+    );
+    const templateColumns = widths.map((w3) => `minmax(${w3}px, max-content)`).join(" ");
+    visualization.style.setProperty("--grid-template-columns", templateColumns);
+    anchorHeader();
+    const firstLine = document.querySelector(".group-template");
+    if (!firstLine) {
+      console.error("No first line found");
+      return;
+    }
+    const sizesFromFirstLine = Array.from(firstLine.children).map(
+      (el) => el.getBoundingClientRect().width
+    );
+    const templateColumns2 = sizesFromFirstLine.map((w3) => `${w3}px`).join(" ");
+    columnsDiv.style.setProperty("grid-template-columns", templateColumns2);
+    const firstPartWidth = Math.ceil(parts[0].getBoundingClientRect().width);
+    const width = Math.ceil(columnsDiv.getBoundingClientRect().width);
+    visualization.style.setProperty("--group-header-width", `${width - 1}px`);
+    visualization.style.setProperty("--group-first-width", `${firstPartWidth - 1}px`);
+  }
+  function anchorHeader() {
+    const store2 = anchorHeader;
+    store2.lastTop = store2.lastTop ?? 0;
+    const panel = document.querySelector(".vis-panel.vis-left");
+    const header = document.getElementById("groupHeader");
+    const content = panel.querySelector(".vis-labelset");
+    const top = panel.getBoundingClientRect().top;
+    if (top === store2.lastTop) {
+      return;
+    }
+    store2.lastTop = top;
+    const headerHeight = header.getBoundingClientRect().height;
+    const newTop = top - headerHeight + 1;
+    header.style.setProperty("top", `${newTop}px`);
+    const left = content.getBoundingClientRect().left;
+    header.style.setProperty("left", `${left}px`);
+  }
+
   // index.ts
   var container = document.getElementById("visualization");
   var itemSet = new DataSet([]);
@@ -50826,6 +51931,11 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var items = observable([]);
   var groupSelected = observable(null);
   var focusOnSelect = observable(false);
+  var mappings = observable({});
+  var eventAdd = new Subject();
+  var eventGroupInfo = new Subject();
+  var eventItemInfo = new Subject();
+  var cmdAddBlank = new Command();
   Object.assign(window, {
     currentScale,
     confirmChanges,
@@ -50834,20 +51944,27 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   });
   var byStart = /* @__PURE__ */ new Map();
   var byEnd = /* @__PURE__ */ new Map();
+  var key = memoizeWith_default((...args) => args.join(), (date2, days = 0) => {
+    return (0, import_moment_timezone2.default)(date2).add({ days }).format("YYYY-MM-DD");
+  });
   function startKey(item, days = 0) {
-    const start = (0, import_moment_timezone2.default)(item.start).add({ days }).format("YYYY-MM-DD");
-    return `${item.group}-${start}`;
+    return `${item.group}-${key(item.start, days)}`;
   }
   function endKey(item, days = 0) {
-    const end = (0, import_moment_timezone2.default)(item.end).add({ days }).format("YYYY-MM-DD");
-    return `${item.group}-${end}`;
+    return `${item.group}-${key(item.end, days)}`;
   }
   items.addListener((list) => {
     byStart.clear();
     byEnd.clear();
     for (const item of list) {
-      byStart.set(startKey(item), item);
-      byEnd.set(endKey(item), item);
+      if (!byStart.has(startKey(item))) {
+        byStart.set(startKey(item), []);
+      }
+      if (!byEnd.has(endKey(item))) {
+        byEnd.set(endKey(item), []);
+      }
+      byStart.get(startKey(item)).push(item);
+      byEnd.get(endKey(item)).push(item);
     }
   });
   grist.ready({
@@ -50893,13 +52010,13 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       const span = document.createElement("span");
       span.innerText = text2;
       div.appendChild(span);
-      const someoneOnLeft = byEnd.get(startKey(item, -1));
-      const someoneOnRight = byStart.get(endKey(item, 1));
+      const someoneOnLeft = byEnd.get(startKey(item, -1)) ?? [];
+      const someoneOnRight = byStart.get(endKey(item, 1)) ?? [];
       div.classList.add("item-template");
-      if (someoneOnLeft) {
+      if (someoneOnLeft.length) {
         div.classList.add("item-left");
       }
-      if (someoneOnRight) {
+      if (someoneOnRight.length) {
         div.classList.add("item-right");
       }
       const { start, end } = data3;
@@ -50953,6 +52070,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       });
     },
     async onAdd(item, callback) {
+      let id2;
       try {
         const group = idToName.get(item.group).split("|").map(formatValue);
         const start = (0, import_moment_timezone2.default)(item.start).format("YYYY-MM-DD");
@@ -50965,12 +52083,14 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         const columns = [...mappings.get().Columns, mappings.get().From, mappings.get().To];
         const rawFields = Object.fromEntries(zip(columns, values3));
         const fields = await liftFields(rawFields);
-        const { id: id2 } = await grist.selectedTable.create({ fields });
+        {
+          id2 = (await grist.selectedTable.create({ fields })).id;
+        }
         await grist.setCursorPos({ rowId: id2 });
         callback(null);
         openCard();
       } finally {
-        cursorBox.classList.remove("cursor-loading");
+        eventAdd.next(id2);
       }
     },
     groupTemplate: function(group) {
@@ -50998,6 +52118,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         const div = document.createElement("div");
         div.innerHTML = '<sl-icon name="three-dots"></sl-icon>';
         div.className = "center cursor";
+        div.addEventListener("click", (e9) => {
+          e9.stopPropagation();
+          eventGroupInfo.next(group.id);
+        });
         return div;
       })());
       container2.append(...partsHtml);
@@ -51048,24 +52172,30 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       axis: 0
     }
   };
-  var mappings = observable({});
   var timeline = new Timeline(container, itemSet, options);
   timeline.setOptions({
     ...options,
     groupHeightMode: "fixed"
   });
+  var lastMappings = "";
   grist.onRecords((recs, maps) => {
     mappings.set(maps);
     records.set(grist.mapColumnNames(recs));
     order.clear();
     recs.forEach((r7, i8) => order.set(r7.id, i8));
-    showCampaigns();
-    rewriteHeader(true);
+    renderAllItems();
+    const newMappings = JSON.stringify(mappings.get());
+    if (newMappings === lastMappings) {
+      document.body.style.visibility = "visible";
+      return;
+    }
+    lastMappings = newMappings;
+    rewriteHeader({ mappings, timeline, cmdAddBlank });
+    document.body.style.visibility = "visible";
   });
   var firstOnRecord = true;
   var lastId = 0;
   grist.onRecord((rec) => {
-    console.error("Record", rec);
     if (rec.id === lastId) {
       return;
     }
@@ -51087,6 +52217,12 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         animation: false
       }
     });
+  });
+  timeline.on("select", function(properties) {
+    if (properties.items.length === 0) {
+      return;
+    }
+    grist.setCursorPos({ rowId: properties.items[0] });
   });
   function getFrom(r7) {
     return r7.From && r7.From instanceof Date ? r7.From : null;
@@ -51152,11 +52288,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     }
     return true;
   }
-  function onClick(selector, callback) {
-    window.document.querySelector(selector).addEventListener("click", callback);
-  }
   onClick("#btnAlCampaign", () => {
-    showCampaigns();
+    renderAllItems();
   });
   function trimTime(date2) {
     if (!date2) {
@@ -51214,7 +52347,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     style: "currency",
     currency: "USD"
   });
-  function showCampaigns() {
+  function renderAllItems() {
     renderItems();
     renderGroups();
   }
@@ -51312,50 +52445,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     return value;
   }
   timeline.setGroups(groupSet);
-  var cursorBox = document.createElement("div");
-  cursorBox.append(document.createElement("sl-spinner"));
-  cursorBox.addEventListener("dblclick", async function(e9) {
-    cursorBox.classList.add("cursor-loading");
+  buildCursor(timeline, {
+    eventAdd
   });
   document.addEventListener("DOMContentLoaded", function() {
-    new import_vanilla_context_menu.default({
-      scope: document.querySelector(".vis-panel.vis-left "),
-      menuItems: [
-        {
-          label: "Add new",
-          callback: async () => {
-            const fields = {
-              [mappings.get().From]: (0, import_moment_timezone2.default)().startOf("day").toDate(),
-              [mappings.get().To]: (0, import_moment_timezone2.default)().endOf("isoWeek").toDate()
-            };
-            const { id: id2 } = await grist.selectedTable.create({ fields });
-            await grist.setCursorPos({ rowId: id2 });
-            await openCard();
-          }
-        },
-        "hr",
-        {
-          label: "More information",
-          callback: async () => {
-            const drawer = document.querySelector(".drawer-overview");
-            const infor = drawer.querySelector(".drawer-info");
-            infor.innerHTML = ``;
-            const selected = timeline.getSelection();
-            const item = itemSet.get(selected[0]);
-            if (!item) {
-              return;
-            }
-            const labels = mappings.get().Columns;
-            const values3 = item.data.Columns;
-            const obj = zip(labels, values3);
-            for (const [label, value] of obj) {
-              infor.innerHTML += `<div>${label}: ${value}</div>`;
-            }
-            drawer.show();
-          }
-        }
-      ]
-    });
     const fore = document.querySelector(
       "#visualization > div.vis-timeline.vis-bottom.vis-ltr > div.vis-panel.vis-center > div.vis-content > div > div.vis-foreground"
     );
@@ -51382,83 +52475,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     button.addEventListener("click", function() {
       timeline.fit();
     });
-    const panel = document.querySelector(".vis-panel.vis-left");
-    const header = document.getElementById("groupHeader");
-    let lastTop = 0;
-    const observer = new MutationObserver(() => {
-      const content = panel.querySelector(".vis-labelset");
-      const top = panel.getBoundingClientRect().top;
-      if (top === lastTop) {
-        return;
-      }
-      lastTop = top;
-      const headerHeight = header.getBoundingClientRect().height;
-      const newTop = top - headerHeight;
-      header.style.setProperty("top", `${newTop}px`);
-      const left = content.getBoundingClientRect().left;
-      header.style.setProperty("left", `${left}px`);
-    });
-    observer.observe(panel, { attributes: true });
-    const foreground = document.querySelector(".vis-center .vis-foreground");
-    cursorBox.className = "cursor-selection";
-    foreground.appendChild(cursorBox);
-    foreground.addEventListener("mouseleave", function() {
-      cursorBox.style.display = "none";
-    });
-    timeline.on("select", function(properties) {
-      if (properties.items.length === 0) {
-        return;
-      }
-      grist.setCursorPos({ rowId: properties.items[0] });
-    });
-    foreground.addEventListener("mousemove", function(e9) {
-      const target = e9.target;
-      if (target === cursorBox) {
-        return;
-      }
-      if (cursorBox.contains(target)) {
-        return;
-      }
-      const x3 = e9.clientX - foreground.getBoundingClientRect().left;
-      if (!target.classList.contains("vis-group")) {
-        cursorBox.style.display = "none";
-        return;
-      }
-      cursorBox.style.display = "grid";
-      const anotherDiv = document.querySelector(
-        "div.vis-panel.vis-background.vis-vertical > div.vis-time-axis.vis-background"
-      );
-      const anotherDivPos = anotherDiv.getBoundingClientRect().left;
-      if (!leftPoints.length) {
-        const children = Array.from(anotherDiv.children);
-        const weekFromElement = (el) => {
-          const classList = Array.from(el.classList).filter((f5) => !["vis-even", "vis-odd", "vis-minor", "vis-major"].includes(f5));
-          return classList.join(" ");
-        };
-        const grouped = u5(children).groupBy((e10) => weekFromElement(e10)).toArray();
-        const points = grouped.map((group) => {
-          const left = group.first().getBoundingClientRect().left;
-          const width = group.reduce(
-            (acc, el) => acc + el.getBoundingClientRect().width,
-            0
-          );
-          const adjustedWidth = left - anotherDivPos;
-          return { left: adjustedWidth, width };
-        });
-        leftPoints = points;
-      }
-      const index = leftPoints.findLastIndex((c6) => c6.left < x3);
-      const closest = leftPoints[index];
-      cursorBox.style.left = `${closest.left}px`;
-      cursorBox.style.width = `${closest.width}px`;
-      cursorBox.style.transform = "";
-      try {
-        if (cursorBox.parentElement !== target) {
-          target.prepend(cursorBox);
-        }
-      } catch (ex) {
-      }
-    });
+    monitorHeader();
     const itemMenu = new import_vanilla_context_menu.default({
       scope: fore,
       menuItems: [
@@ -51475,17 +52492,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         },
         {
           label: "Delete",
-          callback: async () => {
-            const selected = timeline.getSelection();
-            if (selected.length === 0) {
-              return;
-            }
-            setTimeout(async () => {
-              if (!confirmChanges.get() || confirm("Are you sure you want to delete this item?")) {
-                await grist.selectedTable.destroy(selected[0]);
-              }
-            }, 10);
-          }
+          callback: deleteSelected
         },
         {
           label: "Duplicate",
@@ -51517,7 +52524,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
             });
           }
         }
-      ]
+      ],
+      customThemeClass: "context-menu-orange-theme",
+      customClass: "custom-context-menu-cls"
     });
   });
   editCard.addListener(async (value) => {
@@ -51528,87 +52537,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       editCard.set(options2.editCard ?? false);
     }
   });
-  var lastMappings = "";
-  function rewriteHeader(force) {
-    const newMappings = JSON.stringify(mappings.get());
-    if (newMappings === lastMappings && !force) {
-      return;
-    }
-    lastMappings = newMappings;
-    const groupHeader = document.getElementById("groupHeader");
-    if (!groupHeader) {
-      return;
-    }
-    groupHeader.innerHTML = "";
-    const wrapper = dom2("div");
-    wrapper.classList.add("group-header-columns");
-    const parts = mappings.get().Columns.map((col) => {
-      const div = document.createElement("div");
-      div.innerText = col;
-      div.classList.add("group-part");
-      div.style.padding = "5px";
-      return div;
-    });
-    wrapper.style.setProperty("grid-template-columns", "auto");
-    const moreDiv = document.createElement("div");
-    moreDiv.style.width = "20px";
-    parts.push(moreDiv);
-    groupHeader.append(dom2(
-      "div",
-      // Icon to hide or show drawer.
-      dom2("sl-icon", { name: "chevron-bar-left" }),
-      dom2.cls("havron"),
-      dom2.on("click", () => collapsed.set(!collapsed.get()))
-    ));
-    wrapper.append(...parts);
-    const collapsed = observable(false);
-    collapsed.addListener(() => {
-      timeline.redraw();
-    });
-    groupHeader.append(wrapper);
-    const visualization = document.getElementById("visualization");
-    dom2.update(
-      visualization,
-      dom2.cls("collapsed", collapsed)
-    );
-    const widths = parts.map(
-      (part) => Math.ceil(part.getBoundingClientRect().width)
-    );
-    const templateColumns = widths.map((w3) => `minmax(${w3}px, max-content)`).join(" ");
-    visualization.style.setProperty("--group-columns", templateColumns);
-    anchorHeader();
-    const firstLine = document.querySelector(".group-template");
-    if (!firstLine) {
-      console.error("No first line found");
-      return;
-    }
-    const sizesFromFirstLine = Array.from(firstLine.children).map(
-      (el) => el.getBoundingClientRect().width
-    );
-    const templateColumns2 = sizesFromFirstLine.map((w3) => `${w3}px`).join(" ");
-    wrapper.style.setProperty("grid-template-columns", templateColumns2);
-    const firstPartWidth = Math.ceil(parts[0].getBoundingClientRect().width);
-    const width = Math.ceil(wrapper.getBoundingClientRect().width);
-    visualization.style.setProperty("--group-header-width", `${width - 1}px`);
-    visualization.style.setProperty("--group-first-width", `${firstPartWidth - 1}px`);
-  }
-  function anchorHeader() {
-    const store2 = anchorHeader;
-    store2.lastTop = store2.lastTop ?? 0;
-    const panel = document.querySelector(".vis-panel.vis-left");
-    const header = document.getElementById("groupHeader");
-    const content = panel.querySelector(".vis-labelset");
-    const top = panel.getBoundingClientRect().top;
-    if (top === store2.lastTop) {
-      return;
-    }
-    store2.lastTop = top;
-    const headerHeight = header.getBoundingClientRect().height;
-    const newTop = top - headerHeight + 1;
-    header.style.setProperty("top", `${newTop}px`);
-    const left = content.getBoundingClientRect().left;
-    header.style.setProperty("left", `${left}px`);
-  }
   function zip(a4, b4) {
     return a4.map((e9, i8) => [e9, b4[i8]]);
   }
@@ -51682,19 +52610,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       });
     }
   });
-  async function withElementSpinner(element, callback) {
-    const spinner = document.createElement("sl-spinner");
-    element.appendChild(spinner);
-    try {
-      await callback();
-    } finally {
-      spinner.remove();
-    }
-  }
-  async function withIdSpinner(id2, callback) {
-    const element = document.querySelector(`.item_${id2}`);
-    await withElementSpinner(element, callback);
-  }
   window.onunhandledrejection = function(event2) {
     console.error(event2);
     showAlert("danger", event2.reason);
@@ -51704,40 +52619,44 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const message = event2.message ?? event2;
     showAlert("danger", message);
   };
-  function showAlert(variant, message) {
-    const alert2 = document.querySelector(`sl-alert[variant="${variant}"]`);
-    const title = alert2.querySelector("#title");
-    const text2 = alert2.querySelector("#text");
-    title.innerText = "Error occured";
-    text2.innerText = message;
-    alert2.toast();
+  eventGroupInfo.subscribe(openDrawer);
+  function openDrawer(groupId) {
+    if (!groupId) {
+      return;
+    }
+    const item = itemSet.get().find((i8) => i8.group === groupId);
+    const drawer = document.querySelector(".drawer-overview");
+    const infor = drawer.querySelector(".drawer-info");
+    infor.innerHTML = ``;
+    const labels = mappings.get().Columns;
+    const values3 = item.data.Columns;
+    const obj = zip(labels, values3);
+    for (const [label, value] of obj) {
+      infor.innerHTML += `<div>${label}: ${value}</div>`;
+    }
+    drawer.show();
   }
-  var leftPoints = [];
-  timeline.on("rangechange", ({ byUser, event: event2 }) => {
-    leftPoints = [];
-    if (!byUser) {
+  cmdAddBlank.subscribe(addBlank);
+  async function addBlank() {
+    const fields = {
+      [mappings.get().From]: (0, import_moment_timezone2.default)().startOf("day").toDate(),
+      [mappings.get().To]: (0, import_moment_timezone2.default)().endOf("isoWeek").toDate()
+    };
+    const { id: id2 } = await grist.selectedTable.create({ fields });
+    await grist.setCursorPos({ rowId: id2 });
+    await openCard();
+  }
+  async function deleteSelected() {
+    const selected = timeline.getSelection();
+    if (selected.length === 0) {
       return;
     }
-    if (!event2 || !event2.deltaX) {
-      return;
-    }
-    const deltaX = event2.deltaX;
-    cursorBox.style.transform = `translateX(${deltaX}px)`;
-  });
-  timeline.on("rangechanged", () => {
-    const transform = cursorBox.style.transform;
-    if (!transform) {
-      return;
-    }
-    const match2 = transform.match(/translateX\(([^)]+)\)/);
-    if (!match2) {
-      return;
-    }
-    const x3 = parseFloat(match2[1]);
-    const left = parseFloat(cursorBox.style.left);
-    cursorBox.style.left = `${left + x3}px`;
-    cursorBox.style.transform = "";
-  });
+    setTimeout(async () => {
+      if (!confirmChanges.get() || confirm("Are you sure you want to delete this item?")) {
+        await grist.selectedTable.destroy(selected[0]);
+      }
+    }, 10);
+  }
 })();
 /*! Bundled license information:
 

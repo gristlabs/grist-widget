@@ -25,6 +25,10 @@
       margin: 0px;
     }
 
+    body {
+      visibility: hidden;
+    }
+
     div {
       scrollbar-width: thin;
     }
@@ -117,6 +121,20 @@
 
   <div id="visualization">
     <div class="group-header" id="groupHeader">
+      <div class="top">
+        <sl-button size="small" variant="neutral" outline>Add new</sl-button>
+        <div class="resizer">
+          <sl-icon />
+        </div>
+      </div>
+      <div class="bottom">
+        <div class="left">
+
+        </div>
+        <div class="right">
+
+        </div>
+      </div>
     </div>
   </div>
 
@@ -224,8 +242,7 @@
 
     .vis-labelset {
       display: grid;
-      grid-template-columns: var(--group-columns, repeat(12, max-content));
-      min-width: var(--group-header-width, 100px);
+      grid-template-columns: var(--grid-template-columns, repeat(12, max-content));
       max-width: var(--group-max-width, auto);
     }
 
@@ -235,6 +252,14 @@
       display: grid !important;
       grid-column: 1/-1;
       grid-template-columns: subgrid;
+
+      #visualization.collapsed & {
+        grid-template-columns: var(--group-first-width) 20px;
+      }
+    }
+
+    #visualization.collapsed .vis-timeline {
+      --grid-template-columns: var(--group-first-width) 20px;
     }
 
     .group-part {
@@ -360,7 +385,7 @@
     }
 
     #visualization.collapsed {
-      --group-max-width: var(--group-first-width, 50px);
+      --group-max-width: calc(var(--group-first-width, 50px) + 21px);
 
       .vis-labelset {
         min-width: auto;
@@ -384,26 +409,45 @@
       overflow: hidden;
       width: var(--group-header-width);
       max-width: var(--group-max-width, auto);
+
+      & .left {
+        width: var(--left-width, 0px);
+        flex-shrink: 0;
+      }
+
+      & .right {
+        flex-grow: 1;
+      }
+
+      & .bottom {
+        border-top: 1px solid var(--grist-theme-table-header-border, #d3d3d3);
+        height: 30px;
+        clear: both;
+        display: flex;
+      }
+
+      & .top {
+        position: relative;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-left: 4px;
+      }
     }
 
     .group-header-columns {
       background-color: var(--grist-theme-table-header-bg, #f7f7f7);
       display: grid;
       grid-auto-flow: column;
-      border-top: 1px solid var(--grist-theme-table-header-border, #d3d3d3);
       font-weight: 600;
-      height: 30px;
       overflow: hidden;
-      grid-template-columns: var(--group-columns);
-      clear: both;
+      grid-template-columns: var(--grid-template-columns);
     }
 
-    .havron {
-      position: relative;
-      float: right;
+    .resizer {
       cursor: pointer;
       height: 29px;
-      z-index: 100;
       display: grid;
       place-content: center;
       width: 21px;
@@ -416,6 +460,34 @@
 
     .vis-item .vis-item-content {
       padding: 0px;
+    }
+
+    .context-menu-orange-theme {
+      background: #d35400;
+
+      hr {
+        background-color: #eee;
+      }
+
+      &>*:not(hr) {
+        color: var(--grist-theme-menu-item-fg, black);
+
+        &:hover {
+          background-color: var(--weaseljs-selected-background-color, #5AC09C);
+          color: var(--grist-theme-menu-item-selected-fg, var(--grist-color-light));
+        }
+      }
+    }
+
+    .custom-context-menu-cls {
+      font-family: var(--grist-font-family);
+      font-size: var(--grist-medium-font-size);
+      line-height: initial;
+      max-width: 400px;
+      padding: 8px 0px 16px 0px;
+      box-shadow: 0 2px 20px 0 var(--grist-theme-menu-shadow, rgba(38, 38, 51, 0.6));
+      min-width: 160px;
+      background-color: var(--grist-theme-menu-bg, white);
     }
   </style>
 </body>
