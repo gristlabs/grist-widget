@@ -489,6 +489,35 @@
       min-width: 160px;
       background-color: var(--grist-theme-menu-bg, white);
     }
+
+    .drawer-overview {
+      & .line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+        font-family: Arial, sans-serif;
+        flex-wrap: wrap;
+      }
+
+      & .label {
+        font-weight: bold;
+        color: #333;
+        margin-right: 10px;
+      }
+
+      & .value {
+        color: #555;
+        flex-grow: 1;
+        text-align: right;
+      }
+
+      & .line:last-child {
+        border-bottom: none;
+        /* Remove the border for the last line */
+      }
+    }
   </style>
 </body>
 

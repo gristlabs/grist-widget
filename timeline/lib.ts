@@ -1,3 +1,5 @@
+import {Subject, Subscribable} from 'rxjs';
+
 export interface BulkColumns {
   id: number[];
   colId: string[];
@@ -85,22 +87,61 @@ export interface Item {
 
 type CommandObserver = (arg: any) => Promise<void>;
 
-export class Command<T = any> {
-
-  private listeners: CommandObserver[] = [];
+export class Command<T = any> implements Subscribable<T> {
+  private handlers: CommandObserver[] = [];
+  private subject = new Subject<T>();
 
   public async invoke(arg: T) {
-    for (const listener of this.listeners) {
-      await listener(arg);
+    for (const handler of this.handlers) {
+      await handler(arg);
     }
+    this.subject.next(arg);
   }
 
-  public subscribe(observer: (arg: T) => Promise<void>) {
-    this.listeners.push(observer);
+  public subscribe = this.subject.subscribe.bind(this.subject);
+
+  public handle(handler: (arg: T) => Promise<void>) {
+    this.handlers.push(handler);
     return {
       dispose: () => {
-        this.listeners.splice(this.listeners.indexOf(observer), 1);
+        this.handlers.splice(this.handlers.indexOf(handler), 1);
       }
     }
   }
+}
+
+export function stringToValue(value: any) {
+  if (['true', 'false'].includes(value)) {
+    return value === 'true';
+  }
+  if (value === 'null') {
+    return null;
+  }
+  // Test for string that looks like integer.
+  if (/^\d+$/.test(value)) {
+    return parseInt(value, 10);
+  }
+  return value;
+}
+
+
+export function valueToString(value: any) {
+  if (value === null || value === undefined) {
+    return '-';
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+  
+  // Floats to 2 decimal places.
+  if (typeof value === 'number') {
+    return value.toFixed(2);
+  }
+
+  // Dates to ISO date.
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return String(value);
 }

@@ -1,5 +1,5 @@
 import './vendor';
-import {Column, Command, fetchColumnsFromGrist, Item, onClick, selectedTable, showAlert, withElementSpinner, withIdSpinner} from './lib';
+import {Column, Command, fetchColumnsFromGrist, stringToValue, Item, onClick, selectedTable, showAlert, withElementSpinner, withIdSpinner, valueToString} from './lib';
 import {from} from 'fromit';
 import {observable} from 'grainjs';
 import moment from 'moment-timezone';
@@ -82,6 +82,7 @@ grist.ready({
       name: 'Columns',
       allowMultiple: true,
     },
+
     {
       name: 'Title',
       allowMultiple: true,
@@ -96,6 +97,20 @@ grist.ready({
     },
     {
       name: 'To',
+    },
+
+    {
+      name: 'GroupInfo',
+      title: "Group Info",
+      allowMultiple: true,
+      optional: true,
+    },
+    
+    {
+      name: 'ItemInfo',
+      title: "Item Info",
+      allowMultiple: true,
+      optional: true,
     },
   ],
 });
@@ -193,7 +208,7 @@ const options: TimelineOptions = {
   async onAdd(item, callback) {
     let id;
     try {
-      const group = idToName.get(item.group).split('|').map(formatValue);
+      const group = idToName.get(item.group).split('|').map(stringToValue);
       const start = moment(item.start).format('YYYY-MM-DD');
 
       if (!(item.start instanceof Date)) {
@@ -234,7 +249,7 @@ const options: TimelineOptions = {
 
     const partsHtml: HTMLDivElement[] = group.columns.map(col => {
       const div = document.createElement('div');
-      const value = formatValue(col);
+      const value = stringToValue(col);
       if (typeof value === 'string' || value === null) {
         div.innerText = String(value ?? '') || '-';
       } else if (typeof value === 'number') {
@@ -406,21 +421,26 @@ function recToItem(r): Item {
   return result;
 }
 
-
-function recToRow(rec) {
-  const groupValues = rec.Columns;
+/**
+ * Converts mapped record (as seen by widget), to the row in Grist.
+ */
+function recToRow(record) {
+  const groupValues = record.Columns;
   const columns = mappings.get().Columns;
-  const allColumns = [...columns, mappings.get().From, mappings.get().To];
-  const newStart = moment(rec.From).add(1, 'day').toDate();
-  const newEnd = moment(rec.To).add(1, 'week').subtract(-1).toDate();
+  const itemColumns = mappings.get().ItemInfo;
+  const itemValues = record.ItemInfo;
+  const allColumns = [...columns, ...itemColumns, mappings.get().From, mappings.get().To];
+  const newStart = moment(record.From).add(1, 'day').toDate();
+  const newEnd = moment(record.To).add(1, 'week').subtract(-1).toDate();
   const allValues = [
     ...groupValues,
+    ...itemValues,
     moment(newStart).format('YYYY-MM-DD'),
     moment(newEnd).format('YYYY-MM-DD'),
   ];
   const fields = Object.fromEntries(zip(allColumns, allValues));
   return {
-    id: rec.id,
+    id: record.id,
     ...fields,
   };
 }
@@ -595,7 +615,7 @@ function updateConfig(elementId: string, value: any) {
     functions[elementId](value);
     return;
   }
-  const formatedValue = formatValue(value);
+  const formatedValue = stringToValue(value);
   const schema = elementId.split(':')[0];
   const [parent, child] = elementId.split(':')[1].split('.');
   if (child && schema === 'timeline') {
@@ -636,21 +656,6 @@ function updateConfig(elementId: string, value: any) {
     console.error(`Unknown schema ${schema}`);
   }
 }
-
-function formatValue(value: any) {
-  if (['true', 'false'].includes(value)) {
-    return value === 'true';
-  }
-  if (value === 'null') {
-    return null;
-  }
-  // Test for string that looks like integer.
-  if (/^\d+$/.test(value)) {
-    return parseInt(value, 10);
-  }
-  return value;
-}
-
 
 timeline.setGroups(groupSet);
 
@@ -717,37 +722,18 @@ document.addEventListener('DOMContentLoaded', function() {
         callback: deleteSelected,
       },
       {
-        label: 'Duplicate',
-        callback: async () => {
-          const selected = timeline.getSelection() as number[];
+        label: 'More info',
+        callback: () => {
+          const selected = timeline.getSelection();
           if (selected.length === 0) {
             return;
           }
-          const recs = records.get();
-          const rec = recs.find(r => r.id === selected[0]);
-          if (!rec) {
-            return;
-          }
-
-          const clone = structuredClone(rec);
-          clone.From = rec.To;
-
-          // Calculate difference, and add it to the new date.
-          const diff = moment(rec.To).diff(clone.From);
-          clone.To = moment(clone.From).add(diff).toDate();
-
-          const row = recToRow(clone);
-          delete row.id;
-
-          const element = /* div with item_x */ document.querySelector(
-            `.item_${selected[0]}`
-          )!;
-
-          await withElementSpinner(element, async () => {
-            const fields = await liftFields(row);
-            await grist.selectedTable.create({fields});
-          });
+          openItemDrawer(selected[0] as number);
         },
+      },
+      {
+        label: 'Duplicate',
+        callback: duplicateSelected,
       },
     ],
     customThemeClass: 'context-menu-orange-theme',
@@ -875,29 +861,55 @@ window.onerror = function(event) {
   showAlert('danger', message);
 };
 
-eventGroupInfo.subscribe(openDrawer);
-function openDrawer(groupId: number) {
+eventGroupInfo.subscribe(openGroupDrawer);
+function openGroupDrawer(groupId: number) {
   if (!groupId) {
     return;
   }
   const item = itemSet.get().find(i => i.group === groupId);
 
   const drawer = document.querySelector('.drawer-overview') as any;
-  const infor = drawer.querySelector('.drawer-info') as any;
-  infor.innerHTML = ``;
+  const drawerInfo = drawer.querySelector('.drawer-info') as any;
+  drawerInfo.innerHTML = ``;
 
+  const groupInfo = mappings.get().GroupInfo;
+  const colInfo = mappings.get().Columns;
 
-  const labels = mappings.get().Columns;
-  const values = item.data.Columns;
+  const labels =  [...colInfo, ...groupInfo];
+  const values =  [...item.data.GroupInfo, ...item.data.Columns];
   const obj = zip(labels, values);
 
   for (const [label, value] of obj) {
-    infor.innerHTML += `<div>${label}: ${value}</div>`;
+    drawerInfo.innerHTML += `<div class="line">
+    <div class="label">${label}</div>
+    <div class="value">${valueToString(value)}<div>
+    </div>`;
   }
   drawer.show();
 }
 
-cmdAddBlank.subscribe(addBlank);
+function openItemDrawer(itemId: number) {
+  // Same as above but for item.
+  const item = itemSet.get().find(i => i.id === itemId);
+  const drawer = document.querySelector('.drawer-overview') as any;
+  const drawerInfo = drawer.querySelector('.drawer-info') as any;
+  drawerInfo.innerHTML = ``;
+
+  const itemInfo = mappings.get().ItemInfo;
+  if (!itemInfo.length) {
+    return;
+  }
+  const obj = zip(itemInfo, item.data.ItemInfo);
+  for (const [label, value] of obj) {
+    drawerInfo.innerHTML += `<div class="line">
+    <div class="label">${label}</div>
+    <div class="value">${valueToString(value)}<div>
+    </div>`;
+  }
+  drawer.show();
+}
+
+cmdAddBlank.handle(addBlank);
 async function addBlank() {
   const fields = {
     [mappings.get().From]: moment().startOf('day').toDate(),
@@ -921,3 +933,35 @@ async function deleteSelected() {
     }
   }, 10);
 }
+
+async function duplicateSelected(ev: MouseEvent) {
+  const selected = timeline.getSelection() as number[];
+  if (selected.length === 0) {
+    return;
+  }
+  const recs = records.get();
+  const rec = recs.find(r => r.id === selected[0]);
+  if (!rec) {
+    return;
+  }
+
+  const clone = structuredClone(rec);
+  clone.From = rec.To;
+
+  // Calculate difference, and add it to the new date.
+  const diff = moment(rec.To).diff(clone.From);
+  clone.To = moment(clone.From).add(diff).toDate();
+
+  const row = recToRow(clone);
+  delete row.id;
+
+  const element = /* div with item_x */ document.querySelector(
+    `.item_${selected[0]}`
+  )!;
+
+  await withElementSpinner(element, async () => {
+    const fields = await liftFields(row);
+    await grist.selectedTable.create({fields});
+  });
+}
+
