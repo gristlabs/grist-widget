@@ -53158,10 +53158,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const drawer = document.querySelector(".drawer-overview");
     const drawerInfo = drawer.querySelector(".drawer-info");
     drawerInfo.innerHTML = ``;
-    const groupInfo = mappings.get().GroupInfo;
-    const colInfo = mappings.get().Columns;
+    const groupInfo = mappings.get().GroupInfo ?? [];
+    const colInfo = mappings.get().Columns ?? [];
     const labels = [...colInfo, ...groupInfo];
-    const values3 = [...item.data.GroupInfo, ...item.data.Columns];
+    const values3 = [...item.data.GroupInfo ?? [], ...item.data.Columns ?? []];
     const obj = zip(labels, values3);
     for (const [label, value] of obj) {
       drawerInfo.innerHTML += `<div class="line">
@@ -53176,11 +53176,11 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const drawer = document.querySelector(".drawer-overview");
     const drawerInfo = drawer.querySelector(".drawer-info");
     drawerInfo.innerHTML = ``;
-    const itemInfo = mappings.get().ItemInfo;
+    const itemInfo = mappings.get().ItemInfo ?? [];
     if (!itemInfo.length) {
       return;
     }
-    const obj = zip(itemInfo, item.data.ItemInfo);
+    const obj = zip(itemInfo, item.data.ItemInfo ?? []);
     for (const [label, value] of obj) {
       drawerInfo.innerHTML += `<div class="line">
     <div class="label">${label}</div>
