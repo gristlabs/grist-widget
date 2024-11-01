@@ -880,11 +880,11 @@ function openGroupDrawer(groupId: number) {
   const drawerInfo = drawer.querySelector('.drawer-info') as any;
   drawerInfo.innerHTML = ``;
 
-  const groupInfo = mappings.get().GroupInfo;
-  const colInfo = mappings.get().Columns;
+  const groupInfo = mappings.get().GroupInfo ?? [];
+  const colInfo = mappings.get().Columns ?? [];
 
   const labels = [...colInfo, ...groupInfo];
-  const values = [...item.data.GroupInfo, ...item.data.Columns];
+  const values = [...(item.data.GroupInfo ?? []), ...(item.data.Columns ?? [])];
   const obj = zip(labels, values);
 
   for (const [label, value] of obj) {
@@ -903,11 +903,11 @@ function openItemDrawer(itemId: number) {
   const drawerInfo = drawer.querySelector('.drawer-info') as any;
   drawerInfo.innerHTML = ``;
 
-  const itemInfo = mappings.get().ItemInfo;
+  const itemInfo = mappings.get().ItemInfo ?? [];
   if (!itemInfo.length) {
     return;
   }
-  const obj = zip(itemInfo, item.data.ItemInfo);
+  const obj = zip(itemInfo, item.data.ItemInfo ?? []);
   for (const [label, value] of obj) {
     drawerInfo.innerHTML += `<div class="line">
     <div class="label">${label}</div>
