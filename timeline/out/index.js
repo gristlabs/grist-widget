@@ -6212,6 +6212,3865 @@
     }
   });
 
+  // node_modules/fromit/dist/fromit.mjs
+  var Q = (s3) => !!s3;
+  var l = class {
+    iterator() {
+      return this[Symbol.asyncIterator]();
+    }
+    async includes(t5, e9 = (r7, n6) => r7 == n6) {
+      for await (let r7 of this) if (e9(r7, t5)) return true;
+      return false;
+    }
+    sort(t5) {
+      let e9 = this;
+      async function* r7() {
+        yield* (await e9.toArray()).sort(t5);
+      }
+      return new f(r7());
+    }
+    orderBy(t5) {
+      return typeof t5 != "function" && (t5 = (e9) => e9[t5]), new K(this, t5);
+    }
+    distinct(t5) {
+      if (typeof t5 != "function") {
+        let e9 = /* @__PURE__ */ new Set(), r7 = this;
+        async function* n6() {
+          for await (let i8 of r7) e9.has(i8) || (e9.add(i8), yield i8);
+        }
+        return new f(n6());
+      } else {
+        let e9 = /* @__PURE__ */ new Set(), r7 = this;
+        async function* n6() {
+          let i8 = 0;
+          for await (let o7 of r7) {
+            let a4 = await t5(o7, i8);
+            i8++, e9.has(a4) || (e9.add(a4), yield o7);
+          }
+        }
+        return new f(n6());
+      }
+    }
+    orderByDesc(t5) {
+      return new k(this, t5);
+    }
+    map(t5) {
+      return typeof t5 != "function" && (t5 = (e9) => e9[t5]), new V(this, t5);
+    }
+    groupBy(t5) {
+      return new x(this, t5);
+    }
+    filter(t5) {
+      return new M(this, t5 != null ? t5 : Q);
+    }
+    skip(t5) {
+      return new T(this, t5);
+    }
+    skipWhile(t5) {
+      return new T(this, t5);
+    }
+    take(t5) {
+      return new d(this, t5);
+    }
+    takeWhile(t5) {
+      return new d(this, t5);
+    }
+    many(t5) {
+      return new v(this, t5);
+    }
+    async first(t5) {
+      for await (let e9 of this) return e9;
+      return t5;
+    }
+    async last(t5) {
+      let e9 = null;
+      for await (let r7 of this) e9 = r7;
+      return t5 !== void 0 ? t5 : e9;
+    }
+    async find(t5) {
+      let e9 = 0;
+      for await (let r7 of this) if (t5(r7, e9++)) return r7;
+    }
+    async some(t5) {
+      let e9 = 0;
+      for await (let r7 of this) if (t5(r7, e9++)) return true;
+      return false;
+    }
+    async any() {
+      for await (let t5 of this) return true;
+      return false;
+    }
+    async count() {
+      let t5 = 0;
+      for await (let e9 of this) t5++;
+      return t5;
+    }
+    async sum(t5) {
+      let e9 = 0, r7 = 0;
+      for await (let n6 of this) t5 ? e9 += await t5(n6, r7++) : e9 += n6;
+      return e9;
+    }
+    async toArray() {
+      let t5 = [];
+      for await (let e9 of this) t5.push(e9);
+      return t5;
+    }
+    async forEach(t5) {
+      let e9 = 0;
+      for await (let r7 of this) await t5(r7, e9++);
+      return this;
+    }
+    except(t5) {
+      return new S(this, t5);
+    }
+    union(t5) {
+      return new A(this, t5);
+    }
+    intersect(t5) {
+      return new E(this, t5);
+    }
+    chunk(t5) {
+      return new w(this, t5);
+    }
+    flatDeep() {
+      return this.flat(20);
+    }
+    flat(t5) {
+      return new y(this, t5);
+    }
+    zip(t5) {
+      let e9 = this;
+      async function* r7() {
+        let n6 = e9[Symbol.asyncIterator](), i8 = t5[Symbol.asyncIterator]();
+        for (; ; ) {
+          let o7 = await n6.next(), a4 = await i8.next();
+          if (o7.done || a4.done) break;
+          yield [o7.value, a4.value];
+        }
+      }
+      return new f(r7());
+    }
+    concat(t5) {
+      let e9 = this;
+      async function* r7() {
+        for await (let n6 of e9) yield n6;
+        for await (let n6 of t5) yield n6;
+      }
+      return new f(r7());
+    }
+    diff(t5) {
+      return this.except(t5).concat(new f(t5).except(this));
+    }
+    async join(t5) {
+      return (await this.toArray()).join(t5);
+    }
+    async reduce(t5, e9) {
+      let r7 = -1;
+      for await (let n6 of this) {
+        if (r7++, await e9 === void 0 && r7 === 0) {
+          e9 = n6;
+          continue;
+        }
+        e9 = await t5(await e9, n6, r7);
+      }
+      return e9;
+    }
+  };
+  function X(s3) {
+    return s3 != null && typeof s3 != "string" && (s3[Symbol.asyncIterator] || s3[Symbol.iterator]);
+  }
+  var y = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.depth = r7;
+      this.depth = r7 != null ? r7 : 1;
+    }
+    async *[Symbol.asyncIterator]() {
+      for await (let e9 of this.list) if (X(e9)) if (this.depth === 0) yield e9;
+      else {
+        let r7 = new y(e9, this.depth - 1);
+        for await (let n6 of r7) yield n6;
+      }
+      else yield e9;
+    }
+  };
+  var w = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.size = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e9 = [];
+      for await (let r7 of this.list) e9.length === this.size ? (yield new p(e9), e9 = [r7]) : e9.push(r7);
+      e9.length && (yield new p(e9));
+    }
+  };
+  var h = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.key = e9;
+      this.buffer = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      for (let e9 of this.buffer) yield e9;
+    }
+  };
+  var x = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e9 = null, r7 = true, n6 = [], i8 = 0;
+      for await (let o7 of this.list.orderBy(this.selector)) {
+        if (r7) {
+          r7 = false, e9 = await this.selector(o7, i8++), n6.push(o7);
+          continue;
+        }
+        let a4 = await this.selector(o7, i8++);
+        if (a4 != e9) {
+          yield new h(e9, n6), n6 = [o7], e9 = a4;
+          continue;
+        }
+        n6.push(o7);
+      }
+      n6.length && (yield new h(e9, n6));
+    }
+  };
+  var S = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.other = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e9 = /* @__PURE__ */ new Set();
+      for await (let r7 of this.other) e9.add(r7);
+      for await (let r7 of this.list) e9.has(r7) || (yield r7);
+    }
+  };
+  var A = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.other = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e9 = /* @__PURE__ */ new Set();
+      for await (let r7 of this.list) e9.add(r7), yield r7;
+      for await (let r7 of this.other) e9.has(r7) || (yield r7);
+    }
+  };
+  var E = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.other = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      for await (let e9 of this.list) for await (let r7 of this.other) if (e9 == r7) {
+        yield e9;
+        break;
+      }
+    }
+  };
+  var T = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      typeof r7 == "number" ? this._size = r7 : this._matcher = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      if (this._size !== void 0) {
+        let e9 = -1;
+        for await (let r7 of this.list) e9++, e9 >= this._size && (yield r7);
+      } else {
+        let e9 = true, r7 = -1;
+        for await (let n6 of this.list) r7++, e9 && (e9 = await this._matcher(n6, r7)), e9 || (yield n6);
+      }
+    }
+  };
+  var d = class extends T {
+    async *[Symbol.asyncIterator]() {
+      if (this._size !== void 0) {
+        let t5 = 0;
+        if (this._size <= 0) return;
+        for await (let e9 of this.list) if (t5++, yield e9, t5 >= this._size) break;
+      } else {
+        let t5 = -1;
+        for await (let e9 of this.list) {
+          if (t5++, !await this._matcher(e9, t5)) return;
+          yield e9;
+        }
+      }
+    }
+  };
+  var M = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e9 = 0;
+      for await (let r7 of this.list) this.selector(r7, e9++) && (yield r7);
+    }
+  };
+  var v = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e9 = 0;
+      for await (let r7 of this.list) {
+        let n6 = await this.selector(r7, e9++);
+        for (let i8 of n6) yield i8;
+      }
+    }
+  };
+  var K = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e9 = [];
+      for await (let r7 of this.list) e9.push(r7);
+      e9.sort((r7, n6) => {
+        let i8 = this.selector(r7, -1), o7 = this.selector(n6, -1);
+        return i8 < o7 ? -1 : i8 > o7 ? 1 : 0;
+      });
+      for (let r7 of e9) yield r7;
+    }
+  };
+  var k = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e9 = [];
+      for await (let r7 of this.list) e9.push(r7);
+      e9.sort((r7, n6) => {
+        let i8 = this.selector(r7, -1), o7 = this.selector(n6, -1);
+        return i8 < o7 ? 1 : i8 > o7 ? -1 : 0;
+      });
+      for (let r7 of e9) yield r7;
+    }
+  };
+  var V = class extends l {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    async *[Symbol.asyncIterator]() {
+      let e9 = 0;
+      for await (let r7 of this.list) yield this.selector(r7, e9++);
+    }
+  };
+  var p = class extends l {
+    constructor(e9) {
+      super();
+      this.list = e9;
+    }
+    async *[Symbol.asyncIterator]() {
+      for (let e9 of this.list) yield e9;
+    }
+  };
+  var f = class extends l {
+    constructor(e9) {
+      super();
+      this.list = e9;
+    }
+    async *[Symbol.asyncIterator]() {
+      for await (let e9 of this.list) yield e9;
+    }
+  };
+  var Y = (s3) => !!s3;
+  var c = class {
+    async() {
+      let t5 = this;
+      async function* e9() {
+        for (let r7 of t5) yield r7;
+      }
+      return u(e9());
+    }
+    iterator() {
+      return this[Symbol.iterator]();
+    }
+    sort(t5) {
+      return u(function* (e9) {
+        yield* [...e9].sort(t5);
+      }(this));
+    }
+    orderBy(t5) {
+      if (t5 || (t5 = (e9) => e9), typeof t5 != "function") {
+        let e9 = t5;
+        t5 = (r7) => r7[e9];
+      }
+      return new W(this, t5);
+    }
+    chunk(t5) {
+      return new F(this, t5);
+    }
+    orderByDesc(t5) {
+      return new L(this, t5);
+    }
+    map(t5) {
+      if (typeof t5 != "function") {
+        let e9 = t5;
+        t5 = (r7) => r7[e9];
+      }
+      return new G(this, t5);
+    }
+    groupBy(t5) {
+      return new _(this, t5);
+    }
+    filter(t5) {
+      return new D(this, t5 != null ? t5 : Y);
+    }
+    skip(t5) {
+      return new b(this, t5);
+    }
+    skipWhile(t5) {
+      return new b(this, t5);
+    }
+    take(t5) {
+      return new I(this, t5);
+    }
+    takeWhile(t5) {
+      return new I(this, t5);
+    }
+    many(t5) {
+      return new C(this, t5);
+    }
+    first(t5) {
+      for (let e9 of this) return e9;
+      return t5;
+    }
+    last(t5) {
+      let e9 = null;
+      for (let r7 of this) e9 = r7;
+      return t5 !== void 0 ? t5 : e9;
+    }
+    find(t5) {
+      let e9 = 0;
+      for (let r7 of this) if (t5(r7, e9++)) return r7;
+    }
+    some(t5) {
+      let e9 = 0;
+      for (let r7 of this) if (t5(r7, e9++)) return true;
+      return false;
+    }
+    any() {
+      for (let t5 of this) return true;
+      return false;
+    }
+    count() {
+      let t5 = 0;
+      for (let e9 of this) t5++;
+      return t5;
+    }
+    includes(t5, e9 = (r7, n6) => r7 == n6) {
+      for (let r7 of this) if (e9(r7, t5)) return true;
+      return false;
+    }
+    sum(t5) {
+      let e9 = 0, r7 = 0;
+      for (let n6 of this) t5 ? e9 += t5(n6, r7++) : e9 += n6;
+      return e9;
+    }
+    toArray() {
+      return [...this];
+    }
+    forEach(t5) {
+      let e9 = 0;
+      for (let r7 of this) t5(r7, e9++);
+      return this;
+    }
+    except(t5, e9) {
+      return new B(this, t5, e9);
+    }
+    union(t5) {
+      return this.except(t5).concat(t5);
+    }
+    distinct(t5) {
+      return new g(this, t5);
+    }
+    intersect(t5, e9) {
+      return new R(this, t5, e9);
+    }
+    reverse() {
+      return new P(this);
+    }
+    flatDeep() {
+      return this.flat(20);
+    }
+    flat(t5) {
+      return new m(this, t5);
+    }
+    zip(t5) {
+      let e9 = this;
+      function* r7() {
+        let n6 = e9[Symbol.iterator](), i8 = t5[Symbol.iterator]();
+        for (; ; ) {
+          let o7 = n6.next(), a4 = i8.next();
+          if (o7.done || a4.done) break;
+          yield [o7.value, a4.value];
+        }
+      }
+      return u(r7());
+    }
+    concat(t5) {
+      let e9 = this;
+      function* r7() {
+        yield* e9, yield* t5;
+      }
+      return u(r7());
+    }
+    diff(t5) {
+      return this.except(t5).concat(u(t5).except(this));
+    }
+    lookup(t5) {
+      let e9 = /* @__PURE__ */ new Map();
+      for (let r7 of this.groupBy(t5)) e9.set(r7.key, r7.toArray());
+      return e9;
+    }
+    join(...t5) {
+      if (!t5.length || typeof t5[0] == "string") return this.toArray().join(t5[0] || "");
+      {
+        let e9 = t5[0], r7 = t5[1] || ((a4) => a4), n6 = t5[2] || r7, i8 = this;
+        function* o7() {
+          let a4 = u(e9).lookup(n6), N2 = -1;
+          for (let q of i8) {
+            let H2 = r7(q, ++N2);
+            !a4.has(H2) || (yield [q, a4.get(H2)]);
+          }
+        }
+        return u(o7());
+      }
+    }
+    reduce(t5, e9) {
+      let r7 = -1;
+      for (let n6 of this) {
+        if (r7++, e9 === void 0 && r7 === 0) {
+          e9 = n6;
+          continue;
+        }
+        e9 = t5(e9, n6, r7);
+      }
+      return e9;
+    }
+  };
+  var z = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.key = e9;
+      this.buffer = r7;
+    }
+    *[Symbol.iterator]() {
+      for (let e9 of this.buffer) yield e9;
+    }
+  };
+  function Z(s3) {
+    return s3 != null && typeof s3 != "string" && s3[Symbol.iterator];
+  }
+  var m = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.depth = r7;
+      this.depth = r7 != null ? r7 : 1;
+    }
+    *[Symbol.iterator]() {
+      for (let e9 of this.list) Z(e9) ? this.depth === 0 ? yield e9 : yield* new m(e9, this.depth - 1) : yield e9;
+    }
+  };
+  var _ = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    *[Symbol.iterator]() {
+      let e9 = /* @__PURE__ */ new Set(), r7 = -1;
+      for (let n6 of this.list) {
+        r7++;
+        let i8 = this.selector(n6, r7);
+        e9.has(i8) || (e9.add(i8), yield new z(i8, u(this.list).skip(r7).filter((o7, a4) => this.selector(o7, r7 + a4) === i8)));
+      }
+    }
+  };
+  var P = class extends c {
+    constructor(e9) {
+      super();
+      this.list = e9;
+    }
+    *[Symbol.iterator]() {
+      yield* [...this.list].reverse();
+    }
+  };
+  var B = class extends c {
+    constructor(e9, r7, n6) {
+      super();
+      this.list = e9;
+      this.other = r7;
+      this.selector = n6;
+    }
+    *[Symbol.iterator]() {
+      let e9 = /* @__PURE__ */ new Set(), r7 = 0, n6 = 0;
+      for (let i8 of this.other) {
+        let o7 = this.selector ? this.selector(i8, n6++) : i8;
+        e9.add(o7);
+      }
+      for (let i8 of this.list) {
+        let o7 = this.selector ? this.selector(i8, r7++) : i8;
+        e9.has(o7) || (yield i8);
+      }
+    }
+  };
+  var R = class extends c {
+    constructor(e9, r7, n6) {
+      super();
+      this.list = e9;
+      this.other = r7;
+      this.selector = n6;
+      this.selector = n6 != null ? n6 : (i8) => i8;
+    }
+    *[Symbol.iterator]() {
+      let e9 = -1;
+      for (let r7 of this.list) {
+        e9++;
+        let n6 = -1;
+        for (let i8 of this.other) if (n6++, this.selector(r7, e9) == this.selector(i8, n6)) {
+          yield r7;
+          break;
+        }
+      }
+    }
+  };
+  var b = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      typeof r7 == "number" ? this._size = r7 : this._matcher = r7;
+    }
+    *[Symbol.iterator]() {
+      if (this._size !== void 0) {
+        let e9 = -1;
+        for (let r7 of this.list) e9++, e9 >= this._size && (yield r7);
+      } else {
+        let e9 = true, r7 = -1;
+        for (let n6 of this.list) r7++, e9 && (e9 = this._matcher(n6, r7)), e9 || (yield n6);
+      }
+    }
+  };
+  var I = class extends b {
+    *[Symbol.iterator]() {
+      if (this._size !== void 0) {
+        let t5 = 0;
+        if (this._size <= 0) return;
+        for (let e9 of this.list) if (t5++, yield e9, t5 >= this._size) break;
+      } else {
+        let t5 = -1;
+        for (let e9 of this.list) {
+          if (t5++, !this._matcher(e9, t5)) return;
+          yield e9;
+        }
+      }
+    }
+  };
+  var g = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    *[Symbol.iterator]() {
+      let e9 = /* @__PURE__ */ new Set(), r7 = this.selector || ((i8) => i8), n6 = 0;
+      for (let i8 of this.list) {
+        let o7 = r7(i8, n6++);
+        e9.has(o7) || (e9.add(o7), yield i8);
+      }
+    }
+  };
+  var D = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    *[Symbol.iterator]() {
+      let e9 = 0;
+      for (let r7 of this.list) this.selector(r7, e9++) && (yield r7);
+    }
+  };
+  var C = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    *[Symbol.iterator]() {
+      let e9 = 0;
+      for (let r7 of this.list) {
+        let n6 = this.selector(r7, e9++);
+        for (let i8 of n6) yield i8;
+      }
+    }
+  };
+  var W = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    *[Symbol.iterator]() {
+      let e9 = [...this.list];
+      e9.sort((r7, n6) => {
+        let i8 = this.selector(r7, -1), o7 = this.selector(n6, -1);
+        return i8 < o7 ? -1 : i8 > o7 ? 1 : 0;
+      });
+      for (let r7 of e9) yield r7;
+    }
+  };
+  var L = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    *[Symbol.iterator]() {
+      let e9 = [...this.list];
+      e9.sort((r7, n6) => {
+        let i8 = this.selector(r7, -1), o7 = this.selector(n6, -1);
+        return i8 < o7 ? 1 : i8 > o7 ? -1 : 0;
+      });
+      for (let r7 of e9) yield r7;
+    }
+  };
+  var F = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.size = r7;
+    }
+    *[Symbol.iterator]() {
+      let e9 = [];
+      for (let r7 of this.list) e9.length === this.size ? (yield u(e9), e9 = [r7]) : e9.push(r7);
+      e9.length && (yield u(e9));
+    }
+  };
+  var G = class extends c {
+    constructor(e9, r7) {
+      super();
+      this.list = e9;
+      this.selector = r7;
+    }
+    *[Symbol.iterator]() {
+      let e9 = 0;
+      for (let r7 of this.list) yield this.selector(r7, e9++);
+    }
+  };
+  var j = class extends c {
+    constructor(e9) {
+      super();
+      this.list = e9;
+    }
+    *[Symbol.iterator]() {
+      for (let e9 of this.list) yield e9;
+    }
+  };
+  function u(...s3) {
+    if (typeof s3[0] == "number") {
+      if (s3.length === 1) return u(function* () {
+        for (let e9 = 0; e9 < s3[0]; e9++) yield e9;
+      }());
+      if (s3.length === 2) return s3[0] < s3[1] ? u(function* () {
+        for (let e9 = s3[0]; e9 <= s3[1]; e9++) yield e9;
+      }()) : u(function* () {
+        for (let e9 = s3[0]; e9 >= s3[1]; e9--) yield e9;
+      }());
+      if (s3.length === 3) return s3[0] < s3[1] ? u(function* () {
+        for (let e9 = s3[0]; e9 <= s3[1]; e9 += s3[2]) yield e9;
+      }()) : u(function* () {
+        for (let e9 = s3[0]; e9 >= s3[1]; e9 -= s3[2]) yield e9;
+      }());
+    }
+    let t5 = s3[0];
+    if (typeof t5 == "object") {
+      if (Symbol.asyncIterator in t5) return new f(t5);
+      if (typeof t5.then == "function") {
+        async function* e9() {
+          yield* await t5;
+        }
+        return new f(e9());
+      }
+    }
+    if (t5 != null && t5[Symbol.iterator]) return new j(t5);
+    throw new Error("Argument is not iterable");
+  }
+
+  // cursor.ts
+  function buildCursor(timeline2, options2) {
+    const cursorBox = document.createElement("div");
+    cursorBox.append(document.createElement("sl-spinner"));
+    cursorBox.addEventListener("dblclick", async function(e9) {
+      cursorBox.classList.add("cursor-loading");
+    });
+    options2.eventAdd.subscribe(() => cursorBox.classList.remove("cursor-loading"));
+    const foreground = document.querySelector(".vis-center .vis-foreground");
+    cursorBox.className = "cursor-selection";
+    foreground.appendChild(cursorBox);
+    foreground.addEventListener("mouseleave", function() {
+      cursorBox.style.display = "none";
+    });
+    foreground.addEventListener("mousemove", function(e9) {
+      const target = e9.target;
+      if (target === cursorBox) {
+        return;
+      }
+      if (cursorBox.contains(target)) {
+        return;
+      }
+      const x3 = e9.clientX - foreground.getBoundingClientRect().left;
+      if (!target.classList.contains("vis-group")) {
+        cursorBox.style.display = "none";
+        return;
+      }
+      cursorBox.style.display = "grid";
+      const anotherDiv = document.querySelector(
+        "div.vis-panel.vis-background.vis-vertical > div.vis-time-axis.vis-background"
+      );
+      const anotherDivPos = anotherDiv.getBoundingClientRect().left;
+      if (!leftPoints.length) {
+        const children = Array.from(anotherDiv.children);
+        const weekFromElement = (el) => {
+          const classList = Array.from(el.classList).filter((f5) => !["vis-even", "vis-odd", "vis-minor", "vis-major"].includes(f5));
+          return classList.join(" ");
+        };
+        const grouped = u(children).groupBy((e10) => weekFromElement(e10)).toArray();
+        const points = grouped.map((group) => {
+          const left = group.first().getBoundingClientRect().left;
+          const width = group.reduce(
+            (acc, el) => acc + el.getBoundingClientRect().width,
+            0
+          );
+          const adjustedWidth = left - anotherDivPos;
+          return { left: adjustedWidth, width };
+        });
+        leftPoints = points;
+      }
+      const index = leftPoints.findLastIndex((c6) => c6.left < x3);
+      const closest = leftPoints[index];
+      cursorBox.style.left = `${closest.left}px`;
+      cursorBox.style.width = `${closest.width}px`;
+      cursorBox.style.transform = "";
+      try {
+        if (cursorBox.parentElement !== target) {
+          target.prepend(cursorBox);
+        }
+      } catch (ex) {
+      }
+    });
+    let leftPoints = [];
+    timeline2.on("rangechange", ({ byUser, event: event2 }) => {
+      leftPoints = [];
+      if (!byUser) {
+        return;
+      }
+      if (!event2 || !event2.deltaX) {
+        return;
+      }
+      const deltaX = event2.deltaX;
+      cursorBox.style.transform = `translateX(${deltaX}px)`;
+    });
+    timeline2.on("rangechanged", () => {
+      const transform = cursorBox.style.transform;
+      if (!transform) {
+        return;
+      }
+      const match2 = transform.match(/translateX\(([^)]+)\)/);
+      if (!match2) {
+        return;
+      }
+      const x3 = parseFloat(match2[1]);
+      const left = parseFloat(cursorBox.style.left);
+      cursorBox.style.left = `${left + x3}px`;
+      cursorBox.style.transform = "";
+    });
+  }
+
+  // node_modules/grainjs/dist/esm/lib/emit.js
+  function _noop() {
+  }
+  var LLink = class {
+    constructor() {
+      this._next = null;
+      this._prev = null;
+      this._next = this;
+      this._prev = this;
+    }
+    isDisposed() {
+      return !this._next;
+    }
+    _insertBefore(next2, node2) {
+      const last = next2._prev;
+      last._next = node2;
+      next2._prev = node2;
+      node2._prev = last;
+      node2._next = next2;
+    }
+    _removeNode(node2) {
+      if (node2._prev) {
+        node2._prev._next = node2._next;
+        node2._next._prev = node2._prev;
+      }
+      node2._prev = node2._next = null;
+    }
+    _disposeList() {
+      let node2 = this;
+      let next2 = node2._next;
+      while (next2 !== null) {
+        node2._next = node2._prev = null;
+        node2 = next2;
+        next2 = node2._next;
+      }
+    }
+  };
+  var Emitter = class extends LLink {
+    /**
+     * Constructs an Emitter object.
+     */
+    constructor() {
+      super();
+      this._changeCB = _noop;
+      this._changeCBContext = void 0;
+    }
+    /**
+     * Adds a listening callback to the list of functions to call on emit().
+     * @param {Function} callback: Function to call.
+     * @param {Object} optContext: Context for the function.
+     * @returns {Listener} Listener object. Its dispose() method removes the callback from the list.
+     */
+    addListener(callback, optContext) {
+      return new Listener(this, callback, optContext);
+    }
+    /**
+     * Calls all listener callbacks, passing all arguments to each of them.
+     */
+    emit(...args) {
+      Listener.callAll(this._next, this, args);
+    }
+    /**
+     * Sets the single callback that would get called when a listener is added or removed.
+     * @param {Function} changeCB(hasListeners): Function to call after a listener is added or
+     *    removed. It's called with a boolean indicating whether this Emitter has any listeners.
+     *    Pass in `null` to unset the callback. Note that it can be called multiple times in a row
+     *    with hasListeners `true`.
+     */
+    setChangeCB(changeCB, optContext) {
+      this._changeCB = changeCB || _noop;
+      this._changeCBContext = optContext;
+    }
+    /**
+     * Helper used by Listener class, but not intended for public usage.
+     */
+    _triggerChangeCB() {
+      this._changeCB.call(this._changeCBContext, this.hasListeners());
+    }
+    /**
+     * Returns whether this Emitter has any listeners.
+     */
+    hasListeners() {
+      return this._next !== this;
+    }
+    /**
+     * Disposes the Emitter. It breaks references between the emitter and all the items, allowing
+     * for better garbage collection. It effectively disposes all current listeners.
+     */
+    dispose() {
+      this._disposeList();
+      this._changeCB = _noop;
+      this._changeCBContext = void 0;
+    }
+  };
+  var Listener = class extends LLink {
+    constructor(emitter, callback, context2) {
+      super();
+      this.emitter = emitter;
+      this.callback = callback;
+      this.context = context2;
+      this._insertBefore(emitter, this);
+      emitter._triggerChangeCB();
+    }
+    static callAll(begin, end, args) {
+      while (begin !== end) {
+        const lis = begin;
+        lis.callback.call(lis.context, ...args);
+        begin = lis._next;
+      }
+    }
+    dispose() {
+      if (this.isDisposed()) {
+        return;
+      }
+      this._removeNode(this);
+      this.emitter._triggerChangeCB();
+    }
+  };
+
+  // node_modules/grainjs/dist/esm/lib/dispose.js
+  var _noopOwner = {
+    autoDispose(obj) {
+    }
+  };
+  var _defaultDisposableOwner = _noopOwner;
+  var Disposable = class {
+    constructor() {
+      this._disposalList = new DisposalList();
+      _defaultDisposableOwner.autoDispose(this);
+      _defaultDisposableOwner = _noopOwner;
+    }
+    /**
+     * Create Disposable instances using `Class.create(owner, ...)` rather than `new Class(...)`.
+     *
+     * This reminds you to provide an owner, and ensures that if the constructor throws an
+     * exception, dispose() gets called to clean up the partially-constructed object.
+     *
+     * Owner may be null if intend to ensure disposal some other way.
+     */
+    static create(owner, ...args) {
+      const origDefaultOwner = _defaultDisposableOwner;
+      const holder = new Holder();
+      try {
+        _defaultDisposableOwner = holder;
+        return setDisposeOwner(owner, new this(...args));
+      } catch (e9) {
+        try {
+          holder.clear();
+        } catch (e22) {
+          console.error("Error disposing partially constructed %s:", this.name, e22);
+        }
+        throw e9;
+      } finally {
+        holder.release();
+        _defaultDisposableOwner = origDefaultOwner;
+      }
+    }
+    /** Take ownership of obj, and dispose it when this.dispose() is called. */
+    autoDispose(obj) {
+      this.onDispose(obj.dispose, obj);
+      return obj;
+    }
+    /** Call the given callback when this.dispose() is called. */
+    onDispose(callback, context2) {
+      return this._disposalList.addListener(callback, context2);
+    }
+    /**
+     * Wipe out this object when it is disposed, i.e. set all its properties to null. It is
+     * recommended to call this early in the constructor.
+     *
+     * This makes disposal more costly, but has certain benefits:
+     * - If anything still refers to the object and uses it, we'll get an early error, rather than
+     *   silently keep going, potentially doing useless work (or worse) and wasting resources.
+     * - If anything still refers to the object (even without using it), the fields of the object
+     *   can still be garbage-collected.
+     * - If there are circular references involving this object, they get broken, making the job
+     *   easier for the garbage collector.
+     *
+     * The recommendation is to use it for complex, longer-lived objects, but to skip for objects
+     * which are numerous and short-lived (and less likely to be referenced from unexpected places).
+     */
+    wipeOnDispose() {
+      this.onDispose(this._wipeOutObject, this);
+    }
+    /**
+     * Returns whether this object has already been disposed.
+     */
+    isDisposed() {
+      return this._disposalList === null;
+    }
+    /**
+     * Clean up `this` by disposing all owned objects, and calling onDispose() callbacks, in reverse
+     * order to that in which they were added.
+     */
+    dispose() {
+      const disposalList = this._disposalList;
+      if (!disposalList) {
+        console.error("Error disposing %s which is already disposed", _describe(this));
+      } else {
+        this._disposalList = null;
+        disposalList.callAndDispose(this);
+      }
+    }
+    /**
+     * Wipe out this object by setting each property to null. This is helpful for objects that are
+     * disposed and should be ready to be garbage-collected.
+     */
+    _wipeOutObject() {
+      for (const k3 of Object.keys(this)) {
+        this[k3] = null;
+      }
+    }
+  };
+  var Holder = class _Holder {
+    constructor() {
+      this._owned = null;
+      this._disposalListener = void 0;
+    }
+    static create(owner) {
+      return setDisposeOwner(owner, new _Holder());
+    }
+    /** Take ownership of a new object, disposing the previously held one. */
+    autoDispose(obj) {
+      this.clear();
+      this._owned = obj;
+      if (obj instanceof Disposable) {
+        this._disposalListener = obj.onDispose(this._onOutsideDispose, this);
+      }
+      return obj;
+    }
+    /** Releases the held object without disposing it, emptying the holder. */
+    release() {
+      this._unlisten();
+      const ret = this._owned;
+      this._owned = null;
+      return ret;
+    }
+    /** Disposes the held object and empties the holder. */
+    clear() {
+      this._unlisten();
+      const owned = this._owned;
+      if (owned) {
+        this._owned = null;
+        owned.dispose();
+      }
+    }
+    /** Returns the held object, or null if the Holder is empty. */
+    get() {
+      return this._owned;
+    }
+    /** Returns whether the Holder is empty. */
+    isEmpty() {
+      return !this._owned;
+    }
+    /** When the holder is disposed, it disposes the held object if any. */
+    dispose() {
+      this.clear();
+    }
+    /** Stop listening for the disposal of this._owned. */
+    _unlisten() {
+      const disposalListener = this._disposalListener;
+      if (disposalListener) {
+        this._disposalListener = void 0;
+        disposalListener.dispose();
+      }
+    }
+    _onOutsideDispose() {
+      this._disposalListener = void 0;
+      this._owned = null;
+    }
+  };
+  var MultiHolder = class extends Disposable {
+  };
+  function setDisposeOwner(owner, obj) {
+    if (owner) {
+      owner.autoDispose(obj);
+    }
+    return obj;
+  }
+  function _describe(obj) {
+    return obj && obj.constructor && obj.constructor.name ? obj.constructor.name : "" + obj;
+  }
+  var DisposalList = class extends LLink {
+    constructor() {
+      super();
+    }
+    addListener(callback, optContext) {
+      const lis = new DisposeListener(callback, optContext);
+      this._insertBefore(this._next, lis);
+      return lis;
+    }
+    /**
+     * Call all callbacks and dispose this object. The owner is required for better reporting of
+     * errors if any callback throws.
+     */
+    callAndDispose(owner) {
+      try {
+        DisposeListener.callAll(this._next, this, owner);
+      } finally {
+        this._disposeList();
+      }
+    }
+  };
+  var DisposeListener = class extends LLink {
+    constructor(callback, context2) {
+      super();
+      this.callback = callback;
+      this.context = context2;
+    }
+    static callAll(begin, end, owner) {
+      while (begin !== end) {
+        const lis = begin;
+        try {
+          lis.callback.call(lis.context);
+        } catch (e9) {
+          console.error("While disposing %s, error disposing %s: %s", _describe(owner), _describe(this), e9);
+        }
+        begin = lis._next;
+      }
+    }
+    dispose() {
+      if (this.isDisposed()) {
+        return;
+      }
+      this._removeNode(this);
+    }
+  };
+
+  // node_modules/grainjs/dist/esm/lib/PriorityQueue.js
+  var PriorityQueue = class {
+    constructor(_isPrior) {
+      this._isPrior = _isPrior;
+      this._items = [];
+    }
+    get size() {
+      return this._items.length;
+    }
+    push(item) {
+      const items2 = this._items;
+      const isPrior = this._isPrior;
+      let curIdx = this._items.length;
+      while (curIdx > 0) {
+        const parIdx = curIdx - 1 >> 1;
+        const parItem = items2[parIdx];
+        if (isPrior(parItem, item)) {
+          break;
+        }
+        items2[curIdx] = parItem;
+        curIdx = parIdx;
+      }
+      items2[curIdx] = item;
+    }
+    peek() {
+      return this._items[0];
+    }
+    pop() {
+      if (this._items.length <= 1) {
+        return this._items.pop();
+      }
+      const items2 = this._items;
+      const isPrior = this._isPrior;
+      const result = items2[0];
+      const item = items2.pop();
+      const size = this._items.length;
+      let curIdx = 0;
+      let leftIdx = 1;
+      while (leftIdx < size) {
+        const rightIdx = leftIdx + 1;
+        const bestIdx = rightIdx < size && isPrior(items2[rightIdx], items2[leftIdx]) ? rightIdx : leftIdx;
+        if (isPrior(item, items2[bestIdx])) {
+          break;
+        }
+        items2[curIdx] = items2[bestIdx];
+        curIdx = bestIdx;
+        leftIdx = curIdx + curIdx + 1;
+      }
+      items2[curIdx] = item;
+      return result;
+    }
+  };
+
+  // node_modules/grainjs/dist/esm/lib/_computed_queue.js
+  var DepItem = class {
+    /**
+     * Callback should call depItem.useDep(dep) for each DepInput it depends on.
+     */
+    constructor(callback, optContext) {
+      this._priority = 0;
+      this._enqueued = false;
+      this._creation = ++_nextCreationNum;
+      this._callback = callback;
+      this._context = optContext;
+    }
+    static isPrioritySmaller(a4, b4) {
+      return a4._priority < b4._priority || a4._priority === b4._priority && a4._creation < b4._creation;
+    }
+    /**
+     * Mark depItem as a dependency of this DepItem. The argument may be null to indicate a leaf (an
+     * item such as a plain observable, which does not itself depend on anything else).
+     */
+    useDep(depItem) {
+      const p4 = depItem ? depItem._priority : 0;
+      if (p4 >= this._priority) {
+        this._priority = p4 + 1;
+      }
+    }
+    /**
+     * Recompute this DepItem, calling the callback given in the constructor.
+     */
+    recompute() {
+      this._priority = 0;
+      this._callback.call(this._context);
+    }
+    /**
+     * Add this DepItem to the queue, to be recomputed when the time is right.
+     */
+    enqueue() {
+      if (!this._enqueued) {
+        this._enqueued = true;
+        queue.push(this);
+      }
+    }
+  };
+  var queue = new PriorityQueue(DepItem.isPrioritySmaller);
+  var _nextCreationNum = 0;
+  var _seen = [];
+  var bundleDepth = 0;
+  function compute() {
+    if (bundleDepth === 0 && queue.size > 0) {
+      bundleDepth++;
+      try {
+        do {
+          const item = queue.pop();
+          _seen.push(item);
+          item.recompute();
+        } while (queue.size > 0);
+      } finally {
+        for (const item of _seen) {
+          item._enqueued = false;
+        }
+        _seen.length = 0;
+        bundleDepth--;
+      }
+    }
+  }
+  function bundleChanges(func) {
+    try {
+      bundleDepth++;
+      return func();
+    } finally {
+      bundleDepth--;
+      compute();
+    }
+  }
+
+  // node_modules/grainjs/dist/esm/lib/observable.js
+  var BaseObservable = class {
+    /**
+     * Internal constructor for an Observable. You should use observable() function instead.
+     */
+    constructor(value) {
+      this._onChange = new Emitter();
+      this._value = value;
+    }
+    /**
+     * Returns the value of the observable. It is fast and does not create a subscription.
+     * (It is similar to knockout's peek()).
+     * @returns {Object} The current value of the observable.
+     */
+    get() {
+      return this._value;
+    }
+    /**
+     * Sets the value of the observable. If the value differs from the previously set one, then
+     * listeners to this observable will get called with (newValue, oldValue) as arguments.
+     * @param {Object} value: The new value to set.
+     */
+    set(value) {
+      if (value !== this._value) {
+        this.setAndTrigger(value);
+      }
+    }
+    /**
+     * Sets the value of the observable AND calls listeners even if the value is unchanged.
+     */
+    setAndTrigger(value) {
+      const prev = this._value;
+      this._value = value;
+      this._onChange.emit(value, prev);
+      this._disposeOwned();
+      compute();
+    }
+    /**
+     * Adds a callback to listen to changes in the observable.
+     * @param {Function} callback: Function, called on changes with (newValue, oldValue) arguments.
+     * @param {Object} optContext: Context for the function.
+     * @returns {Listener} Listener object. Its dispose() method removes the callback.
+     */
+    addListener(callback, optContext) {
+      return this._onChange.addListener(callback, optContext);
+    }
+    /**
+     * Returns whether this observable has any listeners.
+     */
+    hasListeners() {
+      return this._onChange.hasListeners();
+    }
+    /**
+     * Sets a single callback to be called when a listener is added or removed. It overwrites any
+     * previously-set such callback.
+     * @param {Function} changeCB(hasListeners): Function to call after a listener is added or
+     *    removed. It's called with a boolean indicating whether this observable has any listeners.
+     *    Pass in `null` to unset the callback. Note that it can be called multiple times in a row
+     *    with hasListeners `true`.
+     */
+    setListenerChangeCB(changeCB, optContext) {
+      this._onChange.setChangeCB(changeCB, optContext);
+    }
+    /**
+     * Used by subscriptions to keep track of dependencies. An observable that has dependnecies,
+     * such as a computed observable, would override this method.
+     */
+    _getDepItem() {
+      return null;
+    }
+    /**
+     * Disposes the observable.
+     */
+    dispose() {
+      this._disposeOwned();
+      this._onChange.dispose();
+      this._value = void 0;
+    }
+    /**
+     * Returns whether this observable is disposed.
+     */
+    isDisposed() {
+      return this._onChange.isDisposed();
+    }
+    _disposeOwned(arg) {
+    }
+    /**
+     * Allow derived classes to emit change events with an additional third argument describing the
+     * change. It always emits the event without checking for value equality.
+     */
+    _setWithArg(value, arg) {
+      const prev = this._value;
+      this._value = value;
+      this._onChange.emit(value, prev, arg);
+      this._disposeOwned(arg);
+      compute();
+    }
+  };
+  var Observable = class _Observable extends BaseObservable {
+    constructor() {
+      super(...arguments);
+      this._owned = void 0;
+    }
+    // See module-level holder() function below for documentation.
+    static holder(value) {
+      const obs = new _Observable(value);
+      obs._owned = value;
+      return obs;
+    }
+    /**
+     * Creates a new Observable with the given initial value, and owned by owner.
+     */
+    static create(owner, value) {
+      return setDisposeOwner(owner, new _Observable(value));
+    }
+    /**
+     * The use an observable for a disposable object, use it a DisposableOwner:
+     *
+     *    D.create(obs, ...args)                      // Preferred
+     *    obs.autoDispose(D.create(null, ...args))    // Equivalent
+     *
+     * Either of these usages will set the observable to the newly created value. The observable
+     * will dispose the owned value when it's set to another value, or when it itself is disposed.
+     */
+    autoDispose(value) {
+      this.setAndTrigger(value);
+      this._owned = value;
+      return value;
+    }
+    _disposeOwned() {
+      if (this._owned) {
+        this._owned.dispose();
+        this._owned = void 0;
+      }
+    }
+  };
+  function observable(value) {
+    return new Observable(value);
+  }
+
+  // node_modules/grainjs/dist/esm/lib/domDispose.js
+  var _disposeMap = /* @__PURE__ */ new WeakMap();
+  function _walkDom(elem, visitFunc) {
+    let c6 = elem.firstChild;
+    while (c6) {
+      _walkDom(c6, visitFunc);
+      c6 = c6.nextSibling;
+    }
+    visitFunc(elem);
+  }
+  function _disposeNode(node2) {
+    let disposer = _disposeMap.get(node2);
+    if (disposer) {
+      let key2 = node2;
+      do {
+        _disposeMap.delete(key2);
+        disposer(node2);
+        key2 = disposer;
+        disposer = _disposeMap.get(key2);
+      } while (disposer);
+    }
+  }
+  function _disposeNodeRecursive(node2) {
+    _walkDom(node2, domDisposeHooks.disposeNode);
+  }
+  var domDisposeHooks = {
+    disposeNode: _disposeNode,
+    disposeRecursive: _disposeNodeRecursive
+  };
+  function domDispose(node2) {
+    domDisposeHooks.disposeRecursive(node2);
+  }
+  function onDisposeElem(elem, disposerFunc) {
+    const prevDisposer = _disposeMap.get(elem);
+    _disposeMap.set(elem, disposerFunc);
+    if (prevDisposer) {
+      _disposeMap.set(disposerFunc, prevDisposer);
+    }
+  }
+  function onDispose(disposerFunc) {
+    return (elem) => onDisposeElem(elem, disposerFunc);
+  }
+  function autoDisposeElem(elem, disposable) {
+    if (disposable) {
+      onDisposeElem(elem, () => disposable.dispose());
+    }
+  }
+  function autoDispose(disposable) {
+    if (disposable) {
+      return (elem) => autoDisposeElem(elem, disposable);
+    }
+  }
+
+  // node_modules/grainjs/dist/esm/lib/kowrap.js
+  var fromKoWrappers = /* @__PURE__ */ new WeakMap();
+  function fromKo(koObs) {
+    return fromKoWrappers.get(koObs) || fromKoWrappers.set(koObs, new KoWrapObs(koObs)).get(koObs);
+  }
+  var KoWrapObs = class extends Observable {
+    constructor(_koObs) {
+      super(_koObs.peek());
+      this._koObs = _koObs;
+      this._koSub = null;
+      this.setListenerChangeCB((hasListeners) => {
+        if (!hasListeners) {
+          this._koSub.dispose();
+          this._koSub = null;
+        } else if (!this._koSub) {
+          this._value = this._koObs.peek();
+          this._koSub = this._koObs.subscribe((val) => this.setAndTrigger(val));
+        }
+      });
+    }
+    get() {
+      return this._koObs.peek();
+    }
+    set(value) {
+      bundleChanges(() => this._koObs(value));
+    }
+    dispose() {
+      throw new Error("KoWrapObs should not be disposed");
+    }
+  };
+
+  // node_modules/grainjs/dist/esm/lib/subscribe.js
+  var emptyArray = [];
+  var Subscription = class {
+    /**
+     * Internal constructor for a Subscription. You should use subscribe() function instead.
+     * The last owner argument is used by computed() to make itself available as the .owner property
+     * of the 'use' function that gets passed to the callback.
+     */
+    constructor(callback, dependencies, owner) {
+      this._depItem = new DepItem(this._evaluate, this);
+      this._dependencies = dependencies.length > 0 ? dependencies : emptyArray;
+      this._depListeners = dependencies.length > 0 ? dependencies.map((obs) => this._subscribeTo(obs)) : emptyArray;
+      this._dynDeps = /* @__PURE__ */ new Map();
+      this._callback = callback;
+      this._useFunc = this._useDependency.bind(this);
+      if (owner) {
+        this._useFunc.owner = owner;
+      }
+      this._evaluate();
+    }
+    /**
+     * Disposes the computed, unsubscribing it from all observables it depends on.
+     */
+    dispose() {
+      this._callback = null;
+      for (const lis of this._depListeners) {
+        lis.dispose();
+      }
+      for (const lis of this._dynDeps.values()) {
+        lis.dispose();
+      }
+    }
+    /**
+     * For use by computed(): returns this subscription's hook into the _computed_queue.
+     */
+    _getDepItem() {
+      return this._depItem;
+    }
+    /**
+     * @private
+     * Gets called when the callback calls `use(obs)` for an observable. It creates a
+     * subscription to `obs` if one doesn't yet exist.
+     * @param {Observable} obs: The observable being used as a dependency.
+     */
+    _useDependency(_obs) {
+      const obs = "_getDepItem" in _obs ? _obs : fromKo(_obs);
+      let listener = this._dynDeps.get(obs);
+      if (!listener) {
+        listener = this._subscribeTo(obs);
+        this._dynDeps.set(obs, listener);
+      }
+      listener._inUse = true;
+      this._depItem.useDep(obs._getDepItem());
+      return obs.get();
+    }
+    /**
+     * @private
+     * Calls the callback() with appropriate args, and updates subscriptions when it is done.
+     * I.e. adds dynamic subscriptions created via `use(obs)`, and disposes those no longer used.
+     */
+    _evaluate() {
+      if (this._callback === null) {
+        return;
+      }
+      try {
+        const readArgs = [this._useFunc];
+        for (let i8 = 0, len = this._dependencies.length; i8 < len; i8++) {
+          readArgs[i8 + 1] = this._dependencies[i8].get();
+          this._depItem.useDep(this._dependencies[i8]._getDepItem());
+        }
+        return this._callback.apply(void 0, readArgs);
+      } finally {
+        this._dynDeps.forEach((listener, obs) => {
+          if (listener._inUse) {
+            listener._inUse = false;
+          } else {
+            this._dynDeps.delete(obs);
+            listener.dispose();
+          }
+        });
+      }
+    }
+    /**
+     * @private
+     * Subscribes this computed to another observable that it depends on.
+     * @param {Observable} obs: The observable to subscribe to.
+     * @returns {Listener} Listener object.
+     */
+    _subscribeTo(_obs) {
+      const obs = "_getDepItem" in _obs ? _obs : fromKo(_obs);
+      return obs.addListener(this._enqueue, this);
+    }
+    /**
+     * @private
+     * Adds this item to the recompute queue.
+     */
+    _enqueue() {
+      this._depItem.enqueue();
+    }
+  };
+  function subscribe(...args) {
+    const cb = args.pop();
+    return new Subscription(cb, args);
+  }
+
+  // node_modules/grainjs/dist/esm/lib/computed.js
+  function _noWrite() {
+    throw new Error("Can't write to non-writable computed");
+  }
+  var Computed = class _Computed extends Observable {
+    /**
+     * Internal constructor for a Computed observable. You should use computed() function instead.
+     */
+    constructor(callback, dependencies) {
+      super(void 0);
+      this._callback = callback;
+      this._write = _noWrite;
+      this._sub = new Subscription(this._read.bind(this), dependencies, this);
+    }
+    /**
+     * Creates a new Computed, owned by the given owner.
+     * @param owner: Object to own this Computed, or null to handle disposal manually.
+     * @param ...observables: Zero or more observables on which this computes depends. The callback
+     *        will get called when any of these changes.
+     * @param callback: Read callback that will be called with (use, ...values),
+     *    i.e. the `use` function and values for all of the ...observables. The callback is called
+     *    immediately and whenever any dependency changes.
+     * @returns {Computed} The newly created computed observable.
+     */
+    static create(owner, ...args) {
+      const readCb = args.pop();
+      return setDisposeOwner(owner, new _Computed(readCb, args));
+    }
+    /**
+     * Used by subscriptions to keep track of dependencies.
+     */
+    _getDepItem() {
+      return this._sub._getDepItem();
+    }
+    /**
+     * "Sets" the value of the computed by calling the write() callback if one was provided in the
+     * constructor. Throws an error if there was no such callback (not a "writable" computed).
+     * @param {Object} value: The value to pass to the write() callback.
+     */
+    set(value) {
+      this._write(value);
+    }
+    /**
+     * Set callback to call when this.set(value) is called, to make it a writable computed. If not
+     * set, attempting to write to this computed will throw an exception.
+     */
+    onWrite(writeFunc) {
+      this._write = writeFunc;
+      return this;
+    }
+    /**
+     * Disposes the computed, unsubscribing it from all observables it depends on.
+     */
+    dispose() {
+      this._sub.dispose();
+      super.dispose();
+    }
+    _read(use, ...args) {
+      super.set(this._callback(use, ...args));
+    }
+  };
+  function computed(...args) {
+    const readCb = args.pop();
+    return new Computed(readCb, args);
+  }
+
+  // node_modules/grainjs/dist/esm/lib/binding.js
+  function subscribeBindable(valueObs, callback) {
+    if (typeof valueObs === "function") {
+      const koValue = valueObs;
+      if (typeof koValue.peek === "function") {
+        const sub = koValue.subscribe((val) => callback(val));
+        callback(koValue.peek());
+        return sub;
+      }
+      const comp = computed(valueObs);
+      comp.addListener((val) => callback(val));
+      callback(comp.get());
+      return comp;
+    }
+    if (valueObs instanceof BaseObservable) {
+      return subscribe(valueObs, (use, val) => callback(val));
+    }
+    callback(valueObs);
+    return null;
+  }
+  function subscribeElem(elem, valueObs, callback) {
+    autoDisposeElem(elem, subscribeBindable(valueObs, callback));
+  }
+
+  // node_modules/grainjs/dist/esm/lib/browserGlobals.js
+  function _updateGlobals(dest, source) {
+    dest.DocumentFragment = source.DocumentFragment;
+    dest.Element = source.Element;
+    dest.Node = source.Node;
+    dest.document = source.document;
+    dest.window = source.window;
+  }
+  var initial = {};
+  _updateGlobals(initial, typeof window !== "undefined" ? window : {});
+  var G2 = Object.assign({}, initial);
+
+  // node_modules/grainjs/dist/esm/lib/domMethods.js
+  var _dataMap = /* @__PURE__ */ new WeakMap();
+  function attrsElem(elem, attrsObj) {
+    for (const key2 of Object.keys(attrsObj)) {
+      const val = attrsObj[key2];
+      if (val != null && val !== false) {
+        elem.setAttribute(key2, val === true ? "" : val);
+      }
+    }
+  }
+  function attrs(attrsObj) {
+    return (elem) => attrsElem(elem, attrsObj);
+  }
+  function attrElem(elem, attrName, attrValue) {
+    if (attrValue === null || attrValue === void 0) {
+      elem.removeAttribute(attrName);
+    } else {
+      elem.setAttribute(attrName, attrValue);
+    }
+  }
+  function attr(attrName, attrValueObs) {
+    return (elem) => subscribeElem(elem, attrValueObs, (val) => attrElem(elem, attrName, val));
+  }
+  function boolAttrElem(elem, attrName, boolValue) {
+    attrElem(elem, attrName, boolValue ? "" : null);
+  }
+  function boolAttr(attrName, boolValueObs) {
+    return (elem) => subscribeElem(elem, boolValueObs, (val) => boolAttrElem(elem, attrName, val));
+  }
+  function textElem(elem, value) {
+    elem.appendChild(G2.document.createTextNode(value));
+  }
+  function text(valueObs) {
+    return (elem) => {
+      const textNode = G2.document.createTextNode("");
+      subscribeElem(elem, valueObs, (val) => {
+        textNode.nodeValue = val;
+      });
+      elem.appendChild(textNode);
+    };
+  }
+  function styleElem(elem, property, value) {
+    elem.style[property] = value;
+  }
+  function style2(property, valueObs) {
+    return (elem) => subscribeElem(elem, valueObs, (val) => styleElem(elem, property, val));
+  }
+  function propElem(elem, property, value) {
+    elem[property] = value;
+  }
+  function prop(property, valueObs) {
+    return (elem) => subscribeElem(elem, valueObs, (val) => propElem(elem, property, val));
+  }
+  function showElem(elem, boolValue) {
+    elem.style.display = boolValue ? "" : "none";
+  }
+  function show(boolValueObs) {
+    return (elem) => subscribeElem(elem, boolValueObs, (val) => showElem(elem, val));
+  }
+  function hideElem(elem, boolValue) {
+    elem.style.display = boolValue ? "none" : "";
+  }
+  function hide(boolValueObs) {
+    return (elem) => subscribeElem(elem, boolValueObs, (val) => hideElem(elem, val));
+  }
+  function clsElem(elem, className, boolValue = true) {
+    elem.classList.toggle(className, Boolean(boolValue));
+  }
+  function cls(className, boolValue) {
+    if (typeof className !== "string") {
+      return _clsDynamicPrefix("", className);
+    } else if (!boolValue || typeof boolValue === "boolean") {
+      return (elem) => clsElem(elem, className, boolValue);
+    } else {
+      return (elem) => subscribeElem(elem, boolValue, (val) => clsElem(elem, className, val));
+    }
+  }
+  function clsPrefix(prefix, className, boolValue) {
+    if (typeof className !== "string") {
+      return _clsDynamicPrefix(prefix, className);
+    } else {
+      return cls(prefix + className, boolValue);
+    }
+  }
+  function _clsDynamicPrefix(prefix, className) {
+    return (elem) => {
+      let prevClass = null;
+      subscribeElem(elem, className, (name) => {
+        if (prevClass) {
+          elem.classList.remove(prevClass);
+        }
+        prevClass = name ? prefix + name : null;
+        if (prevClass) {
+          elem.classList.add(prevClass);
+        }
+      });
+    };
+  }
+  function dataElem(elem, key2, value) {
+    const obj = _dataMap.get(elem);
+    if (obj) {
+      obj[key2] = value;
+    } else {
+      onDisposeElem(elem, () => _dataMap.delete(elem));
+      _dataMap.set(elem, { [key2]: value });
+    }
+  }
+  function data(key2, valueObs) {
+    return (elem) => subscribeElem(elem, valueObs, (val) => dataElem(elem, key2, val));
+  }
+  function getData(elem, key2) {
+    const obj = _dataMap.get(elem);
+    return obj && obj[key2];
+  }
+
+  // node_modules/grainjs/dist/esm/lib/domImpl.js
+  function dom(tagString, ...args) {
+    return _updateWithArgsOrDispose(_createFromTagString(_createElementHtml, tagString), args);
+  }
+  function svg(tagString, ...args) {
+    return _updateWithArgsOrDispose(_createFromTagString(_createElementSvg, tagString), args);
+  }
+  function _createElementHtml(tag) {
+    return G2.document.createElement(tag);
+  }
+  function _createElementSvg(tag) {
+    return G2.document.createElementNS("http://www.w3.org/2000/svg", tag);
+  }
+  function _createFromTagString(createFunc, tagString) {
+    let tag;
+    let id2;
+    let classes;
+    let dotPos = tagString.indexOf(".");
+    const hashPos = tagString.indexOf("#");
+    if (dotPos === -1) {
+      dotPos = tagString.length;
+    } else {
+      classes = tagString.substring(dotPos + 1).replace(/\./g, " ");
+    }
+    if (hashPos === -1) {
+      tag = tagString.substring(0, dotPos);
+    } else if (hashPos > dotPos) {
+      throw new Error(`ID must come before classes in dom("${tagString}")`);
+    } else {
+      tag = tagString.substring(0, hashPos);
+      id2 = tagString.substring(hashPos + 1, dotPos);
+    }
+    const elem = createFunc(tag);
+    if (id2) {
+      elem.setAttribute("id", id2);
+    }
+    if (classes) {
+      elem.setAttribute("class", classes);
+    }
+    return elem;
+  }
+  function update(elem, ...args) {
+    return _updateWithArgs(elem, args);
+  }
+  function _updateWithArgs(elem, args) {
+    for (const arg of args) {
+      _updateWithArg(elem, arg);
+    }
+    return elem;
+  }
+  function _updateWithArgsOrDispose(elem, args) {
+    try {
+      return _updateWithArgs(elem, args);
+    } catch (e9) {
+      domDispose(elem);
+      throw e9;
+    }
+  }
+  function _updateWithArg(elem, arg) {
+    if (typeof arg === "function") {
+      const value = arg(elem);
+      if (value !== void 0 && value !== null) {
+        _updateWithArg(elem, value);
+      }
+    } else if (Array.isArray(arg)) {
+      _updateWithArgs(elem, arg);
+    } else if (arg === void 0 || arg === null) {
+    } else if (arg instanceof G2.Node) {
+      elem.appendChild(arg);
+    } else if (typeof arg === "object") {
+      attrsElem(elem, arg);
+    } else {
+      elem.appendChild(G2.document.createTextNode(arg));
+    }
+  }
+  function frag(...args) {
+    const elem = G2.document.createDocumentFragment();
+    return _updateWithArgsOrDispose(elem, args);
+  }
+  function find(selector) {
+    return G2.document.querySelector(selector);
+  }
+  function findAll(selector) {
+    return G2.document.querySelectorAll(selector);
+  }
+
+  // node_modules/grainjs/dist/esm/lib/domComputed.js
+  function replaceContent(nodeBefore, nodeAfter, content) {
+    const elem = nodeBefore.parentNode;
+    if (elem) {
+      let next2;
+      for (let n6 = nodeBefore.nextSibling; n6 && n6 !== nodeAfter; n6 = next2) {
+        next2 = n6.nextSibling;
+        domDispose(n6);
+        elem.removeChild(n6);
+      }
+      if (content) {
+        elem.insertBefore(content instanceof G2.Node ? content : frag(content), nodeAfter);
+      }
+    }
+  }
+  function domComputed(valueObs, contentFunc = identity) {
+    const markerPre = G2.document.createComment("a");
+    const markerPost = G2.document.createComment("b");
+    return [markerPre, markerPost, (elem) => {
+      subscribeElem(markerPost, valueObs, (value) => replaceContent(markerPre, markerPost, contentFunc(value)));
+    }];
+  }
+  function domComputedOwned(valueObs, contentFunc) {
+    const holder = Holder.create(null);
+    const [markerPre, markerPost, func] = domComputed(valueObs, (val) => contentFunc(MultiHolder.create(holder), val));
+    autoDisposeElem(markerPost, holder);
+    return [markerPre, markerPost, func];
+  }
+  function identity(arg) {
+    return arg;
+  }
+  function maybe(boolValueObs, contentFunc) {
+    return domComputed(boolValueObs, (value) => value ? contentFunc(value) : null);
+  }
+  function maybeOwned(boolValueObs, contentFunc) {
+    return domComputedOwned(boolValueObs, (owner, value) => value ? contentFunc(owner, value) : null);
+  }
+
+  // node_modules/grainjs/dist/esm/lib/domComponent.js
+  function create(fn, ...args) {
+    return domComputedOwned(null, (owner) => {
+      const value = "create" in fn ? fn.create(owner, ...args) : fn(owner, ...args);
+      return value && typeof value === "object" && "buildDom" in value ? value.buildDom() : value;
+    });
+  }
+
+  // node_modules/grainjs/dist/esm/lib/obsArray.js
+  var ObsArray = class extends BaseObservable {
+    constructor() {
+      super(...arguments);
+      this._ownedItems = void 0;
+    }
+    addListener(callback, optContext) {
+      return super.addListener(callback, optContext);
+    }
+    autoDispose(value) {
+      if (!this._ownedItems) {
+        this._ownedItems = /* @__PURE__ */ new Set();
+      }
+      this._ownedItems.add(value);
+      return value;
+    }
+    dispose() {
+      if (this._ownedItems) {
+        for (const item of this.get()) {
+          if (this._ownedItems.delete(item)) {
+            item.dispose();
+          }
+        }
+        this._ownedItems = void 0;
+      }
+      super.dispose();
+    }
+    _setWithSplice(value, splice3) {
+      return this._setWithArg(value, splice3);
+    }
+    _disposeOwned(splice3) {
+      if (!this._ownedItems) {
+        return;
+      }
+      if (splice3) {
+        for (const item of splice3.deleted) {
+          if (this._ownedItems.delete(item)) {
+            item.dispose();
+          }
+        }
+      } else {
+        const oldOwnedItems = this._ownedItems;
+        this._ownedItems = /* @__PURE__ */ new Set();
+        for (const item of this.get()) {
+          if (oldOwnedItems.delete(item)) {
+            this._ownedItems.add(item);
+          }
+        }
+        for (const item of oldOwnedItems) {
+          item.dispose();
+        }
+      }
+    }
+  };
+  function isObsArray(val) {
+    return Array.isArray(val.get());
+  }
+  var ComputedArray = class extends ObsArray {
+    constructor(obsArr, _mapper) {
+      super([]);
+      this._mapper = _mapper;
+      this._sub = isObsArray(obsArr) ? subscribe(obsArr, (use) => this._syncMap(obsArr)) : subscribe(obsArr, (use, obsArrayValue) => {
+        use(obsArrayValue);
+        return this._syncMap(obsArrayValue);
+      });
+    }
+    dispose() {
+      this._unsync();
+      this._sub.dispose();
+      super.dispose();
+    }
+    _syncMap(obsArr) {
+      if (this._source !== obsArr) {
+        this._unsync();
+        this._listener = obsArr.addListener(this._recordChange, this);
+        this._source = obsArr;
+        this._rebuild(obsArr);
+      } else if (this._lastSplice) {
+        this._applySplice(obsArr, this._lastSplice);
+      } else {
+        this._rebuild(obsArr);
+      }
+      this._lastSplice = void 0;
+    }
+    _unsync() {
+      if (this._listener) {
+        this._listener.dispose();
+        this._listener = void 0;
+        this._source = void 0;
+      }
+    }
+    _rebuild(obsArr) {
+      this.set(obsArr.get().map((item, i8) => this._mapper.call(void 0, item, i8, this)));
+    }
+    _applySplice(obsArr, change) {
+      const sourceArray = obsArr.get();
+      const newItems = [];
+      for (let i8 = change.start, n6 = 0; n6 < change.numAdded; i8++, n6++) {
+        newItems.push(this._mapper.call(void 0, sourceArray[i8], i8, this));
+      }
+      const items2 = this.get();
+      const deleted = items2.splice(change.start, change.deleted.length, ...newItems);
+      this._setWithSplice(items2, { start: change.start, numAdded: newItems.length, deleted });
+    }
+    _recordChange(newItems, oldItems, change) {
+      if (change && this._lastSplice === void 0) {
+        this._lastSplice = change;
+      } else {
+        this._lastSplice = false;
+      }
+    }
+  };
+  function computedArray(obsArr, mapper) {
+    return new ComputedArray(obsArr, mapper);
+  }
+
+  // node_modules/grainjs/dist/esm/lib/domForEach.js
+  function forEach(obsArray, itemCreateFunc) {
+    const markerPre = G2.document.createComment("a");
+    const markerPost = G2.document.createComment("b");
+    return [markerPre, markerPost, (elem) => {
+      if (Array.isArray(obsArray)) {
+        replaceContent(markerPre, markerPost, obsArray.map(itemCreateFunc));
+        return;
+      }
+      const nodes = computedArray(obsArray, itemCreateFunc);
+      autoDisposeElem(markerPost, nodes);
+      nodes.addListener((newArr, oldArr, splice3) => {
+        if (splice3) {
+          for (const node2 of splice3.deleted) {
+            if (node2 && node2.parentNode === elem) {
+              domDispose(node2);
+              elem.removeChild(node2);
+            }
+          }
+          if (splice3.numAdded > 0) {
+            const endIndex = splice3.start + splice3.numAdded;
+            let nextElem = markerPost;
+            for (let i8 = endIndex; i8 < newArr.length; i8++) {
+              const node2 = newArr[i8];
+              if (node2 && node2.parentNode === elem) {
+                nextElem = node2;
+                break;
+              }
+            }
+            const content = frag(newArr.slice(splice3.start, endIndex));
+            elem.insertBefore(content, nextElem);
+          }
+        } else {
+          replaceContent(markerPre, markerPost, newArr);
+        }
+      });
+      replaceContent(markerPre, markerPost, nodes.get());
+    }];
+  }
+
+  // node_modules/grainjs/dist/esm/lib/domevent.js
+  function _findMatch(inner, outer, selector) {
+    for (let el = inner; el && el !== outer; el = el.parentElement) {
+      if (el.matches(selector)) {
+        return el;
+      }
+    }
+    return null;
+  }
+  var DomEventListener = class {
+    constructor(elem, eventType, callback, useCapture, selector) {
+      this.elem = elem;
+      this.eventType = eventType;
+      this.callback = callback;
+      this.useCapture = useCapture;
+      this.selector = selector;
+      this.elem.addEventListener(this.eventType, this, this.useCapture);
+    }
+    handleEvent(event2) {
+      const cb = this.callback;
+      cb(event2, this.elem);
+    }
+    dispose() {
+      this.elem.removeEventListener(this.eventType, this, this.useCapture);
+    }
+  };
+  var DomEventMatchListener = class extends DomEventListener {
+    handleEvent(event2) {
+      const elem = _findMatch(event2.target, this.elem, this.selector);
+      if (elem) {
+        const cb = this.callback;
+        cb(event2, elem);
+      }
+    }
+  };
+  function onElem(elem, eventType, callback, { useCapture = false } = {}) {
+    return new DomEventListener(elem, eventType, callback, useCapture);
+  }
+  function on(eventType, callback, { useCapture = false } = {}) {
+    return (elem) => {
+      new DomEventListener(elem, eventType, callback, useCapture);
+    };
+  }
+  function onMatchElem(elem, selector, eventType, callback, { useCapture = false } = {}) {
+    return new DomEventMatchListener(elem, eventType, callback, useCapture, selector);
+  }
+  function onMatch(selector, eventType, callback, { useCapture = false } = {}) {
+    return (elem) => {
+      new DomEventMatchListener(elem, eventType, callback, useCapture, selector);
+    };
+  }
+  function onKeyElem(elem, evType, keyHandlers) {
+    if (!(elem.tabIndex >= 0)) {
+      elem.setAttribute("tabindex", "-1");
+    }
+    return onElem(elem, evType, (ev, _elem) => {
+      const plainHandler = keyHandlers[ev.key];
+      const handler = plainHandler || keyHandlers[ev.key + "$"];
+      if (handler) {
+        if (plainHandler) {
+          ev.stopPropagation();
+          ev.preventDefault();
+        }
+        handler(ev, _elem);
+      }
+    });
+  }
+  function onKeyPress(keyHandlers) {
+    return (elem) => {
+      onKeyElem(elem, "keypress", keyHandlers);
+    };
+  }
+  function onKeyDown(keyHandlers) {
+    return (elem) => {
+      onKeyElem(elem, "keydown", keyHandlers);
+    };
+  }
+
+  // node_modules/grainjs/dist/esm/lib/dom.js
+  function dom2(tagString, ...args) {
+    return dom(tagString, ...args);
+  }
+  (function(dom4) {
+    dom4.svg = svg;
+    dom4.frag = frag;
+    dom4.update = update;
+    dom4.find = find;
+    dom4.findAll = findAll;
+    dom4.domDispose = domDispose;
+    dom4.onDisposeElem = onDisposeElem;
+    dom4.onDispose = onDispose;
+    dom4.autoDisposeElem = autoDisposeElem;
+    dom4.autoDispose = autoDispose;
+    dom4.attrsElem = attrsElem;
+    dom4.attrs = attrs;
+    dom4.attrElem = attrElem;
+    dom4.attr = attr;
+    dom4.boolAttrElem = boolAttrElem;
+    dom4.boolAttr = boolAttr;
+    dom4.textElem = textElem;
+    dom4.text = text;
+    dom4.styleElem = styleElem;
+    dom4.style = style2;
+    dom4.propElem = propElem;
+    dom4.prop = prop;
+    dom4.showElem = showElem;
+    dom4.show = show;
+    dom4.hideElem = hideElem;
+    dom4.hide = hide;
+    dom4.clsElem = clsElem;
+    dom4.cls = cls;
+    dom4.clsPrefix = clsPrefix;
+    dom4.dataElem = dataElem;
+    dom4.data = data;
+    dom4.getData = getData;
+    dom4.replaceContent = replaceContent;
+    dom4.domComputed = domComputed;
+    dom4.domComputedOwned = domComputedOwned;
+    dom4.maybe = maybe;
+    dom4.maybeOwned = maybeOwned;
+    dom4.forEach = forEach;
+    dom4.create = create;
+    dom4.onElem = onElem;
+    dom4.on = on;
+    dom4.onMatchElem = onMatchElem;
+    dom4.onMatch = onMatch;
+    dom4.onKeyElem = onKeyElem;
+    dom4.onKeyPress = onKeyPress;
+    dom4.onKeyDown = onKeyDown;
+  })(dom2 || (dom2 = {}));
+
+  // node_modules/grainjs/dist/esm/lib/styled.js
+  function createCssRules(className, styles) {
+    const nestedStart = styles.search(/[^;]*\{/);
+    const mainRules = nestedStart < 0 ? styles : styles.slice(0, nestedStart);
+    const nestedRules = nestedStart < 0 ? "" : styles.slice(nestedStart);
+    return `& {${mainRules}
+}
+${nestedRules}`.replace(/&/g, className);
+  }
+  var _global = {};
+  function getNextStyleNum() {
+    const g3 = G2.window || _global;
+    return g3._grainNextStyleNum = (g3._grainNextStyleNum || 0) + 1;
+  }
+  var StylePiece = class _StylePiece {
+    constructor(_styles) {
+      this._styles = _styles;
+      this._mounted = false;
+      this.className = _StylePiece._nextClassName();
+      _StylePiece._unmounted.add(this);
+    }
+    // Generate a new css class name. The suffix ensures that names like "&2" can't cause a conflict.
+    static _nextClassName() {
+      return `_grain${getNextStyleNum()}_`;
+    }
+    // Mount all unmounted StylePieces, and clear the _unmounted map.
+    static _mountAll() {
+      const sheet = Array.from(this._unmounted, (p4) => p4._createRules()).join("\n\n");
+      G2.document.head.appendChild(dom("style", sheet));
+      for (const piece of this._unmounted) {
+        piece._mounted = true;
+      }
+      this._unmounted.clear();
+    }
+    addToElem(elem) {
+      if (!this._mounted) {
+        _StylePiece._mountAll();
+      }
+      elem.classList.add(this.className);
+      return elem;
+    }
+    _createRules() {
+      return createCssRules("." + this.className, this._styles);
+    }
+  };
+  StylePiece._unmounted = /* @__PURE__ */ new Set();
+
+  // node_modules/tslib/tslib.es6.mjs
+  var extendStatics = function(d4, b4) {
+    extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d5, b5) {
+      d5.__proto__ = b5;
+    } || function(d5, b5) {
+      for (var p4 in b5) if (Object.prototype.hasOwnProperty.call(b5, p4)) d5[p4] = b5[p4];
+    };
+    return extendStatics(d4, b4);
+  };
+  function __extends(d4, b4) {
+    if (typeof b4 !== "function" && b4 !== null)
+      throw new TypeError("Class extends value " + String(b4) + " is not a constructor or null");
+    extendStatics(d4, b4);
+    function __() {
+      this.constructor = d4;
+    }
+    d4.prototype = b4 === null ? Object.create(b4) : (__.prototype = b4.prototype, new __());
+  }
+  function __awaiter(thisArg, _arguments, P3, generator) {
+    function adopt(value) {
+      return value instanceof P3 ? value : new P3(function(resolve2) {
+        resolve2(value);
+      });
+    }
+    return new (P3 || (P3 = Promise))(function(resolve2, reject2) {
+      function fulfilled(value) {
+        try {
+          step(generator.next(value));
+        } catch (e9) {
+          reject2(e9);
+        }
+      }
+      function rejected(value) {
+        try {
+          step(generator["throw"](value));
+        } catch (e9) {
+          reject2(e9);
+        }
+      }
+      function step(result) {
+        result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
+      }
+      step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+  }
+  function __generator(thisArg, body) {
+    var _4 = { label: 0, sent: function() {
+      if (t5[0] & 1) throw t5[1];
+      return t5[1];
+    }, trys: [], ops: [] }, f5, y4, t5, g3 = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g3.next = verb(0), g3["throw"] = verb(1), g3["return"] = verb(2), typeof Symbol === "function" && (g3[Symbol.iterator] = function() {
+      return this;
+    }), g3;
+    function verb(n6) {
+      return function(v3) {
+        return step([n6, v3]);
+      };
+    }
+    function step(op) {
+      if (f5) throw new TypeError("Generator is already executing.");
+      while (g3 && (g3 = 0, op[0] && (_4 = 0)), _4) try {
+        if (f5 = 1, y4 && (t5 = op[0] & 2 ? y4["return"] : op[0] ? y4["throw"] || ((t5 = y4["return"]) && t5.call(y4), 0) : y4.next) && !(t5 = t5.call(y4, op[1])).done) return t5;
+        if (y4 = 0, t5) op = [op[0] & 2, t5.value];
+        switch (op[0]) {
+          case 0:
+          case 1:
+            t5 = op;
+            break;
+          case 4:
+            _4.label++;
+            return { value: op[1], done: false };
+          case 5:
+            _4.label++;
+            y4 = op[1];
+            op = [0];
+            continue;
+          case 7:
+            op = _4.ops.pop();
+            _4.trys.pop();
+            continue;
+          default:
+            if (!(t5 = _4.trys, t5 = t5.length > 0 && t5[t5.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+              _4 = 0;
+              continue;
+            }
+            if (op[0] === 3 && (!t5 || op[1] > t5[0] && op[1] < t5[3])) {
+              _4.label = op[1];
+              break;
+            }
+            if (op[0] === 6 && _4.label < t5[1]) {
+              _4.label = t5[1];
+              t5 = op;
+              break;
+            }
+            if (t5 && _4.label < t5[2]) {
+              _4.label = t5[2];
+              _4.ops.push(op);
+              break;
+            }
+            if (t5[2]) _4.ops.pop();
+            _4.trys.pop();
+            continue;
+        }
+        op = body.call(thisArg, _4);
+      } catch (e9) {
+        op = [6, e9];
+        y4 = 0;
+      } finally {
+        f5 = t5 = 0;
+      }
+      if (op[0] & 5) throw op[1];
+      return { value: op[0] ? op[1] : void 0, done: true };
+    }
+  }
+  function __values(o7) {
+    var s3 = typeof Symbol === "function" && Symbol.iterator, m4 = s3 && o7[s3], i8 = 0;
+    if (m4) return m4.call(o7);
+    if (o7 && typeof o7.length === "number") return {
+      next: function() {
+        if (o7 && i8 >= o7.length) o7 = void 0;
+        return { value: o7 && o7[i8++], done: !o7 };
+      }
+    };
+    throw new TypeError(s3 ? "Object is not iterable." : "Symbol.iterator is not defined.");
+  }
+  function __read(o7, n6) {
+    var m4 = typeof Symbol === "function" && o7[Symbol.iterator];
+    if (!m4) return o7;
+    var i8 = m4.call(o7), r7, ar = [], e9;
+    try {
+      while ((n6 === void 0 || n6-- > 0) && !(r7 = i8.next()).done) ar.push(r7.value);
+    } catch (error) {
+      e9 = { error };
+    } finally {
+      try {
+        if (r7 && !r7.done && (m4 = i8["return"])) m4.call(i8);
+      } finally {
+        if (e9) throw e9.error;
+      }
+    }
+    return ar;
+  }
+  function __spreadArray(to, from3, pack) {
+    if (pack || arguments.length === 2) for (var i8 = 0, l6 = from3.length, ar; i8 < l6; i8++) {
+      if (ar || !(i8 in from3)) {
+        if (!ar) ar = Array.prototype.slice.call(from3, 0, i8);
+        ar[i8] = from3[i8];
+      }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from3));
+  }
+  function __await(v3) {
+    return this instanceof __await ? (this.v = v3, this) : new __await(v3);
+  }
+  function __asyncGenerator(thisArg, _arguments, generator) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var g3 = generator.apply(thisArg, _arguments || []), i8, q = [];
+    return i8 = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i8[Symbol.asyncIterator] = function() {
+      return this;
+    }, i8;
+    function awaitReturn(f5) {
+      return function(v3) {
+        return Promise.resolve(v3).then(f5, reject2);
+      };
+    }
+    function verb(n6, f5) {
+      if (g3[n6]) {
+        i8[n6] = function(v3) {
+          return new Promise(function(a4, b4) {
+            q.push([n6, v3, a4, b4]) > 1 || resume(n6, v3);
+          });
+        };
+        if (f5) i8[n6] = f5(i8[n6]);
+      }
+    }
+    function resume(n6, v3) {
+      try {
+        step(g3[n6](v3));
+      } catch (e9) {
+        settle(q[0][3], e9);
+      }
+    }
+    function step(r7) {
+      r7.value instanceof __await ? Promise.resolve(r7.value.v).then(fulfill, reject2) : settle(q[0][2], r7);
+    }
+    function fulfill(value) {
+      resume("next", value);
+    }
+    function reject2(value) {
+      resume("throw", value);
+    }
+    function settle(f5, v3) {
+      if (f5(v3), q.shift(), q.length) resume(q[0][0], q[0][1]);
+    }
+  }
+  function __asyncValues(o7) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m4 = o7[Symbol.asyncIterator], i8;
+    return m4 ? m4.call(o7) : (o7 = typeof __values === "function" ? __values(o7) : o7[Symbol.iterator](), i8 = {}, verb("next"), verb("throw"), verb("return"), i8[Symbol.asyncIterator] = function() {
+      return this;
+    }, i8);
+    function verb(n6) {
+      i8[n6] = o7[n6] && function(v3) {
+        return new Promise(function(resolve2, reject2) {
+          v3 = o7[n6](v3), settle(resolve2, reject2, v3.done, v3.value);
+        });
+      };
+    }
+    function settle(resolve2, reject2, d4, v3) {
+      Promise.resolve(v3).then(function(v5) {
+        resolve2({ value: v5, done: d4 });
+      }, reject2);
+    }
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/isFunction.js
+  function isFunction(value) {
+    return typeof value === "function";
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/createErrorClass.js
+  function createErrorClass(createImpl) {
+    var _super = function(instance) {
+      Error.call(instance);
+      instance.stack = new Error().stack;
+    };
+    var ctorFunc = createImpl(_super);
+    ctorFunc.prototype = Object.create(Error.prototype);
+    ctorFunc.prototype.constructor = ctorFunc;
+    return ctorFunc;
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/UnsubscriptionError.js
+  var UnsubscriptionError = createErrorClass(function(_super) {
+    return function UnsubscriptionErrorImpl(errors) {
+      _super(this);
+      this.message = errors ? errors.length + " errors occurred during unsubscription:\n" + errors.map(function(err, i8) {
+        return i8 + 1 + ") " + err.toString();
+      }).join("\n  ") : "";
+      this.name = "UnsubscriptionError";
+      this.errors = errors;
+    };
+  });
+
+  // node_modules/rxjs/dist/esm5/internal/util/arrRemove.js
+  function arrRemove(arr, item) {
+    if (arr) {
+      var index = arr.indexOf(item);
+      0 <= index && arr.splice(index, 1);
+    }
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/Subscription.js
+  var Subscription2 = function() {
+    function Subscription3(initialTeardown) {
+      this.initialTeardown = initialTeardown;
+      this.closed = false;
+      this._parentage = null;
+      this._finalizers = null;
+    }
+    Subscription3.prototype.unsubscribe = function() {
+      var e_1, _a, e_2, _b;
+      var errors;
+      if (!this.closed) {
+        this.closed = true;
+        var _parentage = this._parentage;
+        if (_parentage) {
+          this._parentage = null;
+          if (Array.isArray(_parentage)) {
+            try {
+              for (var _parentage_1 = __values(_parentage), _parentage_1_1 = _parentage_1.next(); !_parentage_1_1.done; _parentage_1_1 = _parentage_1.next()) {
+                var parent_1 = _parentage_1_1.value;
+                parent_1.remove(this);
+              }
+            } catch (e_1_1) {
+              e_1 = { error: e_1_1 };
+            } finally {
+              try {
+                if (_parentage_1_1 && !_parentage_1_1.done && (_a = _parentage_1.return)) _a.call(_parentage_1);
+              } finally {
+                if (e_1) throw e_1.error;
+              }
+            }
+          } else {
+            _parentage.remove(this);
+          }
+        }
+        var initialFinalizer = this.initialTeardown;
+        if (isFunction(initialFinalizer)) {
+          try {
+            initialFinalizer();
+          } catch (e9) {
+            errors = e9 instanceof UnsubscriptionError ? e9.errors : [e9];
+          }
+        }
+        var _finalizers = this._finalizers;
+        if (_finalizers) {
+          this._finalizers = null;
+          try {
+            for (var _finalizers_1 = __values(_finalizers), _finalizers_1_1 = _finalizers_1.next(); !_finalizers_1_1.done; _finalizers_1_1 = _finalizers_1.next()) {
+              var finalizer = _finalizers_1_1.value;
+              try {
+                execFinalizer(finalizer);
+              } catch (err) {
+                errors = errors !== null && errors !== void 0 ? errors : [];
+                if (err instanceof UnsubscriptionError) {
+                  errors = __spreadArray(__spreadArray([], __read(errors)), __read(err.errors));
+                } else {
+                  errors.push(err);
+                }
+              }
+            }
+          } catch (e_2_1) {
+            e_2 = { error: e_2_1 };
+          } finally {
+            try {
+              if (_finalizers_1_1 && !_finalizers_1_1.done && (_b = _finalizers_1.return)) _b.call(_finalizers_1);
+            } finally {
+              if (e_2) throw e_2.error;
+            }
+          }
+        }
+        if (errors) {
+          throw new UnsubscriptionError(errors);
+        }
+      }
+    };
+    Subscription3.prototype.add = function(teardown) {
+      var _a;
+      if (teardown && teardown !== this) {
+        if (this.closed) {
+          execFinalizer(teardown);
+        } else {
+          if (teardown instanceof Subscription3) {
+            if (teardown.closed || teardown._hasParent(this)) {
+              return;
+            }
+            teardown._addParent(this);
+          }
+          (this._finalizers = (_a = this._finalizers) !== null && _a !== void 0 ? _a : []).push(teardown);
+        }
+      }
+    };
+    Subscription3.prototype._hasParent = function(parent2) {
+      var _parentage = this._parentage;
+      return _parentage === parent2 || Array.isArray(_parentage) && _parentage.includes(parent2);
+    };
+    Subscription3.prototype._addParent = function(parent2) {
+      var _parentage = this._parentage;
+      this._parentage = Array.isArray(_parentage) ? (_parentage.push(parent2), _parentage) : _parentage ? [_parentage, parent2] : parent2;
+    };
+    Subscription3.prototype._removeParent = function(parent2) {
+      var _parentage = this._parentage;
+      if (_parentage === parent2) {
+        this._parentage = null;
+      } else if (Array.isArray(_parentage)) {
+        arrRemove(_parentage, parent2);
+      }
+    };
+    Subscription3.prototype.remove = function(teardown) {
+      var _finalizers = this._finalizers;
+      _finalizers && arrRemove(_finalizers, teardown);
+      if (teardown instanceof Subscription3) {
+        teardown._removeParent(this);
+      }
+    };
+    Subscription3.EMPTY = function() {
+      var empty2 = new Subscription3();
+      empty2.closed = true;
+      return empty2;
+    }();
+    return Subscription3;
+  }();
+  var EMPTY_SUBSCRIPTION = Subscription2.EMPTY;
+  function isSubscription(value) {
+    return value instanceof Subscription2 || value && "closed" in value && isFunction(value.remove) && isFunction(value.add) && isFunction(value.unsubscribe);
+  }
+  function execFinalizer(finalizer) {
+    if (isFunction(finalizer)) {
+      finalizer();
+    } else {
+      finalizer.unsubscribe();
+    }
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/config.js
+  var config = {
+    onUnhandledError: null,
+    onStoppedNotification: null,
+    Promise: void 0,
+    useDeprecatedSynchronousErrorHandling: false,
+    useDeprecatedNextContext: false
+  };
+
+  // node_modules/rxjs/dist/esm5/internal/scheduler/timeoutProvider.js
+  var timeoutProvider = {
+    setTimeout: function(handler, timeout) {
+      var args = [];
+      for (var _i = 2; _i < arguments.length; _i++) {
+        args[_i - 2] = arguments[_i];
+      }
+      var delegate = timeoutProvider.delegate;
+      if (delegate === null || delegate === void 0 ? void 0 : delegate.setTimeout) {
+        return delegate.setTimeout.apply(delegate, __spreadArray([handler, timeout], __read(args)));
+      }
+      return setTimeout.apply(void 0, __spreadArray([handler, timeout], __read(args)));
+    },
+    clearTimeout: function(handle) {
+      var delegate = timeoutProvider.delegate;
+      return ((delegate === null || delegate === void 0 ? void 0 : delegate.clearTimeout) || clearTimeout)(handle);
+    },
+    delegate: void 0
+  };
+
+  // node_modules/rxjs/dist/esm5/internal/util/reportUnhandledError.js
+  function reportUnhandledError(err) {
+    timeoutProvider.setTimeout(function() {
+      var onUnhandledError = config.onUnhandledError;
+      if (onUnhandledError) {
+        onUnhandledError(err);
+      } else {
+        throw err;
+      }
+    });
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/noop.js
+  function noop() {
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/NotificationFactories.js
+  var COMPLETE_NOTIFICATION = function() {
+    return createNotification("C", void 0, void 0);
+  }();
+  function errorNotification(error) {
+    return createNotification("E", void 0, error);
+  }
+  function nextNotification(value) {
+    return createNotification("N", value, void 0);
+  }
+  function createNotification(kind, value, error) {
+    return {
+      kind,
+      value,
+      error
+    };
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/errorContext.js
+  var context = null;
+  function errorContext(cb) {
+    if (config.useDeprecatedSynchronousErrorHandling) {
+      var isRoot = !context;
+      if (isRoot) {
+        context = { errorThrown: false, error: null };
+      }
+      cb();
+      if (isRoot) {
+        var _a = context, errorThrown = _a.errorThrown, error = _a.error;
+        context = null;
+        if (errorThrown) {
+          throw error;
+        }
+      }
+    } else {
+      cb();
+    }
+  }
+  function captureError(err) {
+    if (config.useDeprecatedSynchronousErrorHandling && context) {
+      context.errorThrown = true;
+      context.error = err;
+    }
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/Subscriber.js
+  var Subscriber = function(_super) {
+    __extends(Subscriber2, _super);
+    function Subscriber2(destination) {
+      var _this = _super.call(this) || this;
+      _this.isStopped = false;
+      if (destination) {
+        _this.destination = destination;
+        if (isSubscription(destination)) {
+          destination.add(_this);
+        }
+      } else {
+        _this.destination = EMPTY_OBSERVER;
+      }
+      return _this;
+    }
+    Subscriber2.create = function(next2, error, complete) {
+      return new SafeSubscriber(next2, error, complete);
+    };
+    Subscriber2.prototype.next = function(value) {
+      if (this.isStopped) {
+        handleStoppedNotification(nextNotification(value), this);
+      } else {
+        this._next(value);
+      }
+    };
+    Subscriber2.prototype.error = function(err) {
+      if (this.isStopped) {
+        handleStoppedNotification(errorNotification(err), this);
+      } else {
+        this.isStopped = true;
+        this._error(err);
+      }
+    };
+    Subscriber2.prototype.complete = function() {
+      if (this.isStopped) {
+        handleStoppedNotification(COMPLETE_NOTIFICATION, this);
+      } else {
+        this.isStopped = true;
+        this._complete();
+      }
+    };
+    Subscriber2.prototype.unsubscribe = function() {
+      if (!this.closed) {
+        this.isStopped = true;
+        _super.prototype.unsubscribe.call(this);
+        this.destination = null;
+      }
+    };
+    Subscriber2.prototype._next = function(value) {
+      this.destination.next(value);
+    };
+    Subscriber2.prototype._error = function(err) {
+      try {
+        this.destination.error(err);
+      } finally {
+        this.unsubscribe();
+      }
+    };
+    Subscriber2.prototype._complete = function() {
+      try {
+        this.destination.complete();
+      } finally {
+        this.unsubscribe();
+      }
+    };
+    return Subscriber2;
+  }(Subscription2);
+  var _bind = Function.prototype.bind;
+  function bind(fn, thisArg) {
+    return _bind.call(fn, thisArg);
+  }
+  var ConsumerObserver = function() {
+    function ConsumerObserver2(partialObserver) {
+      this.partialObserver = partialObserver;
+    }
+    ConsumerObserver2.prototype.next = function(value) {
+      var partialObserver = this.partialObserver;
+      if (partialObserver.next) {
+        try {
+          partialObserver.next(value);
+        } catch (error) {
+          handleUnhandledError(error);
+        }
+      }
+    };
+    ConsumerObserver2.prototype.error = function(err) {
+      var partialObserver = this.partialObserver;
+      if (partialObserver.error) {
+        try {
+          partialObserver.error(err);
+        } catch (error) {
+          handleUnhandledError(error);
+        }
+      } else {
+        handleUnhandledError(err);
+      }
+    };
+    ConsumerObserver2.prototype.complete = function() {
+      var partialObserver = this.partialObserver;
+      if (partialObserver.complete) {
+        try {
+          partialObserver.complete();
+        } catch (error) {
+          handleUnhandledError(error);
+        }
+      }
+    };
+    return ConsumerObserver2;
+  }();
+  var SafeSubscriber = function(_super) {
+    __extends(SafeSubscriber2, _super);
+    function SafeSubscriber2(observerOrNext, error, complete) {
+      var _this = _super.call(this) || this;
+      var partialObserver;
+      if (isFunction(observerOrNext) || !observerOrNext) {
+        partialObserver = {
+          next: observerOrNext !== null && observerOrNext !== void 0 ? observerOrNext : void 0,
+          error: error !== null && error !== void 0 ? error : void 0,
+          complete: complete !== null && complete !== void 0 ? complete : void 0
+        };
+      } else {
+        var context_1;
+        if (_this && config.useDeprecatedNextContext) {
+          context_1 = Object.create(observerOrNext);
+          context_1.unsubscribe = function() {
+            return _this.unsubscribe();
+          };
+          partialObserver = {
+            next: observerOrNext.next && bind(observerOrNext.next, context_1),
+            error: observerOrNext.error && bind(observerOrNext.error, context_1),
+            complete: observerOrNext.complete && bind(observerOrNext.complete, context_1)
+          };
+        } else {
+          partialObserver = observerOrNext;
+        }
+      }
+      _this.destination = new ConsumerObserver(partialObserver);
+      return _this;
+    }
+    return SafeSubscriber2;
+  }(Subscriber);
+  function handleUnhandledError(error) {
+    if (config.useDeprecatedSynchronousErrorHandling) {
+      captureError(error);
+    } else {
+      reportUnhandledError(error);
+    }
+  }
+  function defaultErrorHandler(err) {
+    throw err;
+  }
+  function handleStoppedNotification(notification, subscriber) {
+    var onStoppedNotification = config.onStoppedNotification;
+    onStoppedNotification && timeoutProvider.setTimeout(function() {
+      return onStoppedNotification(notification, subscriber);
+    });
+  }
+  var EMPTY_OBSERVER = {
+    closed: true,
+    next: noop,
+    error: defaultErrorHandler,
+    complete: noop
+  };
+
+  // node_modules/rxjs/dist/esm5/internal/symbol/observable.js
+  var observable2 = function() {
+    return typeof Symbol === "function" && Symbol.observable || "@@observable";
+  }();
+
+  // node_modules/rxjs/dist/esm5/internal/util/identity.js
+  function identity2(x3) {
+    return x3;
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/pipe.js
+  function pipeFromArray(fns) {
+    if (fns.length === 0) {
+      return identity2;
+    }
+    if (fns.length === 1) {
+      return fns[0];
+    }
+    return function piped(input) {
+      return fns.reduce(function(prev, fn) {
+        return fn(prev);
+      }, input);
+    };
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/Observable.js
+  var Observable2 = function() {
+    function Observable4(subscribe2) {
+      if (subscribe2) {
+        this._subscribe = subscribe2;
+      }
+    }
+    Observable4.prototype.lift = function(operator) {
+      var observable3 = new Observable4();
+      observable3.source = this;
+      observable3.operator = operator;
+      return observable3;
+    };
+    Observable4.prototype.subscribe = function(observerOrNext, error, complete) {
+      var _this = this;
+      var subscriber = isSubscriber(observerOrNext) ? observerOrNext : new SafeSubscriber(observerOrNext, error, complete);
+      errorContext(function() {
+        var _a = _this, operator = _a.operator, source = _a.source;
+        subscriber.add(operator ? operator.call(subscriber, source) : source ? _this._subscribe(subscriber) : _this._trySubscribe(subscriber));
+      });
+      return subscriber;
+    };
+    Observable4.prototype._trySubscribe = function(sink) {
+      try {
+        return this._subscribe(sink);
+      } catch (err) {
+        sink.error(err);
+      }
+    };
+    Observable4.prototype.forEach = function(next2, promiseCtor) {
+      var _this = this;
+      promiseCtor = getPromiseCtor(promiseCtor);
+      return new promiseCtor(function(resolve2, reject2) {
+        var subscriber = new SafeSubscriber({
+          next: function(value) {
+            try {
+              next2(value);
+            } catch (err) {
+              reject2(err);
+              subscriber.unsubscribe();
+            }
+          },
+          error: reject2,
+          complete: resolve2
+        });
+        _this.subscribe(subscriber);
+      });
+    };
+    Observable4.prototype._subscribe = function(subscriber) {
+      var _a;
+      return (_a = this.source) === null || _a === void 0 ? void 0 : _a.subscribe(subscriber);
+    };
+    Observable4.prototype[observable2] = function() {
+      return this;
+    };
+    Observable4.prototype.pipe = function() {
+      var operations = [];
+      for (var _i = 0; _i < arguments.length; _i++) {
+        operations[_i] = arguments[_i];
+      }
+      return pipeFromArray(operations)(this);
+    };
+    Observable4.prototype.toPromise = function(promiseCtor) {
+      var _this = this;
+      promiseCtor = getPromiseCtor(promiseCtor);
+      return new promiseCtor(function(resolve2, reject2) {
+        var value;
+        _this.subscribe(function(x3) {
+          return value = x3;
+        }, function(err) {
+          return reject2(err);
+        }, function() {
+          return resolve2(value);
+        });
+      });
+    };
+    Observable4.create = function(subscribe2) {
+      return new Observable4(subscribe2);
+    };
+    return Observable4;
+  }();
+  function getPromiseCtor(promiseCtor) {
+    var _a;
+    return (_a = promiseCtor !== null && promiseCtor !== void 0 ? promiseCtor : config.Promise) !== null && _a !== void 0 ? _a : Promise;
+  }
+  function isObserver(value) {
+    return value && isFunction(value.next) && isFunction(value.error) && isFunction(value.complete);
+  }
+  function isSubscriber(value) {
+    return value && value instanceof Subscriber || isObserver(value) && isSubscription(value);
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/lift.js
+  function hasLift(source) {
+    return isFunction(source === null || source === void 0 ? void 0 : source.lift);
+  }
+  function operate(init) {
+    return function(source) {
+      if (hasLift(source)) {
+        return source.lift(function(liftedSource) {
+          try {
+            return init(liftedSource, this);
+          } catch (err) {
+            this.error(err);
+          }
+        });
+      }
+      throw new TypeError("Unable to lift unknown Observable type");
+    };
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/operators/OperatorSubscriber.js
+  function createOperatorSubscriber(destination, onNext, onComplete, onError, onFinalize) {
+    return new OperatorSubscriber(destination, onNext, onComplete, onError, onFinalize);
+  }
+  var OperatorSubscriber = function(_super) {
+    __extends(OperatorSubscriber2, _super);
+    function OperatorSubscriber2(destination, onNext, onComplete, onError, onFinalize, shouldUnsubscribe) {
+      var _this = _super.call(this, destination) || this;
+      _this.onFinalize = onFinalize;
+      _this.shouldUnsubscribe = shouldUnsubscribe;
+      _this._next = onNext ? function(value) {
+        try {
+          onNext(value);
+        } catch (err) {
+          destination.error(err);
+        }
+      } : _super.prototype._next;
+      _this._error = onError ? function(err) {
+        try {
+          onError(err);
+        } catch (err2) {
+          destination.error(err2);
+        } finally {
+          this.unsubscribe();
+        }
+      } : _super.prototype._error;
+      _this._complete = onComplete ? function() {
+        try {
+          onComplete();
+        } catch (err) {
+          destination.error(err);
+        } finally {
+          this.unsubscribe();
+        }
+      } : _super.prototype._complete;
+      return _this;
+    }
+    OperatorSubscriber2.prototype.unsubscribe = function() {
+      var _a;
+      if (!this.shouldUnsubscribe || this.shouldUnsubscribe()) {
+        var closed_1 = this.closed;
+        _super.prototype.unsubscribe.call(this);
+        !closed_1 && ((_a = this.onFinalize) === null || _a === void 0 ? void 0 : _a.call(this));
+      }
+    };
+    return OperatorSubscriber2;
+  }(Subscriber);
+
+  // node_modules/rxjs/dist/esm5/internal/util/ObjectUnsubscribedError.js
+  var ObjectUnsubscribedError = createErrorClass(function(_super) {
+    return function ObjectUnsubscribedErrorImpl() {
+      _super(this);
+      this.name = "ObjectUnsubscribedError";
+      this.message = "object unsubscribed";
+    };
+  });
+
+  // node_modules/rxjs/dist/esm5/internal/Subject.js
+  var Subject = function(_super) {
+    __extends(Subject2, _super);
+    function Subject2() {
+      var _this = _super.call(this) || this;
+      _this.closed = false;
+      _this.currentObservers = null;
+      _this.observers = [];
+      _this.isStopped = false;
+      _this.hasError = false;
+      _this.thrownError = null;
+      return _this;
+    }
+    Subject2.prototype.lift = function(operator) {
+      var subject = new AnonymousSubject(this, this);
+      subject.operator = operator;
+      return subject;
+    };
+    Subject2.prototype._throwIfClosed = function() {
+      if (this.closed) {
+        throw new ObjectUnsubscribedError();
+      }
+    };
+    Subject2.prototype.next = function(value) {
+      var _this = this;
+      errorContext(function() {
+        var e_1, _a;
+        _this._throwIfClosed();
+        if (!_this.isStopped) {
+          if (!_this.currentObservers) {
+            _this.currentObservers = Array.from(_this.observers);
+          }
+          try {
+            for (var _b = __values(_this.currentObservers), _c = _b.next(); !_c.done; _c = _b.next()) {
+              var observer = _c.value;
+              observer.next(value);
+            }
+          } catch (e_1_1) {
+            e_1 = { error: e_1_1 };
+          } finally {
+            try {
+              if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            } finally {
+              if (e_1) throw e_1.error;
+            }
+          }
+        }
+      });
+    };
+    Subject2.prototype.error = function(err) {
+      var _this = this;
+      errorContext(function() {
+        _this._throwIfClosed();
+        if (!_this.isStopped) {
+          _this.hasError = _this.isStopped = true;
+          _this.thrownError = err;
+          var observers = _this.observers;
+          while (observers.length) {
+            observers.shift().error(err);
+          }
+        }
+      });
+    };
+    Subject2.prototype.complete = function() {
+      var _this = this;
+      errorContext(function() {
+        _this._throwIfClosed();
+        if (!_this.isStopped) {
+          _this.isStopped = true;
+          var observers = _this.observers;
+          while (observers.length) {
+            observers.shift().complete();
+          }
+        }
+      });
+    };
+    Subject2.prototype.unsubscribe = function() {
+      this.isStopped = this.closed = true;
+      this.observers = this.currentObservers = null;
+    };
+    Object.defineProperty(Subject2.prototype, "observed", {
+      get: function() {
+        var _a;
+        return ((_a = this.observers) === null || _a === void 0 ? void 0 : _a.length) > 0;
+      },
+      enumerable: false,
+      configurable: true
+    });
+    Subject2.prototype._trySubscribe = function(subscriber) {
+      this._throwIfClosed();
+      return _super.prototype._trySubscribe.call(this, subscriber);
+    };
+    Subject2.prototype._subscribe = function(subscriber) {
+      this._throwIfClosed();
+      this._checkFinalizedStatuses(subscriber);
+      return this._innerSubscribe(subscriber);
+    };
+    Subject2.prototype._innerSubscribe = function(subscriber) {
+      var _this = this;
+      var _a = this, hasError = _a.hasError, isStopped = _a.isStopped, observers = _a.observers;
+      if (hasError || isStopped) {
+        return EMPTY_SUBSCRIPTION;
+      }
+      this.currentObservers = null;
+      observers.push(subscriber);
+      return new Subscription2(function() {
+        _this.currentObservers = null;
+        arrRemove(observers, subscriber);
+      });
+    };
+    Subject2.prototype._checkFinalizedStatuses = function(subscriber) {
+      var _a = this, hasError = _a.hasError, thrownError = _a.thrownError, isStopped = _a.isStopped;
+      if (hasError) {
+        subscriber.error(thrownError);
+      } else if (isStopped) {
+        subscriber.complete();
+      }
+    };
+    Subject2.prototype.asObservable = function() {
+      var observable3 = new Observable2();
+      observable3.source = this;
+      return observable3;
+    };
+    Subject2.create = function(destination, source) {
+      return new AnonymousSubject(destination, source);
+    };
+    return Subject2;
+  }(Observable2);
+  var AnonymousSubject = function(_super) {
+    __extends(AnonymousSubject2, _super);
+    function AnonymousSubject2(destination, source) {
+      var _this = _super.call(this) || this;
+      _this.destination = destination;
+      _this.source = source;
+      return _this;
+    }
+    AnonymousSubject2.prototype.next = function(value) {
+      var _a, _b;
+      (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.next) === null || _b === void 0 ? void 0 : _b.call(_a, value);
+    };
+    AnonymousSubject2.prototype.error = function(err) {
+      var _a, _b;
+      (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.error) === null || _b === void 0 ? void 0 : _b.call(_a, err);
+    };
+    AnonymousSubject2.prototype.complete = function() {
+      var _a, _b;
+      (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.complete) === null || _b === void 0 ? void 0 : _b.call(_a);
+    };
+    AnonymousSubject2.prototype._subscribe = function(subscriber) {
+      var _a, _b;
+      return (_b = (_a = this.source) === null || _a === void 0 ? void 0 : _a.subscribe(subscriber)) !== null && _b !== void 0 ? _b : EMPTY_SUBSCRIPTION;
+    };
+    return AnonymousSubject2;
+  }(Subject);
+
+  // node_modules/rxjs/dist/esm5/internal/util/isArrayLike.js
+  var isArrayLike = function(x3) {
+    return x3 && typeof x3.length === "number" && typeof x3 !== "function";
+  };
+
+  // node_modules/rxjs/dist/esm5/internal/util/isPromise.js
+  function isPromise(value) {
+    return isFunction(value === null || value === void 0 ? void 0 : value.then);
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/isInteropObservable.js
+  function isInteropObservable(input) {
+    return isFunction(input[observable2]);
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/isAsyncIterable.js
+  function isAsyncIterable(obj) {
+    return Symbol.asyncIterator && isFunction(obj === null || obj === void 0 ? void 0 : obj[Symbol.asyncIterator]);
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/throwUnobservableError.js
+  function createInvalidObservableTypeError(input) {
+    return new TypeError("You provided " + (input !== null && typeof input === "object" ? "an invalid object" : "'" + input + "'") + " where a stream was expected. You can provide an Observable, Promise, ReadableStream, Array, AsyncIterable, or Iterable.");
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/symbol/iterator.js
+  function getSymbolIterator() {
+    if (typeof Symbol !== "function" || !Symbol.iterator) {
+      return "@@iterator";
+    }
+    return Symbol.iterator;
+  }
+  var iterator = getSymbolIterator();
+
+  // node_modules/rxjs/dist/esm5/internal/util/isIterable.js
+  function isIterable(input) {
+    return isFunction(input === null || input === void 0 ? void 0 : input[iterator]);
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/util/isReadableStreamLike.js
+  function readableStreamLikeToAsyncGenerator(readableStream) {
+    return __asyncGenerator(this, arguments, function readableStreamLikeToAsyncGenerator_1() {
+      var reader, _a, value, done;
+      return __generator(this, function(_b) {
+        switch (_b.label) {
+          case 0:
+            reader = readableStream.getReader();
+            _b.label = 1;
+          case 1:
+            _b.trys.push([1, , 9, 10]);
+            _b.label = 2;
+          case 2:
+            if (false) return [3, 8];
+            return [4, __await(reader.read())];
+          case 3:
+            _a = _b.sent(), value = _a.value, done = _a.done;
+            if (!done) return [3, 5];
+            return [4, __await(void 0)];
+          case 4:
+            return [2, _b.sent()];
+          case 5:
+            return [4, __await(value)];
+          case 6:
+            return [4, _b.sent()];
+          case 7:
+            _b.sent();
+            return [3, 2];
+          case 8:
+            return [3, 10];
+          case 9:
+            reader.releaseLock();
+            return [7];
+          case 10:
+            return [2];
+        }
+      });
+    });
+  }
+  function isReadableStreamLike(obj) {
+    return isFunction(obj === null || obj === void 0 ? void 0 : obj.getReader);
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/observable/innerFrom.js
+  function innerFrom(input) {
+    if (input instanceof Observable2) {
+      return input;
+    }
+    if (input != null) {
+      if (isInteropObservable(input)) {
+        return fromInteropObservable(input);
+      }
+      if (isArrayLike(input)) {
+        return fromArrayLike(input);
+      }
+      if (isPromise(input)) {
+        return fromPromise(input);
+      }
+      if (isAsyncIterable(input)) {
+        return fromAsyncIterable(input);
+      }
+      if (isIterable(input)) {
+        return fromIterable(input);
+      }
+      if (isReadableStreamLike(input)) {
+        return fromReadableStreamLike(input);
+      }
+    }
+    throw createInvalidObservableTypeError(input);
+  }
+  function fromInteropObservable(obj) {
+    return new Observable2(function(subscriber) {
+      var obs = obj[observable2]();
+      if (isFunction(obs.subscribe)) {
+        return obs.subscribe(subscriber);
+      }
+      throw new TypeError("Provided object does not correctly implement Symbol.observable");
+    });
+  }
+  function fromArrayLike(array2) {
+    return new Observable2(function(subscriber) {
+      for (var i8 = 0; i8 < array2.length && !subscriber.closed; i8++) {
+        subscriber.next(array2[i8]);
+      }
+      subscriber.complete();
+    });
+  }
+  function fromPromise(promise2) {
+    return new Observable2(function(subscriber) {
+      promise2.then(function(value) {
+        if (!subscriber.closed) {
+          subscriber.next(value);
+          subscriber.complete();
+        }
+      }, function(err) {
+        return subscriber.error(err);
+      }).then(null, reportUnhandledError);
+    });
+  }
+  function fromIterable(iterable) {
+    return new Observable2(function(subscriber) {
+      var e_1, _a;
+      try {
+        for (var iterable_1 = __values(iterable), iterable_1_1 = iterable_1.next(); !iterable_1_1.done; iterable_1_1 = iterable_1.next()) {
+          var value = iterable_1_1.value;
+          subscriber.next(value);
+          if (subscriber.closed) {
+            return;
+          }
+        }
+      } catch (e_1_1) {
+        e_1 = { error: e_1_1 };
+      } finally {
+        try {
+          if (iterable_1_1 && !iterable_1_1.done && (_a = iterable_1.return)) _a.call(iterable_1);
+        } finally {
+          if (e_1) throw e_1.error;
+        }
+      }
+      subscriber.complete();
+    });
+  }
+  function fromAsyncIterable(asyncIterable) {
+    return new Observable2(function(subscriber) {
+      process(asyncIterable, subscriber).catch(function(err) {
+        return subscriber.error(err);
+      });
+    });
+  }
+  function fromReadableStreamLike(readableStream) {
+    return fromAsyncIterable(readableStreamLikeToAsyncGenerator(readableStream));
+  }
+  function process(asyncIterable, subscriber) {
+    var asyncIterable_1, asyncIterable_1_1;
+    var e_2, _a;
+    return __awaiter(this, void 0, void 0, function() {
+      var value, e_2_1;
+      return __generator(this, function(_b) {
+        switch (_b.label) {
+          case 0:
+            _b.trys.push([0, 5, 6, 11]);
+            asyncIterable_1 = __asyncValues(asyncIterable);
+            _b.label = 1;
+          case 1:
+            return [4, asyncIterable_1.next()];
+          case 2:
+            if (!(asyncIterable_1_1 = _b.sent(), !asyncIterable_1_1.done)) return [3, 4];
+            value = asyncIterable_1_1.value;
+            subscriber.next(value);
+            if (subscriber.closed) {
+              return [2];
+            }
+            _b.label = 3;
+          case 3:
+            return [3, 1];
+          case 4:
+            return [3, 11];
+          case 5:
+            e_2_1 = _b.sent();
+            e_2 = { error: e_2_1 };
+            return [3, 11];
+          case 6:
+            _b.trys.push([6, , 9, 10]);
+            if (!(asyncIterable_1_1 && !asyncIterable_1_1.done && (_a = asyncIterable_1.return))) return [3, 8];
+            return [4, _a.call(asyncIterable_1)];
+          case 7:
+            _b.sent();
+            _b.label = 8;
+          case 8:
+            return [3, 10];
+          case 9:
+            if (e_2) throw e_2.error;
+            return [7];
+          case 10:
+            return [7];
+          case 11:
+            subscriber.complete();
+            return [2];
+        }
+      });
+    });
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/operators/filter.js
+  function filter(predicate, thisArg) {
+    return operate(function(source, subscriber) {
+      var index = 0;
+      source.subscribe(createOperatorSubscriber(subscriber, function(value) {
+        return predicate.call(thisArg, value, index++) && subscriber.next(value);
+      }));
+    });
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/operators/distinct.js
+  function distinct(keySelector, flushes) {
+    return operate(function(source, subscriber) {
+      var distinctKeys = /* @__PURE__ */ new Set();
+      source.subscribe(createOperatorSubscriber(subscriber, function(value) {
+        var key2 = keySelector ? keySelector(value) : value;
+        if (!distinctKeys.has(key2)) {
+          distinctKeys.add(key2);
+          subscriber.next(value);
+        }
+      }));
+      flushes && innerFrom(flushes).subscribe(createOperatorSubscriber(subscriber, function() {
+        return distinctKeys.clear();
+      }, noop));
+    });
+  }
+
+  // node_modules/rxjs/dist/esm5/internal/operators/skip.js
+  function skip(count) {
+    return filter(function(_4, index) {
+      return count <= index;
+    });
+  }
+
+  // lib.ts
+  async function fetchColumnsFromGrist() {
+    const columns = toRecords(await grist.docApi.fetchTable("_grist_Tables_column"));
+    return columns;
+  }
+  async function fetchTables() {
+    return toRecords(await grist.docApi.fetchTable("_grist_Tables"));
+  }
+  async function fetchSchema() {
+    const [allColumns, tables, tableId] = await Promise.all([
+      fetchColumnsFromGrist(),
+      fetchTables(),
+      selectedTable()
+    ]);
+    const table = tables.find((t5) => t5.tableId === tableId);
+    const columns = allColumns.filter((c6) => c6.parentId === table.id);
+    return {
+      allColumns,
+      tables,
+      tableId,
+      table,
+      columns
+    };
+  }
+  function toRecords(bulk) {
+    const fields = Object.keys(bulk);
+    const records2 = [];
+    for (const index in bulk.id) {
+      records2.push(
+        Object.fromEntries(fields.map((f5) => [f5, bulk[f5][index]]))
+      );
+    }
+    return records2;
+  }
+  async function selectedTable() {
+    return await grist.selectedTable.getTableId();
+  }
+  function showAlert(variant, message) {
+    const alert2 = document.querySelector(`sl-alert[variant="${variant}"]`);
+    const title = alert2.querySelector("#title");
+    const text2 = alert2.querySelector("#text");
+    title.innerText = "Error occured";
+    text2.innerText = message;
+    alert2.toast();
+  }
+  async function withElementSpinner(element, callback) {
+    const spinner = document.createElement("sl-spinner");
+    element.appendChild(spinner);
+    try {
+      await callback();
+    } finally {
+      spinner.remove();
+    }
+  }
+  async function withIdSpinner(id2, callback) {
+    const element = document.querySelector(`.item_${id2}`);
+    await withElementSpinner(element, callback);
+  }
+  function onClick(selector, callback) {
+    window.document.querySelector(selector).addEventListener("click", callback);
+  }
+  var Command = class {
+    handlers = [];
+    subject = new Subject();
+    async invoke(arg) {
+      for (const handler of this.handlers) {
+        await handler(arg);
+      }
+      this.subject.next(arg);
+    }
+    subscribe = this.subject.subscribe.bind(this.subject);
+    handle(handler) {
+      this.handlers.push(handler);
+      return {
+        dispose: () => {
+          this.handlers.splice(this.handlers.indexOf(handler), 1);
+        }
+      };
+    }
+  };
+  function stringToValue(value) {
+    if (["true", "false"].includes(value)) {
+      return value === "true";
+    }
+    if (value === "null") {
+      return null;
+    }
+    if (/^\d+$/.test(value)) {
+      return parseInt(value, 10);
+    }
+    return value;
+  }
+  function valueToString(value) {
+    if (value === null || value === void 0) {
+      return "-";
+    }
+    if (typeof value === "boolean") {
+      return value ? "true" : "false";
+    }
+    if (typeof value === "number") {
+      return value.toFixed(2);
+    }
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    return String(value);
+  }
+  var MY_COLUMNS = observable([]);
+  var __columnLabelCache = /* @__PURE__ */ new Map();
+  function buildColLabel(colId) {
+    if (__columnLabelCache.has(colId)) {
+      return __columnLabelCache.get(colId);
+    }
+    const obs = computed((use) => use(MY_COLUMNS).find((c6) => c6.colId === colId)?.label || colId);
+    __columnLabelCache.set(colId, obs);
+    return obs;
+  }
+  function memo(fn, salt) {
+    let prevKey = Symbol();
+    let value = null;
+    return function(...args) {
+      const key2 = salt ? JSON.stringify([args, salt()]) : JSON.stringify(args);
+      const newKey = JSON.stringify(key2);
+      if (newKey !== prevKey) {
+        prevKey = newKey;
+        value = fn(...args);
+      }
+      return value;
+    };
+  }
+  function hasChanged() {
+    let lastValue = null;
+    return function(value) {
+      const newValue = JSON.stringify(value);
+      if (newValue === lastValue) {
+        return false;
+      } else {
+        lastValue = newValue;
+        return true;
+      }
+    };
+  }
+
+  // header.ts
+  function monitorHeader() {
+    const panel = document.querySelector(".vis-panel.vis-left");
+    const header = document.getElementById("groupHeader");
+    const observer = new ResizeObserver((...args) => {
+      const { left } = panel.querySelector(".vis-labelset").getBoundingClientRect();
+      header.style.setProperty("--left-width", `${left}px`);
+      const width = args[0][0].borderBoxSize[0].inlineSize;
+      header.style.width = `${width}px`;
+    });
+    observer.observe(panel);
+  }
+  function rewriteHeader({ mappings: mappings2, timeline: timeline2, cmdAddBlank: cmdAddBlank2 }) {
+    const headerTop = document.querySelector("#groupHeader .top");
+    const headerRight = document.querySelector("#groupHeader .bottom .right");
+    const columnsDiv = dom2("div");
+    columnsDiv.classList.add("group-header-columns");
+    const parts = mappings2.get().Columns.map((col) => {
+      return dom2(
+        "div",
+        dom2.text(buildColLabel(col)),
+        dom2.cls("group-part"),
+        dom2.style("padding", "5px")
+      );
+    });
+    columnsDiv.style.setProperty("grid-template-columns", "auto");
+    const moreDiv = document.createElement("div");
+    moreDiv.style.width = "20px";
+    parts.push(moreDiv);
+    const collapsed = observable(false);
+    const iconName = computed((use) => {
+      return use(collapsed) ? "chevron-bar-right" : "chevron-bar-left";
+    });
+    const resizer = headerTop.querySelector(".resizer");
+    const icon = headerTop.querySelector("sl-icon");
+    const button = headerTop.querySelector("sl-button");
+    const buttonLoading = observable(false);
+    dom2.update(
+      resizer,
+      dom2.on("click", () => collapsed.set(!collapsed.get()))
+    );
+    dom2.update(
+      icon,
+      // Icon to hide or show drawer.
+      dom2.prop("name", iconName)
+    );
+    dom2.update(
+      button,
+      dom2.prop("loading", buttonLoading),
+      dom2.on("click", async () => {
+        try {
+          buttonLoading.set(true);
+          await cmdAddBlank2.invoke(null);
+        } finally {
+          buttonLoading.set(false);
+        }
+      })
+    );
+    columnsDiv.append(...parts);
+    collapsed.addListener(() => {
+      timeline2.redraw();
+    });
+    headerRight.innerHTML = "";
+    headerRight.append(columnsDiv);
+    const visualization = document.getElementById("visualization");
+    dom2.update(
+      visualization,
+      dom2.cls("collapsed", collapsed)
+    );
+    const widths = parts.map(
+      (part) => Math.ceil(part.getBoundingClientRect().width)
+    );
+    const templateColumns = widths.map((w3) => `minmax(${w3}px, max-content)`).join(" ");
+    visualization.style.setProperty("--grid-template-columns", templateColumns);
+    anchorHeader();
+    const firstLine = document.querySelector(".group-template");
+    if (!firstLine) {
+      console.error("No first line found");
+      return;
+    }
+    const sizesFromFirstLine = Array.from(firstLine.children).map(
+      (el) => el.getBoundingClientRect().width
+    );
+    const templateColumns2 = sizesFromFirstLine.map((w3) => `${w3}px`).join(" ");
+    columnsDiv.style.setProperty("grid-template-columns", templateColumns2);
+    const firstPartWidth = Math.ceil(parts[0].getBoundingClientRect().width);
+    const width = Math.ceil(columnsDiv.getBoundingClientRect().width);
+    visualization.style.setProperty("--group-header-width", `${width - 1}px`);
+    visualization.style.setProperty("--group-first-width", `${firstPartWidth - 1}px`);
+  }
+  function anchorHeader() {
+    const store2 = anchorHeader;
+    store2.lastTop = store2.lastTop ?? 0;
+    const panel = document.querySelector(".vis-panel.vis-left");
+    const header = document.getElementById("groupHeader");
+    const content = panel.querySelector(".vis-labelset");
+    const top = panel.getBoundingClientRect().top;
+    if (top === store2.lastTop) {
+      return;
+    }
+    store2.lastTop = top;
+    const headerHeight = header.getBoundingClientRect().height;
+    const newTop = top - headerHeight + 1;
+    header.style.setProperty("top", `${newTop}px`);
+    const left = content.getBoundingClientRect().left;
+    header.style.setProperty("left", `${left}px`);
+  }
+
   // vendor.ts
   var import_moment_timezone = __toESM(require_moment_timezone2());
   var import_en_gb = __toESM(require_en_gb());
@@ -6453,7 +10312,7 @@
     setter ? setter.call(obj, value) : member.set(obj, value);
     return value;
   };
-  var __await = function(promise2, isYieldStar) {
+  var __await2 = function(promise2, isYieldStar) {
     this[0] = promise2;
     this[1] = isYieldStar;
   };
@@ -6477,7 +10336,7 @@
         isAwait = true;
         return {
           done: false,
-          value: new __await(new Promise((resolve2) => {
+          value: new __await2(new Promise((resolve2) => {
             var x3 = obj[k3](v3);
             if (!(x3 instanceof Object))
               throw TypeError("Object expected");
@@ -6523,30 +10382,30 @@
     })(s3) + t5[o8 + 1], t5[0]);
     return new n(o7, t5, s);
   };
-  var S = (s3, o7) => {
+  var S2 = (s3, o7) => {
     if (e) s3.adoptedStyleSheets = o7.map((t5) => t5 instanceof CSSStyleSheet ? t5 : t5.styleSheet);
     else for (const e9 of o7) {
       const o8 = document.createElement("style"), n6 = t.litNonce;
       void 0 !== n6 && o8.setAttribute("nonce", n6), o8.textContent = e9.cssText, s3.appendChild(o8);
     }
   };
-  var c = e ? (t5) => t5 : (t5) => t5 instanceof CSSStyleSheet ? ((t6) => {
+  var c2 = e ? (t5) => t5 : (t5) => t5 instanceof CSSStyleSheet ? ((t6) => {
     let e9 = "";
     for (const s3 of t6.cssRules) e9 += s3.cssText;
     return r(e9);
   })(t5) : t5;
 
   // node_modules/@lit/reactive-element/reactive-element.js
-  var { is: i3, defineProperty: e2, getOwnPropertyDescriptor: r2, getOwnPropertyNames: h, getOwnPropertySymbols: o2, getPrototypeOf: n2 } = Object;
+  var { is: i3, defineProperty: e2, getOwnPropertyDescriptor: r2, getOwnPropertyNames: h2, getOwnPropertySymbols: o2, getPrototypeOf: n2 } = Object;
   var a = globalThis;
-  var c2 = a.trustedTypes;
-  var l = c2 ? c2.emptyScript : "";
-  var p = a.reactiveElementPolyfillSupport;
-  var d = (t5, s3) => t5;
-  var u = { toAttribute(t5, s3) {
+  var c3 = a.trustedTypes;
+  var l2 = c3 ? c3.emptyScript : "";
+  var p2 = a.reactiveElementPolyfillSupport;
+  var d2 = (t5, s3) => t5;
+  var u2 = { toAttribute(t5, s3) {
     switch (s3) {
       case Boolean:
-        t5 = t5 ? l : null;
+        t5 = t5 ? l2 : null;
         break;
       case Object:
       case Array:
@@ -6572,17 +10431,17 @@
     }
     return i8;
   } };
-  var f = (t5, s3) => !i3(t5, s3);
-  var y = { attribute: true, type: String, converter: u, reflect: false, hasChanged: f };
+  var f2 = (t5, s3) => !i3(t5, s3);
+  var y2 = { attribute: true, type: String, converter: u2, reflect: false, hasChanged: f2 };
   Symbol.metadata ??= Symbol("metadata"), a.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
-  var b = class extends HTMLElement {
+  var b2 = class extends HTMLElement {
     static addInitializer(t5) {
       this._$Ei(), (this.l ??= []).push(t5);
     }
     static get observedAttributes() {
       return this.finalize(), this._$Eh && [...this._$Eh.keys()];
     }
-    static createProperty(t5, s3 = y) {
+    static createProperty(t5, s3 = y2) {
       if (s3.state && (s3.attribute = false), this._$Ei(), this.elementProperties.set(t5, s3), !s3.noAccessor) {
         const i8 = Symbol(), r7 = this.getPropertyDescriptor(t5, i8, s3);
         void 0 !== r7 && e2(this.prototype, t5, r7);
@@ -6602,17 +10461,17 @@
       }, configurable: true, enumerable: true };
     }
     static getPropertyOptions(t5) {
-      return this.elementProperties.get(t5) ?? y;
+      return this.elementProperties.get(t5) ?? y2;
     }
     static _$Ei() {
-      if (this.hasOwnProperty(d("elementProperties"))) return;
+      if (this.hasOwnProperty(d2("elementProperties"))) return;
       const t5 = n2(this);
       t5.finalize(), void 0 !== t5.l && (this.l = [...t5.l]), this.elementProperties = new Map(t5.elementProperties);
     }
     static finalize() {
-      if (this.hasOwnProperty(d("finalized"))) return;
-      if (this.finalized = true, this._$Ei(), this.hasOwnProperty(d("properties"))) {
-        const t6 = this.properties, s3 = [...h(t6), ...o2(t6)];
+      if (this.hasOwnProperty(d2("finalized"))) return;
+      if (this.finalized = true, this._$Ei(), this.hasOwnProperty(d2("properties"))) {
+        const t6 = this.properties, s3 = [...h2(t6), ...o2(t6)];
         for (const i8 of s3) this.createProperty(i8, t6[i8]);
       }
       const t5 = this[Symbol.metadata];
@@ -6631,8 +10490,8 @@
       const i8 = [];
       if (Array.isArray(s3)) {
         const e9 = new Set(s3.flat(1 / 0).reverse());
-        for (const s4 of e9) i8.unshift(c(s4));
-      } else void 0 !== s3 && i8.push(c(s3));
+        for (const s4 of e9) i8.unshift(c2(s4));
+      } else void 0 !== s3 && i8.push(c2(s3));
       return i8;
     }
     static _$Eu(t5, s3) {
@@ -6658,7 +10517,7 @@
     }
     createRenderRoot() {
       const t5 = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-      return S(t5, this.constructor.elementStyles), t5;
+      return S2(t5, this.constructor.elementStyles), t5;
     }
     connectedCallback() {
       this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(true), this._$EO?.forEach((t5) => t5.hostConnected?.());
@@ -6674,20 +10533,20 @@
     _$EC(t5, s3) {
       const i8 = this.constructor.elementProperties.get(t5), e9 = this.constructor._$Eu(t5, i8);
       if (void 0 !== e9 && true === i8.reflect) {
-        const r7 = (void 0 !== i8.converter?.toAttribute ? i8.converter : u).toAttribute(s3, i8.type);
+        const r7 = (void 0 !== i8.converter?.toAttribute ? i8.converter : u2).toAttribute(s3, i8.type);
         this._$Em = t5, null == r7 ? this.removeAttribute(e9) : this.setAttribute(e9, r7), this._$Em = null;
       }
     }
     _$AK(t5, s3) {
       const i8 = this.constructor, e9 = i8._$Eh.get(t5);
       if (void 0 !== e9 && this._$Em !== e9) {
-        const t6 = i8.getPropertyOptions(e9), r7 = "function" == typeof t6.converter ? { fromAttribute: t6.converter } : void 0 !== t6.converter?.fromAttribute ? t6.converter : u;
+        const t6 = i8.getPropertyOptions(e9), r7 = "function" == typeof t6.converter ? { fromAttribute: t6.converter } : void 0 !== t6.converter?.fromAttribute ? t6.converter : u2;
         this._$Em = e9, this[e9] = r7.fromAttribute(s3, t6.type), this._$Em = null;
       }
     }
     requestUpdate(t5, s3, i8) {
       if (void 0 !== t5) {
-        if (i8 ??= this.constructor.getPropertyOptions(t5), !(i8.hasChanged ?? f)(this[t5], s3)) return;
+        if (i8 ??= this.constructor.getPropertyOptions(t5), !(i8.hasChanged ?? f2)(this[t5], s3)) return;
         this.P(t5, s3, i8);
       }
       false === this.isUpdatePending && (this._$ES = this._$ET());
@@ -6752,82 +10611,82 @@
     firstUpdated(t5) {
     }
   };
-  b.elementStyles = [], b.shadowRootOptions = { mode: "open" }, b[d("elementProperties")] = /* @__PURE__ */ new Map(), b[d("finalized")] = /* @__PURE__ */ new Map(), p?.({ ReactiveElement: b }), (a.reactiveElementVersions ??= []).push("2.0.4");
+  b2.elementStyles = [], b2.shadowRootOptions = { mode: "open" }, b2[d2("elementProperties")] = /* @__PURE__ */ new Map(), b2[d2("finalized")] = /* @__PURE__ */ new Map(), p2?.({ ReactiveElement: b2 }), (a.reactiveElementVersions ??= []).push("2.0.4");
 
   // node_modules/lit-html/lit-html.js
   var t2 = globalThis;
   var i4 = t2.trustedTypes;
   var s2 = i4 ? i4.createPolicy("lit-html", { createHTML: (t5) => t5 }) : void 0;
   var e3 = "$lit$";
-  var h2 = `lit$${Math.random().toFixed(9).slice(2)}$`;
-  var o3 = "?" + h2;
+  var h3 = `lit$${Math.random().toFixed(9).slice(2)}$`;
+  var o3 = "?" + h3;
   var n3 = `<${o3}>`;
   var r3 = document;
-  var l2 = () => r3.createComment("");
-  var c3 = (t5) => null === t5 || "object" != typeof t5 && "function" != typeof t5;
+  var l3 = () => r3.createComment("");
+  var c4 = (t5) => null === t5 || "object" != typeof t5 && "function" != typeof t5;
   var a2 = Array.isArray;
-  var u2 = (t5) => a2(t5) || "function" == typeof t5?.[Symbol.iterator];
-  var d2 = "[ 	\n\f\r]";
-  var f2 = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g;
-  var v = /-->/g;
-  var _ = />/g;
-  var m = RegExp(`>|${d2}(?:([^\\s"'>=/]+)(${d2}*=${d2}*(?:[^ 	
+  var u3 = (t5) => a2(t5) || "function" == typeof t5?.[Symbol.iterator];
+  var d3 = "[ 	\n\f\r]";
+  var f3 = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g;
+  var v2 = /-->/g;
+  var _2 = />/g;
+  var m2 = RegExp(`>|${d3}(?:([^\\s"'>=/]+)(${d3}*=${d3}*(?:[^ 	
 \f\r"'\`<>=]|("|')|))|$)`, "g");
-  var p2 = /'/g;
-  var g = /"/g;
+  var p3 = /'/g;
+  var g2 = /"/g;
   var $ = /^(?:script|style|textarea|title)$/i;
-  var y2 = (t5) => (i8, ...s3) => ({ _$litType$: t5, strings: i8, values: s3 });
-  var x = y2(1);
-  var b2 = y2(2);
-  var w = y2(3);
-  var T = Symbol.for("lit-noChange");
-  var E = Symbol.for("lit-nothing");
-  var A = /* @__PURE__ */ new WeakMap();
-  var C = r3.createTreeWalker(r3, 129);
-  function P(t5, i8) {
+  var y3 = (t5) => (i8, ...s3) => ({ _$litType$: t5, strings: i8, values: s3 });
+  var x2 = y3(1);
+  var b3 = y3(2);
+  var w2 = y3(3);
+  var T2 = Symbol.for("lit-noChange");
+  var E2 = Symbol.for("lit-nothing");
+  var A2 = /* @__PURE__ */ new WeakMap();
+  var C2 = r3.createTreeWalker(r3, 129);
+  function P2(t5, i8) {
     if (!a2(t5) || !t5.hasOwnProperty("raw")) throw Error("invalid template strings array");
     return void 0 !== s2 ? s2.createHTML(i8) : i8;
   }
-  var V = (t5, i8) => {
+  var V2 = (t5, i8) => {
     const s3 = t5.length - 1, o7 = [];
-    let r7, l6 = 2 === i8 ? "<svg>" : 3 === i8 ? "<math>" : "", c6 = f2;
+    let r7, l6 = 2 === i8 ? "<svg>" : 3 === i8 ? "<math>" : "", c6 = f3;
     for (let i9 = 0; i9 < s3; i9++) {
       const s4 = t5[i9];
       let a4, u6, d4 = -1, y4 = 0;
-      for (; y4 < s4.length && (c6.lastIndex = y4, u6 = c6.exec(s4), null !== u6); ) y4 = c6.lastIndex, c6 === f2 ? "!--" === u6[1] ? c6 = v : void 0 !== u6[1] ? c6 = _ : void 0 !== u6[2] ? ($.test(u6[2]) && (r7 = RegExp("</" + u6[2], "g")), c6 = m) : void 0 !== u6[3] && (c6 = m) : c6 === m ? ">" === u6[0] ? (c6 = r7 ?? f2, d4 = -1) : void 0 === u6[1] ? d4 = -2 : (d4 = c6.lastIndex - u6[2].length, a4 = u6[1], c6 = void 0 === u6[3] ? m : '"' === u6[3] ? g : p2) : c6 === g || c6 === p2 ? c6 = m : c6 === v || c6 === _ ? c6 = f2 : (c6 = m, r7 = void 0);
-      const x3 = c6 === m && t5[i9 + 1].startsWith("/>") ? " " : "";
-      l6 += c6 === f2 ? s4 + n3 : d4 >= 0 ? (o7.push(a4), s4.slice(0, d4) + e3 + s4.slice(d4) + h2 + x3) : s4 + h2 + (-2 === d4 ? i9 : x3);
+      for (; y4 < s4.length && (c6.lastIndex = y4, u6 = c6.exec(s4), null !== u6); ) y4 = c6.lastIndex, c6 === f3 ? "!--" === u6[1] ? c6 = v2 : void 0 !== u6[1] ? c6 = _2 : void 0 !== u6[2] ? ($.test(u6[2]) && (r7 = RegExp("</" + u6[2], "g")), c6 = m2) : void 0 !== u6[3] && (c6 = m2) : c6 === m2 ? ">" === u6[0] ? (c6 = r7 ?? f3, d4 = -1) : void 0 === u6[1] ? d4 = -2 : (d4 = c6.lastIndex - u6[2].length, a4 = u6[1], c6 = void 0 === u6[3] ? m2 : '"' === u6[3] ? g2 : p3) : c6 === g2 || c6 === p3 ? c6 = m2 : c6 === v2 || c6 === _2 ? c6 = f3 : (c6 = m2, r7 = void 0);
+      const x3 = c6 === m2 && t5[i9 + 1].startsWith("/>") ? " " : "";
+      l6 += c6 === f3 ? s4 + n3 : d4 >= 0 ? (o7.push(a4), s4.slice(0, d4) + e3 + s4.slice(d4) + h3 + x3) : s4 + h3 + (-2 === d4 ? i9 : x3);
     }
-    return [P(t5, l6 + (t5[s3] || "<?>") + (2 === i8 ? "</svg>" : 3 === i8 ? "</math>" : "")), o7];
+    return [P2(t5, l6 + (t5[s3] || "<?>") + (2 === i8 ? "</svg>" : 3 === i8 ? "</math>" : "")), o7];
   };
   var N = class _N {
     constructor({ strings: t5, _$litType$: s3 }, n6) {
       let r7;
       this.parts = [];
       let c6 = 0, a4 = 0;
-      const u6 = t5.length - 1, d4 = this.parts, [f5, v3] = V(t5, s3);
-      if (this.el = _N.createElement(f5, n6), C.currentNode = this.el.content, 2 === s3 || 3 === s3) {
+      const u6 = t5.length - 1, d4 = this.parts, [f5, v3] = V2(t5, s3);
+      if (this.el = _N.createElement(f5, n6), C2.currentNode = this.el.content, 2 === s3 || 3 === s3) {
         const t6 = this.el.content.firstChild;
         t6.replaceWith(...t6.childNodes);
       }
-      for (; null !== (r7 = C.nextNode()) && d4.length < u6; ) {
+      for (; null !== (r7 = C2.nextNode()) && d4.length < u6; ) {
         if (1 === r7.nodeType) {
           if (r7.hasAttributes()) for (const t6 of r7.getAttributeNames()) if (t6.endsWith(e3)) {
-            const i8 = v3[a4++], s4 = r7.getAttribute(t6).split(h2), e9 = /([.?@])?(.*)/.exec(i8);
-            d4.push({ type: 1, index: c6, name: e9[2], strings: s4, ctor: "." === e9[1] ? H : "?" === e9[1] ? I : "@" === e9[1] ? L : k }), r7.removeAttribute(t6);
-          } else t6.startsWith(h2) && (d4.push({ type: 6, index: c6 }), r7.removeAttribute(t6));
+            const i8 = v3[a4++], s4 = r7.getAttribute(t6).split(h3), e9 = /([.?@])?(.*)/.exec(i8);
+            d4.push({ type: 1, index: c6, name: e9[2], strings: s4, ctor: "." === e9[1] ? H : "?" === e9[1] ? I2 : "@" === e9[1] ? L2 : k2 }), r7.removeAttribute(t6);
+          } else t6.startsWith(h3) && (d4.push({ type: 6, index: c6 }), r7.removeAttribute(t6));
           if ($.test(r7.tagName)) {
-            const t6 = r7.textContent.split(h2), s4 = t6.length - 1;
+            const t6 = r7.textContent.split(h3), s4 = t6.length - 1;
             if (s4 > 0) {
               r7.textContent = i4 ? i4.emptyScript : "";
-              for (let i8 = 0; i8 < s4; i8++) r7.append(t6[i8], l2()), C.nextNode(), d4.push({ type: 2, index: ++c6 });
-              r7.append(t6[s4], l2());
+              for (let i8 = 0; i8 < s4; i8++) r7.append(t6[i8], l3()), C2.nextNode(), d4.push({ type: 2, index: ++c6 });
+              r7.append(t6[s4], l3());
             }
           }
         } else if (8 === r7.nodeType) if (r7.data === o3) d4.push({ type: 2, index: c6 });
         else {
           let t6 = -1;
-          for (; -1 !== (t6 = r7.data.indexOf(h2, t6 + 1)); ) d4.push({ type: 7, index: c6 }), t6 += h2.length - 1;
+          for (; -1 !== (t6 = r7.data.indexOf(h3, t6 + 1)); ) d4.push({ type: 7, index: c6 }), t6 += h3.length - 1;
         }
         c6++;
       }
@@ -6837,13 +10696,13 @@
       return s3.innerHTML = t5, s3;
     }
   };
-  function S2(t5, i8, s3 = t5, e9) {
-    if (i8 === T) return i8;
+  function S3(t5, i8, s3 = t5, e9) {
+    if (i8 === T2) return i8;
     let h4 = void 0 !== e9 ? s3._$Co?.[e9] : s3._$Cl;
-    const o7 = c3(i8) ? void 0 : i8._$litDirective$;
-    return h4?.constructor !== o7 && (h4?._$AO?.(false), void 0 === o7 ? h4 = void 0 : (h4 = new o7(t5), h4._$AT(t5, s3, e9)), void 0 !== e9 ? (s3._$Co ??= [])[e9] = h4 : s3._$Cl = h4), void 0 !== h4 && (i8 = S2(t5, h4._$AS(t5, i8.values), h4, e9)), i8;
+    const o7 = c4(i8) ? void 0 : i8._$litDirective$;
+    return h4?.constructor !== o7 && (h4?._$AO?.(false), void 0 === o7 ? h4 = void 0 : (h4 = new o7(t5), h4._$AT(t5, s3, e9)), void 0 !== e9 ? (s3._$Co ??= [])[e9] = h4 : s3._$Cl = h4), void 0 !== h4 && (i8 = S3(t5, h4._$AS(t5, i8.values), h4, e9)), i8;
   }
-  var M = class {
+  var M2 = class {
     constructor(t5, i8) {
       this._$AV = [], this._$AN = void 0, this._$AD = t5, this._$AM = i8;
     }
@@ -6855,28 +10714,28 @@
     }
     u(t5) {
       const { el: { content: i8 }, parts: s3 } = this._$AD, e9 = (t5?.creationScope ?? r3).importNode(i8, true);
-      C.currentNode = e9;
-      let h4 = C.nextNode(), o7 = 0, n6 = 0, l6 = s3[0];
+      C2.currentNode = e9;
+      let h4 = C2.nextNode(), o7 = 0, n6 = 0, l6 = s3[0];
       for (; void 0 !== l6; ) {
         if (o7 === l6.index) {
           let i9;
-          2 === l6.type ? i9 = new R(h4, h4.nextSibling, this, t5) : 1 === l6.type ? i9 = new l6.ctor(h4, l6.name, l6.strings, this, t5) : 6 === l6.type && (i9 = new z(h4, this, t5)), this._$AV.push(i9), l6 = s3[++n6];
+          2 === l6.type ? i9 = new R2(h4, h4.nextSibling, this, t5) : 1 === l6.type ? i9 = new l6.ctor(h4, l6.name, l6.strings, this, t5) : 6 === l6.type && (i9 = new z2(h4, this, t5)), this._$AV.push(i9), l6 = s3[++n6];
         }
-        o7 !== l6?.index && (h4 = C.nextNode(), o7++);
+        o7 !== l6?.index && (h4 = C2.nextNode(), o7++);
       }
-      return C.currentNode = r3, e9;
+      return C2.currentNode = r3, e9;
     }
     p(t5) {
       let i8 = 0;
       for (const s3 of this._$AV) void 0 !== s3 && (void 0 !== s3.strings ? (s3._$AI(t5, s3, i8), i8 += s3.strings.length - 2) : s3._$AI(t5[i8])), i8++;
     }
   };
-  var R = class _R {
+  var R2 = class _R {
     get _$AU() {
       return this._$AM?._$AU ?? this._$Cv;
     }
     constructor(t5, i8, s3, e9) {
-      this.type = 2, this._$AH = E, this._$AN = void 0, this._$AA = t5, this._$AB = i8, this._$AM = s3, this.options = e9, this._$Cv = e9?.isConnected ?? true;
+      this.type = 2, this._$AH = E2, this._$AN = void 0, this._$AA = t5, this._$AB = i8, this._$AM = s3, this.options = e9, this._$Cv = e9?.isConnected ?? true;
     }
     get parentNode() {
       let t5 = this._$AA.parentNode;
@@ -6890,7 +10749,7 @@
       return this._$AB;
     }
     _$AI(t5, i8 = this) {
-      t5 = S2(this, t5, i8), c3(t5) ? t5 === E || null == t5 || "" === t5 ? (this._$AH !== E && this._$AR(), this._$AH = E) : t5 !== this._$AH && t5 !== T && this._(t5) : void 0 !== t5._$litType$ ? this.$(t5) : void 0 !== t5.nodeType ? this.T(t5) : u2(t5) ? this.k(t5) : this._(t5);
+      t5 = S3(this, t5, i8), c4(t5) ? t5 === E2 || null == t5 || "" === t5 ? (this._$AH !== E2 && this._$AR(), this._$AH = E2) : t5 !== this._$AH && t5 !== T2 && this._(t5) : void 0 !== t5._$litType$ ? this.$(t5) : void 0 !== t5.nodeType ? this.T(t5) : u3(t5) ? this.k(t5) : this._(t5);
     }
     O(t5) {
       return this._$AA.parentNode.insertBefore(t5, this._$AB);
@@ -6899,25 +10758,25 @@
       this._$AH !== t5 && (this._$AR(), this._$AH = this.O(t5));
     }
     _(t5) {
-      this._$AH !== E && c3(this._$AH) ? this._$AA.nextSibling.data = t5 : this.T(r3.createTextNode(t5)), this._$AH = t5;
+      this._$AH !== E2 && c4(this._$AH) ? this._$AA.nextSibling.data = t5 : this.T(r3.createTextNode(t5)), this._$AH = t5;
     }
     $(t5) {
-      const { values: i8, _$litType$: s3 } = t5, e9 = "number" == typeof s3 ? this._$AC(t5) : (void 0 === s3.el && (s3.el = N.createElement(P(s3.h, s3.h[0]), this.options)), s3);
+      const { values: i8, _$litType$: s3 } = t5, e9 = "number" == typeof s3 ? this._$AC(t5) : (void 0 === s3.el && (s3.el = N.createElement(P2(s3.h, s3.h[0]), this.options)), s3);
       if (this._$AH?._$AD === e9) this._$AH.p(i8);
       else {
-        const t6 = new M(e9, this), s4 = t6.u(this.options);
+        const t6 = new M2(e9, this), s4 = t6.u(this.options);
         t6.p(i8), this.T(s4), this._$AH = t6;
       }
     }
     _$AC(t5) {
-      let i8 = A.get(t5.strings);
-      return void 0 === i8 && A.set(t5.strings, i8 = new N(t5)), i8;
+      let i8 = A2.get(t5.strings);
+      return void 0 === i8 && A2.set(t5.strings, i8 = new N(t5)), i8;
     }
     k(t5) {
       a2(this._$AH) || (this._$AH = [], this._$AR());
       const i8 = this._$AH;
       let s3, e9 = 0;
-      for (const h4 of t5) e9 === i8.length ? i8.push(s3 = new _R(this.O(l2()), this.O(l2()), this, this.options)) : s3 = i8[e9], s3._$AI(h4), e9++;
+      for (const h4 of t5) e9 === i8.length ? i8.push(s3 = new _R(this.O(l3()), this.O(l3()), this, this.options)) : s3 = i8[e9], s3._$AI(h4), e9++;
       e9 < i8.length && (this._$AR(s3 && s3._$AB.nextSibling, e9), i8.length = e9);
     }
     _$AR(t5 = this._$AA.nextSibling, i8) {
@@ -6930,7 +10789,7 @@
       void 0 === this._$AM && (this._$Cv = t5, this._$AP?.(t5));
     }
   };
-  var k = class {
+  var k2 = class {
     get tagName() {
       return this.element.tagName;
     }
@@ -6938,53 +10797,53 @@
       return this._$AM._$AU;
     }
     constructor(t5, i8, s3, e9, h4) {
-      this.type = 1, this._$AH = E, this._$AN = void 0, this.element = t5, this.name = i8, this._$AM = e9, this.options = h4, s3.length > 2 || "" !== s3[0] || "" !== s3[1] ? (this._$AH = Array(s3.length - 1).fill(new String()), this.strings = s3) : this._$AH = E;
+      this.type = 1, this._$AH = E2, this._$AN = void 0, this.element = t5, this.name = i8, this._$AM = e9, this.options = h4, s3.length > 2 || "" !== s3[0] || "" !== s3[1] ? (this._$AH = Array(s3.length - 1).fill(new String()), this.strings = s3) : this._$AH = E2;
     }
     _$AI(t5, i8 = this, s3, e9) {
       const h4 = this.strings;
       let o7 = false;
-      if (void 0 === h4) t5 = S2(this, t5, i8, 0), o7 = !c3(t5) || t5 !== this._$AH && t5 !== T, o7 && (this._$AH = t5);
+      if (void 0 === h4) t5 = S3(this, t5, i8, 0), o7 = !c4(t5) || t5 !== this._$AH && t5 !== T2, o7 && (this._$AH = t5);
       else {
         const e10 = t5;
         let n6, r7;
-        for (t5 = h4[0], n6 = 0; n6 < h4.length - 1; n6++) r7 = S2(this, e10[s3 + n6], i8, n6), r7 === T && (r7 = this._$AH[n6]), o7 ||= !c3(r7) || r7 !== this._$AH[n6], r7 === E ? t5 = E : t5 !== E && (t5 += (r7 ?? "") + h4[n6 + 1]), this._$AH[n6] = r7;
+        for (t5 = h4[0], n6 = 0; n6 < h4.length - 1; n6++) r7 = S3(this, e10[s3 + n6], i8, n6), r7 === T2 && (r7 = this._$AH[n6]), o7 ||= !c4(r7) || r7 !== this._$AH[n6], r7 === E2 ? t5 = E2 : t5 !== E2 && (t5 += (r7 ?? "") + h4[n6 + 1]), this._$AH[n6] = r7;
       }
       o7 && !e9 && this.j(t5);
     }
     j(t5) {
-      t5 === E ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t5 ?? "");
+      t5 === E2 ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t5 ?? "");
     }
   };
-  var H = class extends k {
+  var H = class extends k2 {
     constructor() {
       super(...arguments), this.type = 3;
     }
     j(t5) {
-      this.element[this.name] = t5 === E ? void 0 : t5;
+      this.element[this.name] = t5 === E2 ? void 0 : t5;
     }
   };
-  var I = class extends k {
+  var I2 = class extends k2 {
     constructor() {
       super(...arguments), this.type = 4;
     }
     j(t5) {
-      this.element.toggleAttribute(this.name, !!t5 && t5 !== E);
+      this.element.toggleAttribute(this.name, !!t5 && t5 !== E2);
     }
   };
-  var L = class extends k {
+  var L2 = class extends k2 {
     constructor(t5, i8, s3, e9, h4) {
       super(t5, i8, s3, e9, h4), this.type = 5;
     }
     _$AI(t5, i8 = this) {
-      if ((t5 = S2(this, t5, i8, 0) ?? E) === T) return;
-      const s3 = this._$AH, e9 = t5 === E && s3 !== E || t5.capture !== s3.capture || t5.once !== s3.once || t5.passive !== s3.passive, h4 = t5 !== E && (s3 === E || e9);
+      if ((t5 = S3(this, t5, i8, 0) ?? E2) === T2) return;
+      const s3 = this._$AH, e9 = t5 === E2 && s3 !== E2 || t5.capture !== s3.capture || t5.once !== s3.once || t5.passive !== s3.passive, h4 = t5 !== E2 && (s3 === E2 || e9);
       e9 && this.element.removeEventListener(this.name, this, s3), h4 && this.element.addEventListener(this.name, this, t5), this._$AH = t5;
     }
     handleEvent(t5) {
       "function" == typeof this._$AH ? this._$AH.call(this.options?.host ?? this.element, t5) : this._$AH.handleEvent(t5);
     }
   };
-  var z = class {
+  var z2 = class {
     constructor(t5, i8, s3) {
       this.element = t5, this.type = 6, this._$AN = void 0, this._$AM = i8, this.options = s3;
     }
@@ -6992,24 +10851,24 @@
       return this._$AM._$AU;
     }
     _$AI(t5) {
-      S2(this, t5);
+      S3(this, t5);
     }
   };
-  var Z = { M: e3, P: h2, A: o3, C: 1, L: V, R: M, D: u2, V: S2, I: R, H: k, N: I, U: L, B: H, F: z };
-  var j = t2.litHtmlPolyfillSupport;
-  j?.(N, R), (t2.litHtmlVersions ??= []).push("3.2.1");
-  var B = (t5, i8, s3) => {
+  var Z2 = { M: e3, P: h3, A: o3, C: 1, L: V2, R: M2, D: u3, V: S3, I: R2, H: k2, N: I2, U: L2, B: H, F: z2 };
+  var j2 = t2.litHtmlPolyfillSupport;
+  j2?.(N, R2), (t2.litHtmlVersions ??= []).push("3.2.1");
+  var B2 = (t5, i8, s3) => {
     const e9 = s3?.renderBefore ?? i8;
     let h4 = e9._$litPart$;
     if (void 0 === h4) {
       const t6 = s3?.renderBefore ?? null;
-      e9._$litPart$ = h4 = new R(i8.insertBefore(l2(), t6), t6, void 0, s3 ?? {});
+      e9._$litPart$ = h4 = new R2(i8.insertBefore(l3(), t6), t6, void 0, s3 ?? {});
     }
     return h4._$AI(t5), h4;
   };
 
   // node_modules/lit-element/lit-element.js
-  var r4 = class extends b {
+  var r4 = class extends b2 {
     constructor() {
       super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
     }
@@ -7019,7 +10878,7 @@
     }
     update(t5) {
       const s3 = this.render();
-      this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(t5), this._$Do = B(s3, this.renderRoot, this.renderOptions);
+      this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(t5), this._$Do = B2(s3, this.renderRoot, this.renderOptions);
     }
     connectedCallback() {
       super.connectedCallback(), this._$Do?.setConnected(true);
@@ -7028,7 +10887,7 @@
       super.disconnectedCallback(), this._$Do?.setConnected(false);
     }
     render() {
-      return T;
+      return T2;
     }
   };
   r4._$litElement$ = true, r4["finalized"] = true, globalThis.litElementHydrateSupport?.({ LitElement: r4 });
@@ -7583,7 +11442,7 @@
 `;
 
   // node_modules/@lit/reactive-element/decorators/property.js
-  var o4 = { attribute: true, type: String, converter: u, reflect: false, hasChanged: f };
+  var o4 = { attribute: true, type: String, converter: u2, reflect: false, hasChanged: f2 };
   var r5 = (t5 = o4, e9, r7) => {
     const { kind: n6, metadata: i8 } = r7;
     let s3 = globalThis.litPropertyMetadata.get(i8);
@@ -7725,11 +11584,11 @@
   ], ShoelaceElement.prototype, "lang", 2);
 
   // node_modules/lit-html/directive-helpers.js
-  var { I: t3 } = Z;
+  var { I: t3 } = Z2;
   var e6 = (o7, t5) => void 0 === t5 ? void 0 !== o7?._$litType$ : o7?._$litType$ === t5;
-  var f3 = (o7) => void 0 === o7.strings;
-  var u3 = {};
-  var m2 = (o7, t5 = u3) => o7._$AH = t5;
+  var f4 = (o7) => void 0 === o7.strings;
+  var u4 = {};
+  var m3 = (o7, t5 = u4) => o7._$AH = t5;
 
   // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.E6QAPUBK.js
   var CACHEABLE_ERROR = Symbol();
@@ -7749,7 +11608,7 @@
       var _a;
       let fileData;
       if (library2 == null ? void 0 : library2.spriteSheet) {
-        this.svg = x`<svg part="svg">
+        this.svg = x2`<svg part="svg">
         <use part="use" href="${url}"></use>
       </svg>`;
         return this.svg;
@@ -7929,7 +11788,7 @@
         const s4 = !!i8[t5];
         s4 === this.st.has(t5) || this.nt?.has(t5) || (s4 ? (r7.add(t5), this.st.add(t5)) : (r7.remove(t5), this.st.delete(t5)));
       }
-      return T;
+      return T2;
     }
   });
 
@@ -7943,7 +11802,7 @@
     throw Error(`Value passed to 'literal' function must be a 'literal' result: ${t6}. Use 'unsafeStatic' to pass non-literal values, but
             take care to ensure page security.`);
   })(e9) + t5[a4 + 1], t5[0]), r: a3 });
-  var l3 = /* @__PURE__ */ new Map();
+  var l4 = /* @__PURE__ */ new Map();
   var n5 = (t5) => (r7, ...e9) => {
     const a4 = e9.length;
     let s3, i8;
@@ -7955,16 +11814,16 @@
     }
     if ($4 === a4 && n6.push(r7[a4]), f5) {
       const t6 = n6.join("$$lit$$");
-      void 0 === (r7 = l3.get(t6)) && (n6.raw = n6, l3.set(t6, r7 = n6)), e9 = u6;
+      void 0 === (r7 = l4.get(t6)) && (n6.raw = n6, l4.set(t6, r7 = n6)), e9 = u6;
     }
     return t5(r7, ...e9);
   };
-  var u4 = n5(x);
-  var c4 = n5(b2);
-  var $2 = n5(w);
+  var u5 = n5(x2);
+  var c5 = n5(b3);
+  var $2 = n5(w2);
 
   // node_modules/lit-html/directives/if-defined.js
-  var o6 = (o7) => o7 ?? E;
+  var o6 = (o7) => o7 ?? E2;
 
   // node_modules/@shoelace-style/shoelace/dist/chunks/chunk.3HB7VQL2.js
   var SlIconButton = class extends ShoelaceElement {
@@ -8003,7 +11862,7 @@
     render() {
       const isLink = this.href ? true : false;
       const tag = isLink ? i7`a` : i7`button`;
-      return u4`
+      return u5`
       <${tag}
         part="base"
         class=${e8({
@@ -8151,7 +12010,7 @@
   var documentLanguage = "en";
   var isClient = typeof MutationObserver !== "undefined" && typeof document !== "undefined" && typeof document.documentElement !== "undefined";
   if (isClient) {
-    const documentElementObserver = new MutationObserver(update);
+    const documentElementObserver = new MutationObserver(update2);
     documentDirection = document.documentElement.dir || "ltr";
     documentLanguage = document.documentElement.lang || navigator.language;
     documentElementObserver.observe(document.documentElement, {
@@ -8171,9 +12030,9 @@
         fallback = t5;
       }
     });
-    update();
+    update2();
   }
-  function update() {
+  function update2() {
     if (isClient) {
       documentDirection = document.documentElement.dir || "ltr";
       documentLanguage = document.documentElement.lang || navigator.language;
@@ -8501,7 +12360,7 @@
       return waitForEvent(this, "sl-after-hide");
     }
     render() {
-      return x`
+      return x2`
       <div
         part="base"
         class=${e8({
@@ -8529,7 +12388,7 @@
           aria-labelledby=${o6(!this.noHeader ? "title" : void 0)}
           tabindex="0"
         >
-          ${!this.noHeader ? x`
+          ${!this.noHeader ? x2`
                 <header part="header" class="drawer__header">
                   <h2 part="title" class="drawer__title" id="title">
                     <!-- If there's no label, use an invisible character to prevent the header from collapsing -->
@@ -8747,7 +12606,7 @@
       this.localize = new LocalizeController2(this);
     }
     render() {
-      return x`
+      return x2`
       <svg part="base" class="spinner" role="progressbar" aria-label=${this.localize.term("loading")}>
         <circle class="spinner__track"></circle>
         <circle class="spinner__indicator"></circle>
@@ -9760,7 +13619,7 @@
     render() {
       const isLink = this.isLink();
       const tag = isLink ? i7`a` : i7`button`;
-      return u4`
+      return u5`
       <${tag}
         part="base"
         class=${e8({
@@ -9808,8 +13667,8 @@
         <slot name="prefix" part="prefix" class="button__prefix"></slot>
         <slot part="label" class="button__label"></slot>
         <slot name="suffix" part="suffix" class="button__suffix"></slot>
-        ${this.caret ? u4` <sl-icon part="caret" class="button__caret" library="system" name="caret"></sl-icon> ` : ""}
-        ${this.loading ? u4`<sl-spinner part="spinner"></sl-spinner>` : ""}
+        ${this.caret ? u5` <sl-icon part="caret" class="button__caret" library="system" name="caret"></sl-icon> ` : ""}
+        ${this.loading ? u5`<sl-spinner part="spinner"></sl-spinner>` : ""}
       </${tag}>
     `;
     }
@@ -10078,8 +13937,8 @@
       const options2 = ctor.getPropertyOptions(propertyName);
       const attributeName = typeof options2.attribute === "string" ? options2.attribute : propertyName;
       if (name === attributeName) {
-        const converter = options2.converter || u;
-        const fromAttribute = typeof converter === "function" ? converter : (_a = converter == null ? void 0 : converter.fromAttribute) != null ? _a : u.fromAttribute;
+        const converter = options2.converter || u2;
+        const fromAttribute = typeof converter === "function" ? converter : (_a = converter == null ? void 0 : converter.fromAttribute) != null ? _a : u2.fromAttribute;
         const newValue = fromAttribute(value, options2.type);
         if (this[propertyName] !== newValue) {
           this[key2] = newValue;
@@ -10149,23 +14008,23 @@
 `;
 
   // node_modules/lit-html/directives/live.js
-  var l4 = e7(class extends i6 {
+  var l5 = e7(class extends i6 {
     constructor(r7) {
       if (super(r7), r7.type !== t4.PROPERTY && r7.type !== t4.ATTRIBUTE && r7.type !== t4.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
-      if (!f3(r7)) throw Error("`live` bindings can only contain a single expression");
+      if (!f4(r7)) throw Error("`live` bindings can only contain a single expression");
     }
     render(r7) {
       return r7;
     }
     update(i8, [t5]) {
-      if (t5 === T || t5 === E) return t5;
+      if (t5 === T2 || t5 === E2) return t5;
       const o7 = i8.element, l6 = i8.name;
       if (i8.type === t4.PROPERTY) {
-        if (t5 === o7[l6]) return T;
+        if (t5 === o7[l6]) return T2;
       } else if (i8.type === t4.BOOLEAN_ATTRIBUTE) {
-        if (!!t5 === o7.hasAttribute(l6)) return T;
-      } else if (i8.type === t4.ATTRIBUTE && o7.getAttribute(l6) === t5 + "") return T;
-      return m2(i8), t5;
+        if (!!t5 === o7.hasAttribute(l6)) return T2;
+      } else if (i8.type === t4.ATTRIBUTE && o7.getAttribute(l6) === t5 + "") return T2;
+      return m3(i8), t5;
     }
   });
 
@@ -10273,7 +14132,7 @@
     render() {
       const hasHelpTextSlot = this.hasSlotController.test("help-text");
       const hasHelpText = this.helpText ? true : !!hasHelpTextSlot;
-      return x`
+      return x2`
       <div
         class=${e8({
         "form-control": true,
@@ -10301,7 +14160,7 @@
             title=${this.title}
             name=${this.name}
             value=${o6(this.value)}
-            .checked=${l4(this.checked)}
+            .checked=${l5(this.checked)}
             .disabled=${this.disabled}
             .required=${this.required}
             role="switch"
@@ -10657,7 +14516,7 @@
       });
     }
     render() {
-      return x`
+      return x2`
       <div
         part="base"
         class=${e8({
@@ -10685,7 +14544,7 @@
           <slot></slot>
         </div>
 
-        ${this.closable ? x`
+        ${this.closable ? x2`
               <sl-icon-button
                 part="close-button"
                 exportparts="base:close-button__base"
@@ -10699,7 +14558,7 @@
 
         <div role="timer" class="alert__timer">${this.remainingTime}</div>
 
-        ${this.countdown ? x`
+        ${this.countdown ? x2`
               <div
                 class=${e8({
         alert__countdown: true,
@@ -10772,3142 +14631,116 @@
   });
   import_moment_timezone.default.locale("en-gb");
 
-  // node_modules/tslib/tslib.es6.mjs
-  var extendStatics = function(d4, b4) {
-    extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d5, b5) {
-      d5.__proto__ = b5;
-    } || function(d5, b5) {
-      for (var p4 in b5) if (Object.prototype.hasOwnProperty.call(b5, p4)) d5[p4] = b5[p4];
-    };
-    return extendStatics(d4, b4);
-  };
-  function __extends(d4, b4) {
-    if (typeof b4 !== "function" && b4 !== null)
-      throw new TypeError("Class extends value " + String(b4) + " is not a constructor or null");
-    extendStatics(d4, b4);
-    function __() {
-      this.constructor = d4;
-    }
-    d4.prototype = b4 === null ? Object.create(b4) : (__.prototype = b4.prototype, new __());
-  }
-  function __values(o7) {
-    var s3 = typeof Symbol === "function" && Symbol.iterator, m4 = s3 && o7[s3], i8 = 0;
-    if (m4) return m4.call(o7);
-    if (o7 && typeof o7.length === "number") return {
-      next: function() {
-        if (o7 && i8 >= o7.length) o7 = void 0;
-        return { value: o7 && o7[i8++], done: !o7 };
-      }
-    };
-    throw new TypeError(s3 ? "Object is not iterable." : "Symbol.iterator is not defined.");
-  }
-  function __read(o7, n6) {
-    var m4 = typeof Symbol === "function" && o7[Symbol.iterator];
-    if (!m4) return o7;
-    var i8 = m4.call(o7), r7, ar = [], e9;
-    try {
-      while ((n6 === void 0 || n6-- > 0) && !(r7 = i8.next()).done) ar.push(r7.value);
-    } catch (error) {
-      e9 = { error };
-    } finally {
-      try {
-        if (r7 && !r7.done && (m4 = i8["return"])) m4.call(i8);
-      } finally {
-        if (e9) throw e9.error;
-      }
-    }
-    return ar;
-  }
-  function __spreadArray(to, from3, pack) {
-    if (pack || arguments.length === 2) for (var i8 = 0, l6 = from3.length, ar; i8 < l6; i8++) {
-      if (ar || !(i8 in from3)) {
-        if (!ar) ar = Array.prototype.slice.call(from3, 0, i8);
-        ar[i8] = from3[i8];
-      }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from3));
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/util/isFunction.js
-  function isFunction(value) {
-    return typeof value === "function";
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/util/createErrorClass.js
-  function createErrorClass(createImpl) {
-    var _super = function(instance) {
-      Error.call(instance);
-      instance.stack = new Error().stack;
-    };
-    var ctorFunc = createImpl(_super);
-    ctorFunc.prototype = Object.create(Error.prototype);
-    ctorFunc.prototype.constructor = ctorFunc;
-    return ctorFunc;
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/util/UnsubscriptionError.js
-  var UnsubscriptionError = createErrorClass(function(_super) {
-    return function UnsubscriptionErrorImpl(errors) {
-      _super(this);
-      this.message = errors ? errors.length + " errors occurred during unsubscription:\n" + errors.map(function(err, i8) {
-        return i8 + 1 + ") " + err.toString();
-      }).join("\n  ") : "";
-      this.name = "UnsubscriptionError";
-      this.errors = errors;
-    };
-  });
-
-  // node_modules/rxjs/dist/esm5/internal/util/arrRemove.js
-  function arrRemove(arr, item) {
-    if (arr) {
-      var index = arr.indexOf(item);
-      0 <= index && arr.splice(index, 1);
-    }
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/Subscription.js
-  var Subscription = function() {
-    function Subscription3(initialTeardown) {
-      this.initialTeardown = initialTeardown;
-      this.closed = false;
-      this._parentage = null;
-      this._finalizers = null;
-    }
-    Subscription3.prototype.unsubscribe = function() {
-      var e_1, _a, e_2, _b;
-      var errors;
-      if (!this.closed) {
-        this.closed = true;
-        var _parentage = this._parentage;
-        if (_parentage) {
-          this._parentage = null;
-          if (Array.isArray(_parentage)) {
-            try {
-              for (var _parentage_1 = __values(_parentage), _parentage_1_1 = _parentage_1.next(); !_parentage_1_1.done; _parentage_1_1 = _parentage_1.next()) {
-                var parent_1 = _parentage_1_1.value;
-                parent_1.remove(this);
-              }
-            } catch (e_1_1) {
-              e_1 = { error: e_1_1 };
-            } finally {
-              try {
-                if (_parentage_1_1 && !_parentage_1_1.done && (_a = _parentage_1.return)) _a.call(_parentage_1);
-              } finally {
-                if (e_1) throw e_1.error;
-              }
-            }
-          } else {
-            _parentage.remove(this);
-          }
-        }
-        var initialFinalizer = this.initialTeardown;
-        if (isFunction(initialFinalizer)) {
-          try {
-            initialFinalizer();
-          } catch (e9) {
-            errors = e9 instanceof UnsubscriptionError ? e9.errors : [e9];
-          }
-        }
-        var _finalizers = this._finalizers;
-        if (_finalizers) {
-          this._finalizers = null;
-          try {
-            for (var _finalizers_1 = __values(_finalizers), _finalizers_1_1 = _finalizers_1.next(); !_finalizers_1_1.done; _finalizers_1_1 = _finalizers_1.next()) {
-              var finalizer = _finalizers_1_1.value;
-              try {
-                execFinalizer(finalizer);
-              } catch (err) {
-                errors = errors !== null && errors !== void 0 ? errors : [];
-                if (err instanceof UnsubscriptionError) {
-                  errors = __spreadArray(__spreadArray([], __read(errors)), __read(err.errors));
-                } else {
-                  errors.push(err);
-                }
-              }
-            }
-          } catch (e_2_1) {
-            e_2 = { error: e_2_1 };
-          } finally {
-            try {
-              if (_finalizers_1_1 && !_finalizers_1_1.done && (_b = _finalizers_1.return)) _b.call(_finalizers_1);
-            } finally {
-              if (e_2) throw e_2.error;
-            }
-          }
-        }
-        if (errors) {
-          throw new UnsubscriptionError(errors);
-        }
-      }
-    };
-    Subscription3.prototype.add = function(teardown) {
-      var _a;
-      if (teardown && teardown !== this) {
-        if (this.closed) {
-          execFinalizer(teardown);
-        } else {
-          if (teardown instanceof Subscription3) {
-            if (teardown.closed || teardown._hasParent(this)) {
-              return;
-            }
-            teardown._addParent(this);
-          }
-          (this._finalizers = (_a = this._finalizers) !== null && _a !== void 0 ? _a : []).push(teardown);
-        }
-      }
-    };
-    Subscription3.prototype._hasParent = function(parent2) {
-      var _parentage = this._parentage;
-      return _parentage === parent2 || Array.isArray(_parentage) && _parentage.includes(parent2);
-    };
-    Subscription3.prototype._addParent = function(parent2) {
-      var _parentage = this._parentage;
-      this._parentage = Array.isArray(_parentage) ? (_parentage.push(parent2), _parentage) : _parentage ? [_parentage, parent2] : parent2;
-    };
-    Subscription3.prototype._removeParent = function(parent2) {
-      var _parentage = this._parentage;
-      if (_parentage === parent2) {
-        this._parentage = null;
-      } else if (Array.isArray(_parentage)) {
-        arrRemove(_parentage, parent2);
-      }
-    };
-    Subscription3.prototype.remove = function(teardown) {
-      var _finalizers = this._finalizers;
-      _finalizers && arrRemove(_finalizers, teardown);
-      if (teardown instanceof Subscription3) {
-        teardown._removeParent(this);
-      }
-    };
-    Subscription3.EMPTY = function() {
-      var empty2 = new Subscription3();
-      empty2.closed = true;
-      return empty2;
-    }();
-    return Subscription3;
-  }();
-  var EMPTY_SUBSCRIPTION = Subscription.EMPTY;
-  function isSubscription(value) {
-    return value instanceof Subscription || value && "closed" in value && isFunction(value.remove) && isFunction(value.add) && isFunction(value.unsubscribe);
-  }
-  function execFinalizer(finalizer) {
-    if (isFunction(finalizer)) {
-      finalizer();
-    } else {
-      finalizer.unsubscribe();
-    }
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/config.js
-  var config = {
-    onUnhandledError: null,
-    onStoppedNotification: null,
-    Promise: void 0,
-    useDeprecatedSynchronousErrorHandling: false,
-    useDeprecatedNextContext: false
-  };
-
-  // node_modules/rxjs/dist/esm5/internal/scheduler/timeoutProvider.js
-  var timeoutProvider = {
-    setTimeout: function(handler, timeout) {
-      var args = [];
-      for (var _i = 2; _i < arguments.length; _i++) {
-        args[_i - 2] = arguments[_i];
-      }
-      var delegate = timeoutProvider.delegate;
-      if (delegate === null || delegate === void 0 ? void 0 : delegate.setTimeout) {
-        return delegate.setTimeout.apply(delegate, __spreadArray([handler, timeout], __read(args)));
-      }
-      return setTimeout.apply(void 0, __spreadArray([handler, timeout], __read(args)));
-    },
-    clearTimeout: function(handle) {
-      var delegate = timeoutProvider.delegate;
-      return ((delegate === null || delegate === void 0 ? void 0 : delegate.clearTimeout) || clearTimeout)(handle);
-    },
-    delegate: void 0
-  };
-
-  // node_modules/rxjs/dist/esm5/internal/util/reportUnhandledError.js
-  function reportUnhandledError(err) {
-    timeoutProvider.setTimeout(function() {
-      var onUnhandledError = config.onUnhandledError;
-      if (onUnhandledError) {
-        onUnhandledError(err);
-      } else {
-        throw err;
-      }
-    });
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/util/noop.js
-  function noop() {
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/NotificationFactories.js
-  var COMPLETE_NOTIFICATION = function() {
-    return createNotification("C", void 0, void 0);
-  }();
-  function errorNotification(error) {
-    return createNotification("E", void 0, error);
-  }
-  function nextNotification(value) {
-    return createNotification("N", value, void 0);
-  }
-  function createNotification(kind, value, error) {
-    return {
-      kind,
-      value,
-      error
-    };
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/util/errorContext.js
-  var context = null;
-  function errorContext(cb) {
-    if (config.useDeprecatedSynchronousErrorHandling) {
-      var isRoot = !context;
-      if (isRoot) {
-        context = { errorThrown: false, error: null };
-      }
-      cb();
-      if (isRoot) {
-        var _a = context, errorThrown = _a.errorThrown, error = _a.error;
-        context = null;
-        if (errorThrown) {
-          throw error;
-        }
-      }
-    } else {
-      cb();
-    }
-  }
-  function captureError(err) {
-    if (config.useDeprecatedSynchronousErrorHandling && context) {
-      context.errorThrown = true;
-      context.error = err;
-    }
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/Subscriber.js
-  var Subscriber = function(_super) {
-    __extends(Subscriber2, _super);
-    function Subscriber2(destination) {
-      var _this = _super.call(this) || this;
-      _this.isStopped = false;
-      if (destination) {
-        _this.destination = destination;
-        if (isSubscription(destination)) {
-          destination.add(_this);
-        }
-      } else {
-        _this.destination = EMPTY_OBSERVER;
-      }
-      return _this;
-    }
-    Subscriber2.create = function(next2, error, complete) {
-      return new SafeSubscriber(next2, error, complete);
-    };
-    Subscriber2.prototype.next = function(value) {
-      if (this.isStopped) {
-        handleStoppedNotification(nextNotification(value), this);
-      } else {
-        this._next(value);
-      }
-    };
-    Subscriber2.prototype.error = function(err) {
-      if (this.isStopped) {
-        handleStoppedNotification(errorNotification(err), this);
-      } else {
-        this.isStopped = true;
-        this._error(err);
-      }
-    };
-    Subscriber2.prototype.complete = function() {
-      if (this.isStopped) {
-        handleStoppedNotification(COMPLETE_NOTIFICATION, this);
-      } else {
-        this.isStopped = true;
-        this._complete();
-      }
-    };
-    Subscriber2.prototype.unsubscribe = function() {
-      if (!this.closed) {
-        this.isStopped = true;
-        _super.prototype.unsubscribe.call(this);
-        this.destination = null;
-      }
-    };
-    Subscriber2.prototype._next = function(value) {
-      this.destination.next(value);
-    };
-    Subscriber2.prototype._error = function(err) {
-      try {
-        this.destination.error(err);
-      } finally {
-        this.unsubscribe();
-      }
-    };
-    Subscriber2.prototype._complete = function() {
-      try {
-        this.destination.complete();
-      } finally {
-        this.unsubscribe();
-      }
-    };
-    return Subscriber2;
-  }(Subscription);
-  var _bind = Function.prototype.bind;
-  function bind(fn, thisArg) {
-    return _bind.call(fn, thisArg);
-  }
-  var ConsumerObserver = function() {
-    function ConsumerObserver2(partialObserver) {
-      this.partialObserver = partialObserver;
-    }
-    ConsumerObserver2.prototype.next = function(value) {
-      var partialObserver = this.partialObserver;
-      if (partialObserver.next) {
-        try {
-          partialObserver.next(value);
-        } catch (error) {
-          handleUnhandledError(error);
-        }
-      }
-    };
-    ConsumerObserver2.prototype.error = function(err) {
-      var partialObserver = this.partialObserver;
-      if (partialObserver.error) {
-        try {
-          partialObserver.error(err);
-        } catch (error) {
-          handleUnhandledError(error);
-        }
-      } else {
-        handleUnhandledError(err);
-      }
-    };
-    ConsumerObserver2.prototype.complete = function() {
-      var partialObserver = this.partialObserver;
-      if (partialObserver.complete) {
-        try {
-          partialObserver.complete();
-        } catch (error) {
-          handleUnhandledError(error);
-        }
-      }
-    };
-    return ConsumerObserver2;
-  }();
-  var SafeSubscriber = function(_super) {
-    __extends(SafeSubscriber2, _super);
-    function SafeSubscriber2(observerOrNext, error, complete) {
-      var _this = _super.call(this) || this;
-      var partialObserver;
-      if (isFunction(observerOrNext) || !observerOrNext) {
-        partialObserver = {
-          next: observerOrNext !== null && observerOrNext !== void 0 ? observerOrNext : void 0,
-          error: error !== null && error !== void 0 ? error : void 0,
-          complete: complete !== null && complete !== void 0 ? complete : void 0
-        };
-      } else {
-        var context_1;
-        if (_this && config.useDeprecatedNextContext) {
-          context_1 = Object.create(observerOrNext);
-          context_1.unsubscribe = function() {
-            return _this.unsubscribe();
-          };
-          partialObserver = {
-            next: observerOrNext.next && bind(observerOrNext.next, context_1),
-            error: observerOrNext.error && bind(observerOrNext.error, context_1),
-            complete: observerOrNext.complete && bind(observerOrNext.complete, context_1)
-          };
-        } else {
-          partialObserver = observerOrNext;
-        }
-      }
-      _this.destination = new ConsumerObserver(partialObserver);
-      return _this;
-    }
-    return SafeSubscriber2;
-  }(Subscriber);
-  function handleUnhandledError(error) {
-    if (config.useDeprecatedSynchronousErrorHandling) {
-      captureError(error);
-    } else {
-      reportUnhandledError(error);
-    }
-  }
-  function defaultErrorHandler(err) {
-    throw err;
-  }
-  function handleStoppedNotification(notification, subscriber) {
-    var onStoppedNotification = config.onStoppedNotification;
-    onStoppedNotification && timeoutProvider.setTimeout(function() {
-      return onStoppedNotification(notification, subscriber);
-    });
-  }
-  var EMPTY_OBSERVER = {
-    closed: true,
-    next: noop,
-    error: defaultErrorHandler,
-    complete: noop
-  };
-
-  // node_modules/rxjs/dist/esm5/internal/symbol/observable.js
-  var observable = function() {
-    return typeof Symbol === "function" && Symbol.observable || "@@observable";
-  }();
-
-  // node_modules/rxjs/dist/esm5/internal/util/identity.js
-  function identity(x3) {
-    return x3;
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/util/pipe.js
-  function pipeFromArray(fns) {
-    if (fns.length === 0) {
-      return identity;
-    }
-    if (fns.length === 1) {
-      return fns[0];
-    }
-    return function piped(input) {
-      return fns.reduce(function(prev, fn) {
-        return fn(prev);
-      }, input);
-    };
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/Observable.js
-  var Observable = function() {
-    function Observable4(subscribe2) {
-      if (subscribe2) {
-        this._subscribe = subscribe2;
-      }
-    }
-    Observable4.prototype.lift = function(operator) {
-      var observable3 = new Observable4();
-      observable3.source = this;
-      observable3.operator = operator;
-      return observable3;
-    };
-    Observable4.prototype.subscribe = function(observerOrNext, error, complete) {
-      var _this = this;
-      var subscriber = isSubscriber(observerOrNext) ? observerOrNext : new SafeSubscriber(observerOrNext, error, complete);
-      errorContext(function() {
-        var _a = _this, operator = _a.operator, source = _a.source;
-        subscriber.add(operator ? operator.call(subscriber, source) : source ? _this._subscribe(subscriber) : _this._trySubscribe(subscriber));
-      });
-      return subscriber;
-    };
-    Observable4.prototype._trySubscribe = function(sink) {
-      try {
-        return this._subscribe(sink);
-      } catch (err) {
-        sink.error(err);
-      }
-    };
-    Observable4.prototype.forEach = function(next2, promiseCtor) {
-      var _this = this;
-      promiseCtor = getPromiseCtor(promiseCtor);
-      return new promiseCtor(function(resolve2, reject2) {
-        var subscriber = new SafeSubscriber({
-          next: function(value) {
-            try {
-              next2(value);
-            } catch (err) {
-              reject2(err);
-              subscriber.unsubscribe();
-            }
-          },
-          error: reject2,
-          complete: resolve2
-        });
-        _this.subscribe(subscriber);
-      });
-    };
-    Observable4.prototype._subscribe = function(subscriber) {
-      var _a;
-      return (_a = this.source) === null || _a === void 0 ? void 0 : _a.subscribe(subscriber);
-    };
-    Observable4.prototype[observable] = function() {
-      return this;
-    };
-    Observable4.prototype.pipe = function() {
-      var operations = [];
-      for (var _i = 0; _i < arguments.length; _i++) {
-        operations[_i] = arguments[_i];
-      }
-      return pipeFromArray(operations)(this);
-    };
-    Observable4.prototype.toPromise = function(promiseCtor) {
-      var _this = this;
-      promiseCtor = getPromiseCtor(promiseCtor);
-      return new promiseCtor(function(resolve2, reject2) {
-        var value;
-        _this.subscribe(function(x3) {
-          return value = x3;
-        }, function(err) {
-          return reject2(err);
-        }, function() {
-          return resolve2(value);
-        });
-      });
-    };
-    Observable4.create = function(subscribe2) {
-      return new Observable4(subscribe2);
-    };
-    return Observable4;
-  }();
-  function getPromiseCtor(promiseCtor) {
-    var _a;
-    return (_a = promiseCtor !== null && promiseCtor !== void 0 ? promiseCtor : config.Promise) !== null && _a !== void 0 ? _a : Promise;
-  }
-  function isObserver(value) {
-    return value && isFunction(value.next) && isFunction(value.error) && isFunction(value.complete);
-  }
-  function isSubscriber(value) {
-    return value && value instanceof Subscriber || isObserver(value) && isSubscription(value);
-  }
-
-  // node_modules/rxjs/dist/esm5/internal/util/ObjectUnsubscribedError.js
-  var ObjectUnsubscribedError = createErrorClass(function(_super) {
-    return function ObjectUnsubscribedErrorImpl() {
-      _super(this);
-      this.name = "ObjectUnsubscribedError";
-      this.message = "object unsubscribed";
-    };
-  });
-
-  // node_modules/rxjs/dist/esm5/internal/Subject.js
-  var Subject = function(_super) {
-    __extends(Subject2, _super);
-    function Subject2() {
-      var _this = _super.call(this) || this;
-      _this.closed = false;
-      _this.currentObservers = null;
-      _this.observers = [];
-      _this.isStopped = false;
-      _this.hasError = false;
-      _this.thrownError = null;
-      return _this;
-    }
-    Subject2.prototype.lift = function(operator) {
-      var subject = new AnonymousSubject(this, this);
-      subject.operator = operator;
-      return subject;
-    };
-    Subject2.prototype._throwIfClosed = function() {
-      if (this.closed) {
-        throw new ObjectUnsubscribedError();
-      }
-    };
-    Subject2.prototype.next = function(value) {
-      var _this = this;
-      errorContext(function() {
-        var e_1, _a;
-        _this._throwIfClosed();
-        if (!_this.isStopped) {
-          if (!_this.currentObservers) {
-            _this.currentObservers = Array.from(_this.observers);
-          }
-          try {
-            for (var _b = __values(_this.currentObservers), _c = _b.next(); !_c.done; _c = _b.next()) {
-              var observer = _c.value;
-              observer.next(value);
-            }
-          } catch (e_1_1) {
-            e_1 = { error: e_1_1 };
-          } finally {
-            try {
-              if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            } finally {
-              if (e_1) throw e_1.error;
-            }
-          }
-        }
-      });
-    };
-    Subject2.prototype.error = function(err) {
-      var _this = this;
-      errorContext(function() {
-        _this._throwIfClosed();
-        if (!_this.isStopped) {
-          _this.hasError = _this.isStopped = true;
-          _this.thrownError = err;
-          var observers = _this.observers;
-          while (observers.length) {
-            observers.shift().error(err);
-          }
-        }
-      });
-    };
-    Subject2.prototype.complete = function() {
-      var _this = this;
-      errorContext(function() {
-        _this._throwIfClosed();
-        if (!_this.isStopped) {
-          _this.isStopped = true;
-          var observers = _this.observers;
-          while (observers.length) {
-            observers.shift().complete();
-          }
-        }
-      });
-    };
-    Subject2.prototype.unsubscribe = function() {
-      this.isStopped = this.closed = true;
-      this.observers = this.currentObservers = null;
-    };
-    Object.defineProperty(Subject2.prototype, "observed", {
-      get: function() {
-        var _a;
-        return ((_a = this.observers) === null || _a === void 0 ? void 0 : _a.length) > 0;
-      },
-      enumerable: false,
-      configurable: true
-    });
-    Subject2.prototype._trySubscribe = function(subscriber) {
-      this._throwIfClosed();
-      return _super.prototype._trySubscribe.call(this, subscriber);
-    };
-    Subject2.prototype._subscribe = function(subscriber) {
-      this._throwIfClosed();
-      this._checkFinalizedStatuses(subscriber);
-      return this._innerSubscribe(subscriber);
-    };
-    Subject2.prototype._innerSubscribe = function(subscriber) {
-      var _this = this;
-      var _a = this, hasError = _a.hasError, isStopped = _a.isStopped, observers = _a.observers;
-      if (hasError || isStopped) {
-        return EMPTY_SUBSCRIPTION;
-      }
-      this.currentObservers = null;
-      observers.push(subscriber);
-      return new Subscription(function() {
-        _this.currentObservers = null;
-        arrRemove(observers, subscriber);
-      });
-    };
-    Subject2.prototype._checkFinalizedStatuses = function(subscriber) {
-      var _a = this, hasError = _a.hasError, thrownError = _a.thrownError, isStopped = _a.isStopped;
-      if (hasError) {
-        subscriber.error(thrownError);
-      } else if (isStopped) {
-        subscriber.complete();
-      }
-    };
-    Subject2.prototype.asObservable = function() {
-      var observable3 = new Observable();
-      observable3.source = this;
-      return observable3;
-    };
-    Subject2.create = function(destination, source) {
-      return new AnonymousSubject(destination, source);
-    };
-    return Subject2;
-  }(Observable);
-  var AnonymousSubject = function(_super) {
-    __extends(AnonymousSubject2, _super);
-    function AnonymousSubject2(destination, source) {
-      var _this = _super.call(this) || this;
-      _this.destination = destination;
-      _this.source = source;
-      return _this;
-    }
-    AnonymousSubject2.prototype.next = function(value) {
-      var _a, _b;
-      (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.next) === null || _b === void 0 ? void 0 : _b.call(_a, value);
-    };
-    AnonymousSubject2.prototype.error = function(err) {
-      var _a, _b;
-      (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.error) === null || _b === void 0 ? void 0 : _b.call(_a, err);
-    };
-    AnonymousSubject2.prototype.complete = function() {
-      var _a, _b;
-      (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.complete) === null || _b === void 0 ? void 0 : _b.call(_a);
-    };
-    AnonymousSubject2.prototype._subscribe = function(subscriber) {
-      var _a, _b;
-      return (_b = (_a = this.source) === null || _a === void 0 ? void 0 : _a.subscribe(subscriber)) !== null && _b !== void 0 ? _b : EMPTY_SUBSCRIPTION;
-    };
-    return AnonymousSubject2;
-  }(Subject);
-
-  // lib.ts
-  async function fetchColumnsFromGrist() {
-    const columns = toRecords(await grist.docApi.fetchTable("_grist_Tables_column"));
-    return columns;
-  }
-  var tablesCache = [];
-  async function fetchTables() {
-    if (!tablesCache.length) {
-      tablesCache = toRecords(await grist.docApi.fetchTable("_grist_Tables"));
-    }
-    return tablesCache;
-  }
-  function toRecords(bulk) {
-    const fields = Object.keys(bulk);
-    const records2 = [];
-    for (const index in bulk.id) {
-      records2.push(
-        Object.fromEntries(fields.map((f5) => [f5, bulk[f5][index]]))
-      );
-    }
-    return records2;
-  }
-  async function selectedTable() {
-    const tables = await fetchTables();
-    const tableId = await grist.selectedTable.getTableId();
-    return tables.find((t5) => t5.tableId === tableId);
-  }
-  function showAlert(variant, message) {
-    const alert2 = document.querySelector(`sl-alert[variant="${variant}"]`);
-    const title = alert2.querySelector("#title");
-    const text2 = alert2.querySelector("#text");
-    title.innerText = "Error occured";
-    text2.innerText = message;
-    alert2.toast();
-  }
-  async function withElementSpinner(element, callback) {
-    const spinner = document.createElement("sl-spinner");
-    element.appendChild(spinner);
-    try {
-      await callback();
-    } finally {
-      spinner.remove();
-    }
-  }
-  async function withIdSpinner(id2, callback) {
-    const element = document.querySelector(`.item_${id2}`);
-    await withElementSpinner(element, callback);
-  }
-  function onClick(selector, callback) {
-    window.document.querySelector(selector).addEventListener("click", callback);
-  }
-  var Command = class {
-    handlers = [];
-    subject = new Subject();
-    async invoke(arg) {
-      for (const handler of this.handlers) {
-        await handler(arg);
-      }
-      this.subject.next(arg);
-    }
-    subscribe = this.subject.subscribe.bind(this.subject);
-    handle(handler) {
-      this.handlers.push(handler);
-      return {
-        dispose: () => {
-          this.handlers.splice(this.handlers.indexOf(handler), 1);
-        }
-      };
-    }
-  };
-  function stringToValue(value) {
-    if (["true", "false"].includes(value)) {
-      return value === "true";
-    }
-    if (value === "null") {
-      return null;
-    }
-    if (/^\d+$/.test(value)) {
-      return parseInt(value, 10);
-    }
-    return value;
-  }
-  function valueToString(value) {
-    if (value === null || value === void 0) {
-      return "-";
-    }
-    if (typeof value === "boolean") {
-      return value ? "true" : "false";
-    }
-    if (typeof value === "number") {
-      return value.toFixed(2);
-    }
-    if (value instanceof Date) {
-      return value.toISOString();
-    }
-    return String(value);
-  }
-
-  // node_modules/fromit/dist/fromit.mjs
-  var Q = (s3) => !!s3;
-  var l5 = class {
-    iterator() {
-      return this[Symbol.asyncIterator]();
-    }
-    async includes(t5, e9 = (r7, n6) => r7 == n6) {
-      for await (let r7 of this) if (e9(r7, t5)) return true;
-      return false;
-    }
-    sort(t5) {
-      let e9 = this;
-      async function* r7() {
-        yield* (await e9.toArray()).sort(t5);
-      }
-      return new f4(r7());
-    }
-    orderBy(t5) {
-      return typeof t5 != "function" && (t5 = (e9) => e9[t5]), new K(this, t5);
-    }
-    distinct(t5) {
-      if (typeof t5 != "function") {
-        let e9 = /* @__PURE__ */ new Set(), r7 = this;
-        async function* n6() {
-          for await (let i8 of r7) e9.has(i8) || (e9.add(i8), yield i8);
-        }
-        return new f4(n6());
-      } else {
-        let e9 = /* @__PURE__ */ new Set(), r7 = this;
-        async function* n6() {
-          let i8 = 0;
-          for await (let o7 of r7) {
-            let a4 = await t5(o7, i8);
-            i8++, e9.has(a4) || (e9.add(a4), yield o7);
-          }
-        }
-        return new f4(n6());
-      }
-    }
-    orderByDesc(t5) {
-      return new k2(this, t5);
-    }
-    map(t5) {
-      return typeof t5 != "function" && (t5 = (e9) => e9[t5]), new V2(this, t5);
-    }
-    groupBy(t5) {
-      return new x2(this, t5);
-    }
-    filter(t5) {
-      return new M2(this, t5 != null ? t5 : Q);
-    }
-    skip(t5) {
-      return new T2(this, t5);
-    }
-    skipWhile(t5) {
-      return new T2(this, t5);
-    }
-    take(t5) {
-      return new d3(this, t5);
-    }
-    takeWhile(t5) {
-      return new d3(this, t5);
-    }
-    many(t5) {
-      return new v2(this, t5);
-    }
-    async first(t5) {
-      for await (let e9 of this) return e9;
-      return t5;
-    }
-    async last(t5) {
-      let e9 = null;
-      for await (let r7 of this) e9 = r7;
-      return t5 !== void 0 ? t5 : e9;
-    }
-    async find(t5) {
-      let e9 = 0;
-      for await (let r7 of this) if (t5(r7, e9++)) return r7;
-    }
-    async some(t5) {
-      let e9 = 0;
-      for await (let r7 of this) if (t5(r7, e9++)) return true;
-      return false;
-    }
-    async any() {
-      for await (let t5 of this) return true;
-      return false;
-    }
-    async count() {
-      let t5 = 0;
-      for await (let e9 of this) t5++;
-      return t5;
-    }
-    async sum(t5) {
-      let e9 = 0, r7 = 0;
-      for await (let n6 of this) t5 ? e9 += await t5(n6, r7++) : e9 += n6;
-      return e9;
-    }
-    async toArray() {
-      let t5 = [];
-      for await (let e9 of this) t5.push(e9);
-      return t5;
-    }
-    async forEach(t5) {
-      let e9 = 0;
-      for await (let r7 of this) await t5(r7, e9++);
-      return this;
-    }
-    except(t5) {
-      return new S3(this, t5);
-    }
-    union(t5) {
-      return new A2(this, t5);
-    }
-    intersect(t5) {
-      return new E2(this, t5);
-    }
-    chunk(t5) {
-      return new w2(this, t5);
-    }
-    flatDeep() {
-      return this.flat(20);
-    }
-    flat(t5) {
-      return new y3(this, t5);
-    }
-    zip(t5) {
-      let e9 = this;
-      async function* r7() {
-        let n6 = e9[Symbol.asyncIterator](), i8 = t5[Symbol.asyncIterator]();
-        for (; ; ) {
-          let o7 = await n6.next(), a4 = await i8.next();
-          if (o7.done || a4.done) break;
-          yield [o7.value, a4.value];
-        }
-      }
-      return new f4(r7());
-    }
-    concat(t5) {
-      let e9 = this;
-      async function* r7() {
-        for await (let n6 of e9) yield n6;
-        for await (let n6 of t5) yield n6;
-      }
-      return new f4(r7());
-    }
-    diff(t5) {
-      return this.except(t5).concat(new f4(t5).except(this));
-    }
-    async join(t5) {
-      return (await this.toArray()).join(t5);
-    }
-    async reduce(t5, e9) {
-      let r7 = -1;
-      for await (let n6 of this) {
-        if (r7++, await e9 === void 0 && r7 === 0) {
-          e9 = n6;
-          continue;
-        }
-        e9 = await t5(await e9, n6, r7);
-      }
-      return e9;
-    }
-  };
-  function X(s3) {
-    return s3 != null && typeof s3 != "string" && (s3[Symbol.asyncIterator] || s3[Symbol.iterator]);
-  }
-  var y3 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.depth = r7;
-      this.depth = r7 != null ? r7 : 1;
-    }
-    async *[Symbol.asyncIterator]() {
-      for await (let e9 of this.list) if (X(e9)) if (this.depth === 0) yield e9;
-      else {
-        let r7 = new y3(e9, this.depth - 1);
-        for await (let n6 of r7) yield n6;
-      }
-      else yield e9;
-    }
-  };
-  var w2 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.size = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e9 = [];
-      for await (let r7 of this.list) e9.length === this.size ? (yield new p3(e9), e9 = [r7]) : e9.push(r7);
-      e9.length && (yield new p3(e9));
-    }
-  };
-  var h3 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.key = e9;
-      this.buffer = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      for (let e9 of this.buffer) yield e9;
-    }
-  };
-  var x2 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e9 = null, r7 = true, n6 = [], i8 = 0;
-      for await (let o7 of this.list.orderBy(this.selector)) {
-        if (r7) {
-          r7 = false, e9 = await this.selector(o7, i8++), n6.push(o7);
-          continue;
-        }
-        let a4 = await this.selector(o7, i8++);
-        if (a4 != e9) {
-          yield new h3(e9, n6), n6 = [o7], e9 = a4;
-          continue;
-        }
-        n6.push(o7);
-      }
-      n6.length && (yield new h3(e9, n6));
-    }
-  };
-  var S3 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.other = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e9 = /* @__PURE__ */ new Set();
-      for await (let r7 of this.other) e9.add(r7);
-      for await (let r7 of this.list) e9.has(r7) || (yield r7);
-    }
-  };
-  var A2 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.other = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e9 = /* @__PURE__ */ new Set();
-      for await (let r7 of this.list) e9.add(r7), yield r7;
-      for await (let r7 of this.other) e9.has(r7) || (yield r7);
-    }
-  };
-  var E2 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.other = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      for await (let e9 of this.list) for await (let r7 of this.other) if (e9 == r7) {
-        yield e9;
-        break;
-      }
-    }
-  };
-  var T2 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      typeof r7 == "number" ? this._size = r7 : this._matcher = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      if (this._size !== void 0) {
-        let e9 = -1;
-        for await (let r7 of this.list) e9++, e9 >= this._size && (yield r7);
-      } else {
-        let e9 = true, r7 = -1;
-        for await (let n6 of this.list) r7++, e9 && (e9 = await this._matcher(n6, r7)), e9 || (yield n6);
-      }
-    }
-  };
-  var d3 = class extends T2 {
-    async *[Symbol.asyncIterator]() {
-      if (this._size !== void 0) {
-        let t5 = 0;
-        if (this._size <= 0) return;
-        for await (let e9 of this.list) if (t5++, yield e9, t5 >= this._size) break;
-      } else {
-        let t5 = -1;
-        for await (let e9 of this.list) {
-          if (t5++, !await this._matcher(e9, t5)) return;
-          yield e9;
-        }
-      }
-    }
-  };
-  var M2 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e9 = 0;
-      for await (let r7 of this.list) this.selector(r7, e9++) && (yield r7);
-    }
-  };
-  var v2 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e9 = 0;
-      for await (let r7 of this.list) {
-        let n6 = await this.selector(r7, e9++);
-        for (let i8 of n6) yield i8;
-      }
-    }
-  };
-  var K = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e9 = [];
-      for await (let r7 of this.list) e9.push(r7);
-      e9.sort((r7, n6) => {
-        let i8 = this.selector(r7, -1), o7 = this.selector(n6, -1);
-        return i8 < o7 ? -1 : i8 > o7 ? 1 : 0;
-      });
-      for (let r7 of e9) yield r7;
-    }
-  };
-  var k2 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e9 = [];
-      for await (let r7 of this.list) e9.push(r7);
-      e9.sort((r7, n6) => {
-        let i8 = this.selector(r7, -1), o7 = this.selector(n6, -1);
-        return i8 < o7 ? 1 : i8 > o7 ? -1 : 0;
-      });
-      for (let r7 of e9) yield r7;
-    }
-  };
-  var V2 = class extends l5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    async *[Symbol.asyncIterator]() {
-      let e9 = 0;
-      for await (let r7 of this.list) yield this.selector(r7, e9++);
-    }
-  };
-  var p3 = class extends l5 {
-    constructor(e9) {
-      super();
-      this.list = e9;
-    }
-    async *[Symbol.asyncIterator]() {
-      for (let e9 of this.list) yield e9;
-    }
-  };
-  var f4 = class extends l5 {
-    constructor(e9) {
-      super();
-      this.list = e9;
-    }
-    async *[Symbol.asyncIterator]() {
-      for await (let e9 of this.list) yield e9;
-    }
-  };
-  var Y = (s3) => !!s3;
-  var c5 = class {
-    async() {
-      let t5 = this;
-      async function* e9() {
-        for (let r7 of t5) yield r7;
-      }
-      return u5(e9());
-    }
-    iterator() {
-      return this[Symbol.iterator]();
-    }
-    sort(t5) {
-      return u5(function* (e9) {
-        yield* [...e9].sort(t5);
-      }(this));
-    }
-    orderBy(t5) {
-      if (t5 || (t5 = (e9) => e9), typeof t5 != "function") {
-        let e9 = t5;
-        t5 = (r7) => r7[e9];
-      }
-      return new W(this, t5);
-    }
-    chunk(t5) {
-      return new F(this, t5);
-    }
-    orderByDesc(t5) {
-      return new L2(this, t5);
-    }
-    map(t5) {
-      if (typeof t5 != "function") {
-        let e9 = t5;
-        t5 = (r7) => r7[e9];
-      }
-      return new G(this, t5);
-    }
-    groupBy(t5) {
-      return new _2(this, t5);
-    }
-    filter(t5) {
-      return new D(this, t5 != null ? t5 : Y);
-    }
-    skip(t5) {
-      return new b3(this, t5);
-    }
-    skipWhile(t5) {
-      return new b3(this, t5);
-    }
-    take(t5) {
-      return new I2(this, t5);
-    }
-    takeWhile(t5) {
-      return new I2(this, t5);
-    }
-    many(t5) {
-      return new C2(this, t5);
-    }
-    first(t5) {
-      for (let e9 of this) return e9;
-      return t5;
-    }
-    last(t5) {
-      let e9 = null;
-      for (let r7 of this) e9 = r7;
-      return t5 !== void 0 ? t5 : e9;
-    }
-    find(t5) {
-      let e9 = 0;
-      for (let r7 of this) if (t5(r7, e9++)) return r7;
-    }
-    some(t5) {
-      let e9 = 0;
-      for (let r7 of this) if (t5(r7, e9++)) return true;
-      return false;
-    }
-    any() {
-      for (let t5 of this) return true;
-      return false;
-    }
-    count() {
-      let t5 = 0;
-      for (let e9 of this) t5++;
-      return t5;
-    }
-    includes(t5, e9 = (r7, n6) => r7 == n6) {
-      for (let r7 of this) if (e9(r7, t5)) return true;
-      return false;
-    }
-    sum(t5) {
-      let e9 = 0, r7 = 0;
-      for (let n6 of this) t5 ? e9 += t5(n6, r7++) : e9 += n6;
-      return e9;
-    }
-    toArray() {
-      return [...this];
-    }
-    forEach(t5) {
-      let e9 = 0;
-      for (let r7 of this) t5(r7, e9++);
-      return this;
-    }
-    except(t5, e9) {
-      return new B2(this, t5, e9);
-    }
-    union(t5) {
-      return this.except(t5).concat(t5);
-    }
-    distinct(t5) {
-      return new g2(this, t5);
-    }
-    intersect(t5, e9) {
-      return new R2(this, t5, e9);
-    }
-    reverse() {
-      return new P2(this);
-    }
-    flatDeep() {
-      return this.flat(20);
-    }
-    flat(t5) {
-      return new m3(this, t5);
-    }
-    zip(t5) {
-      let e9 = this;
-      function* r7() {
-        let n6 = e9[Symbol.iterator](), i8 = t5[Symbol.iterator]();
-        for (; ; ) {
-          let o7 = n6.next(), a4 = i8.next();
-          if (o7.done || a4.done) break;
-          yield [o7.value, a4.value];
-        }
-      }
-      return u5(r7());
-    }
-    concat(t5) {
-      let e9 = this;
-      function* r7() {
-        yield* e9, yield* t5;
-      }
-      return u5(r7());
-    }
-    diff(t5) {
-      return this.except(t5).concat(u5(t5).except(this));
-    }
-    lookup(t5) {
-      let e9 = /* @__PURE__ */ new Map();
-      for (let r7 of this.groupBy(t5)) e9.set(r7.key, r7.toArray());
-      return e9;
-    }
-    join(...t5) {
-      if (!t5.length || typeof t5[0] == "string") return this.toArray().join(t5[0] || "");
-      {
-        let e9 = t5[0], r7 = t5[1] || ((a4) => a4), n6 = t5[2] || r7, i8 = this;
-        function* o7() {
-          let a4 = u5(e9).lookup(n6), N2 = -1;
-          for (let q of i8) {
-            let H2 = r7(q, ++N2);
-            !a4.has(H2) || (yield [q, a4.get(H2)]);
-          }
-        }
-        return u5(o7());
-      }
-    }
-    reduce(t5, e9) {
-      let r7 = -1;
-      for (let n6 of this) {
-        if (r7++, e9 === void 0 && r7 === 0) {
-          e9 = n6;
-          continue;
-        }
-        e9 = t5(e9, n6, r7);
-      }
-      return e9;
-    }
-  };
-  var z2 = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.key = e9;
-      this.buffer = r7;
-    }
-    *[Symbol.iterator]() {
-      for (let e9 of this.buffer) yield e9;
-    }
-  };
-  function Z2(s3) {
-    return s3 != null && typeof s3 != "string" && s3[Symbol.iterator];
-  }
-  var m3 = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.depth = r7;
-      this.depth = r7 != null ? r7 : 1;
-    }
-    *[Symbol.iterator]() {
-      for (let e9 of this.list) Z2(e9) ? this.depth === 0 ? yield e9 : yield* new m3(e9, this.depth - 1) : yield e9;
-    }
-  };
-  var _2 = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    *[Symbol.iterator]() {
-      let e9 = /* @__PURE__ */ new Set(), r7 = -1;
-      for (let n6 of this.list) {
-        r7++;
-        let i8 = this.selector(n6, r7);
-        e9.has(i8) || (e9.add(i8), yield new z2(i8, u5(this.list).skip(r7).filter((o7, a4) => this.selector(o7, r7 + a4) === i8)));
-      }
-    }
-  };
-  var P2 = class extends c5 {
-    constructor(e9) {
-      super();
-      this.list = e9;
-    }
-    *[Symbol.iterator]() {
-      yield* [...this.list].reverse();
-    }
-  };
-  var B2 = class extends c5 {
-    constructor(e9, r7, n6) {
-      super();
-      this.list = e9;
-      this.other = r7;
-      this.selector = n6;
-    }
-    *[Symbol.iterator]() {
-      let e9 = /* @__PURE__ */ new Set(), r7 = 0, n6 = 0;
-      for (let i8 of this.other) {
-        let o7 = this.selector ? this.selector(i8, n6++) : i8;
-        e9.add(o7);
-      }
-      for (let i8 of this.list) {
-        let o7 = this.selector ? this.selector(i8, r7++) : i8;
-        e9.has(o7) || (yield i8);
-      }
-    }
-  };
-  var R2 = class extends c5 {
-    constructor(e9, r7, n6) {
-      super();
-      this.list = e9;
-      this.other = r7;
-      this.selector = n6;
-      this.selector = n6 != null ? n6 : (i8) => i8;
-    }
-    *[Symbol.iterator]() {
-      let e9 = -1;
-      for (let r7 of this.list) {
-        e9++;
-        let n6 = -1;
-        for (let i8 of this.other) if (n6++, this.selector(r7, e9) == this.selector(i8, n6)) {
-          yield r7;
-          break;
-        }
-      }
-    }
-  };
-  var b3 = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      typeof r7 == "number" ? this._size = r7 : this._matcher = r7;
-    }
-    *[Symbol.iterator]() {
-      if (this._size !== void 0) {
-        let e9 = -1;
-        for (let r7 of this.list) e9++, e9 >= this._size && (yield r7);
-      } else {
-        let e9 = true, r7 = -1;
-        for (let n6 of this.list) r7++, e9 && (e9 = this._matcher(n6, r7)), e9 || (yield n6);
-      }
-    }
-  };
-  var I2 = class extends b3 {
-    *[Symbol.iterator]() {
-      if (this._size !== void 0) {
-        let t5 = 0;
-        if (this._size <= 0) return;
-        for (let e9 of this.list) if (t5++, yield e9, t5 >= this._size) break;
-      } else {
-        let t5 = -1;
-        for (let e9 of this.list) {
-          if (t5++, !this._matcher(e9, t5)) return;
-          yield e9;
-        }
-      }
-    }
-  };
-  var g2 = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    *[Symbol.iterator]() {
-      let e9 = /* @__PURE__ */ new Set(), r7 = this.selector || ((i8) => i8), n6 = 0;
-      for (let i8 of this.list) {
-        let o7 = r7(i8, n6++);
-        e9.has(o7) || (e9.add(o7), yield i8);
-      }
-    }
-  };
-  var D = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    *[Symbol.iterator]() {
-      let e9 = 0;
-      for (let r7 of this.list) this.selector(r7, e9++) && (yield r7);
-    }
-  };
-  var C2 = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    *[Symbol.iterator]() {
-      let e9 = 0;
-      for (let r7 of this.list) {
-        let n6 = this.selector(r7, e9++);
-        for (let i8 of n6) yield i8;
-      }
-    }
-  };
-  var W = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    *[Symbol.iterator]() {
-      let e9 = [...this.list];
-      e9.sort((r7, n6) => {
-        let i8 = this.selector(r7, -1), o7 = this.selector(n6, -1);
-        return i8 < o7 ? -1 : i8 > o7 ? 1 : 0;
-      });
-      for (let r7 of e9) yield r7;
-    }
-  };
-  var L2 = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    *[Symbol.iterator]() {
-      let e9 = [...this.list];
-      e9.sort((r7, n6) => {
-        let i8 = this.selector(r7, -1), o7 = this.selector(n6, -1);
-        return i8 < o7 ? 1 : i8 > o7 ? -1 : 0;
-      });
-      for (let r7 of e9) yield r7;
-    }
-  };
-  var F = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.size = r7;
-    }
-    *[Symbol.iterator]() {
-      let e9 = [];
-      for (let r7 of this.list) e9.length === this.size ? (yield u5(e9), e9 = [r7]) : e9.push(r7);
-      e9.length && (yield u5(e9));
-    }
-  };
-  var G = class extends c5 {
-    constructor(e9, r7) {
-      super();
-      this.list = e9;
-      this.selector = r7;
-    }
-    *[Symbol.iterator]() {
-      let e9 = 0;
-      for (let r7 of this.list) yield this.selector(r7, e9++);
-    }
-  };
-  var j2 = class extends c5 {
-    constructor(e9) {
-      super();
-      this.list = e9;
-    }
-    *[Symbol.iterator]() {
-      for (let e9 of this.list) yield e9;
-    }
-  };
-  function u5(...s3) {
-    if (typeof s3[0] == "number") {
-      if (s3.length === 1) return u5(function* () {
-        for (let e9 = 0; e9 < s3[0]; e9++) yield e9;
-      }());
-      if (s3.length === 2) return s3[0] < s3[1] ? u5(function* () {
-        for (let e9 = s3[0]; e9 <= s3[1]; e9++) yield e9;
-      }()) : u5(function* () {
-        for (let e9 = s3[0]; e9 >= s3[1]; e9--) yield e9;
-      }());
-      if (s3.length === 3) return s3[0] < s3[1] ? u5(function* () {
-        for (let e9 = s3[0]; e9 <= s3[1]; e9 += s3[2]) yield e9;
-      }()) : u5(function* () {
-        for (let e9 = s3[0]; e9 >= s3[1]; e9 -= s3[2]) yield e9;
-      }());
-    }
-    let t5 = s3[0];
-    if (typeof t5 == "object") {
-      if (Symbol.asyncIterator in t5) return new f4(t5);
-      if (typeof t5.then == "function") {
-        async function* e9() {
-          yield* await t5;
-        }
-        return new f4(e9());
-      }
-    }
-    if (t5 != null && t5[Symbol.iterator]) return new j2(t5);
-    throw new Error("Argument is not iterable");
-  }
-
-  // node_modules/grainjs/dist/esm/lib/emit.js
-  function _noop() {
-  }
-  var LLink = class {
-    constructor() {
-      this._next = null;
-      this._prev = null;
-      this._next = this;
-      this._prev = this;
-    }
-    isDisposed() {
-      return !this._next;
-    }
-    _insertBefore(next2, node2) {
-      const last = next2._prev;
-      last._next = node2;
-      next2._prev = node2;
-      node2._prev = last;
-      node2._next = next2;
-    }
-    _removeNode(node2) {
-      if (node2._prev) {
-        node2._prev._next = node2._next;
-        node2._next._prev = node2._prev;
-      }
-      node2._prev = node2._next = null;
-    }
-    _disposeList() {
-      let node2 = this;
-      let next2 = node2._next;
-      while (next2 !== null) {
-        node2._next = node2._prev = null;
-        node2 = next2;
-        next2 = node2._next;
-      }
-    }
-  };
-  var Emitter = class extends LLink {
-    /**
-     * Constructs an Emitter object.
-     */
-    constructor() {
-      super();
-      this._changeCB = _noop;
-      this._changeCBContext = void 0;
-    }
-    /**
-     * Adds a listening callback to the list of functions to call on emit().
-     * @param {Function} callback: Function to call.
-     * @param {Object} optContext: Context for the function.
-     * @returns {Listener} Listener object. Its dispose() method removes the callback from the list.
-     */
-    addListener(callback, optContext) {
-      return new Listener(this, callback, optContext);
-    }
-    /**
-     * Calls all listener callbacks, passing all arguments to each of them.
-     */
-    emit(...args) {
-      Listener.callAll(this._next, this, args);
-    }
-    /**
-     * Sets the single callback that would get called when a listener is added or removed.
-     * @param {Function} changeCB(hasListeners): Function to call after a listener is added or
-     *    removed. It's called with a boolean indicating whether this Emitter has any listeners.
-     *    Pass in `null` to unset the callback. Note that it can be called multiple times in a row
-     *    with hasListeners `true`.
-     */
-    setChangeCB(changeCB, optContext) {
-      this._changeCB = changeCB || _noop;
-      this._changeCBContext = optContext;
-    }
-    /**
-     * Helper used by Listener class, but not intended for public usage.
-     */
-    _triggerChangeCB() {
-      this._changeCB.call(this._changeCBContext, this.hasListeners());
-    }
-    /**
-     * Returns whether this Emitter has any listeners.
-     */
-    hasListeners() {
-      return this._next !== this;
-    }
-    /**
-     * Disposes the Emitter. It breaks references between the emitter and all the items, allowing
-     * for better garbage collection. It effectively disposes all current listeners.
-     */
-    dispose() {
-      this._disposeList();
-      this._changeCB = _noop;
-      this._changeCBContext = void 0;
-    }
-  };
-  var Listener = class extends LLink {
-    constructor(emitter, callback, context2) {
-      super();
-      this.emitter = emitter;
-      this.callback = callback;
-      this.context = context2;
-      this._insertBefore(emitter, this);
-      emitter._triggerChangeCB();
-    }
-    static callAll(begin, end, args) {
-      while (begin !== end) {
-        const lis = begin;
-        lis.callback.call(lis.context, ...args);
-        begin = lis._next;
-      }
-    }
-    dispose() {
-      if (this.isDisposed()) {
-        return;
-      }
-      this._removeNode(this);
-      this.emitter._triggerChangeCB();
-    }
-  };
-
-  // node_modules/grainjs/dist/esm/lib/dispose.js
-  var _noopOwner = {
-    autoDispose(obj) {
-    }
-  };
-  var _defaultDisposableOwner = _noopOwner;
-  var Disposable = class {
-    constructor() {
-      this._disposalList = new DisposalList();
-      _defaultDisposableOwner.autoDispose(this);
-      _defaultDisposableOwner = _noopOwner;
-    }
-    /**
-     * Create Disposable instances using `Class.create(owner, ...)` rather than `new Class(...)`.
-     *
-     * This reminds you to provide an owner, and ensures that if the constructor throws an
-     * exception, dispose() gets called to clean up the partially-constructed object.
-     *
-     * Owner may be null if intend to ensure disposal some other way.
-     */
-    static create(owner, ...args) {
-      const origDefaultOwner = _defaultDisposableOwner;
-      const holder = new Holder();
-      try {
-        _defaultDisposableOwner = holder;
-        return setDisposeOwner(owner, new this(...args));
-      } catch (e9) {
-        try {
-          holder.clear();
-        } catch (e22) {
-          console.error("Error disposing partially constructed %s:", this.name, e22);
-        }
-        throw e9;
-      } finally {
-        holder.release();
-        _defaultDisposableOwner = origDefaultOwner;
-      }
-    }
-    /** Take ownership of obj, and dispose it when this.dispose() is called. */
-    autoDispose(obj) {
-      this.onDispose(obj.dispose, obj);
-      return obj;
-    }
-    /** Call the given callback when this.dispose() is called. */
-    onDispose(callback, context2) {
-      return this._disposalList.addListener(callback, context2);
-    }
-    /**
-     * Wipe out this object when it is disposed, i.e. set all its properties to null. It is
-     * recommended to call this early in the constructor.
-     *
-     * This makes disposal more costly, but has certain benefits:
-     * - If anything still refers to the object and uses it, we'll get an early error, rather than
-     *   silently keep going, potentially doing useless work (or worse) and wasting resources.
-     * - If anything still refers to the object (even without using it), the fields of the object
-     *   can still be garbage-collected.
-     * - If there are circular references involving this object, they get broken, making the job
-     *   easier for the garbage collector.
-     *
-     * The recommendation is to use it for complex, longer-lived objects, but to skip for objects
-     * which are numerous and short-lived (and less likely to be referenced from unexpected places).
-     */
-    wipeOnDispose() {
-      this.onDispose(this._wipeOutObject, this);
-    }
-    /**
-     * Returns whether this object has already been disposed.
-     */
-    isDisposed() {
-      return this._disposalList === null;
-    }
-    /**
-     * Clean up `this` by disposing all owned objects, and calling onDispose() callbacks, in reverse
-     * order to that in which they were added.
-     */
-    dispose() {
-      const disposalList = this._disposalList;
-      if (!disposalList) {
-        console.error("Error disposing %s which is already disposed", _describe(this));
-      } else {
-        this._disposalList = null;
-        disposalList.callAndDispose(this);
-      }
-    }
-    /**
-     * Wipe out this object by setting each property to null. This is helpful for objects that are
-     * disposed and should be ready to be garbage-collected.
-     */
-    _wipeOutObject() {
-      for (const k3 of Object.keys(this)) {
-        this[k3] = null;
-      }
-    }
-  };
-  var Holder = class _Holder {
-    constructor() {
-      this._owned = null;
-      this._disposalListener = void 0;
-    }
-    static create(owner) {
-      return setDisposeOwner(owner, new _Holder());
-    }
-    /** Take ownership of a new object, disposing the previously held one. */
-    autoDispose(obj) {
-      this.clear();
-      this._owned = obj;
-      if (obj instanceof Disposable) {
-        this._disposalListener = obj.onDispose(this._onOutsideDispose, this);
-      }
-      return obj;
-    }
-    /** Releases the held object without disposing it, emptying the holder. */
-    release() {
-      this._unlisten();
-      const ret = this._owned;
-      this._owned = null;
-      return ret;
-    }
-    /** Disposes the held object and empties the holder. */
-    clear() {
-      this._unlisten();
-      const owned = this._owned;
-      if (owned) {
-        this._owned = null;
-        owned.dispose();
-      }
-    }
-    /** Returns the held object, or null if the Holder is empty. */
-    get() {
-      return this._owned;
-    }
-    /** Returns whether the Holder is empty. */
-    isEmpty() {
-      return !this._owned;
-    }
-    /** When the holder is disposed, it disposes the held object if any. */
-    dispose() {
-      this.clear();
-    }
-    /** Stop listening for the disposal of this._owned. */
-    _unlisten() {
-      const disposalListener = this._disposalListener;
-      if (disposalListener) {
-        this._disposalListener = void 0;
-        disposalListener.dispose();
-      }
-    }
-    _onOutsideDispose() {
-      this._disposalListener = void 0;
-      this._owned = null;
-    }
-  };
-  var MultiHolder = class extends Disposable {
-  };
-  function setDisposeOwner(owner, obj) {
-    if (owner) {
-      owner.autoDispose(obj);
-    }
-    return obj;
-  }
-  function _describe(obj) {
-    return obj && obj.constructor && obj.constructor.name ? obj.constructor.name : "" + obj;
-  }
-  var DisposalList = class extends LLink {
-    constructor() {
-      super();
-    }
-    addListener(callback, optContext) {
-      const lis = new DisposeListener(callback, optContext);
-      this._insertBefore(this._next, lis);
-      return lis;
-    }
-    /**
-     * Call all callbacks and dispose this object. The owner is required for better reporting of
-     * errors if any callback throws.
-     */
-    callAndDispose(owner) {
-      try {
-        DisposeListener.callAll(this._next, this, owner);
-      } finally {
-        this._disposeList();
-      }
-    }
-  };
-  var DisposeListener = class extends LLink {
-    constructor(callback, context2) {
-      super();
-      this.callback = callback;
-      this.context = context2;
-    }
-    static callAll(begin, end, owner) {
-      while (begin !== end) {
-        const lis = begin;
-        try {
-          lis.callback.call(lis.context);
-        } catch (e9) {
-          console.error("While disposing %s, error disposing %s: %s", _describe(owner), _describe(this), e9);
-        }
-        begin = lis._next;
-      }
-    }
-    dispose() {
-      if (this.isDisposed()) {
-        return;
-      }
-      this._removeNode(this);
-    }
-  };
-
-  // node_modules/grainjs/dist/esm/lib/PriorityQueue.js
-  var PriorityQueue = class {
-    constructor(_isPrior) {
-      this._isPrior = _isPrior;
-      this._items = [];
-    }
-    get size() {
-      return this._items.length;
-    }
-    push(item) {
-      const items2 = this._items;
-      const isPrior = this._isPrior;
-      let curIdx = this._items.length;
-      while (curIdx > 0) {
-        const parIdx = curIdx - 1 >> 1;
-        const parItem = items2[parIdx];
-        if (isPrior(parItem, item)) {
-          break;
-        }
-        items2[curIdx] = parItem;
-        curIdx = parIdx;
-      }
-      items2[curIdx] = item;
-    }
-    peek() {
-      return this._items[0];
-    }
-    pop() {
-      if (this._items.length <= 1) {
-        return this._items.pop();
-      }
-      const items2 = this._items;
-      const isPrior = this._isPrior;
-      const result = items2[0];
-      const item = items2.pop();
-      const size = this._items.length;
-      let curIdx = 0;
-      let leftIdx = 1;
-      while (leftIdx < size) {
-        const rightIdx = leftIdx + 1;
-        const bestIdx = rightIdx < size && isPrior(items2[rightIdx], items2[leftIdx]) ? rightIdx : leftIdx;
-        if (isPrior(item, items2[bestIdx])) {
-          break;
-        }
-        items2[curIdx] = items2[bestIdx];
-        curIdx = bestIdx;
-        leftIdx = curIdx + curIdx + 1;
-      }
-      items2[curIdx] = item;
-      return result;
-    }
-  };
-
-  // node_modules/grainjs/dist/esm/lib/_computed_queue.js
-  var DepItem = class {
-    /**
-     * Callback should call depItem.useDep(dep) for each DepInput it depends on.
-     */
-    constructor(callback, optContext) {
-      this._priority = 0;
-      this._enqueued = false;
-      this._creation = ++_nextCreationNum;
-      this._callback = callback;
-      this._context = optContext;
-    }
-    static isPrioritySmaller(a4, b4) {
-      return a4._priority < b4._priority || a4._priority === b4._priority && a4._creation < b4._creation;
-    }
-    /**
-     * Mark depItem as a dependency of this DepItem. The argument may be null to indicate a leaf (an
-     * item such as a plain observable, which does not itself depend on anything else).
-     */
-    useDep(depItem) {
-      const p4 = depItem ? depItem._priority : 0;
-      if (p4 >= this._priority) {
-        this._priority = p4 + 1;
-      }
-    }
-    /**
-     * Recompute this DepItem, calling the callback given in the constructor.
-     */
-    recompute() {
-      this._priority = 0;
-      this._callback.call(this._context);
-    }
-    /**
-     * Add this DepItem to the queue, to be recomputed when the time is right.
-     */
-    enqueue() {
-      if (!this._enqueued) {
-        this._enqueued = true;
-        queue.push(this);
-      }
-    }
-  };
-  var queue = new PriorityQueue(DepItem.isPrioritySmaller);
-  var _nextCreationNum = 0;
-  var _seen = [];
-  var bundleDepth = 0;
-  function compute() {
-    if (bundleDepth === 0 && queue.size > 0) {
-      bundleDepth++;
-      try {
-        do {
-          const item = queue.pop();
-          _seen.push(item);
-          item.recompute();
-        } while (queue.size > 0);
-      } finally {
-        for (const item of _seen) {
-          item._enqueued = false;
-        }
-        _seen.length = 0;
-        bundleDepth--;
-      }
-    }
-  }
-  function bundleChanges(func) {
-    try {
-      bundleDepth++;
-      return func();
-    } finally {
-      bundleDepth--;
-      compute();
-    }
-  }
-
-  // node_modules/grainjs/dist/esm/lib/observable.js
-  var BaseObservable = class {
-    /**
-     * Internal constructor for an Observable. You should use observable() function instead.
-     */
-    constructor(value) {
-      this._onChange = new Emitter();
-      this._value = value;
-    }
-    /**
-     * Returns the value of the observable. It is fast and does not create a subscription.
-     * (It is similar to knockout's peek()).
-     * @returns {Object} The current value of the observable.
-     */
-    get() {
-      return this._value;
-    }
-    /**
-     * Sets the value of the observable. If the value differs from the previously set one, then
-     * listeners to this observable will get called with (newValue, oldValue) as arguments.
-     * @param {Object} value: The new value to set.
-     */
-    set(value) {
-      if (value !== this._value) {
-        this.setAndTrigger(value);
-      }
-    }
-    /**
-     * Sets the value of the observable AND calls listeners even if the value is unchanged.
-     */
-    setAndTrigger(value) {
-      const prev = this._value;
-      this._value = value;
-      this._onChange.emit(value, prev);
-      this._disposeOwned();
-      compute();
-    }
-    /**
-     * Adds a callback to listen to changes in the observable.
-     * @param {Function} callback: Function, called on changes with (newValue, oldValue) arguments.
-     * @param {Object} optContext: Context for the function.
-     * @returns {Listener} Listener object. Its dispose() method removes the callback.
-     */
-    addListener(callback, optContext) {
-      return this._onChange.addListener(callback, optContext);
-    }
-    /**
-     * Returns whether this observable has any listeners.
-     */
-    hasListeners() {
-      return this._onChange.hasListeners();
-    }
-    /**
-     * Sets a single callback to be called when a listener is added or removed. It overwrites any
-     * previously-set such callback.
-     * @param {Function} changeCB(hasListeners): Function to call after a listener is added or
-     *    removed. It's called with a boolean indicating whether this observable has any listeners.
-     *    Pass in `null` to unset the callback. Note that it can be called multiple times in a row
-     *    with hasListeners `true`.
-     */
-    setListenerChangeCB(changeCB, optContext) {
-      this._onChange.setChangeCB(changeCB, optContext);
-    }
-    /**
-     * Used by subscriptions to keep track of dependencies. An observable that has dependnecies,
-     * such as a computed observable, would override this method.
-     */
-    _getDepItem() {
-      return null;
-    }
-    /**
-     * Disposes the observable.
-     */
-    dispose() {
-      this._disposeOwned();
-      this._onChange.dispose();
-      this._value = void 0;
-    }
-    /**
-     * Returns whether this observable is disposed.
-     */
-    isDisposed() {
-      return this._onChange.isDisposed();
-    }
-    _disposeOwned(arg) {
-    }
-    /**
-     * Allow derived classes to emit change events with an additional third argument describing the
-     * change. It always emits the event without checking for value equality.
-     */
-    _setWithArg(value, arg) {
-      const prev = this._value;
-      this._value = value;
-      this._onChange.emit(value, prev, arg);
-      this._disposeOwned(arg);
-      compute();
-    }
-  };
-  var Observable2 = class _Observable extends BaseObservable {
-    constructor() {
-      super(...arguments);
-      this._owned = void 0;
-    }
-    // See module-level holder() function below for documentation.
-    static holder(value) {
-      const obs = new _Observable(value);
-      obs._owned = value;
-      return obs;
-    }
-    /**
-     * Creates a new Observable with the given initial value, and owned by owner.
-     */
-    static create(owner, value) {
-      return setDisposeOwner(owner, new _Observable(value));
-    }
-    /**
-     * The use an observable for a disposable object, use it a DisposableOwner:
-     *
-     *    D.create(obs, ...args)                      // Preferred
-     *    obs.autoDispose(D.create(null, ...args))    // Equivalent
-     *
-     * Either of these usages will set the observable to the newly created value. The observable
-     * will dispose the owned value when it's set to another value, or when it itself is disposed.
-     */
-    autoDispose(value) {
-      this.setAndTrigger(value);
-      this._owned = value;
-      return value;
-    }
-    _disposeOwned() {
-      if (this._owned) {
-        this._owned.dispose();
-        this._owned = void 0;
-      }
-    }
-  };
-  function observable2(value) {
-    return new Observable2(value);
-  }
-
-  // node_modules/grainjs/dist/esm/lib/domDispose.js
-  var _disposeMap = /* @__PURE__ */ new WeakMap();
-  function _walkDom(elem, visitFunc) {
-    let c6 = elem.firstChild;
-    while (c6) {
-      _walkDom(c6, visitFunc);
-      c6 = c6.nextSibling;
-    }
-    visitFunc(elem);
-  }
-  function _disposeNode(node2) {
-    let disposer = _disposeMap.get(node2);
-    if (disposer) {
-      let key2 = node2;
-      do {
-        _disposeMap.delete(key2);
-        disposer(node2);
-        key2 = disposer;
-        disposer = _disposeMap.get(key2);
-      } while (disposer);
-    }
-  }
-  function _disposeNodeRecursive(node2) {
-    _walkDom(node2, domDisposeHooks.disposeNode);
-  }
-  var domDisposeHooks = {
-    disposeNode: _disposeNode,
-    disposeRecursive: _disposeNodeRecursive
-  };
-  function domDispose(node2) {
-    domDisposeHooks.disposeRecursive(node2);
-  }
-  function onDisposeElem(elem, disposerFunc) {
-    const prevDisposer = _disposeMap.get(elem);
-    _disposeMap.set(elem, disposerFunc);
-    if (prevDisposer) {
-      _disposeMap.set(disposerFunc, prevDisposer);
-    }
-  }
-  function onDispose(disposerFunc) {
-    return (elem) => onDisposeElem(elem, disposerFunc);
-  }
-  function autoDisposeElem(elem, disposable) {
-    if (disposable) {
-      onDisposeElem(elem, () => disposable.dispose());
-    }
-  }
-  function autoDispose(disposable) {
-    if (disposable) {
-      return (elem) => autoDisposeElem(elem, disposable);
-    }
-  }
-
-  // node_modules/grainjs/dist/esm/lib/kowrap.js
-  var fromKoWrappers = /* @__PURE__ */ new WeakMap();
-  function fromKo(koObs) {
-    return fromKoWrappers.get(koObs) || fromKoWrappers.set(koObs, new KoWrapObs(koObs)).get(koObs);
-  }
-  var KoWrapObs = class extends Observable2 {
-    constructor(_koObs) {
-      super(_koObs.peek());
-      this._koObs = _koObs;
-      this._koSub = null;
-      this.setListenerChangeCB((hasListeners) => {
-        if (!hasListeners) {
-          this._koSub.dispose();
-          this._koSub = null;
-        } else if (!this._koSub) {
-          this._value = this._koObs.peek();
-          this._koSub = this._koObs.subscribe((val) => this.setAndTrigger(val));
-        }
-      });
-    }
-    get() {
-      return this._koObs.peek();
-    }
-    set(value) {
-      bundleChanges(() => this._koObs(value));
-    }
-    dispose() {
-      throw new Error("KoWrapObs should not be disposed");
-    }
-  };
-
-  // node_modules/grainjs/dist/esm/lib/subscribe.js
-  var emptyArray = [];
-  var Subscription2 = class {
-    /**
-     * Internal constructor for a Subscription. You should use subscribe() function instead.
-     * The last owner argument is used by computed() to make itself available as the .owner property
-     * of the 'use' function that gets passed to the callback.
-     */
-    constructor(callback, dependencies, owner) {
-      this._depItem = new DepItem(this._evaluate, this);
-      this._dependencies = dependencies.length > 0 ? dependencies : emptyArray;
-      this._depListeners = dependencies.length > 0 ? dependencies.map((obs) => this._subscribeTo(obs)) : emptyArray;
-      this._dynDeps = /* @__PURE__ */ new Map();
-      this._callback = callback;
-      this._useFunc = this._useDependency.bind(this);
-      if (owner) {
-        this._useFunc.owner = owner;
-      }
-      this._evaluate();
-    }
-    /**
-     * Disposes the computed, unsubscribing it from all observables it depends on.
-     */
-    dispose() {
-      this._callback = null;
-      for (const lis of this._depListeners) {
-        lis.dispose();
-      }
-      for (const lis of this._dynDeps.values()) {
-        lis.dispose();
-      }
-    }
-    /**
-     * For use by computed(): returns this subscription's hook into the _computed_queue.
-     */
-    _getDepItem() {
-      return this._depItem;
-    }
-    /**
-     * @private
-     * Gets called when the callback calls `use(obs)` for an observable. It creates a
-     * subscription to `obs` if one doesn't yet exist.
-     * @param {Observable} obs: The observable being used as a dependency.
-     */
-    _useDependency(_obs) {
-      const obs = "_getDepItem" in _obs ? _obs : fromKo(_obs);
-      let listener = this._dynDeps.get(obs);
-      if (!listener) {
-        listener = this._subscribeTo(obs);
-        this._dynDeps.set(obs, listener);
-      }
-      listener._inUse = true;
-      this._depItem.useDep(obs._getDepItem());
-      return obs.get();
-    }
-    /**
-     * @private
-     * Calls the callback() with appropriate args, and updates subscriptions when it is done.
-     * I.e. adds dynamic subscriptions created via `use(obs)`, and disposes those no longer used.
-     */
-    _evaluate() {
-      if (this._callback === null) {
-        return;
-      }
-      try {
-        const readArgs = [this._useFunc];
-        for (let i8 = 0, len = this._dependencies.length; i8 < len; i8++) {
-          readArgs[i8 + 1] = this._dependencies[i8].get();
-          this._depItem.useDep(this._dependencies[i8]._getDepItem());
-        }
-        return this._callback.apply(void 0, readArgs);
-      } finally {
-        this._dynDeps.forEach((listener, obs) => {
-          if (listener._inUse) {
-            listener._inUse = false;
-          } else {
-            this._dynDeps.delete(obs);
-            listener.dispose();
-          }
-        });
-      }
-    }
-    /**
-     * @private
-     * Subscribes this computed to another observable that it depends on.
-     * @param {Observable} obs: The observable to subscribe to.
-     * @returns {Listener} Listener object.
-     */
-    _subscribeTo(_obs) {
-      const obs = "_getDepItem" in _obs ? _obs : fromKo(_obs);
-      return obs.addListener(this._enqueue, this);
-    }
-    /**
-     * @private
-     * Adds this item to the recompute queue.
-     */
-    _enqueue() {
-      this._depItem.enqueue();
-    }
-  };
-  function subscribe(...args) {
-    const cb = args.pop();
-    return new Subscription2(cb, args);
-  }
-
-  // node_modules/grainjs/dist/esm/lib/computed.js
-  function _noWrite() {
-    throw new Error("Can't write to non-writable computed");
-  }
-  var Computed = class _Computed extends Observable2 {
-    /**
-     * Internal constructor for a Computed observable. You should use computed() function instead.
-     */
-    constructor(callback, dependencies) {
-      super(void 0);
-      this._callback = callback;
-      this._write = _noWrite;
-      this._sub = new Subscription2(this._read.bind(this), dependencies, this);
-    }
-    /**
-     * Creates a new Computed, owned by the given owner.
-     * @param owner: Object to own this Computed, or null to handle disposal manually.
-     * @param ...observables: Zero or more observables on which this computes depends. The callback
-     *        will get called when any of these changes.
-     * @param callback: Read callback that will be called with (use, ...values),
-     *    i.e. the `use` function and values for all of the ...observables. The callback is called
-     *    immediately and whenever any dependency changes.
-     * @returns {Computed} The newly created computed observable.
-     */
-    static create(owner, ...args) {
-      const readCb = args.pop();
-      return setDisposeOwner(owner, new _Computed(readCb, args));
-    }
-    /**
-     * Used by subscriptions to keep track of dependencies.
-     */
-    _getDepItem() {
-      return this._sub._getDepItem();
-    }
-    /**
-     * "Sets" the value of the computed by calling the write() callback if one was provided in the
-     * constructor. Throws an error if there was no such callback (not a "writable" computed).
-     * @param {Object} value: The value to pass to the write() callback.
-     */
-    set(value) {
-      this._write(value);
-    }
-    /**
-     * Set callback to call when this.set(value) is called, to make it a writable computed. If not
-     * set, attempting to write to this computed will throw an exception.
-     */
-    onWrite(writeFunc) {
-      this._write = writeFunc;
-      return this;
-    }
-    /**
-     * Disposes the computed, unsubscribing it from all observables it depends on.
-     */
-    dispose() {
-      this._sub.dispose();
-      super.dispose();
-    }
-    _read(use, ...args) {
-      super.set(this._callback(use, ...args));
-    }
-  };
-  function computed(...args) {
-    const readCb = args.pop();
-    return new Computed(readCb, args);
-  }
-
-  // node_modules/grainjs/dist/esm/lib/binding.js
-  function subscribeBindable(valueObs, callback) {
-    if (typeof valueObs === "function") {
-      const koValue = valueObs;
-      if (typeof koValue.peek === "function") {
-        const sub = koValue.subscribe((val) => callback(val));
-        callback(koValue.peek());
-        return sub;
-      }
-      const comp = computed(valueObs);
-      comp.addListener((val) => callback(val));
-      callback(comp.get());
-      return comp;
-    }
-    if (valueObs instanceof BaseObservable) {
-      return subscribe(valueObs, (use, val) => callback(val));
-    }
-    callback(valueObs);
-    return null;
-  }
-  function subscribeElem(elem, valueObs, callback) {
-    autoDisposeElem(elem, subscribeBindable(valueObs, callback));
-  }
-
-  // node_modules/grainjs/dist/esm/lib/browserGlobals.js
-  function _updateGlobals(dest, source) {
-    dest.DocumentFragment = source.DocumentFragment;
-    dest.Element = source.Element;
-    dest.Node = source.Node;
-    dest.document = source.document;
-    dest.window = source.window;
-  }
-  var initial = {};
-  _updateGlobals(initial, typeof window !== "undefined" ? window : {});
-  var G2 = Object.assign({}, initial);
-
-  // node_modules/grainjs/dist/esm/lib/domMethods.js
-  var _dataMap = /* @__PURE__ */ new WeakMap();
-  function attrsElem(elem, attrsObj) {
-    for (const key2 of Object.keys(attrsObj)) {
-      const val = attrsObj[key2];
-      if (val != null && val !== false) {
-        elem.setAttribute(key2, val === true ? "" : val);
-      }
-    }
-  }
-  function attrs(attrsObj) {
-    return (elem) => attrsElem(elem, attrsObj);
-  }
-  function attrElem(elem, attrName, attrValue) {
-    if (attrValue === null || attrValue === void 0) {
-      elem.removeAttribute(attrName);
-    } else {
-      elem.setAttribute(attrName, attrValue);
-    }
-  }
-  function attr(attrName, attrValueObs) {
-    return (elem) => subscribeElem(elem, attrValueObs, (val) => attrElem(elem, attrName, val));
-  }
-  function boolAttrElem(elem, attrName, boolValue) {
-    attrElem(elem, attrName, boolValue ? "" : null);
-  }
-  function boolAttr(attrName, boolValueObs) {
-    return (elem) => subscribeElem(elem, boolValueObs, (val) => boolAttrElem(elem, attrName, val));
-  }
-  function textElem(elem, value) {
-    elem.appendChild(G2.document.createTextNode(value));
-  }
-  function text(valueObs) {
-    return (elem) => {
-      const textNode = G2.document.createTextNode("");
-      subscribeElem(elem, valueObs, (val) => {
-        textNode.nodeValue = val;
-      });
-      elem.appendChild(textNode);
-    };
-  }
-  function styleElem(elem, property, value) {
-    elem.style[property] = value;
-  }
-  function style2(property, valueObs) {
-    return (elem) => subscribeElem(elem, valueObs, (val) => styleElem(elem, property, val));
-  }
-  function propElem(elem, property, value) {
-    elem[property] = value;
-  }
-  function prop(property, valueObs) {
-    return (elem) => subscribeElem(elem, valueObs, (val) => propElem(elem, property, val));
-  }
-  function showElem(elem, boolValue) {
-    elem.style.display = boolValue ? "" : "none";
-  }
-  function show(boolValueObs) {
-    return (elem) => subscribeElem(elem, boolValueObs, (val) => showElem(elem, val));
-  }
-  function hideElem(elem, boolValue) {
-    elem.style.display = boolValue ? "none" : "";
-  }
-  function hide(boolValueObs) {
-    return (elem) => subscribeElem(elem, boolValueObs, (val) => hideElem(elem, val));
-  }
-  function clsElem(elem, className, boolValue = true) {
-    elem.classList.toggle(className, Boolean(boolValue));
-  }
-  function cls(className, boolValue) {
-    if (typeof className !== "string") {
-      return _clsDynamicPrefix("", className);
-    } else if (!boolValue || typeof boolValue === "boolean") {
-      return (elem) => clsElem(elem, className, boolValue);
-    } else {
-      return (elem) => subscribeElem(elem, boolValue, (val) => clsElem(elem, className, val));
-    }
-  }
-  function clsPrefix(prefix, className, boolValue) {
-    if (typeof className !== "string") {
-      return _clsDynamicPrefix(prefix, className);
-    } else {
-      return cls(prefix + className, boolValue);
-    }
-  }
-  function _clsDynamicPrefix(prefix, className) {
-    return (elem) => {
-      let prevClass = null;
-      subscribeElem(elem, className, (name) => {
-        if (prevClass) {
-          elem.classList.remove(prevClass);
-        }
-        prevClass = name ? prefix + name : null;
-        if (prevClass) {
-          elem.classList.add(prevClass);
-        }
-      });
-    };
-  }
-  function dataElem(elem, key2, value) {
-    const obj = _dataMap.get(elem);
-    if (obj) {
-      obj[key2] = value;
-    } else {
-      onDisposeElem(elem, () => _dataMap.delete(elem));
-      _dataMap.set(elem, { [key2]: value });
-    }
-  }
-  function data(key2, valueObs) {
-    return (elem) => subscribeElem(elem, valueObs, (val) => dataElem(elem, key2, val));
-  }
-  function getData(elem, key2) {
-    const obj = _dataMap.get(elem);
-    return obj && obj[key2];
-  }
-
-  // node_modules/grainjs/dist/esm/lib/domImpl.js
-  function dom(tagString, ...args) {
-    return _updateWithArgsOrDispose(_createFromTagString(_createElementHtml, tagString), args);
-  }
-  function svg(tagString, ...args) {
-    return _updateWithArgsOrDispose(_createFromTagString(_createElementSvg, tagString), args);
-  }
-  function _createElementHtml(tag) {
-    return G2.document.createElement(tag);
-  }
-  function _createElementSvg(tag) {
-    return G2.document.createElementNS("http://www.w3.org/2000/svg", tag);
-  }
-  function _createFromTagString(createFunc, tagString) {
-    let tag;
-    let id2;
-    let classes;
-    let dotPos = tagString.indexOf(".");
-    const hashPos = tagString.indexOf("#");
-    if (dotPos === -1) {
-      dotPos = tagString.length;
-    } else {
-      classes = tagString.substring(dotPos + 1).replace(/\./g, " ");
-    }
-    if (hashPos === -1) {
-      tag = tagString.substring(0, dotPos);
-    } else if (hashPos > dotPos) {
-      throw new Error(`ID must come before classes in dom("${tagString}")`);
-    } else {
-      tag = tagString.substring(0, hashPos);
-      id2 = tagString.substring(hashPos + 1, dotPos);
-    }
-    const elem = createFunc(tag);
-    if (id2) {
-      elem.setAttribute("id", id2);
-    }
-    if (classes) {
-      elem.setAttribute("class", classes);
-    }
-    return elem;
-  }
-  function update2(elem, ...args) {
-    return _updateWithArgs(elem, args);
-  }
-  function _updateWithArgs(elem, args) {
-    for (const arg of args) {
-      _updateWithArg(elem, arg);
-    }
-    return elem;
-  }
-  function _updateWithArgsOrDispose(elem, args) {
-    try {
-      return _updateWithArgs(elem, args);
-    } catch (e9) {
-      domDispose(elem);
-      throw e9;
-    }
-  }
-  function _updateWithArg(elem, arg) {
-    if (typeof arg === "function") {
-      const value = arg(elem);
-      if (value !== void 0 && value !== null) {
-        _updateWithArg(elem, value);
-      }
-    } else if (Array.isArray(arg)) {
-      _updateWithArgs(elem, arg);
-    } else if (arg === void 0 || arg === null) {
-    } else if (arg instanceof G2.Node) {
-      elem.appendChild(arg);
-    } else if (typeof arg === "object") {
-      attrsElem(elem, arg);
-    } else {
-      elem.appendChild(G2.document.createTextNode(arg));
-    }
-  }
-  function frag(...args) {
-    const elem = G2.document.createDocumentFragment();
-    return _updateWithArgsOrDispose(elem, args);
-  }
-  function find(selector) {
-    return G2.document.querySelector(selector);
-  }
-  function findAll(selector) {
-    return G2.document.querySelectorAll(selector);
-  }
-
-  // node_modules/grainjs/dist/esm/lib/domComputed.js
-  function replaceContent(nodeBefore, nodeAfter, content) {
-    const elem = nodeBefore.parentNode;
-    if (elem) {
-      let next2;
-      for (let n6 = nodeBefore.nextSibling; n6 && n6 !== nodeAfter; n6 = next2) {
-        next2 = n6.nextSibling;
-        domDispose(n6);
-        elem.removeChild(n6);
-      }
-      if (content) {
-        elem.insertBefore(content instanceof G2.Node ? content : frag(content), nodeAfter);
-      }
-    }
-  }
-  function domComputed(valueObs, contentFunc = identity2) {
-    const markerPre = G2.document.createComment("a");
-    const markerPost = G2.document.createComment("b");
-    return [markerPre, markerPost, (elem) => {
-      subscribeElem(markerPost, valueObs, (value) => replaceContent(markerPre, markerPost, contentFunc(value)));
-    }];
-  }
-  function domComputedOwned(valueObs, contentFunc) {
-    const holder = Holder.create(null);
-    const [markerPre, markerPost, func] = domComputed(valueObs, (val) => contentFunc(MultiHolder.create(holder), val));
-    autoDisposeElem(markerPost, holder);
-    return [markerPre, markerPost, func];
-  }
-  function identity2(arg) {
-    return arg;
-  }
-  function maybe(boolValueObs, contentFunc) {
-    return domComputed(boolValueObs, (value) => value ? contentFunc(value) : null);
-  }
-  function maybeOwned(boolValueObs, contentFunc) {
-    return domComputedOwned(boolValueObs, (owner, value) => value ? contentFunc(owner, value) : null);
-  }
-
-  // node_modules/grainjs/dist/esm/lib/domComponent.js
-  function create(fn, ...args) {
-    return domComputedOwned(null, (owner) => {
-      const value = "create" in fn ? fn.create(owner, ...args) : fn(owner, ...args);
-      return value && typeof value === "object" && "buildDom" in value ? value.buildDom() : value;
-    });
-  }
-
-  // node_modules/grainjs/dist/esm/lib/obsArray.js
-  var ObsArray = class extends BaseObservable {
-    constructor() {
-      super(...arguments);
-      this._ownedItems = void 0;
-    }
-    addListener(callback, optContext) {
-      return super.addListener(callback, optContext);
-    }
-    autoDispose(value) {
-      if (!this._ownedItems) {
-        this._ownedItems = /* @__PURE__ */ new Set();
-      }
-      this._ownedItems.add(value);
-      return value;
-    }
-    dispose() {
-      if (this._ownedItems) {
-        for (const item of this.get()) {
-          if (this._ownedItems.delete(item)) {
-            item.dispose();
-          }
-        }
-        this._ownedItems = void 0;
-      }
-      super.dispose();
-    }
-    _setWithSplice(value, splice3) {
-      return this._setWithArg(value, splice3);
-    }
-    _disposeOwned(splice3) {
-      if (!this._ownedItems) {
-        return;
-      }
-      if (splice3) {
-        for (const item of splice3.deleted) {
-          if (this._ownedItems.delete(item)) {
-            item.dispose();
-          }
-        }
-      } else {
-        const oldOwnedItems = this._ownedItems;
-        this._ownedItems = /* @__PURE__ */ new Set();
-        for (const item of this.get()) {
-          if (oldOwnedItems.delete(item)) {
-            this._ownedItems.add(item);
-          }
-        }
-        for (const item of oldOwnedItems) {
-          item.dispose();
-        }
-      }
-    }
-  };
-  function isObsArray(val) {
-    return Array.isArray(val.get());
-  }
-  var ComputedArray = class extends ObsArray {
-    constructor(obsArr, _mapper) {
-      super([]);
-      this._mapper = _mapper;
-      this._sub = isObsArray(obsArr) ? subscribe(obsArr, (use) => this._syncMap(obsArr)) : subscribe(obsArr, (use, obsArrayValue) => {
-        use(obsArrayValue);
-        return this._syncMap(obsArrayValue);
-      });
-    }
-    dispose() {
-      this._unsync();
-      this._sub.dispose();
-      super.dispose();
-    }
-    _syncMap(obsArr) {
-      if (this._source !== obsArr) {
-        this._unsync();
-        this._listener = obsArr.addListener(this._recordChange, this);
-        this._source = obsArr;
-        this._rebuild(obsArr);
-      } else if (this._lastSplice) {
-        this._applySplice(obsArr, this._lastSplice);
-      } else {
-        this._rebuild(obsArr);
-      }
-      this._lastSplice = void 0;
-    }
-    _unsync() {
-      if (this._listener) {
-        this._listener.dispose();
-        this._listener = void 0;
-        this._source = void 0;
-      }
-    }
-    _rebuild(obsArr) {
-      this.set(obsArr.get().map((item, i8) => this._mapper.call(void 0, item, i8, this)));
-    }
-    _applySplice(obsArr, change) {
-      const sourceArray = obsArr.get();
-      const newItems = [];
-      for (let i8 = change.start, n6 = 0; n6 < change.numAdded; i8++, n6++) {
-        newItems.push(this._mapper.call(void 0, sourceArray[i8], i8, this));
-      }
-      const items2 = this.get();
-      const deleted = items2.splice(change.start, change.deleted.length, ...newItems);
-      this._setWithSplice(items2, { start: change.start, numAdded: newItems.length, deleted });
-    }
-    _recordChange(newItems, oldItems, change) {
-      if (change && this._lastSplice === void 0) {
-        this._lastSplice = change;
-      } else {
-        this._lastSplice = false;
-      }
-    }
-  };
-  function computedArray(obsArr, mapper) {
-    return new ComputedArray(obsArr, mapper);
-  }
-
-  // node_modules/grainjs/dist/esm/lib/domForEach.js
-  function forEach(obsArray, itemCreateFunc) {
-    const markerPre = G2.document.createComment("a");
-    const markerPost = G2.document.createComment("b");
-    return [markerPre, markerPost, (elem) => {
-      if (Array.isArray(obsArray)) {
-        replaceContent(markerPre, markerPost, obsArray.map(itemCreateFunc));
-        return;
-      }
-      const nodes = computedArray(obsArray, itemCreateFunc);
-      autoDisposeElem(markerPost, nodes);
-      nodes.addListener((newArr, oldArr, splice3) => {
-        if (splice3) {
-          for (const node2 of splice3.deleted) {
-            if (node2 && node2.parentNode === elem) {
-              domDispose(node2);
-              elem.removeChild(node2);
-            }
-          }
-          if (splice3.numAdded > 0) {
-            const endIndex = splice3.start + splice3.numAdded;
-            let nextElem = markerPost;
-            for (let i8 = endIndex; i8 < newArr.length; i8++) {
-              const node2 = newArr[i8];
-              if (node2 && node2.parentNode === elem) {
-                nextElem = node2;
-                break;
-              }
-            }
-            const content = frag(newArr.slice(splice3.start, endIndex));
-            elem.insertBefore(content, nextElem);
-          }
-        } else {
-          replaceContent(markerPre, markerPost, newArr);
-        }
-      });
-      replaceContent(markerPre, markerPost, nodes.get());
-    }];
-  }
-
-  // node_modules/grainjs/dist/esm/lib/domevent.js
-  function _findMatch(inner, outer, selector) {
-    for (let el = inner; el && el !== outer; el = el.parentElement) {
-      if (el.matches(selector)) {
-        return el;
-      }
-    }
-    return null;
-  }
-  var DomEventListener = class {
-    constructor(elem, eventType, callback, useCapture, selector) {
-      this.elem = elem;
-      this.eventType = eventType;
-      this.callback = callback;
-      this.useCapture = useCapture;
-      this.selector = selector;
-      this.elem.addEventListener(this.eventType, this, this.useCapture);
-    }
-    handleEvent(event2) {
-      const cb = this.callback;
-      cb(event2, this.elem);
-    }
-    dispose() {
-      this.elem.removeEventListener(this.eventType, this, this.useCapture);
-    }
-  };
-  var DomEventMatchListener = class extends DomEventListener {
-    handleEvent(event2) {
-      const elem = _findMatch(event2.target, this.elem, this.selector);
-      if (elem) {
-        const cb = this.callback;
-        cb(event2, elem);
-      }
-    }
-  };
-  function onElem(elem, eventType, callback, { useCapture = false } = {}) {
-    return new DomEventListener(elem, eventType, callback, useCapture);
-  }
-  function on(eventType, callback, { useCapture = false } = {}) {
-    return (elem) => {
-      new DomEventListener(elem, eventType, callback, useCapture);
-    };
-  }
-  function onMatchElem(elem, selector, eventType, callback, { useCapture = false } = {}) {
-    return new DomEventMatchListener(elem, eventType, callback, useCapture, selector);
-  }
-  function onMatch(selector, eventType, callback, { useCapture = false } = {}) {
-    return (elem) => {
-      new DomEventMatchListener(elem, eventType, callback, useCapture, selector);
-    };
-  }
-  function onKeyElem(elem, evType, keyHandlers) {
-    if (!(elem.tabIndex >= 0)) {
-      elem.setAttribute("tabindex", "-1");
-    }
-    return onElem(elem, evType, (ev, _elem) => {
-      const plainHandler = keyHandlers[ev.key];
-      const handler = plainHandler || keyHandlers[ev.key + "$"];
-      if (handler) {
-        if (plainHandler) {
-          ev.stopPropagation();
-          ev.preventDefault();
-        }
-        handler(ev, _elem);
-      }
-    });
-  }
-  function onKeyPress(keyHandlers) {
-    return (elem) => {
-      onKeyElem(elem, "keypress", keyHandlers);
-    };
-  }
-  function onKeyDown(keyHandlers) {
-    return (elem) => {
-      onKeyElem(elem, "keydown", keyHandlers);
-    };
-  }
-
-  // node_modules/grainjs/dist/esm/lib/dom.js
-  function dom2(tagString, ...args) {
-    return dom(tagString, ...args);
-  }
-  (function(dom4) {
-    dom4.svg = svg;
-    dom4.frag = frag;
-    dom4.update = update2;
-    dom4.find = find;
-    dom4.findAll = findAll;
-    dom4.domDispose = domDispose;
-    dom4.onDisposeElem = onDisposeElem;
-    dom4.onDispose = onDispose;
-    dom4.autoDisposeElem = autoDisposeElem;
-    dom4.autoDispose = autoDispose;
-    dom4.attrsElem = attrsElem;
-    dom4.attrs = attrs;
-    dom4.attrElem = attrElem;
-    dom4.attr = attr;
-    dom4.boolAttrElem = boolAttrElem;
-    dom4.boolAttr = boolAttr;
-    dom4.textElem = textElem;
-    dom4.text = text;
-    dom4.styleElem = styleElem;
-    dom4.style = style2;
-    dom4.propElem = propElem;
-    dom4.prop = prop;
-    dom4.showElem = showElem;
-    dom4.show = show;
-    dom4.hideElem = hideElem;
-    dom4.hide = hide;
-    dom4.clsElem = clsElem;
-    dom4.cls = cls;
-    dom4.clsPrefix = clsPrefix;
-    dom4.dataElem = dataElem;
-    dom4.data = data;
-    dom4.getData = getData;
-    dom4.replaceContent = replaceContent;
-    dom4.domComputed = domComputed;
-    dom4.domComputedOwned = domComputedOwned;
-    dom4.maybe = maybe;
-    dom4.maybeOwned = maybeOwned;
-    dom4.forEach = forEach;
-    dom4.create = create;
-    dom4.onElem = onElem;
-    dom4.on = on;
-    dom4.onMatchElem = onMatchElem;
-    dom4.onMatch = onMatch;
-    dom4.onKeyElem = onKeyElem;
-    dom4.onKeyPress = onKeyPress;
-    dom4.onKeyDown = onKeyDown;
-  })(dom2 || (dom2 = {}));
-
-  // node_modules/grainjs/dist/esm/lib/styled.js
-  function createCssRules(className, styles) {
-    const nestedStart = styles.search(/[^;]*\{/);
-    const mainRules = nestedStart < 0 ? styles : styles.slice(0, nestedStart);
-    const nestedRules = nestedStart < 0 ? "" : styles.slice(nestedStart);
-    return `& {${mainRules}
-}
-${nestedRules}`.replace(/&/g, className);
-  }
-  var _global = {};
-  function getNextStyleNum() {
-    const g3 = G2.window || _global;
-    return g3._grainNextStyleNum = (g3._grainNextStyleNum || 0) + 1;
-  }
-  var StylePiece = class _StylePiece {
-    constructor(_styles) {
-      this._styles = _styles;
-      this._mounted = false;
-      this.className = _StylePiece._nextClassName();
-      _StylePiece._unmounted.add(this);
-    }
-    // Generate a new css class name. The suffix ensures that names like "&2" can't cause a conflict.
-    static _nextClassName() {
-      return `_grain${getNextStyleNum()}_`;
-    }
-    // Mount all unmounted StylePieces, and clear the _unmounted map.
-    static _mountAll() {
-      const sheet = Array.from(this._unmounted, (p4) => p4._createRules()).join("\n\n");
-      G2.document.head.appendChild(dom("style", sheet));
-      for (const piece of this._unmounted) {
-        piece._mounted = true;
-      }
-      this._unmounted.clear();
-    }
-    addToElem(elem) {
-      if (!this._mounted) {
-        _StylePiece._mountAll();
-      }
-      elem.classList.add(this.className);
-      return elem;
-    }
-    _createRules() {
-      return createCssRules("." + this.className, this._styles);
-    }
-  };
-  StylePiece._unmounted = /* @__PURE__ */ new Set();
-
   // index.ts
   var import_moment_timezone2 = __toESM(require_moment_timezone2());
+
+  // node_modules/ramda/es/internal/_isPlaceholder.js
+  function _isPlaceholder(a4) {
+    return a4 != null && typeof a4 === "object" && a4["@@functional/placeholder"] === true;
+  }
+
+  // node_modules/ramda/es/internal/_curry1.js
+  function _curry1(fn) {
+    return function f1(a4) {
+      if (arguments.length === 0 || _isPlaceholder(a4)) {
+        return f1;
+      } else {
+        return fn.apply(this, arguments);
+      }
+    };
+  }
+
+  // node_modules/ramda/es/internal/_curry2.js
+  function _curry2(fn) {
+    return function f22(a4, b4) {
+      switch (arguments.length) {
+        case 0:
+          return f22;
+        case 1:
+          return _isPlaceholder(a4) ? f22 : _curry1(function(_b) {
+            return fn(a4, _b);
+          });
+        default:
+          return _isPlaceholder(a4) && _isPlaceholder(b4) ? f22 : _isPlaceholder(a4) ? _curry1(function(_a) {
+            return fn(_a, b4);
+          }) : _isPlaceholder(b4) ? _curry1(function(_b) {
+            return fn(a4, _b);
+          }) : fn(a4, b4);
+      }
+    };
+  }
+
+  // node_modules/ramda/es/internal/_arity.js
+  function _arity(n6, fn) {
+    switch (n6) {
+      case 0:
+        return function() {
+          return fn.apply(this, arguments);
+        };
+      case 1:
+        return function(a0) {
+          return fn.apply(this, arguments);
+        };
+      case 2:
+        return function(a0, a1) {
+          return fn.apply(this, arguments);
+        };
+      case 3:
+        return function(a0, a1, a22) {
+          return fn.apply(this, arguments);
+        };
+      case 4:
+        return function(a0, a1, a22, a32) {
+          return fn.apply(this, arguments);
+        };
+      case 5:
+        return function(a0, a1, a22, a32, a4) {
+          return fn.apply(this, arguments);
+        };
+      case 6:
+        return function(a0, a1, a22, a32, a4, a5) {
+          return fn.apply(this, arguments);
+        };
+      case 7:
+        return function(a0, a1, a22, a32, a4, a5, a6) {
+          return fn.apply(this, arguments);
+        };
+      case 8:
+        return function(a0, a1, a22, a32, a4, a5, a6, a7) {
+          return fn.apply(this, arguments);
+        };
+      case 9:
+        return function(a0, a1, a22, a32, a4, a5, a6, a7, a8) {
+          return fn.apply(this, arguments);
+        };
+      case 10:
+        return function(a0, a1, a22, a32, a4, a5, a6, a7, a8, a9) {
+          return fn.apply(this, arguments);
+        };
+      default:
+        throw new Error("First argument to _arity must be a non-negative integer no greater than ten");
+    }
+  }
+
+  // node_modules/ramda/es/internal/_has.js
+  function _has(prop2, obj) {
+    return Object.prototype.hasOwnProperty.call(obj, prop2);
+  }
+
+  // node_modules/ramda/es/memoizeWith.js
+  var memoizeWith = /* @__PURE__ */ _curry2(function memoizeWith2(keyGen, fn) {
+    var cache = {};
+    return _arity(fn.length, function() {
+      var key2 = keyGen.apply(this, arguments);
+      if (!_has(key2, cache)) {
+        cache[key2] = fn.apply(this, arguments);
+      }
+      return cache[key2];
+    });
+  });
+  var memoizeWith_default = memoizeWith;
+
+  // index.ts
   var import_vanilla_context_menu = __toESM(require_vanilla_context_menu());
 
   // node_modules/vis-timeline/standalone/esm/vis-timeline-graph2d.js
@@ -19983,16 +20816,16 @@ ${nestedRules}`.replace(/&/g, className);
   var call$d = functionCall;
   var anObject$8 = anObject$d;
   var getMethod$1 = getMethod$3;
-  var iteratorClose$2 = function(iterator2, kind, value) {
+  var iteratorClose$2 = function(iterator3, kind, value) {
     var innerResult, innerError;
-    anObject$8(iterator2);
+    anObject$8(iterator3);
     try {
-      innerResult = getMethod$1(iterator2, "return");
+      innerResult = getMethod$1(iterator3, "return");
       if (!innerResult) {
         if (kind === "throw") throw value;
         return value;
       }
-      innerResult = call$d(innerResult, iterator2);
+      innerResult = call$d(innerResult, iterator3);
     } catch (error) {
       innerError = true;
       innerResult = error;
@@ -20004,11 +20837,11 @@ ${nestedRules}`.replace(/&/g, className);
   };
   var anObject$7 = anObject$d;
   var iteratorClose$1 = iteratorClose$2;
-  var callWithSafeIterationClosing$1 = function(iterator2, fn, value, ENTRIES2) {
+  var callWithSafeIterationClosing$1 = function(iterator3, fn, value, ENTRIES2) {
     try {
       return ENTRIES2 ? fn(anObject$7(value)[0], value[1]) : fn(value);
     } catch (error) {
-      iteratorClose$1(iterator2, "throw", error);
+      iteratorClose$1(iterator3, "throw", error);
     }
   };
   var wellKnownSymbol$i = wellKnownSymbol$p;
@@ -20119,13 +20952,13 @@ ${nestedRules}`.replace(/&/g, className);
     if (mapping) mapfn = bind$g(mapfn, argumentsLength > 2 ? arguments[2] : void 0);
     var iteratorMethod = getIteratorMethod$7(O);
     var index = 0;
-    var length, result, step, iterator2, next2, value;
+    var length, result, step, iterator3, next2, value;
     if (iteratorMethod && !(this === $Array$3 && isArrayIteratorMethod$1(iteratorMethod))) {
-      iterator2 = getIterator$7(O, iteratorMethod);
-      next2 = iterator2.next;
+      iterator3 = getIterator$7(O, iteratorMethod);
+      next2 = iterator3.next;
       result = IS_CONSTRUCTOR ? new this() : [];
-      for (; !(step = call$b(next2, iterator2)).done; index++) {
-        value = mapping ? callWithSafeIterationClosing(iterator2, mapfn, [step.value, index], true) : step.value;
+      for (; !(step = call$b(next2, iterator3)).done; index++) {
+        value = mapping ? callWithSafeIterationClosing(iterator3, mapfn, [step.value, index], true) : step.value;
         createProperty$5(result, index, value);
       }
     } else {
@@ -21774,7 +22607,7 @@ ${nestedRules}`.replace(/&/g, className);
   var arrayMethodHasSpeciesSupport = arrayMethodHasSpeciesSupport$5;
   var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport("filter");
   $$A({ target: "Array", proto: true, forced: !HAS_SPECIES_SUPPORT }, {
-    filter: function filter(callbackfn) {
+    filter: function filter2(callbackfn) {
       return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : void 0);
     }
   });
@@ -21789,8 +22622,8 @@ ${nestedRules}`.replace(/&/g, className);
   };
   var parent$J = filter$2;
   var filter$1 = parent$J;
-  var filter2 = filter$1;
-  var _filterInstanceProperty = /* @__PURE__ */ getDefaultExportFromCjs(filter2);
+  var filter3 = filter$1;
+  var _filterInstanceProperty = /* @__PURE__ */ getDefaultExportFromCjs(filter3);
   var DESCRIPTORS$7 = descriptors;
   var fails$c = fails$y;
   var uncurryThis$7 = functionUncurryThis;
@@ -22240,22 +23073,22 @@ ${nestedRules}`.replace(/&/g, className);
   var DIRECTION_ALL = DIRECTION_HORIZONTAL | DIRECTION_VERTICAL;
   var PROPS_XY = ["x", "y"];
   var PROPS_CLIENT_XY = ["clientX", "clientY"];
-  function each(obj, iterator2, context2) {
+  function each(obj, iterator3, context2) {
     var i8;
     if (!obj) {
       return;
     }
     if (obj.forEach) {
-      obj.forEach(iterator2, context2);
+      obj.forEach(iterator3, context2);
     } else if (obj.length !== void 0) {
       i8 = 0;
       while (i8 < obj.length) {
-        iterator2.call(context2, obj[i8], i8, obj);
+        iterator3.call(context2, obj[i8], i8, obj);
         i8++;
       }
     } else {
       for (i8 in obj) {
-        obj.hasOwnProperty(i8) && iterator2.call(context2, obj[i8], i8, obj);
+        obj.hasOwnProperty(i8) && iterator3.call(context2, obj[i8], i8, obj);
       }
     }
   }
@@ -23044,7 +23877,7 @@ ${nestedRules}`.replace(/&/g, className);
         this.tryEmit(inputDataClone);
       }
     };
-    _proto.process = function process2(inputData) {
+    _proto.process = function process3(inputData) {
     };
     _proto.getTouchAction = function getTouchAction() {
     };
@@ -23082,7 +23915,7 @@ ${nestedRules}`.replace(/&/g, className);
     _proto.getTouchAction = function getTouchAction() {
       return [TOUCH_ACTION_MANIPULATION];
     };
-    _proto.process = function process2(input) {
+    _proto.process = function process3(input) {
       var _this2 = this;
       var options2 = this.options;
       var validPointers = input.pointers.length === options2.pointers;
@@ -23154,7 +23987,7 @@ ${nestedRules}`.replace(/&/g, className);
       var optionPointers = this.options.pointers;
       return optionPointers === 0 || input.pointers.length === optionPointers;
     };
-    _proto.process = function process2(input) {
+    _proto.process = function process3(input) {
       var state = this.state;
       var eventType = input.eventType;
       var isRecognized = state & (STATE_BEGAN | STATE_CHANGED);
@@ -23360,7 +24193,7 @@ ${nestedRules}`.replace(/&/g, className);
     _proto.getTouchAction = function getTouchAction() {
       return [TOUCH_ACTION_AUTO];
     };
-    _proto.process = function process2(input) {
+    _proto.process = function process3(input) {
       var _this2 = this;
       var options2 = this.options;
       var validPointers = input.pointers.length === options2.pointers;
@@ -25969,17 +26802,17 @@ ${nestedRules}`.replace(/&/g, className);
       value: function _create() {
         this._clean();
         this.changedOptions = [];
-        var filter3 = _filterInstanceProperty(this.options);
+        var filter4 = _filterInstanceProperty(this.options);
         var counter2 = 0;
         var show2 = false;
         for (var _option in this.configureOptions) {
           if (Object.prototype.hasOwnProperty.call(this.configureOptions, _option)) {
             this.allowCreation = false;
             show2 = false;
-            if (typeof filter3 === "function") {
-              show2 = filter3(_option, []);
+            if (typeof filter4 === "function") {
+              show2 = filter4(_option, []);
               show2 = show2 || this._handleObject(this.configureOptions[_option], [_option], true);
-            } else if (filter3 === true || _indexOfInstanceProperty(filter3).call(filter3, _option) !== -1) {
+            } else if (filter4 === true || _indexOfInstanceProperty(filter4).call(filter4, _option) !== -1) {
               show2 = true;
             }
             if (show2 !== false) {
@@ -26445,15 +27278,15 @@ ${nestedRules}`.replace(/&/g, className);
         var path2 = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : [];
         var checkOnly = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : false;
         var show2 = false;
-        var filter3 = _filterInstanceProperty(this.options);
+        var filter4 = _filterInstanceProperty(this.options);
         var visibleInSet = false;
         for (var subObj in obj) {
           if (Object.prototype.hasOwnProperty.call(obj, subObj)) {
             show2 = true;
             var item = obj[subObj];
             var newPath = copyAndExtendArray(path2, subObj);
-            if (typeof filter3 === "function") {
-              show2 = filter3(subObj, path2);
+            if (typeof filter4 === "function") {
+              show2 = filter4(subObj, path2);
               if (show2 === false) {
                 if (!_Array$isArray(item) && typeof item !== "string" && typeof item !== "boolean" && item instanceof Object) {
                   this.allowCreation = false;
@@ -27450,9 +28283,9 @@ ${nestedRules}`.replace(/&/g, className);
     var IS_ITERATOR = !!(options2 && options2.IS_ITERATOR);
     var INTERRUPTED = !!(options2 && options2.INTERRUPTED);
     var fn = bind$6(unboundFunction, that);
-    var iterator2, iterFn, index, length, result, next2, step;
+    var iterator3, iterFn, index, length, result, next2, step;
     var stop = function(condition) {
-      if (iterator2) iteratorClose(iterator2, "normal", condition);
+      if (iterator3) iteratorClose(iterator3, "normal", condition);
       return new Result(true, condition);
     };
     var callFn = function(value) {
@@ -27463,9 +28296,9 @@ ${nestedRules}`.replace(/&/g, className);
       return INTERRUPTED ? fn(value, stop) : fn(value);
     };
     if (IS_RECORD) {
-      iterator2 = iterable.iterator;
+      iterator3 = iterable.iterator;
     } else if (IS_ITERATOR) {
-      iterator2 = iterable;
+      iterator3 = iterable;
     } else {
       iterFn = getIteratorMethod(iterable);
       if (!iterFn) throw new $TypeError$4(tryToString$1(iterable) + " is not iterable");
@@ -27476,14 +28309,14 @@ ${nestedRules}`.replace(/&/g, className);
         }
         return new Result(false);
       }
-      iterator2 = getIterator$6(iterable, iterFn);
+      iterator3 = getIterator$6(iterable, iterFn);
     }
-    next2 = IS_RECORD ? iterable.next : iterator2.next;
-    while (!(step = call$6(next2, iterator2)).done) {
+    next2 = IS_RECORD ? iterable.next : iterator3.next;
+    while (!(step = call$6(next2, iterator3)).done) {
       try {
         result = callFn(step.value);
       } catch (error) {
-        iteratorClose(iterator2, "throw", error);
+        iteratorClose(iterator3, "throw", error);
       }
       if (typeof result == "object" && result && isPrototypeOf$d(ResultPrototype, result)) return result;
     }
@@ -27872,7 +28705,7 @@ ${nestedRules}`.replace(/&/g, className);
   var PromisePrototype = NativePromisePrototype$1;
   var TypeError$1 = global$3.TypeError;
   var document$1 = global$3.document;
-  var process = global$3.process;
+  var process2 = global$3.process;
   var newPromiseCapability$1 = newPromiseCapabilityModule$7.f;
   var newGenericPromiseCapability = newPromiseCapability$1;
   var DISPATCH_EVENT = !!(document$1 && document$1.createEvent && global$3.dispatchEvent);
@@ -27958,7 +28791,7 @@ ${nestedRules}`.replace(/&/g, className);
       if (IS_UNHANDLED) {
         result = perform$5(function() {
           if (IS_NODE$1) {
-            process.emit("unhandledRejection", value, promise2);
+            process2.emit("unhandledRejection", value, promise2);
           } else dispatchEvent(UNHANDLED_REJECTION, promise2, value);
         });
         state.rejection = IS_NODE$1 || isUnhandled(state) ? UNHANDLED : HANDLED;
@@ -27973,7 +28806,7 @@ ${nestedRules}`.replace(/&/g, className);
     call$5(task, global$3, function() {
       var promise2 = state.facade;
       if (IS_NODE$1) {
-        process.emit("rejectionHandled", promise2);
+        process2.emit("rejectionHandled", promise2);
       } else dispatchEvent(REJECTION_HANDLED, promise2, state.value);
     });
   };
@@ -28051,7 +28884,7 @@ ${nestedRules}`.replace(/&/g, className);
       state.parent = true;
       reaction.ok = isCallable$2(onFulfilled) ? onFulfilled : true;
       reaction.fail = isCallable$2(onRejected) && onRejected;
-      reaction.domain = IS_NODE$1 ? process.domain : void 0;
+      reaction.domain = IS_NODE$1 ? process2.domain : void 0;
       if (state.state === PENDING) state.reactions.add(reaction);
       else microtask(function() {
         callReaction(reaction, state);
@@ -28653,7 +29486,7 @@ ${nestedRules}`.replace(/&/g, className);
   var lengthOfArrayLike$3 = lengthOfArrayLike$e;
   var $TypeError = TypeError;
   var createMethod = function(IS_RIGHT) {
-    return function(that, callbackfn, argumentsLength, memo) {
+    return function(that, callbackfn, argumentsLength, memo2) {
       aCallable$2(callbackfn);
       var O = toObject$2(that);
       var self2 = IndexedObject(O);
@@ -28662,7 +29495,7 @@ ${nestedRules}`.replace(/&/g, className);
       var i8 = IS_RIGHT ? -1 : 1;
       if (argumentsLength < 2) while (true) {
         if (index in self2) {
-          memo = self2[index];
+          memo2 = self2[index];
           index += i8;
           break;
         }
@@ -28672,9 +29505,9 @@ ${nestedRules}`.replace(/&/g, className);
         }
       }
       for (; IS_RIGHT ? index >= 0 : length > index; index += i8) if (index in self2) {
-        memo = callbackfn(memo, self2[index], index, O);
+        memo2 = callbackfn(memo2, self2[index], index, O);
       }
-      return memo;
+      return memo2;
     };
   };
   var arrayReduce = {
@@ -29142,8 +29975,8 @@ ${nestedRules}`.replace(/&/g, className);
   var set$1 = parent$i;
   var set = set$1;
   var _Set = /* @__PURE__ */ getDefaultExportFromCjs(set);
-  var iterator = iterator$4;
-  var _Symbol$iterator2 = /* @__PURE__ */ getDefaultExportFromCjs(iterator);
+  var iterator2 = iterator$4;
+  var _Symbol$iterator2 = /* @__PURE__ */ getDefaultExportFromCjs(iterator2);
   var getIterator$5 = getIterator$8;
   var getIterator_1 = getIterator$5;
   var parent$h = getIterator_1;
@@ -29763,7 +30596,7 @@ ${nestedRules}`.replace(/&/g, className);
     }
     _createClass(DataPipeUnderConstruction2, [{
       key: "filter",
-      value: function filter3(callback) {
+      value: function filter4(callback) {
         this._transformers.push(function(input) {
           return _filterInstanceProperty(input).call(input, callback);
         });
@@ -30346,7 +31179,7 @@ ${nestedRules}`.replace(/&/g, className);
        */
     }, {
       key: "distinct",
-      value: function distinct(callback) {
+      value: function distinct2(callback) {
         var set2 = new _Set();
         var _iterator6 = _createForOfIteratorHelper$6(this._pairs), _step6;
         try {
@@ -30369,7 +31202,7 @@ ${nestedRules}`.replace(/&/g, className);
        */
     }, {
       key: "filter",
-      value: function filter3(callback) {
+      value: function filter4(callback) {
         var pairs = this._pairs;
         return new DataStream2(_defineProperty({}, _Symbol$iterator2, /* @__PURE__ */ _regeneratorRuntime.mark(function _callee() {
           var _iterator7, _step7, _step7$value, id2, item;
@@ -30879,20 +31712,20 @@ ${nestedRules}`.replace(/&/g, className);
           options2 = first;
         }
         var returnType = options2 && options2.returnType === "Object" ? "Object" : "Array";
-        var filter3 = options2 && _filterInstanceProperty(options2);
+        var filter4 = options2 && _filterInstanceProperty(options2);
         var items2 = [];
         var item = void 0;
         var itemIds = void 0;
         var itemId = void 0;
         if (id2 != null) {
           item = this._data.get(id2);
-          if (item && filter3 && !filter3(item)) {
+          if (item && filter4 && !filter4(item)) {
             item = void 0;
           }
         } else if (ids != null) {
           for (var i8 = 0, len = ids.length; i8 < len; i8++) {
             item = this._data.get(ids[i8]);
-            if (item != null && (!filter3 || filter3(item))) {
+            if (item != null && (!filter4 || filter4(item))) {
               items2.push(item);
             }
           }
@@ -30902,7 +31735,7 @@ ${nestedRules}`.replace(/&/g, className);
           for (var _i = 0, _len2 = itemIds.length; _i < _len2; _i++) {
             itemId = itemIds[_i];
             item = this._data.get(itemId);
-            if (item != null && (!filter3 || filter3(item))) {
+            if (item != null && (!filter4 || filter4(item))) {
               items2.push(item);
             }
           }
@@ -30942,17 +31775,17 @@ ${nestedRules}`.replace(/&/g, className);
       key: "getIds",
       value: function getIds(options2) {
         var data3 = this._data;
-        var filter3 = options2 && _filterInstanceProperty(options2);
+        var filter4 = options2 && _filterInstanceProperty(options2);
         var order2 = options2 && options2.order;
         var itemIds = _toConsumableArray(_keysInstanceProperty(data3).call(data3));
         var ids = [];
-        if (filter3) {
+        if (filter4) {
           if (order2) {
             var items2 = [];
             for (var i8 = 0, len = itemIds.length; i8 < len; i8++) {
               var id2 = itemIds[i8];
               var item = this._data.get(id2);
-              if (item != null && filter3(item)) {
+              if (item != null && filter4(item)) {
                 items2.push(item);
               }
             }
@@ -30964,7 +31797,7 @@ ${nestedRules}`.replace(/&/g, className);
             for (var _i5 = 0, _len6 = itemIds.length; _i5 < _len6; _i5++) {
               var _id3 = itemIds[_i5];
               var _item2 = this._data.get(_id3);
-              if (_item2 != null && filter3(_item2)) {
+              if (_item2 != null && filter4(_item2)) {
                 ids.push(_item2[this._idProp]);
               }
             }
@@ -31002,7 +31835,7 @@ ${nestedRules}`.replace(/&/g, className);
     }, {
       key: "forEach",
       value: function forEach4(callback, options2) {
-        var filter3 = options2 && _filterInstanceProperty(options2);
+        var filter4 = options2 && _filterInstanceProperty(options2);
         var data3 = this._data;
         var itemIds = _toConsumableArray(_keysInstanceProperty(data3).call(data3));
         if (options2 && options2.order) {
@@ -31016,7 +31849,7 @@ ${nestedRules}`.replace(/&/g, className);
           for (var _i9 = 0, _len10 = itemIds.length; _i9 < _len10; _i9++) {
             var _id6 = itemIds[_i9];
             var _item4 = this._data.get(_id6);
-            if (_item4 != null && (!filter3 || filter3(_item4))) {
+            if (_item4 != null && (!filter4 || filter4(_item4))) {
               callback(_item4, _id6);
             }
           }
@@ -31026,14 +31859,14 @@ ${nestedRules}`.replace(/&/g, className);
     }, {
       key: "map",
       value: function map3(callback, options2) {
-        var filter3 = options2 && _filterInstanceProperty(options2);
+        var filter4 = options2 && _filterInstanceProperty(options2);
         var mappedItems = [];
         var data3 = this._data;
         var itemIds = _toConsumableArray(_keysInstanceProperty(data3).call(data3));
         for (var i8 = 0, len = itemIds.length; i8 < len; i8++) {
           var id2 = itemIds[i8];
           var item = this._data.get(id2);
-          if (item != null && (!filter3 || filter3(item))) {
+          if (item != null && (!filter4 || filter4(item))) {
             mappedItems.push(callback(item, id2));
           }
         }
@@ -31255,7 +32088,7 @@ ${nestedRules}`.replace(/&/g, className);
        */
     }, {
       key: "distinct",
-      value: function distinct(prop2) {
+      value: function distinct2(prop2) {
         var data3 = this._data;
         var itemIds = _toConsumableArray(_keysInstanceProperty(data3).call(data3));
         var values3 = [];
@@ -31519,20 +32352,20 @@ ${nestedRules}`.replace(/&/g, className);
         if (this._data.length) {
           var defaultFilter = _filterInstanceProperty(this._options);
           var optionsFilter = options2 != null ? _filterInstanceProperty(options2) : null;
-          var filter3;
+          var filter4;
           if (optionsFilter) {
             if (defaultFilter) {
-              filter3 = function filter4(item) {
+              filter4 = function filter5(item) {
                 return defaultFilter(item) && optionsFilter(item);
               };
             } else {
-              filter3 = optionsFilter;
+              filter4 = optionsFilter;
             }
           } else {
-            filter3 = defaultFilter;
+            filter4 = defaultFilter;
           }
           return this._data.getIds({
-            filter: filter3,
+            filter: filter4,
             order: options2 && options2.order
           });
         } else {
@@ -31547,20 +32380,20 @@ ${nestedRules}`.replace(/&/g, className);
           var _context28;
           var defaultFilter = _filterInstanceProperty(this._options);
           var optionsFilter = options2 && _filterInstanceProperty(options2);
-          var filter3;
+          var filter4;
           if (optionsFilter) {
             if (defaultFilter) {
-              filter3 = function filter4(item) {
+              filter4 = function filter5(item) {
                 return defaultFilter(item) && optionsFilter(item);
               };
             } else {
-              filter3 = optionsFilter;
+              filter4 = optionsFilter;
             }
           } else {
-            filter3 = defaultFilter;
+            filter4 = defaultFilter;
           }
           _forEachInstanceProperty(_context28 = this._data).call(_context28, callback, {
-            filter: filter3,
+            filter: filter4,
             order: options2 && options2.order
           });
         }
@@ -31573,20 +32406,20 @@ ${nestedRules}`.replace(/&/g, className);
           var _context29;
           var defaultFilter = _filterInstanceProperty(this._options);
           var optionsFilter = options2 && _filterInstanceProperty(options2);
-          var filter3;
+          var filter4;
           if (optionsFilter) {
             if (defaultFilter) {
-              filter3 = function filter4(item) {
+              filter4 = function filter5(item) {
                 return defaultFilter(item) && optionsFilter(item);
               };
             } else {
-              filter3 = optionsFilter;
+              filter4 = optionsFilter;
             }
           } else {
-            filter3 = defaultFilter;
+            filter4 = defaultFilter;
           }
           return _mapInstanceProperty(_context29 = this._data).call(_context29, callback, {
-            filter: filter3,
+            filter: filter4,
             order: options2 && options2.order
           });
         } else {
@@ -43780,7 +44613,7 @@ ${nestedRules}`.replace(/&/g, className);
             if (groupData.nestedGroups) {
               var _context26;
               var nestedGroupIds = _mapInstanceProperty(_context26 = t5.groupsData.get({
-                filter: function filter3(nestedGroup) {
+                filter: function filter4(nestedGroup) {
                   return nestedGroup.nestedInGroup == groupId;
                 },
                 order: t5.options.groupOrder
@@ -46982,17 +47815,17 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       value: function _create() {
         this._clean();
         this.changedOptions = [];
-        var filter3 = _filterInstanceProperty(this.options);
+        var filter4 = _filterInstanceProperty(this.options);
         var counter2 = 0;
         var show2 = false;
         for (var option2 in this.configureOptions) {
           if (this.configureOptions.hasOwnProperty(option2)) {
             this.allowCreation = false;
             show2 = false;
-            if (typeof filter3 === "function") {
-              show2 = filter3(option2, []);
+            if (typeof filter4 === "function") {
+              show2 = filter4(option2, []);
               show2 = show2 || this._handleObject(this.configureOptions[option2], [option2], true);
-            } else if (filter3 === true || _indexOfInstanceProperty(filter3).call(filter3, option2) !== -1) {
+            } else if (filter4 === true || _indexOfInstanceProperty(filter4).call(filter4, option2) !== -1) {
               show2 = true;
             }
             if (show2 !== false) {
@@ -47438,15 +48271,15 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         var path2 = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : [];
         var checkOnly = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : false;
         var show2 = false;
-        var filter3 = _filterInstanceProperty(this.options);
+        var filter4 = _filterInstanceProperty(this.options);
         var visibleInSet = false;
         for (var subObj in obj) {
           if (obj.hasOwnProperty(subObj)) {
             show2 = true;
             var item = obj[subObj];
             var newPath = availableUtils.copyAndExtendArray(path2, subObj);
-            if (typeof filter3 === "function") {
-              show2 = filter3(subObj, path2);
+            if (typeof filter4 === "function") {
+              show2 = filter4(subObj, path2);
               if (show2 === false) {
                 if (!_Array$isArray(item) && typeof item !== "string" && typeof item !== "boolean" && item instanceof Object) {
                   this.allowCreation = false;
@@ -47907,7 +48740,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       key: "setGroups",
       value: function setGroups(groups) {
         var newDataSet;
-        var filter3 = function filter4(group) {
+        var filter4 = function filter5(group) {
           return group.visible !== false;
         };
         if (!groups) {
@@ -47915,7 +48748,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         } else {
           if (_Array$isArray(groups)) groups = new DataSet(groups);
           newDataSet = new DataView(groups, {
-            filter: filter3
+            filter: filter4
           });
         }
         if (this.groupsData != null && typeof this.groupsData.setData === "function") {
@@ -51646,332 +52479,23 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   var defaultLanguage = getNavigatorLanguage();
   moment$4.locale(defaultLanguage);
 
-  // cursor.ts
-  function buildCursor(timeline2, options2) {
-    const cursorBox = document.createElement("div");
-    cursorBox.append(document.createElement("sl-spinner"));
-    cursorBox.addEventListener("dblclick", async function(e9) {
-      cursorBox.classList.add("cursor-loading");
-    });
-    options2.eventAdd.subscribe(() => cursorBox.classList.remove("cursor-loading"));
-    const foreground = document.querySelector(".vis-center .vis-foreground");
-    cursorBox.className = "cursor-selection";
-    foreground.appendChild(cursorBox);
-    foreground.addEventListener("mouseleave", function() {
-      cursorBox.style.display = "none";
-    });
-    foreground.addEventListener("mousemove", function(e9) {
-      const target = e9.target;
-      if (target === cursorBox) {
-        return;
-      }
-      if (cursorBox.contains(target)) {
-        return;
-      }
-      const x3 = e9.clientX - foreground.getBoundingClientRect().left;
-      if (!target.classList.contains("vis-group")) {
-        cursorBox.style.display = "none";
-        return;
-      }
-      cursorBox.style.display = "grid";
-      const anotherDiv = document.querySelector(
-        "div.vis-panel.vis-background.vis-vertical > div.vis-time-axis.vis-background"
-      );
-      const anotherDivPos = anotherDiv.getBoundingClientRect().left;
-      if (!leftPoints.length) {
-        const children = Array.from(anotherDiv.children);
-        const weekFromElement = (el) => {
-          const classList = Array.from(el.classList).filter((f5) => !["vis-even", "vis-odd", "vis-minor", "vis-major"].includes(f5));
-          return classList.join(" ");
-        };
-        const grouped = u5(children).groupBy((e10) => weekFromElement(e10)).toArray();
-        const points = grouped.map((group) => {
-          const left = group.first().getBoundingClientRect().left;
-          const width = group.reduce(
-            (acc, el) => acc + el.getBoundingClientRect().width,
-            0
-          );
-          const adjustedWidth = left - anotherDivPos;
-          return { left: adjustedWidth, width };
-        });
-        leftPoints = points;
-      }
-      const index = leftPoints.findLastIndex((c6) => c6.left < x3);
-      const closest = leftPoints[index];
-      cursorBox.style.left = `${closest.left}px`;
-      cursorBox.style.width = `${closest.width}px`;
-      cursorBox.style.transform = "";
-      try {
-        if (cursorBox.parentElement !== target) {
-          target.prepend(cursorBox);
-        }
-      } catch (ex) {
-      }
-    });
-    let leftPoints = [];
-    timeline2.on("rangechange", ({ byUser, event: event2 }) => {
-      leftPoints = [];
-      if (!byUser) {
-        return;
-      }
-      if (!event2 || !event2.deltaX) {
-        return;
-      }
-      const deltaX = event2.deltaX;
-      cursorBox.style.transform = `translateX(${deltaX}px)`;
-    });
-    timeline2.on("rangechanged", () => {
-      const transform = cursorBox.style.transform;
-      if (!transform) {
-        return;
-      }
-      const match2 = transform.match(/translateX\(([^)]+)\)/);
-      if (!match2) {
-        return;
-      }
-      const x3 = parseFloat(match2[1]);
-      const left = parseFloat(cursorBox.style.left);
-      cursorBox.style.left = `${left + x3}px`;
-      cursorBox.style.transform = "";
-    });
-  }
-
-  // node_modules/ramda/es/internal/_isPlaceholder.js
-  function _isPlaceholder(a4) {
-    return a4 != null && typeof a4 === "object" && a4["@@functional/placeholder"] === true;
-  }
-
-  // node_modules/ramda/es/internal/_curry1.js
-  function _curry1(fn) {
-    return function f1(a4) {
-      if (arguments.length === 0 || _isPlaceholder(a4)) {
-        return f1;
-      } else {
-        return fn.apply(this, arguments);
-      }
-    };
-  }
-
-  // node_modules/ramda/es/internal/_curry2.js
-  function _curry2(fn) {
-    return function f22(a4, b4) {
-      switch (arguments.length) {
-        case 0:
-          return f22;
-        case 1:
-          return _isPlaceholder(a4) ? f22 : _curry1(function(_b) {
-            return fn(a4, _b);
-          });
-        default:
-          return _isPlaceholder(a4) && _isPlaceholder(b4) ? f22 : _isPlaceholder(a4) ? _curry1(function(_a) {
-            return fn(_a, b4);
-          }) : _isPlaceholder(b4) ? _curry1(function(_b) {
-            return fn(a4, _b);
-          }) : fn(a4, b4);
-      }
-    };
-  }
-
-  // node_modules/ramda/es/internal/_arity.js
-  function _arity(n6, fn) {
-    switch (n6) {
-      case 0:
-        return function() {
-          return fn.apply(this, arguments);
-        };
-      case 1:
-        return function(a0) {
-          return fn.apply(this, arguments);
-        };
-      case 2:
-        return function(a0, a1) {
-          return fn.apply(this, arguments);
-        };
-      case 3:
-        return function(a0, a1, a22) {
-          return fn.apply(this, arguments);
-        };
-      case 4:
-        return function(a0, a1, a22, a32) {
-          return fn.apply(this, arguments);
-        };
-      case 5:
-        return function(a0, a1, a22, a32, a4) {
-          return fn.apply(this, arguments);
-        };
-      case 6:
-        return function(a0, a1, a22, a32, a4, a5) {
-          return fn.apply(this, arguments);
-        };
-      case 7:
-        return function(a0, a1, a22, a32, a4, a5, a6) {
-          return fn.apply(this, arguments);
-        };
-      case 8:
-        return function(a0, a1, a22, a32, a4, a5, a6, a7) {
-          return fn.apply(this, arguments);
-        };
-      case 9:
-        return function(a0, a1, a22, a32, a4, a5, a6, a7, a8) {
-          return fn.apply(this, arguments);
-        };
-      case 10:
-        return function(a0, a1, a22, a32, a4, a5, a6, a7, a8, a9) {
-          return fn.apply(this, arguments);
-        };
-      default:
-        throw new Error("First argument to _arity must be a non-negative integer no greater than ten");
-    }
-  }
-
-  // node_modules/ramda/es/internal/_has.js
-  function _has(prop2, obj) {
-    return Object.prototype.hasOwnProperty.call(obj, prop2);
-  }
-
-  // node_modules/ramda/es/memoizeWith.js
-  var memoizeWith = /* @__PURE__ */ _curry2(function memoizeWith2(keyGen, fn) {
-    var cache = {};
-    return _arity(fn.length, function() {
-      var key2 = keyGen.apply(this, arguments);
-      if (!_has(key2, cache)) {
-        cache[key2] = fn.apply(this, arguments);
-      }
-      return cache[key2];
-    });
-  });
-  var memoizeWith_default = memoizeWith;
-
-  // header.ts
-  function monitorHeader() {
-    const panel = document.querySelector(".vis-panel.vis-left");
-    const header = document.getElementById("groupHeader");
-    const observer = new ResizeObserver((...args) => {
-      const { left } = panel.querySelector(".vis-labelset").getBoundingClientRect();
-      header.style.setProperty("--left-width", `${left}px`);
-      const width = args[0][0].borderBoxSize[0].inlineSize;
-      header.style.width = `${width}px`;
-    });
-    observer.observe(panel);
-  }
-  function rewriteHeader({ mappings: mappings2, timeline: timeline2, cmdAddBlank: cmdAddBlank2 }) {
-    const headerTop = document.querySelector("#groupHeader .top");
-    const headerRight = document.querySelector("#groupHeader .bottom .right");
-    const columnsDiv = dom2("div");
-    columnsDiv.classList.add("group-header-columns");
-    const parts = mappings2.get().Columns.map((col) => {
-      const div = document.createElement("div");
-      div.innerText = col;
-      div.classList.add("group-part");
-      div.style.padding = "5px";
-      return div;
-    });
-    columnsDiv.style.setProperty("grid-template-columns", "auto");
-    const moreDiv = document.createElement("div");
-    moreDiv.style.width = "20px";
-    parts.push(moreDiv);
-    const collapsed = observable2(false);
-    const iconName = computed((use) => {
-      return use(collapsed) ? "chevron-bar-right" : "chevron-bar-left";
-    });
-    const resizer = headerTop.querySelector(".resizer");
-    const icon = headerTop.querySelector("sl-icon");
-    const button = headerTop.querySelector("sl-button");
-    const buttonLoading = observable2(false);
-    dom2.update(
-      resizer,
-      dom2.on("click", () => collapsed.set(!collapsed.get()))
-    );
-    dom2.update(
-      icon,
-      // Icon to hide or show drawer.
-      dom2.prop("name", iconName)
-    );
-    dom2.update(
-      button,
-      dom2.prop("loading", buttonLoading),
-      dom2.on("click", async () => {
-        try {
-          buttonLoading.set(true);
-          await cmdAddBlank2.invoke(null);
-        } finally {
-          buttonLoading.set(false);
-        }
-      })
-    );
-    columnsDiv.append(...parts);
-    collapsed.addListener(() => {
-      timeline2.redraw();
-    });
-    headerRight.innerHTML = "";
-    headerRight.append(columnsDiv);
-    const visualization = document.getElementById("visualization");
-    dom2.update(
-      visualization,
-      dom2.cls("collapsed", collapsed)
-    );
-    const widths = parts.map(
-      (part) => Math.ceil(part.getBoundingClientRect().width)
-    );
-    const templateColumns = widths.map((w3) => `minmax(${w3}px, max-content)`).join(" ");
-    visualization.style.setProperty("--grid-template-columns", templateColumns);
-    anchorHeader();
-    const firstLine = document.querySelector(".group-template");
-    if (!firstLine) {
-      console.error("No first line found");
-      return;
-    }
-    const sizesFromFirstLine = Array.from(firstLine.children).map(
-      (el) => el.getBoundingClientRect().width
-    );
-    const templateColumns2 = sizesFromFirstLine.map((w3) => `${w3}px`).join(" ");
-    columnsDiv.style.setProperty("grid-template-columns", templateColumns2);
-    const firstPartWidth = Math.ceil(parts[0].getBoundingClientRect().width);
-    const width = Math.ceil(columnsDiv.getBoundingClientRect().width);
-    visualization.style.setProperty("--group-header-width", `${width - 1}px`);
-    visualization.style.setProperty("--group-first-width", `${firstPartWidth - 1}px`);
-  }
-  function anchorHeader() {
-    const store2 = anchorHeader;
-    store2.lastTop = store2.lastTop ?? 0;
-    const panel = document.querySelector(".vis-panel.vis-left");
-    const header = document.getElementById("groupHeader");
-    const content = panel.querySelector(".vis-labelset");
-    const top = panel.getBoundingClientRect().top;
-    if (top === store2.lastTop) {
-      return;
-    }
-    store2.lastTop = top;
-    const headerHeight = header.getBoundingClientRect().height;
-    const newTop = top - headerHeight + 1;
-    header.style.setProperty("top", `${newTop}px`);
-    const left = content.getBoundingClientRect().left;
-    header.style.setProperty("left", `${left}px`);
-  }
-
   // index.ts
   var container = document.getElementById("visualization");
   var itemSet = new DataSet([]);
   var groupSet = new DataSet([]);
-  var records = observable2([]);
+  var records = observable([]);
   var order = /* @__PURE__ */ new Map();
-  var editCard = observable2(false);
-  var confirmChanges = observable2(false);
-  var currentScale = observable2("day");
-  var items = observable2([]);
-  var groupSelected = observable2(null);
-  var focusOnSelect = observable2(false);
-  var mappings = observable2({});
+  var editCard = observable(false);
+  var confirmChanges = observable(false);
+  var currentScale = observable("day");
+  var items = observable([]);
+  var groupSelected = observable(null);
+  var focusOnSelect = observable(false);
+  var mappings = observable({});
   var eventAdd = new Subject();
   var eventGroupInfo = new Subject();
   var eventItemInfo = new Subject();
   var cmdAddBlank = new Command();
-  Object.assign(window, {
-    currentScale,
-    confirmChanges,
-    editCard,
-    focusOnSelect
-  });
   var byStart = /* @__PURE__ */ new Map();
   var byEnd = /* @__PURE__ */ new Map();
   var key = memoizeWith_default((...args) => args.join(), (date2, days = 0) => {
@@ -52219,41 +52743,43 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     ...options,
     groupHeightMode: "fixed"
   });
-  var lastMappings = "";
-  grist.onRecords((recs, maps) => {
+  Object.assign(window, {
+    currentScale,
+    confirmChanges,
+    editCard,
+    focusOnSelect,
+    timeline
+  });
+  var newMappings = hasChanged();
+  var schema;
+  grist.onRecords(async (recs, maps) => {
+    setTimeout(() => {
+      document.body.classList.add("slow");
+    }, 80);
+    const areMappingsNew = newMappings(maps);
+    if (areMappingsNew || !schema) {
+      schema = await fetchSchema();
+    }
     mappings.set(maps);
     records.set(grist.mapColumnNames(recs));
     order.clear();
     recs.forEach((r7, i8) => order.set(r7.id, i8));
     renderAllItems();
-    const newMappings = JSON.stringify(mappings.get());
-    if (newMappings === lastMappings) {
-      document.body.style.visibility = "visible";
-      return;
+    if (areMappingsNew) {
+      rewriteHeader({ mappings, timeline, cmdAddBlank });
     }
-    lastMappings = newMappings;
-    rewriteHeader({ mappings, timeline, cmdAddBlank });
-    document.body.style.visibility = "visible";
+    document.body.classList.remove("loading");
   });
-  var firstOnRecord = true;
-  var lastId = 0;
-  grist.onRecord((rec) => {
-    if (rec.id === lastId) {
-      return;
-    }
-    lastId = rec.id;
-    if (firstOnRecord) {
-      firstOnRecord = false;
-      return;
-    }
-    if (!rec || !rec.id) {
-      return;
-    }
-    const selected = timeline.getSelection();
-    if (selected[0] === rec.id) {
-      return;
-    }
-    timeline.setSelection(Number(rec.id), {
+  var onRecord = new Subject();
+  grist.onRecord(({ id: id2 }) => onRecord.next(id2));
+  onRecord.pipe(
+    distinct(),
+    // ignore duplicates
+    skip(1),
+    // ignore initial one
+    filter((id2) => timeline.getSelection()[0] !== id2)
+  ).subscribe((id2) => {
+    timeline.setSelection(Number(id2), {
       focus: focusOnSelect.get(),
       animation: {
         animation: false
@@ -52369,7 +52895,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const existing = itemSet.getIds();
     const removed = existing.filter((x3) => !newIds.has(x3));
     itemSet.remove(removed);
-    const newItems = u5(recs).filter((r7) => getFrom(r7) && getTo(r7)).map((r7) => {
+    const newItems = u(recs).filter((r7) => getFrom(r7) && getTo(r7)).map((r7) => {
       const result = recToItem(r7);
       return result;
     });
@@ -52439,9 +52965,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       return;
     }
     const formatedValue = stringToValue(value);
-    const schema = elementId.split(":")[0];
+    const schema2 = elementId.split(":")[0];
     const [parent2, child] = elementId.split(":")[1].split(".");
-    if (child && schema === "timeline") {
+    if (child && schema2 === "timeline") {
       if (child === "scale") {
         currentScale.set(formatedValue);
         timeline.setOptions({
@@ -52456,7 +52982,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
           }
         });
       }
-    } else if (schema === "timeline") {
+    } else if (schema2 === "timeline") {
       timeline.setOptions({
         [parent2]: formatedValue
       });
@@ -52467,14 +52993,14 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         timeline.setGroups(groupSet);
         timeline.redraw();
       }
-    } else if (schema === "local") {
+    } else if (schema2 === "local") {
       if (!(parent2 in window)) {
         console.error(`Local variable ${parent2} not found in window`);
         return;
       }
       window[parent2].set(formatedValue);
     } else {
-      console.error(`Unknown schema ${schema}`);
+      console.error(`Unknown schema ${schema2}`);
     }
   }
   timeline.setGroups(groupSet);
@@ -52504,10 +53030,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         scale: "day"
       }
     });
-    const button = document.getElementById("focusButton");
-    button.addEventListener("click", function() {
+    document.getElementById("allButton").addEventListener("click", function() {
       timeline.fit();
     });
+    document.getElementById("fitButton").addEventListener("click", () => autoFit(true));
     monitorHeader();
     const itemMenu = new import_vanilla_context_menu.default({
       scope: fore,
@@ -52573,26 +53099,11 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   function openCard() {
     return grist.commandApi.run("viewAsCard");
   }
-  var getAllColumns = buildColumns();
-  function buildColumns() {
-    let cache = [];
-    let lastMappings2 = JSON.stringify(mappings.get());
-    return async () => {
-      const newMappings = JSON.stringify(mappings.get());
-      if (newMappings === lastMappings2) {
-        return cache;
-      }
-      lastMappings2 = newMappings;
-      const columns = await fetchColumnsFromGrist();
-      cache = columns;
-      return columns;
-    };
-  }
   async function liftFields(fields) {
-    const allColumns = await getAllColumns();
-    const myTable = await selectedTable();
-    const myColumns = allColumns.filter((c6) => c6.parentId === myTable.id);
+    const allColumns = schema.allColumns;
+    const myColumns = schema.columns;
     let clone2 = null;
+    const fetchTable = memo(async (tableId) => await grist.docApi.fetchTable(tableId));
     for (const colId in fields) {
       const col = myColumns.find((c6) => c6.colId === colId);
       if (!col) {
@@ -52609,7 +53120,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         const visibleColRowId = col.visibleCol;
         const visibleColModel = allColumns.find((c6) => c6.id === visibleColRowId);
         const visibleColId = visibleColModel?.colId;
-        const table = await grist.docApi.fetchTable(tableId);
+        const table = await fetchTable(tableId);
         const visibleColValues = table[visibleColId];
         const rowIndex = visibleColValues.indexOf(fields[colId]);
         const rowId = table.id[rowIndex];
@@ -52630,11 +53141,13 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   window.onunhandledrejection = function(event2) {
     console.error(event2);
     showAlert("danger", event2.reason);
+    document.body.classList.remove("loading");
   };
   window.onerror = function(event2) {
     console.error(event2);
     const message = event2.message ?? event2;
     showAlert("danger", message);
+    document.body.classList.remove("loading");
   };
   eventGroupInfo.subscribe(openGroupDrawer);
   function openGroupDrawer(groupId) {
@@ -52722,6 +53235,19 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     await withElementSpinner(element, async () => {
       const fields = await liftFields(row);
       await grist.selectedTable.create({ fields });
+    });
+  }
+  function autoFit(animation = false) {
+    const window2 = timeline.getWindow();
+    const end = window2.end;
+    const currentWidth = document.querySelector(".vis-panel.vis-center").getBoundingClientRect().width;
+    const daysToFit = Math.floor(currentWidth / 24);
+    const newStart = (0, import_moment_timezone2.default)(end).subtract(daysToFit, "days").toDate();
+    timeline.setWindow(newStart, end, {
+      animation: {
+        duration: animation ? 500 : 0,
+        easingFunction: "easeInOutQuad"
+      }
     });
   }
 })();

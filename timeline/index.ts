@@ -1,14 +1,27 @@
+import {buildCursor} from './cursor';
+import {monitorHeader, rewriteHeader} from './header';
+import {
+  Command,
+  fetchSchema,
+  hasChanged,
+  Item,
+  memo,
+  onClick,
+  Schema,
+  showAlert,
+  stringToValue,
+  valueToString,
+  withElementSpinner,
+  withIdSpinner
+} from './lib';
 import './vendor';
-import {Column, Command, fetchColumnsFromGrist, stringToValue, Item, onClick, selectedTable, showAlert, withElementSpinner, withIdSpinner, valueToString} from './lib';
 import {from} from 'fromit';
 import {observable} from 'grainjs';
 import moment from 'moment-timezone';
+import {memoizeWith} from 'ramda';
+import {distinct, filter, skip, Subject, take} from 'rxjs';
 import VanillaContextMenu from 'vanilla-context-menu';
 import {DataSet, Timeline, TimelineOptions} from 'vis-timeline/standalone';
-import {buildCursor} from './cursor';
-import {Subject} from 'rxjs';
-import {memoizeWith} from 'ramda';
-import {monitorHeader, rewriteHeader} from './header';
 
 declare global {
   var grist: any;
@@ -35,29 +48,21 @@ const eventItemInfo = new Subject<number>();
 
 const cmdAddBlank = new Command<any>();
 
-// Exposed for configuration.
-Object.assign((window as any), {
-  currentScale,
-  confirmChanges,
-  editCard,
-  focusOnSelect
-});
 
 
 // Two indexes to quickly find group name by id and vice versa.
 const byStart = new Map<string, Item[]>();
 const byEnd = new Map<string, Item[]>();
-
 const key = memoizeWith((...args: any[]) => args.join(), (date: string, days: number = 0) => {
   return moment(date).add({days}).format('YYYY-MM-DD');
 })
-
 function startKey(item: Item, days: number = 0) {
   return `${item.group}-${key(item.start, days)}`;
 }
 function endKey(item: Item, days: number = 0): string {
   return `${item.group}-${key(item.end, days)}`;
 }
+
 items.addListener(list => {
   byStart.clear();
   byEnd.clear();
@@ -105,7 +110,7 @@ grist.ready({
       allowMultiple: true,
       optional: true,
     },
-    
+
     {
       name: 'ItemInfo',
       title: "Item Info",
@@ -337,45 +342,57 @@ timeline.setOptions({
   groupHeightMode: 'fixed',
 });
 
-let lastMappings = '';
-grist.onRecords((recs, maps) => {
+
+// Exposed for configuration.
+Object.assign((window as any), {
+  currentScale,
+  confirmChanges,
+  editCard,
+  focusOnSelect,
+  timeline
+});
+
+
+const newMappings = hasChanged();
+
+let schema: Schema;
+
+// This is async iterator
+grist.onRecords(async (recs: any[], maps: any) => {
+  // First compare mappings with those before, if they are different, we need to fetch
+  // columns again.
+
+  setTimeout(() => {
+    document.body.classList.add('slow');
+  }, 80);
+
+  const areMappingsNew = newMappings(maps);
+  if (areMappingsNew || !schema) {
+    schema = await fetchSchema();
+  }
+
   mappings.set(maps);
   records.set(grist.mapColumnNames(recs));
   order.clear();
   recs.forEach((r, i) => order.set(r.id, i));
   renderAllItems();
-  const newMappings = JSON.stringify(mappings.get());
-  if (newMappings === lastMappings) {
-    document.body.style.visibility = 'visible';
-    return;
-  }
-  lastMappings = newMappings;
-  rewriteHeader({mappings, timeline, cmdAddBlank});
-  document.body.style.visibility = 'visible';
 
+  if (areMappingsNew) {
+    rewriteHeader({mappings, timeline, cmdAddBlank});
+  }
+
+  document.body.classList.remove('loading');
 });
 
-// We will ignore first onRecord event.
-let firstOnRecord = true;
-let lastId = 0;
-grist.onRecord(rec => {
-  if (rec.id === lastId) {
-    return;
-  }
-  lastId = rec.id;
-  if (firstOnRecord) {
-    firstOnRecord = false;
-    return;
-  }
-  if (!rec || !rec.id) {
-    return;
-  }
-  // Get selected row.
-  const selected = timeline.getSelection();
-  if (selected[0] === rec.id) {
-    return;
-  }
-  timeline.setSelection(Number(rec.id), {
+
+const onRecord = new Subject<number>();
+grist.onRecord(({id}) => onRecord.next(id));
+onRecord.pipe(
+  distinct(), // ignore duplicates
+  skip(1), // ignore initial one
+  filter(id => timeline.getSelection()[0] !== id)
+).subscribe(id => {
+  timeline.setSelection(Number(id), {
     focus: focusOnSelect.get(),
     animation: {
       animation: false,
@@ -693,10 +710,11 @@ document.addEventListener('DOMContentLoaded', function() {
     },
   });
 
-  const button = document.getElementById('focusButton')!;
-  button.addEventListener('click', function() {
+  document.getElementById('allButton')!.addEventListener('click', function() {
     timeline.fit();
   });
+
+  document.getElementById('fitButton')!.addEventListener('click', () => autoFit(true));
 
 
   monitorHeader();
@@ -786,31 +804,16 @@ function openCard() {
   return grist.commandApi.run('viewAsCard');
 }
 
-const getAllColumns: () => Promise<Column[]> = buildColumns();
-
-function buildColumns() {
-  let cache = [] as any[];
-  let lastMappings = JSON.stringify(mappings.get());
-  return async () => {
-    const newMappings = JSON.stringify(mappings.get());
-    if (newMappings === lastMappings) {
-      return cache;
-    }
-    lastMappings = newMappings;
-    const columns = await fetchColumnsFromGrist();
-    cache = columns;
-    return columns;
-  };
-}
 
 /**
  * When creating a row in Grist we need to change values for Ref columns to row ids.
  */
 async function liftFields(fields: Record<string, any>) {
-  const allColumns = await getAllColumns();
-  const myTable = await selectedTable();
-  const myColumns = allColumns.filter(c => c.parentId === myTable.id);
+  const allColumns = schema.allColumns;
+  const myColumns = schema.columns;
   let clone = null as any;
+
+  const fetchTable = memo(async (tableId: string) => await grist.docApi.fetchTable(tableId));
 
   for (const colId in fields) {
     const col = myColumns.find(c => c.colId === colId);
@@ -829,7 +832,7 @@ async function liftFields(fields: Record<string, any>) {
       const visibleColRowId = col.visibleCol;
       const visibleColModel = allColumns.find(c => c.id === visibleColRowId);
       const visibleColId = visibleColModel?.colId;
-      const table = await grist.docApi.fetchTable(tableId);
+      const table = await fetchTable(tableId);
       const visibleColValues = table[visibleColId];
       const rowIndex = visibleColValues.indexOf(fields[colId]);
       const rowId = table.id[rowIndex];
@@ -840,6 +843,9 @@ async function liftFields(fields: Record<string, any>) {
 
   return clone ?? fields;
 }
+
+
+
 
 timeline.on('doubleClick', async function(props) {
   const {item, event} = props;
@@ -853,12 +859,14 @@ timeline.on('doubleClick', async function(props) {
 window.onunhandledrejection = function(event) {
   console.error(event);
   showAlert('danger', event.reason);
+  document.body.classList.remove('loading');
 };
 
 window.onerror = function(event) {
   console.error(event);
   const message = (event as any).message ?? event;
   showAlert('danger', message);
+  document.body.classList.remove('loading');
 };
 
 eventGroupInfo.subscribe(openGroupDrawer);
@@ -875,8 +883,8 @@ function openGroupDrawer(groupId: number) {
   const groupInfo = mappings.get().GroupInfo;
   const colInfo = mappings.get().Columns;
 
-  const labels =  [...colInfo, ...groupInfo];
-  const values =  [...item.data.GroupInfo, ...item.data.Columns];
+  const labels = [...colInfo, ...groupInfo];
+  const values = [...item.data.GroupInfo, ...item.data.Columns];
   const obj = zip(labels, values);
 
   for (const [label, value] of obj) {
@@ -965,3 +973,19 @@ async function duplicateSelected(ev: MouseEvent) {
   });
 }
 
+
+function autoFit(animation = false) {
+  const window = timeline.getWindow();
+  const end = window.end;
+  // To work comfortably with the timeline, each day should be roughly 24px wide.
+  const currentWidth = document.querySelector('.vis-panel.vis-center')!.getBoundingClientRect().width;
+  // Calculate how many days should be in the window.
+  const daysToFit = Math.floor(currentWidth / 24);
+  const newStart = moment(end).subtract(daysToFit, 'days').toDate();
+  timeline.setWindow(newStart, end, {
+    animation: {
+      duration: animation ? 500 : 0,
+      easingFunction: 'easeInOutQuad',
+    }
+  });
+}

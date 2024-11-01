@@ -1,7 +1,7 @@
 import {computed, dom, Observable, observable} from 'grainjs';
 import {Timeline} from 'vis-timeline';
 import type * as Rx from 'rxjs';
-import {Command, withElementSpinner} from './lib';
+import {buildColLabel, Command, withElementSpinner} from './lib';
 
 export function monitorHeader() {
   // Monitor left panel and adjust header left position.
@@ -30,11 +30,12 @@ export function rewriteHeader({mappings, timeline, cmdAddBlank}: {
   columnsDiv.classList.add('group-header-columns');
 
   const parts = mappings.get().Columns.map((col: string) => {
-    const div = document.createElement('div');
-    div.innerText = col;
-    div.classList.add('group-part');
-    div.style.padding = '5px';
-    return div;
+
+    return dom('div',
+      dom.text(buildColLabel(col)),
+      dom.cls('group-part'),
+      dom.style('padding', '5px')
+    );
   });
   columnsDiv.style.setProperty('grid-template-columns', 'auto');
 

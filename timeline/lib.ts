@@ -1,3 +1,4 @@
+import {computed, observable} from 'grainjs';
 import {Subject, Subscribable} from 'rxjs';
 
 export interface BulkColumns {
@@ -9,24 +10,53 @@ export interface BulkColumns {
   isFormula: boolean[];
   formula: string[];
   visibleCol: string[];
+  label: string[];
 }
 
 export interface Column extends Record<keyof BulkColumns, any> {};
+
+export interface BulkTables {
+  id: number[];
+  tableId: string[];
+}
+
+export interface Table extends Record<keyof BulkTables, any> {};
 
 export async function fetchColumnsFromGrist() {
   const columns: Column[] = toRecords(await grist.docApi.fetchTable('_grist_Tables_column'));
   return columns;
 }
 
-let tablesCache = [] as any[];
-
-export async function fetchTables() {
-  if (!tablesCache.length) {
-    tablesCache = toRecords(await grist.docApi.fetchTable('_grist_Tables'));
-  }
-  return tablesCache;
+export async function fetchTables(): Promise<Table[]> {
+  return toRecords(await grist.docApi.fetchTable('_grist_Tables'));
 }
 
+export interface Schema {
+  allColumns: Column[];
+  tables: Table[];
+  tableId: string;
+  table: Table;
+  columns: Column[];
+}
+
+export async function fetchSchema(): Promise<Schema> {
+  const [allColumns, tables, tableId] = await Promise.all([
+    fetchColumnsFromGrist(),
+    fetchTables(),
+    selectedTable()
+  ]);
+
+  const table = tables.find(t => t.tableId === tableId)!;
+  const columns = allColumns.filter(c => c.parentId === table.id);
+
+  return {
+    allColumns,
+    tables,
+    tableId,
+    table,
+    columns
+  }
+}
 
 function toRecords(bulk: Record<string, any[]>) {
   const fields = Object.keys(bulk);
@@ -39,10 +69,8 @@ function toRecords(bulk: Record<string, any[]>) {
   return records;
 }
 
-export async function selectedTable() {
-  const tables = await fetchTables();
-  const tableId = await grist.selectedTable.getTableId();
-  return tables.find(t => t.tableId === tableId);
+export async function selectedTable(): Promise<string> {
+  return await grist.selectedTable.getTableId()
 }
 
 export function showAlert(variant: string, message: string) {
@@ -132,7 +160,7 @@ export function valueToString(value: any) {
   if (typeof value === 'boolean') {
     return value ? 'true' : 'false';
   }
-  
+
   // Floats to 2 decimal places.
   if (typeof value === 'number') {
     return value.toFixed(2);
@@ -144,4 +172,51 @@ export function valueToString(value: any) {
   }
 
   return String(value);
+}
+
+
+// Machinery to create observable for column labels.
+export const MY_COLUMNS = observable([] as Column[]);
+let __columnLabelCache = new Map<string, any>();
+export function buildColLabel(colId: string) {
+  if (__columnLabelCache.has(colId)) {
+    return __columnLabelCache.get(colId);
+  }
+  const obs = computed(use => use(MY_COLUMNS).find(c => c.colId === colId)?.label || colId);
+  __columnLabelCache.set(colId, obs);
+  return obs;
+}
+
+/**
+ * Function that memoizes the result of a function based on arguments.
+ */
+export function memo<F extends (...args: any) => any>(fn: F, salt?: () => any): F {
+  let prevKey: any = Symbol();
+  let value: any = null;
+  return function(...args: any[]) {
+    const key = salt ? JSON.stringify([args, salt()]) : JSON.stringify(args);
+    const newKey = JSON.stringify(key);
+    if (newKey !== prevKey) {
+      prevKey = newKey;
+      value = fn(...args);
+    }
+    return value;
+  } as F;
+}
+
+export function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function hasChanged() {
+  let lastValue: any = null;
+  return function(value: any) {
+    const newValue = JSON.stringify(value);
+    if (newValue === lastValue) {
+      return false;
+    } else {
+      lastValue = newValue;
+      return true;
+    }
+  };
 }
