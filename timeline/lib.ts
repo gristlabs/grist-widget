@@ -138,6 +138,28 @@ export class Command<T = any> implements Subscribable<T> {
   }
 }
 
+type Infer<T> = T extends Some<infer U> ? U : T;
+
+/**
+ * Identity Monad.
+ */
+export class Some<T> {
+  constructor(private _value: T) {}
+  public map<U>(fn: (value: T) => U): Some<Infer<U>> {
+    const result = fn(this._value);
+    if (result instanceof Some) {
+      return result;
+    }
+    return new Some(result) as any;
+  }
+  public valueOf() {
+    return this._value;
+  }
+  public static of<T>(value: T) {
+    return new Some(value);
+  }
+}
+
 export function stringToValue(value: any) {
   if (['true', 'false'].includes(value)) {
     return value === 'true';

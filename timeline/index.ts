@@ -134,6 +134,10 @@ const options: TimelineOptions = {
     return a.id - b.id;
   },
 
+  /**
+   * Item template is used to render each item in the timeline. Notice, this is run many times,
+   * even when scrolling or moving.
+   */
   template: function(item, element, data) {
     const parts = data.content.split('|');
     const text = parts[1] ? `${parts[0]} (${parts[1] || 'no subject'})` : parts[0];
@@ -211,7 +215,7 @@ const options: TimelineOptions = {
     });
   },
   async onAdd(item, callback) {
-    let id;
+    let id: number = 0;
     try {
       const group = idToName.get(item.group).split('|').map(stringToValue);
       const start = moment(item.start).format('YYYY-MM-DD');
@@ -237,7 +241,9 @@ const options: TimelineOptions = {
       openCard();
 
     } finally {
-      eventAdd.next(id);
+      if (id) {
+        eventAdd.next(id);
+      }
     }
   },
 
@@ -252,11 +258,11 @@ const options: TimelineOptions = {
       return container;
     }
 
-    const partsHtml: HTMLDivElement[] = group.columns.map(col => {
+    const columnsDivs: HTMLDivElement[] = group.columns.map(col => {
       const div = document.createElement('div');
       const value = stringToValue(col);
       if (typeof value === 'string' || value === null) {
-        div.innerText = String(value ?? '') || '-';
+        div.innerText = valueToString(value);
       } else if (typeof value === 'number') {
         div.innerText = formatCurrency.format(value);
       } else if (typeof value === 'boolean') {
@@ -269,7 +275,7 @@ const options: TimelineOptions = {
     });
 
     // Add 3 dots menu.
-    partsHtml.push((() => {
+    columnsDivs.push((() => {
       const div = document.createElement('div');
       div.innerHTML = '<sl-icon name="three-dots"></sl-icon>';
       div.className = 'center cursor';
@@ -280,7 +286,7 @@ const options: TimelineOptions = {
       return div;
     })());
 
-    container.append(...partsHtml);
+    container.append(...columnsDivs);
 
     container.addEventListener('click', function() {
       // Find first item in that group.

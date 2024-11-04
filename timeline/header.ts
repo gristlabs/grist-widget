@@ -29,8 +29,7 @@ export function rewriteHeader({mappings, timeline, cmdAddBlank}: {
   const columnsDiv = dom('div');
   columnsDiv.classList.add('group-header-columns');
 
-  const parts = mappings.get().Columns.map((col: string) => {
-
+  const columnElements = mappings.get().Columns.map((col: string) => {
     return dom('div',
       dom.text(buildColLabel(col)),
       dom.cls('group-part'),
@@ -42,7 +41,7 @@ export function rewriteHeader({mappings, timeline, cmdAddBlank}: {
   const moreDiv = document.createElement('div');
   moreDiv.style.width = '20px';
 
-  parts.push(moreDiv);
+  columnElements.push(moreDiv);
   const collapsed = observable(false);
 
   const iconName = computed(use => {
@@ -71,12 +70,11 @@ export function rewriteHeader({mappings, timeline, cmdAddBlank}: {
       }
     })
   );
-  columnsDiv.append(...parts);
+  columnsDiv.append(...columnElements);
 
   collapsed.addListener(() => {
     timeline.redraw();
   });
-
 
   // Now we need to update its width, we can't break lines and anything like that.
   headerRight.innerHTML = '';
@@ -91,8 +89,7 @@ export function rewriteHeader({mappings, timeline, cmdAddBlank}: {
   // Now measure each individual line, and provide grid-template-columns variable with minimum
   // width to make up for a column and header width.
   // grid-template-columns: var(--grid-template-columns,  repeat(12, max-content));
-  const widths = parts.map(part => Math.ceil(part.getBoundingClientRect().width)
-  );
+  const widths = columnElements.map(part => part.getBoundingClientRect().width);
   const templateColumns = widths
     .map(w => `minmax(${w}px, max-content)`)
     .join(' ');
@@ -105,18 +102,21 @@ export function rewriteHeader({mappings, timeline, cmdAddBlank}: {
     console.error('No first line found');
     return;
   }
-  const sizesFromFirstLine = Array.from(firstLine.children).map(
-    (el: Element) => el.getBoundingClientRect().width
-  );
-  const templateColumns2 = sizesFromFirstLine.map(w => `${w}px`).join(' ');
+
+
+  const templateColumns2 = Array.from(firstLine.children)
+    .map(elementWidth)
+    .map(pixels)
+    .join(' ');
+
   columnsDiv.style.setProperty('grid-template-columns', templateColumns2);
 
-  const firstPartWidth = Math.ceil(parts[0].getBoundingClientRect().width);
+  const firstPartWidth = Array.from(firstLine.children)[0].getBoundingClientRect().width;
 
   const width = Math.ceil(columnsDiv.getBoundingClientRect().width);
   // Set custom property --group-header-width to the width of the groupHeader
-  visualization.style.setProperty('--group-header-width', `${width - 1}px`);
-  visualization.style.setProperty('--group-first-width', `${firstPartWidth - 1}px`);
+  visualization.style.setProperty('--group-header-width', `${width}px`);
+  visualization.style.setProperty('--group-first-width', `${firstPartWidth}px`);
 }
 
 export function anchorHeader() {
@@ -125,17 +125,21 @@ export function anchorHeader() {
   const panel = document.querySelector('.vis-panel.vis-left')!;
   const header = document.getElementById('groupHeader')!;
   const content = panel.querySelector('.vis-labelset')!;
-  const top = panel.getBoundingClientRect().top;
+  const top = Math.ceil(panel.getBoundingClientRect().top);
   if (top === store.lastTop) {
     return;
   }
   store.lastTop = top;
-  const headerHeight = header.getBoundingClientRect().height;
+  const headerHeight = Math.ceil(header.getBoundingClientRect().height);
   const newTop = top - headerHeight + 1;
   header.style.setProperty('top', `${newTop}px`);
 
   // Also adjust the left property of the group-header, as it may have a scrool element.
-  const left = content.getBoundingClientRect().left;
+  const left = Math.ceil(content.getBoundingClientRect().left);
   header.style.setProperty('left', `${left}px`);
 }
 
+
+
+const elementWidth = (el: Element) => el.getBoundingClientRect().width;
+const pixels = (w: number) => `${w}px`;

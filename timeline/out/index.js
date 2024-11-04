@@ -9980,7 +9980,7 @@ ${nestedRules}`.replace(/&/g, className);
     const headerRight = document.querySelector("#groupHeader .bottom .right");
     const columnsDiv = dom2("div");
     columnsDiv.classList.add("group-header-columns");
-    const parts = mappings2.get().Columns.map((col) => {
+    const columnElements = mappings2.get().Columns.map((col) => {
       return dom2(
         "div",
         dom2.text(buildColLabel(col)),
@@ -9991,7 +9991,7 @@ ${nestedRules}`.replace(/&/g, className);
     columnsDiv.style.setProperty("grid-template-columns", "auto");
     const moreDiv = document.createElement("div");
     moreDiv.style.width = "20px";
-    parts.push(moreDiv);
+    columnElements.push(moreDiv);
     const collapsed = observable(false);
     const iconName = computed((use) => {
       return use(collapsed) ? "chevron-bar-right" : "chevron-bar-left";
@@ -10021,7 +10021,7 @@ ${nestedRules}`.replace(/&/g, className);
         }
       })
     );
-    columnsDiv.append(...parts);
+    columnsDiv.append(...columnElements);
     collapsed.addListener(() => {
       timeline2.redraw();
     });
@@ -10032,9 +10032,7 @@ ${nestedRules}`.replace(/&/g, className);
       visualization,
       dom2.cls("collapsed", collapsed)
     );
-    const widths = parts.map(
-      (part) => Math.ceil(part.getBoundingClientRect().width)
-    );
+    const widths = columnElements.map((part) => part.getBoundingClientRect().width);
     const templateColumns = widths.map((w3) => `minmax(${w3}px, max-content)`).join(" ");
     visualization.style.setProperty("--grid-template-columns", templateColumns);
     anchorHeader();
@@ -10043,15 +10041,12 @@ ${nestedRules}`.replace(/&/g, className);
       console.error("No first line found");
       return;
     }
-    const sizesFromFirstLine = Array.from(firstLine.children).map(
-      (el) => el.getBoundingClientRect().width
-    );
-    const templateColumns2 = sizesFromFirstLine.map((w3) => `${w3}px`).join(" ");
+    const templateColumns2 = Array.from(firstLine.children).map(elementWidth).map(pixels).join(" ");
     columnsDiv.style.setProperty("grid-template-columns", templateColumns2);
-    const firstPartWidth = Math.ceil(parts[0].getBoundingClientRect().width);
+    const firstPartWidth = Array.from(firstLine.children)[0].getBoundingClientRect().width;
     const width = Math.ceil(columnsDiv.getBoundingClientRect().width);
-    visualization.style.setProperty("--group-header-width", `${width - 1}px`);
-    visualization.style.setProperty("--group-first-width", `${firstPartWidth - 1}px`);
+    visualization.style.setProperty("--group-header-width", `${width}px`);
+    visualization.style.setProperty("--group-first-width", `${firstPartWidth}px`);
   }
   function anchorHeader() {
     const store2 = anchorHeader;
@@ -10059,17 +10054,19 @@ ${nestedRules}`.replace(/&/g, className);
     const panel = document.querySelector(".vis-panel.vis-left");
     const header = document.getElementById("groupHeader");
     const content = panel.querySelector(".vis-labelset");
-    const top = panel.getBoundingClientRect().top;
+    const top = Math.ceil(panel.getBoundingClientRect().top);
     if (top === store2.lastTop) {
       return;
     }
     store2.lastTop = top;
-    const headerHeight = header.getBoundingClientRect().height;
+    const headerHeight = Math.ceil(header.getBoundingClientRect().height);
     const newTop = top - headerHeight + 1;
     header.style.setProperty("top", `${newTop}px`);
-    const left = content.getBoundingClientRect().left;
+    const left = Math.ceil(content.getBoundingClientRect().left);
     header.style.setProperty("left", `${left}px`);
   }
+  var elementWidth = (el) => el.getBoundingClientRect().width;
+  var pixels = (w3) => `${w3}px`;
 
   // vendor.ts
   var import_moment_timezone = __toESM(require_moment_timezone2());
@@ -49429,8 +49426,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
        */
     }, {
       key: "screenToValue",
-      value: function screenToValue(pixels) {
-        return (this.containerHeight - pixels) / this.scale + this._start;
+      value: function screenToValue(pixels2) {
+        return (this.containerHeight - pixels2) / this.scale + this._start;
       }
     }]);
     return DataScale2;
@@ -52568,6 +52565,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       }
       return a4.id - b4.id;
     },
+    /**
+     * Item template is used to render each item in the timeline. Notice, this is run many times,
+     * even when scrolling or moving.
+     */
     template: function(item, element, data3) {
       const parts = data3.content.split("|");
       const text2 = parts[1] ? `${parts[0]} (${parts[1] || "no subject"})` : parts[0];
@@ -52636,7 +52637,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       });
     },
     async onAdd(item, callback) {
-      let id2;
+      let id2 = 0;
       try {
         const group = idToName.get(item.group).split("|").map(stringToValue);
         const start = (0, import_moment_timezone2.default)(item.start).format("YYYY-MM-DD");
@@ -52656,7 +52657,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         callback(null);
         openCard();
       } finally {
-        eventAdd.next(id2);
+        if (id2) {
+          eventAdd.next(id2);
+        }
       }
     },
     groupTemplate: function(group) {
@@ -52666,11 +52669,11 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         container2.classList.add("group-empty");
         return container2;
       }
-      const partsHtml = group.columns.map((col) => {
+      const columnsDivs = group.columns.map((col) => {
         const div = document.createElement("div");
         const value = stringToValue(col);
         if (typeof value === "string" || value === null) {
-          div.innerText = String(value ?? "") || "-";
+          div.innerText = valueToString(value);
         } else if (typeof value === "number") {
           div.innerText = formatCurrency.format(value);
         } else if (typeof value === "boolean") {
@@ -52680,7 +52683,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         div.style.padding = "5px";
         return div;
       });
-      partsHtml.push((() => {
+      columnsDivs.push((() => {
         const div = document.createElement("div");
         div.innerHTML = '<sl-icon name="three-dots"></sl-icon>';
         div.className = "center cursor";
@@ -52690,7 +52693,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         });
         return div;
       })());
-      container2.append(...partsHtml);
+      container2.append(...columnsDivs);
       container2.addEventListener("click", function() {
         const last = itemSet.get().filter((i8) => i8.group === group.id).sort((a4, b4) => b4.start - a4.start)[0];
         if (last) {
