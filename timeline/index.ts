@@ -1,5 +1,5 @@
 import {buildCursor} from './cursor';
-import {monitorHeader, rewriteHeader} from './header';
+import {headerMonitor, rewriteHeader} from './header';
 import {
   Command,
   fetchSchema,
@@ -377,17 +377,22 @@ grist.onRecords(async (recs: any[], maps: any) => {
     schema = await fetchSchema();
   }
 
-  mappings.set(maps);
-  records.set(grist.mapColumnNames(recs));
-  order.clear();
-  recs.forEach((r, i) => order.set(r.id, i));
-  renderAllItems();
+  try {
+    headerMonitor.pause();
+    mappings.set(maps);
+    records.set(grist.mapColumnNames(recs));
+    order.clear();
+    recs.forEach((r, i) => order.set(r.id, i));
+    renderAllItems();
 
-  if (areMappingsNew) {
-    rewriteHeader({mappings, timeline, cmdAddBlank});
+    if (areMappingsNew) {
+      rewriteHeader({mappings, timeline, cmdAddBlank});
+    }
+
+    document.body.classList.remove('loading');
+  } finally {
+    headerMonitor.resume();
   }
-
-  document.body.classList.remove('loading');
 });
 
 
@@ -723,7 +728,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('fitButton')!.addEventListener('click', () => autoFit(true));
 
 
-  monitorHeader();
+  headerMonitor.start();
 
 
   // same manu for .vis-item.vis-range

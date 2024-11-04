@@ -9964,89 +9964,145 @@ ${nestedRules}`.replace(/&/g, className);
   }
 
   // header.ts
-  function monitorHeader() {
-    const panel = document.querySelector(".vis-panel.vis-left");
-    const header = document.getElementById("groupHeader");
-    const observer = new ResizeObserver((...args) => {
+  var HeaderMonitor = class {
+    headerMonitor;
+    lastWidth = 0;
+    work = () => {
+    };
+    constructor() {
+      this.work = debounced(this.invoke.bind(this), 5);
+    }
+    start() {
+      this.headerMonitor = new ResizeObserver(this.work);
+      this.headerMonitor.observe(this.panel());
+    }
+    invoke(...args) {
+      const [panel, header] = [this.panel(), this.header()];
       const { left } = panel.querySelector(".vis-labelset").getBoundingClientRect();
       header.style.setProperty("--left-width", `${left}px`);
       const width = args[0][0].borderBoxSize[0].inlineSize;
       header.style.width = `${width}px`;
-    });
-    observer.observe(panel);
-  }
-  function rewriteHeader({ mappings: mappings2, timeline: timeline2, cmdAddBlank: cmdAddBlank2 }) {
-    const headerTop = document.querySelector("#groupHeader .top");
-    const headerRight = document.querySelector("#groupHeader .bottom .right");
-    const columnsDiv = dom2("div");
-    columnsDiv.classList.add("group-header-columns");
-    const columnElements = mappings2.get().Columns.map((col) => {
-      return dom2(
-        "div",
-        dom2.text(buildColLabel(col)),
-        dom2.cls("group-part"),
-        dom2.style("padding", "5px")
-      );
-    });
-    columnsDiv.style.setProperty("grid-template-columns", "auto");
-    const moreDiv = document.createElement("div");
-    moreDiv.style.width = "20px";
-    columnElements.push(moreDiv);
-    const collapsed = observable(false);
-    const iconName = computed((use) => {
-      return use(collapsed) ? "chevron-bar-right" : "chevron-bar-left";
-    });
-    const resizer = headerTop.querySelector(".resizer");
-    const icon = headerTop.querySelector("sl-icon");
-    const button = headerTop.querySelector("sl-button");
-    const buttonLoading = observable(false);
-    dom2.update(
-      resizer,
-      dom2.on("click", () => collapsed.set(!collapsed.get()))
-    );
-    dom2.update(
-      icon,
-      // Icon to hide or show drawer.
-      dom2.prop("name", iconName)
-    );
-    dom2.update(
-      button,
-      dom2.prop("loading", buttonLoading),
-      dom2.on("click", async () => {
-        try {
-          buttonLoading.set(true);
-          await cmdAddBlank2.invoke(null);
-        } finally {
-          buttonLoading.set(false);
-        }
-      })
-    );
-    columnsDiv.append(...columnElements);
-    collapsed.addListener(() => {
-      timeline2.redraw();
-    });
-    headerRight.innerHTML = "";
-    headerRight.append(columnsDiv);
-    const visualization = document.getElementById("visualization");
-    dom2.update(
-      visualization,
-      dom2.cls("collapsed", collapsed)
-    );
-    const widths = columnElements.map((part) => part.getBoundingClientRect().width);
-    const templateColumns = widths.map((w3) => `minmax(${w3}px, max-content)`).join(" ");
-    visualization.style.setProperty("--grid-template-columns", templateColumns);
-    anchorHeader();
-    const firstLine = document.querySelector(".group-template");
-    if (!firstLine) {
-      console.error("No first line found");
-      return;
+      if (this.lastWidth !== width) {
+        this.lastWidth = width;
+        recalculateHeader();
+      }
     }
-    const templateColumns2 = Array.from(firstLine.children).map(elementWidth).map(pixels).join(" ");
-    columnsDiv.style.setProperty("grid-template-columns", templateColumns2);
-    const firstPartWidth = Array.from(firstLine.children)[0].getBoundingClientRect().width;
-    const width = Math.ceil(columnsDiv.getBoundingClientRect().width);
-    visualization.style.setProperty("--group-header-width", `${width}px`);
-    visualization.style.setProperty("--group-first-width", `${firstPartWidth}px`);
+    panel() {
+      return document.querySelector(".vis-panel.vis-left");
+    }
+    header() {
+      return document.getElementById("groupHeader");
+    }
+    pauseCalls = 0;
+    pause() {
+      this.pauseCalls++;
+      if (this.pauseCalls === 1) {
+        this.headerMonitor.disconnect();
+      }
+    }
+    resume() {
+      this.pauseCalls--;
+      if (this.pauseCalls === 0) {
+        this.headerMonitor.observe(this.panel());
+      }
+      if (this.pauseCalls < 0) {
+        throw new Error("Unbalanced pause/resume calls");
+      }
+    }
+  };
+  var headerMonitor = new HeaderMonitor();
+  function rewriteHeader({ mappings: mappings2, timeline: timeline2, cmdAddBlank: cmdAddBlank2 }) {
+    try {
+      headerMonitor.pause();
+      const headerTop = document.querySelector("#groupHeader .top");
+      const headerRight = document.querySelector("#groupHeader .bottom .right");
+      const columnsDiv = dom2("div");
+      columnsDiv.classList.add("group-header-columns");
+      const columnElements = mappings2.get().Columns.map((col) => {
+        return dom2(
+          "div",
+          dom2.text(buildColLabel(col)),
+          dom2.cls("group-part"),
+          dom2.style("padding", "5px")
+        );
+      });
+      columnsDiv.style.setProperty("grid-template-columns", "auto");
+      const moreDiv = document.createElement("div");
+      moreDiv.style.width = "20px";
+      columnElements.push(moreDiv);
+      const collapsed = observable(false);
+      const iconName = computed((use) => {
+        return use(collapsed) ? "chevron-bar-right" : "chevron-bar-left";
+      });
+      const resizer = headerTop.querySelector(".resizer");
+      const icon = headerTop.querySelector("sl-icon");
+      const button = headerTop.querySelector("sl-button");
+      const buttonLoading = observable(false);
+      dom2.update(
+        resizer,
+        dom2.on("click", () => collapsed.set(!collapsed.get()))
+      );
+      dom2.update(
+        icon,
+        // Icon to hide or show drawer.
+        dom2.prop("name", iconName)
+      );
+      dom2.update(
+        button,
+        dom2.prop("loading", buttonLoading),
+        dom2.on("click", async () => {
+          try {
+            buttonLoading.set(true);
+            await cmdAddBlank2.invoke(null);
+          } finally {
+            buttonLoading.set(false);
+          }
+        })
+      );
+      columnsDiv.append(...columnElements);
+      collapsed.addListener(() => {
+        timeline2.redraw();
+      });
+      headerRight.innerHTML = "";
+      headerRight.append(columnsDiv);
+      const visualization = document.getElementById("visualization");
+      dom2.update(
+        visualization,
+        dom2.cls("collapsed", collapsed)
+      );
+      recalculateHeader();
+    } finally {
+      headerMonitor.resume();
+    }
+  }
+  function recalculateHeader() {
+    try {
+      headerMonitor.pause();
+      const visualization = document.getElementById("visualization");
+      const columnsDiv = document.querySelector(".group-header-columns");
+      const columnElements = Array.from(columnsDiv.children);
+      columnsDiv.style.setProperty(
+        "grid-template-columns",
+        "auto ".repeat(columnElements.length - 1) + "20px 1fr"
+      );
+      const widths = columnElements.map((part) => part.getBoundingClientRect().width);
+      const templateColumns = widths.map((w3) => `minmax(${w3}px, max-content)`).join(" ");
+      visualization.style.setProperty("--grid-template-columns", templateColumns);
+      anchorHeader();
+      const firstLine = document.querySelector(".group-template");
+      if (!firstLine) {
+        console.error("No first line found");
+        return;
+      }
+      const firstLineColumns = Array.from(firstLine.children).map(elementWidth).map(pixels).join(" ");
+      columnsDiv.style.setProperty("grid-template-columns", firstLineColumns);
+      const firstPartWidth = Array.from(firstLine.children)[0].getBoundingClientRect().width;
+      const width = Math.ceil(columnsDiv.getBoundingClientRect().width);
+      visualization.style.setProperty("--group-header-width", `${width}px`);
+      visualization.style.setProperty("--group-first-width", `${firstPartWidth}px`);
+    } finally {
+      headerMonitor.resume();
+    }
   }
   function anchorHeader() {
     const store2 = anchorHeader;
@@ -10067,6 +10123,17 @@ ${nestedRules}`.replace(/&/g, className);
   }
   var elementWidth = (el) => el.getBoundingClientRect().width;
   var pixels = (w3) => `${w3}px`;
+  function debounced(func, wait = 100) {
+    let timeout = null;
+    return function(...args) {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+      timeout = setTimeout(() => {
+        func(...args);
+      }, wait);
+    };
+  }
 
   // vendor.ts
   var import_moment_timezone = __toESM(require_moment_timezone2());
@@ -52763,15 +52830,20 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     if (areMappingsNew || !schema) {
       schema = await fetchSchema();
     }
-    mappings.set(maps);
-    records.set(grist.mapColumnNames(recs));
-    order.clear();
-    recs.forEach((r7, i8) => order.set(r7.id, i8));
-    renderAllItems();
-    if (areMappingsNew) {
-      rewriteHeader({ mappings, timeline, cmdAddBlank });
+    try {
+      headerMonitor.pause();
+      mappings.set(maps);
+      records.set(grist.mapColumnNames(recs));
+      order.clear();
+      recs.forEach((r7, i8) => order.set(r7.id, i8));
+      renderAllItems();
+      if (areMappingsNew) {
+        rewriteHeader({ mappings, timeline, cmdAddBlank });
+      }
+      document.body.classList.remove("loading");
+    } finally {
+      headerMonitor.resume();
     }
-    document.body.classList.remove("loading");
   });
   var onRecord = new Subject();
   grist.onRecord(({ id: id2 }) => onRecord.next(id2));
@@ -53037,7 +53109,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       timeline.fit();
     });
     document.getElementById("fitButton").addEventListener("click", () => autoFit(true));
-    monitorHeader();
+    headerMonitor.start();
     const itemMenu = new import_vanilla_context_menu.default({
       scope: fore,
       menuItems: [
