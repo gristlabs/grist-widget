@@ -1,0 +1,131 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --buttons-height: 0px;
+  --status-height: 24px;
+  --primary-color: var(--grist-theme-progress-bar-fg, #16B378);
+}
+
+html,
+body {
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Liberation Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  background-color: var(--grist-theme-page-panels-main-panel-bg, #f7f7f7);
+  color: var(--grist-theme-text, black);
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+}
+
+.cloak {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #f3f3f3;
+  z-index: 1000;
+  place-content: center;
+
+  & sl-spinner {
+    display: none;
+    font-size: 4rem;
+    --indicator-color: var(--grist-theme-progress-bar-fg, #16B378);
+    --track-color: var(--grist-theme-progress-bar-bg, #D9D9D9);
+  }
+}
+
+
+body.loading .cloak {
+  display: grid;
+}
+
+body.loading.slow .cloak sl-spinner {
+  display: block;
+}
+
+div {
+  scrollbar-width: thin;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cursor {
+  cursor: pointer;
+}
+
+#visualization {
+  width: 100%;
+  height: calc(100% - var(--buttons-height) - var(--status-height));
+  margin-top: var(--buttons-height);
+}
+
+#status-bar {
+  height: var(--status-height);
+  border-top: 1px solid #d3d3d3;
+  display: flex;
+  align-items: center;
+  padding-right: 8px;
+  min-height: 0px;
+  max-height: var(--status-height);
+  overflow: hidden;
+  gap: 4px;
+}
+
+select.config {
+  border-color: rgb(217, 217, 217);
+}
+
+#buttons {
+  position: absolute;
+  background-color: var(--grist-theme-page-panels-main-panel-bg, white);
+  overflow: hidden;
+
+  border-bottom: 1px solid #d3d3d3;
+  top: 0px;
+  left: 0px;
+  z-index: 10;
+  display: flex;
+  height: var(--buttons-height);
+  gap: 4px;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  padding-right: 8px;
+}
+
+.btn {
+  font-size: x-small;
+}
+
+.selected {
+  --background-color: #007bff;
+}
+
+.group-template {
+  border-bottom: 1px solid #d3d3d3;
+
+}
+
+.vertical-bar {
+  /* vertical bar that splits columns */
+  width: 1px;
+  background-color: #d3d3d3;
+}
+
+.item-template {
+  display: flex;
+  justify-content: space-between;
+  min-height: 0px;
+  height: 23px;
+  line-height: 1em;
+  align-items: center;
+  padding: 2px 4px;
+}

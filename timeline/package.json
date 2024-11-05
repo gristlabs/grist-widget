@@ -7,7 +7,7 @@
     "name": "Timeline",
     "url": "https://gristlabs.github.io/grist-widget/timeline",
     "widgetId": "@gristlabs/timeline",
-    "published": true,
+    "published": false,
     "accessLevel": "read table",
     "renderAfterReady": true,
     "description": "Timeline",

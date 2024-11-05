@@ -2,6 +2,7 @@ import {buildCursor} from './cursor';
 import {headerMonitor, rewriteHeader} from './header';
 import {
   Command,
+  dateDesc,
   fetchSchema,
   hasChanged,
   Item,
@@ -30,7 +31,7 @@ declare global {
 // DOM element where the Timeline will be attached
 const container = document.getElementById('visualization')!;
 
-const itemSet = new DataSet([]);
+const itemSet = new DataSet<Item>([]);
 const groupSet = new DataSet<any>([]);
 const records = observable([] as any[]);
 const order = new Map();
@@ -53,9 +54,9 @@ const cmdAddBlank = new Command<any>();
 // Two indexes to quickly find group name by id and vice versa.
 const byStart = new Map<string, Item[]>();
 const byEnd = new Map<string, Item[]>();
-const key = memoizeWith((...args: any[]) => args.join(), (date: string, days: number = 0) => {
+const key = memoizeWith((...args: any[]) => args.join(), (date: Date | string, days: number = 0) => {
   return moment(date).add({days}).format('YYYY-MM-DD');
-})
+}) as (date: Date | string, days?: number) => string;
 function startKey(item: Item, days: number = 0) {
   return `${item.group}-${key(item.start, days)}`;
 }
@@ -63,25 +64,10 @@ function endKey(item: Item, days: number = 0): string {
   return `${item.group}-${key(item.end, days)}`;
 }
 
-items.addListener(list => {
-  byStart.clear();
-  byEnd.clear();
-  for (const item of list) {
-    if (!byStart.has(startKey(item))) {
-      byStart.set(startKey(item), []);
-    }
-    if (!byEnd.has(endKey(item))) {
-      byEnd.set(endKey(item), []);
-    }
-    byStart.get(startKey(item))!.push(item);
-    byEnd.get(endKey(item))!.push(item);
-  }
-});
-
 
 grist.ready({
   allowSelectBy: true,
-  requiredAccess: 'read table',
+  requiredAccess: 'full',
   columns: [
     {
       name: 'Columns',
@@ -290,7 +276,7 @@ const options: TimelineOptions = {
 
     container.addEventListener('click', function() {
       // Find first item in that group.
-      const last = itemSet.get().filter(i => i.group === group.id).sort((a, b) => b.start - a.start)[0];
+      const last = itemSet.get().filter(i => i.group === group.id).sort((a, b) => dateDesc(a.start, b.start))[0];
       if (last) {
         timeline.focus(last.id);
       }
@@ -428,7 +414,7 @@ function getTo(r: any) {
 }
 
 function recToItem(r): Item {
-  const result = {
+  const result: Item = {
     id: r.id,
     content: '',
     start: trimTime(getFrom(r)),
@@ -438,7 +424,11 @@ function recToItem(r): Item {
     className: 'item_' + r.id,
     data: r,
     editable: undefined as any,
-  };
+    startKey: '',
+    endKey: '',
+  }
+  result.startKey = startKey(result);
+  result.endKey = endKey(result);
   result.group = r.Columns.join('|');
   result.group = nameToId.get(result.group);
   result.content = (r.Title ?? ['no title']).join('|');
@@ -542,11 +532,23 @@ function renderItems() {
   const existing = itemSet.getIds();
   const removed = existing.filter(x => !newIds.has(x));
   itemSet.remove(removed);
+
+  byStart.clear();
+  byEnd.clear();
+
   const newItems = from(recs as any[])
     .filter(r => getFrom(r) && getTo(r))
     .map(r => {
-      const result = recToItem(r);
-      return result;
+      const item = recToItem(r);
+      if (!byStart.has(item.startKey)) {
+        byStart.set(item.startKey, []);
+      }
+      if (!byEnd.has(item.endKey)) {
+        byEnd.set(item.endKey, []);
+      }
+      byStart.get(item.startKey)!.push(item);
+      byEnd.get(item.endKey)!.push(item);
+      return item;
     });
 
   items.set(newItems.toArray());
@@ -886,6 +888,9 @@ function openGroupDrawer(groupId: number) {
     return;
   }
   const item = itemSet.get().find(i => i.group === groupId);
+  if (!item) {
+    return;
+  }
 
   const drawer = document.querySelector('.drawer-overview') as any;
   const drawerInfo = drawer.querySelector('.drawer-info') as any;
@@ -910,6 +915,9 @@ function openGroupDrawer(groupId: number) {
 function openItemDrawer(itemId: number) {
   // Same as above but for item.
   const item = itemSet.get().find(i => i.id === itemId);
+  if (!item) {
+    return;
+  }
   const drawer = document.querySelector('.drawer-overview') as any;
   const drawerInfo = drawer.querySelector('.drawer-info') as any;
   drawerInfo.innerHTML = ``;
@@ -930,10 +938,10 @@ function openItemDrawer(itemId: number) {
 
 cmdAddBlank.handle(addBlank);
 async function addBlank() {
-  const fields = {
+  const fields = await liftFields({
     [mappings.get().From]: moment().startOf('day').toDate(),
     [mappings.get().To]: moment().endOf('isoWeek').toDate(),
-  };
+  });
   const {id} = await grist.selectedTable.create({fields});
   await grist.setCursorPos({rowId: id});
   // Open the card.
