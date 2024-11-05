@@ -7,18 +7,14 @@ export class HeaderMonitor {
   private headerMonitor!: ResizeObserver;
   private lastWidth = 0;
   private work = () => {};
-
-
   constructor() {
     this.work = debounced(this.invoke.bind(this), 5);
   }
-
   public start() {
     // Monitor left panel and adjust header left position.
     this.headerMonitor = new ResizeObserver(this.work);
     this.headerMonitor.observe(this.panel());
   }
-
   public invoke(...args: any[]) {
     const [panel, header] = [this.panel(), this.header()];
     const {left} = panel.querySelector('.vis-labelset')!.getBoundingClientRect();
@@ -193,21 +189,22 @@ export function recalculateHeader() {
 export function anchorHeader() {
   const store = anchorHeader as any as {lastTop: number;};
   store.lastTop = store.lastTop ?? 0;
-  const panel = document.querySelector('.vis-panel.vis-left')!;
-  const header = document.getElementById('groupHeader')!;
-  const content = panel.querySelector('.vis-labelset')!;
-  const top = Math.ceil(panel.getBoundingClientRect().top);
+  const panelEl = document.querySelector('.vis-panel.vis-left')!;
+  const headerEl = document.getElementById('groupHeader')!;
+  const headerBottomEl = headerEl.querySelector('.bottom')! as HTMLElement;
+  const headerTopEl = headerEl.querySelector('.top')! as HTMLElement;
+
+  const contentEl = panelEl.querySelector('.vis-labelset')!;
+  const top = Math.ceil(panelEl.getBoundingClientRect().top);
   if (top === store.lastTop) {
     return;
   }
   store.lastTop = top;
-  const headerHeight = Math.ceil(header.getBoundingClientRect().height);
-  const newTop = top - headerHeight + 1;
-  header.style.setProperty('top', `${newTop}px`);
+  headerTopEl.style.setProperty('height', `${top - 30}px`);
 
   // Also adjust the left property of the group-header, as it may have a scrool element.
-  const left = Math.ceil(content.getBoundingClientRect().left);
-  header.style.setProperty('left', `${left}px`);
+  const left = Math.ceil(contentEl.getBoundingClientRect().left);
+  headerEl.style.setProperty('left', `${left}px`);
 }
 
 

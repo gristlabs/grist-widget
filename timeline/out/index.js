@@ -9962,6 +9962,12 @@ ${nestedRules}`.replace(/&/g, className);
       }
     };
   }
+  function datesAsc(a4, b4) {
+    const left = typeof a4 === "string" ? a4 : a4.toISOString();
+    const right = typeof b4 === "string" ? b4 : b4.toISOString();
+    return left.localeCompare(right);
+  }
+  var dateDesc = (a4, b4) => datesAsc(b4, a4);
 
   // header.ts
   var HeaderMonitor = class {
@@ -10107,19 +10113,19 @@ ${nestedRules}`.replace(/&/g, className);
   function anchorHeader() {
     const store2 = anchorHeader;
     store2.lastTop = store2.lastTop ?? 0;
-    const panel = document.querySelector(".vis-panel.vis-left");
-    const header = document.getElementById("groupHeader");
-    const content = panel.querySelector(".vis-labelset");
-    const top = Math.ceil(panel.getBoundingClientRect().top);
+    const panelEl = document.querySelector(".vis-panel.vis-left");
+    const headerEl = document.getElementById("groupHeader");
+    const headerBottomEl = headerEl.querySelector(".bottom");
+    const headerTopEl = headerEl.querySelector(".top");
+    const contentEl = panelEl.querySelector(".vis-labelset");
+    const top = Math.ceil(panelEl.getBoundingClientRect().top);
     if (top === store2.lastTop) {
       return;
     }
     store2.lastTop = top;
-    const headerHeight = Math.ceil(header.getBoundingClientRect().height);
-    const newTop = top - headerHeight + 1;
-    header.style.setProperty("top", `${newTop}px`);
-    const left = Math.ceil(content.getBoundingClientRect().left);
-    header.style.setProperty("left", `${left}px`);
+    headerTopEl.style.setProperty("height", `${top - 30}px`);
+    const left = Math.ceil(contentEl.getBoundingClientRect().left);
+    headerEl.style.setProperty("left", `${left}px`);
   }
   var elementWidth = (el) => el.getBoundingClientRect().width;
   var pixels = (w3) => `${w3}px`;
@@ -52571,20 +52577,6 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   function endKey(item, days = 0) {
     return `${item.group}-${key(item.end, days)}`;
   }
-  items.addListener((list) => {
-    byStart.clear();
-    byEnd.clear();
-    for (const item of list) {
-      if (!byStart.has(startKey(item))) {
-        byStart.set(startKey(item), []);
-      }
-      if (!byEnd.has(endKey(item))) {
-        byEnd.set(endKey(item), []);
-      }
-      byStart.get(startKey(item)).push(item);
-      byEnd.get(endKey(item)).push(item);
-    }
-  });
   grist.ready({
     allowSelectBy: true,
     requiredAccess: "read table",
@@ -52762,7 +52754,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       })());
       container2.append(...columnsDivs);
       container2.addEventListener("click", function() {
-        const last = itemSet.get().filter((i8) => i8.group === group.id).sort((a4, b4) => b4.start - a4.start)[0];
+        const last = itemSet.get().filter((i8) => i8.group === group.id).sort((a4, b4) => dateDesc(a4.start, b4.start))[0];
         if (last) {
           timeline.focus(last.id);
         }
@@ -52883,8 +52875,12 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       group: void 0,
       className: "item_" + r7.id,
       data: r7,
-      editable: void 0
+      editable: void 0,
+      startKey: "",
+      endKey: ""
     };
+    result.startKey = startKey(result);
+    result.endKey = endKey(result);
     result.group = r7.Columns.join("|");
     result.group = nameToId.get(result.group);
     result.content = (r7.Title ?? ["no title"]).join("|");
@@ -52970,9 +52966,19 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const existing = itemSet.getIds();
     const removed = existing.filter((x3) => !newIds.has(x3));
     itemSet.remove(removed);
+    byStart.clear();
+    byEnd.clear();
     const newItems = u(recs).filter((r7) => getFrom(r7) && getTo(r7)).map((r7) => {
-      const result = recToItem(r7);
-      return result;
+      const item = recToItem(r7);
+      if (!byStart.has(item.startKey)) {
+        byStart.set(item.startKey, []);
+      }
+      if (!byEnd.has(item.endKey)) {
+        byEnd.set(item.endKey, []);
+      }
+      byStart.get(item.startKey).push(item);
+      byEnd.get(item.endKey).push(item);
+      return item;
     });
     items.set(newItems.toArray());
     const changedItems = oldRecs.size > 0 ? newItems.filter((newOne) => {
@@ -53230,6 +53236,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       return;
     }
     const item = itemSet.get().find((i8) => i8.group === groupId);
+    if (!item) {
+      return;
+    }
     const drawer = document.querySelector(".drawer-overview");
     const drawerInfo = drawer.querySelector(".drawer-info");
     drawerInfo.innerHTML = ``;
@@ -53248,6 +53257,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   }
   function openItemDrawer(itemId) {
     const item = itemSet.get().find((i8) => i8.id === itemId);
+    if (!item) {
+      return;
+    }
     const drawer = document.querySelector(".drawer-overview");
     const drawerInfo = drawer.querySelector(".drawer-info");
     drawerInfo.innerHTML = ``;
@@ -53266,10 +53278,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   }
   cmdAddBlank.handle(addBlank);
   async function addBlank() {
-    const fields = {
+    const fields = await liftFields({
       [mappings.get().From]: (0, import_moment_timezone2.default)().startOf("day").toDate(),
       [mappings.get().To]: (0, import_moment_timezone2.default)().endOf("isoWeek").toDate()
-    };
+    });
     const { id: id2 } = await grist.selectedTable.create({ fields });
     await grist.setCursorPos({ rowId: id2 });
     await openCard();

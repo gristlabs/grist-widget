@@ -111,6 +111,8 @@ export interface Item {
 
   group?: number;
   element?: HTMLElement;
+  startKey: string;
+  endKey: string;
 }
 
 type CommandObserver = (arg: any) => Promise<void>;
@@ -242,3 +244,12 @@ export function hasChanged() {
     }
   };
 }
+
+
+export function datesAsc(a: Date|string, b: Date|string) {
+  const left = typeof a === 'string' ? a : a.toISOString();
+  const right = typeof b === 'string' ? b : b.toISOString();
+  return left.localeCompare(right);
+}
+
+export const dateDesc = (a: Date|string, b: Date|string) => datesAsc(b, a);
