@@ -1,0 +1,87 @@
+<html>
+
+<head>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <link rel="stylesheet" href="out/index.css"></link>
+  <link rel="stylesheet" href="pre.css"></link>
+</head>
+
+</html>
+
+<body class="loading">
+  <div id="visualization">
+    <div class="group-header" id="groupHeader">
+      <div class="top">
+        <sl-button size="small" class="grist-outline" outline>Add new</sl-button>
+        <div class="resizer">
+          <sl-icon />
+        </div>
+      </div>
+      <div class="bottom">
+        <div class="left">
+
+        </div>
+        <div class="right">
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="buttons" style="text-align: right; display: none;">
+    <button class="btn" style="min-width: 60px" id="btnAll">All</button>
+    <button class="btn" id="btnAlCampaign">Campaign</button>
+    <button class="btn" id="btnModel">Model</button>
+    <button class="btn" id="btnReseller">Reseller </button>
+    <label for="locale">Select a locale:</label>
+    <select id="locale">
+      <option value="en">en</option>
+      <option value="fr">fr</option>
+      <option value="en-UK">UK</option>
+      <option value="nl">nl</option>
+      <option value="de" selected>de</option>
+    </select>
+  </div>
+
+  <div id="status-bar">
+    <select class="conf-select config" id="timeline:timeAxis.scale">
+      <option value="day" selected>day</option>
+      <option value="week">week</option>
+      <option value="month">month</option>
+      <option value="year">year</option>
+    </select>
+    <sl-drawer label="Info" class="drawer-overview">
+      <div class="drawer-info">
+      </div>
+      <sl-button id="close-drawer" slot="footer" variant="success">Close</sl-button>
+    </sl-drawer>
+    <script>
+      const closeButton = document.querySelector('#close-drawer');
+      const drawer = document.querySelector('.drawer-overview');
+      closeButton.addEventListener('click', () => drawer.hide());
+    </script>
+    <sl-switch class="config" checked id="local:editCard" size="small">Edit card</sl-switch>
+    <sl-switch class="config" id="local:confirmChanges" size="small">Confirm changes</sl-switch>
+    <sl-switch class="config" id="local:focusOnSelect" size="small">Focus on select</sl-switch>
+    <div style="margin-left: auto" ></div>
+    <sl-icon-button id="fitButton" name="border-all" label="Settings" ></sl-icon-button>
+    <sl-icon-button id="allButton" name="arrows-collapse-vertical" label="Settings"></sl-icon-button>
+  </div>
+
+
+
+  <div class="cloak">
+    <sl-spinner></sl-spinner>
+  </div>
+
+  <sl-alert variant="danger" duration="10000" closable>
+    <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
+    <strong id="title"></strong><br />
+    <div id="text"></div>
+  </sl-alert>
+
+  <script src="out/index.js"></script>
+  <link rel="stylesheet" href="post.css"></link>
+
+</body>
+
+</html>

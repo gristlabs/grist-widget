@@ -1,0 +1,42 @@
+{
+  "name": "@gristlabs/timeline",
+  "description": "Timeline",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Timeline",
+    "url": "https://gristlabs.github.io/grist-widget/timeline",
+    "widgetId": "@gristlabs/timeline",
+    "published": false,
+    "accessLevel": "read table",
+    "renderAfterReady": true,
+    "description": "Timeline",
+    "authors": [
+      {
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
+      }
+    ]
+  },
+  "dependencies": {
+    "@shoelace-style/shoelace": "^2.18.0",
+    "fromit": "^2.2.11",
+    "grainjs": "^1.0.2",
+    "moment-timezone": "0.5.45",
+    "ramda": "^0.30.1",
+    "rxjs": "^7.8.1",
+    "vanilla-context-menu": "^1.6.0",
+    "vis-timeline": "^7.7.3"
+  },
+  "devDependencies": {
+    "@types/moment-timezone": "^0.5.30",
+    "@types/ramda": "^0.30.2",
+    "esbuild": "^0.24.0",
+    "reload": "^3.3.0"
+  },
+  "scripts": {
+    "build": "bash icons.sh && esbuild index.ts --bundle --sourcemap --outdir=out",
+    "dev": "esbuild index.ts --bundle  --sourcemap --outdir=out --watch",
+    "serve": "(cd ../ && npm run grist:serve)"
+  }
+}
