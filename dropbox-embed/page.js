@@ -301,16 +301,16 @@ for (const rec of data) {
   // Build HTML content for the popup, similar to your Mapbox example
   const imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
   const popupContent = `
-  <div style="font-size: 12px; line-height: 1.2; padding: 5px; max-width: 150px;">
-    <strong>${name}</strong><br>
-    ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; margin-bottom: 5px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-    <p style="margin: 0;"><strong>Type:</strong> ${propertyType}</p>
-    <p style="margin: 0;"><strong>Secondary:</strong> ${secondaryType}</p>
-    <p style="margin: 0;"><strong>Tenants:</strong> ${tenants}</p>
-    <div class="popup-buttons" style="display: flex; gap: 5px; margin-top: 5px;">
-      <a href="${costarLink}" style="font-size: 10px; padding: 3px 5px;" class="popup-button" target="_blank">CoStar</a>
-      <a href="${countyLink}" style="font-size: 10px; padding: 3px 5px;" class="popup-button" target="_blank">County</a>
-      <a href="${gisLink}" style="font-size: 10px; padding: 3px 5px;" class="popup-button" target="_blank">GIS</a>
+  <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
+    <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${name}</strong>
+    ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${propertyType}</p>
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${secondaryType}</p>
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${tenants}</p>
+    <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
+      <a href="${costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
+      <a href="${countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
+      <a href="${gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
     </div>
   </div>
 `;
