@@ -1,3 +1,5 @@
+/* Style sheet (screen.css): The CSS file is responsible for changing styles like background, colors, etc. Main parts pertaining to map and its style are: */
+
 #map {
   width: 100vw; 
   height: 100vh;
