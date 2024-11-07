@@ -301,17 +301,19 @@ for (const rec of data) {
   // Build HTML content for the popup, similar to your Mapbox example
   const imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
   const popupContent = `
-    <h3>${name}</h3>
-    ${imageTag}
-    <h4><b>Property Type: </b>${propertyType}</h4>
-    <h4><b>Secondary Type: </b>${secondaryType}</h4>
-    <h4><b>Tenants: </b>${tenants}</h4>
-    <div class="popup-buttons">
-      <a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>
-      <a href="${countyLink}" class="popup-button" target="_blank">County</a>
-      <a href="${gisLink}" class="popup-button" target="_blank">GIS</a>
+  <div style="font-size: 12px; line-height: 1.2; padding: 5px; max-width: 150px;">
+    <strong>${name}</strong><br>
+    ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; margin-bottom: 5px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+    <p style="margin: 0;"><strong>Type:</strong> ${propertyType}</p>
+    <p style="margin: 0;"><strong>Secondary:</strong> ${secondaryType}</p>
+    <p style="margin: 0;"><strong>Tenants:</strong> ${tenants}</p>
+    <div class="popup-buttons" style="display: flex; gap: 5px; margin-top: 5px;">
+      <a href="${costarLink}" style="font-size: 10px; padding: 3px 5px;" class="popup-button" target="_blank">CoStar</a>
+      <a href="${countyLink}" style="font-size: 10px; padding: 3px 5px;" class="popup-button" target="_blank">County</a>
+      <a href="${gisLink}" style="font-size: 10px; padding: 3px 5px;" class="popup-button" target="_blank">GIS</a>
     </div>
-  `;
+  </div>
+`;
 
   // Bind the custom HTML content to the marker's popup
   marker.bindPopup(popupContent);
