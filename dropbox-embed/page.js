@@ -1,3 +1,5 @@
+/* The JS file is responsible for setting up the map control, styling the markers, popups, and adding necessary script tags. */
+
 "use strict";
 
 /* global grist, window */
