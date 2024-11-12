@@ -17,7 +17,7 @@ export function getGrist(): GristUtils {
   const server = new GristTestServer();
   const grist = new GristUtils(server);
 
-  enableDebugCapture()
+  enableDebugCapture();
 
   before(async function () {
     // Server will have started up in a global fixture, we just
