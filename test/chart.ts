@@ -44,12 +44,15 @@ describe('chart', function () {
       await chooseColumnFromFieldDropdown(/Values/, /num/);
       await chooseColumnFromFieldDropdown(/Labels/, /choice list/);
 
-      assert.equal(
-        await driver.find('.plotly_editor_plot').getText(),
+      const result =
         // Percentages inside the pie chart
         '55.6%\n44.4%\n' +
         // Legend
-        'choice B\nchoice A',
+        'choice B\nchoice A';
+
+      assert.equal(
+        await driver.findContentWait('.plotly_editor_plot', result, 2000).getText(),
+        result
       );
     });
   });

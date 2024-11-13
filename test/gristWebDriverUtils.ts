@@ -145,7 +145,9 @@ export class GristWebDriverUtils {
     if (options.dismissTips) { await this.dismissBehavioralPrompts(); }
 
     if (tableRe) {
-      const tableEl = driver.findContent('.test-wselect-table', tableRe);
+      const tableEl = driver.findContentWait('.test-wselect-table', tableRe, 2000);
+
+      if (options.dismissTips) { await this.dismissBehavioralPrompts(); }
 
       // unselect all selected columns
       for (const col of (await driver.findAll('.test-wselect-column[class*=-selected]'))) {

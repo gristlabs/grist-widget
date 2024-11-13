@@ -1,7 +1,7 @@
 import {ChildProcess, execSync, spawn} from 'child_process';
 import FormData from 'form-data';
 import fs from 'fs';
-import {driver} from 'mocha-webdriver';
+import { driver, enableDebugCapture } from 'mocha-webdriver';
 import fetch from 'node-fetch';
 
 import {GristWebDriverUtils} from 'test/gristWebDriverUtils';
@@ -16,6 +16,8 @@ import {GristWebDriverUtils} from 'test/gristWebDriverUtils';
 export function getGrist(): GristUtils {
   const server = new GristTestServer();
   const grist = new GristUtils(server);
+
+  enableDebugCapture();
 
   before(async function () {
     // Server will have started up in a global fixture, we just
@@ -198,17 +200,16 @@ export class GristUtils extends GristWebDriverUtils {
     await this.waitForServer();
   }
 
-
-
   public async clickWidgetPane() {
-    const elem = this.driver.find('.test-config-widget-select .test-select-open');
+    const elem = this.driver.find('.test-custom-widget-gallery-container');
     if (await elem.isPresent()) {
       await elem.click();
     }
   }
 
   public async selectCustomWidget(text: string | RegExp) {
-    await this.driver.findContent('.test-select-menu li', text).click();
+    await this.driver.findContent('.test-custom-widget-gallery-widget', text).click();
+    await this.driver.find('.test-custom-widget-gallery-save').click();
     await this.waitForServer();
   }
 
