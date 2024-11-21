@@ -1,23 +1,14 @@
-/** Helper for keeping some data and watching for changes */
 function memory(name) {
   let value = undefined;
-  let listeners = [];
-  const obj = function (arg) {
+  const obj = function(arg) {
     if (arg === undefined) {
       return value;
     } else {
       if (value !== arg) {
-        listeners.forEach(clb => clb(arg));
         value = arg;
       }
     }
   };
-
-  obj.subscribe = function (clb) {
-    listeners.push(clb);
-    return () => void listeners.splice(listeners.indexOf(clb), 1);
-  };
-
   return obj;
 }
 
@@ -25,11 +16,6 @@ function memory(name) {
 const currentJs = memory('js');
 const currentHtml = memory('html');
 const state = memory('state'); // null, 'installed', 'editor'
-
-const COLORS = {
-  green: '#16b378',
-}
-
 const DEFAULT_HTML = `<html>
 <head>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
@@ -64,15 +50,12 @@ let htmlModel;
 let jsModel;
 
 let monacoLoaded = false;
+/** Helper method that loads monaco scripts asynchronously  */
 async function loadMonaco() {
-  // Load all those scripts above.
-
   if (monacoLoaded) {
     return;
   }
-
   monacoLoaded = true;
-
   async function loadJs(url) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
@@ -93,12 +76,17 @@ async function loadMonaco() {
     });
   }
 
-  await loadCss(
-    'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css'
-  );
-  await loadJs(
-    'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js'
-  );
+  await Promise.allSettled([
+    loadJs(`api_deps.js`),
+
+    loadCss(
+      'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css'
+    ),
+
+    loadJs(
+      'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js'
+    ),
+  ]);
 
   window.require.config({
     paths: {
@@ -147,9 +135,9 @@ function buildEditor() {
     folding: false,
   });
   // Set tabSize - this can be done only after editor is created.
-  editor.getModel().updateOptions({ tabSize: 2 });
+  editor.getModel().updateOptions({tabSize: 2});
   // Disable scrolling past the last line - we will expand editor if necessary.
-  editor.updateOptions({ scrollBeyondLastLine: false });
+  editor.updateOptions({scrollBeyondLastLine: false});
   window.editor = editor;
 }
 const page_widget = document.getElementById('page_widget');
@@ -174,10 +162,12 @@ let wFrame = null;
 const bntTabs = [btnTabJs, btnTabHtml, btnTabHelp];
 const pages = [page_editor, page_help, page_widget];
 
+/** Clears element's innerHTML */
 function purge(element) {
-  while (element.firstChild) {
-    element.removeChild(element.firstChild);
+  if (!element) {
+    return;
   }
+  element.innerHTML = '';
 }
 
 let widgetWindow = null;
@@ -187,7 +177,7 @@ function createFrame() {
   wFrame = document.createElement('iframe');
   page_widget.appendChild(wFrame);
   widgetWindow = wFrame.contentWindow;
- }
+}
 
 function init() {
   if (init.invoked) return;
@@ -228,6 +218,7 @@ function changeTab(lang) {
   page_editor.style.display = 'block';
   page_help.style.display = 'none';
   editor.setModel(lang === 'js' ? jsModel : htmlModel);
+  editor.getModel().updateOptions({tabSize: 2});
   selectTab(lang == 'js' ? btnTabJs : btnTabHtml);
 }
 
@@ -243,7 +234,7 @@ function installWidget(code, html) {
     if (!html.includes('grist-plugin-api.js')) {
       content.document.write(
         `<script src="https://docs.getgrist.com/grist-plugin-api.js"></` +
-          `script>`
+        `script>`
       );
     }
     content.document.write(`<script>${code}</` + `script>`);
@@ -285,28 +276,12 @@ async function showEditor() {
   btnInstall.style.display = 'inline-block';
   btnReset.style.display = 'inline-block';
   changeTab('html');
+  widgetWindow = null;
 }
-
-const onOptions = function (clb) {
-  let listen = true;
-  let last = undefined;
-  grist.onOptions((...data) => {
-    if (listen) {
-      if (last !== undefined) {
-        if (JSON.stringify(last) === JSON.stringify(data)) {
-          return;
-        }
-        last = data;
-      }
-      clb(...data);
-    }
-  });
-  return () => void (listen = false);
-};
 
 let lastOptions = null;
 
-onOptions(async options => {
+grist.onOptions(async options => {
   lastOptions = options;
   if (!options) {
     if (state() === 'installed') {
@@ -347,7 +322,6 @@ function btnInstall_onClick() {
     _js: jsModel.getValue(),
     _html: htmlModel.getValue(),
   };
-
 
   state('installed');
 
@@ -398,6 +372,10 @@ grist.rpc.sendReadyMessage();
 grist.rpc.registerFunc('editOptions', () => {});
 
 window.addEventListener('message', e => {
+  // If we haven't created the widget yet, nothing to do here.
+  if (!widgetWindow) {
+    return;
+  }
   if (e.source === widgetWindow) {
     // Hijack configure message to inform Grist that we have custom configuration.
     // data will have { iface: "CustomSectionAPI", meth: "configure", args: [{}] }
