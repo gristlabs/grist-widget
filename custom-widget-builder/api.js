@@ -393,7 +393,7 @@ window.addEventListener('message', e => {
     }
     window.parent.postMessage(e.data, '*');
   } else if (e.source === window.parent) {
-    // If user clicks `Open confirguration` button, we will switch to the editor.
+    // If user clicks `Open configuration` button, we will switch to the editor.
     // The message that we will receive is:
     // {"mtype":1,"reqId":6,"iface":"editOptions","meth":"invoke","args":[]}
     if (e.data?.iface === 'editOptions' && e.data?.meth === 'invoke') {
