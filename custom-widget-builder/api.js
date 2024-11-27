@@ -385,7 +385,7 @@ window.addEventListener('message', e => {
     ) {
       e.data.args ??= [{}];
       e.data.args[0].hasCustomOptions = true;
-      // Here is the trick part. Inner widget is calling ready method and configure method (as
+      // Here is the tricky part. Inner widget is calling ready method and configure method (as
       // part of grist.ready() call). Since we don't call configure method at all, we just append
       // the `hasCustomOptions` to the configure method, and send it back to Grist. This way Grist
       // will receive same configuration of mapping columns each time, which will avoid the infinite
