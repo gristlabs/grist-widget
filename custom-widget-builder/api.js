@@ -1,23 +1,14 @@
-/** Helper for keeping some data and watching for changes */
 function memory(name) {
   let value = undefined;
-  let listeners = [];
-  const obj = function (arg) {
+  const obj = function(arg) {
     if (arg === undefined) {
       return value;
     } else {
       if (value !== arg) {
-        listeners.forEach(clb => clb(arg));
         value = arg;
       }
     }
   };
-
-  obj.subscribe = function (clb) {
-    listeners.push(clb);
-    return () => void listeners.splice(listeners.indexOf(clb), 1);
-  };
-
   return obj;
 }
 
@@ -25,11 +16,6 @@ function memory(name) {
 const currentJs = memory('js');
 const currentHtml = memory('html');
 const state = memory('state'); // null, 'installed', 'editor'
-
-const COLORS = {
-  green: '#16b378',
-}
-
 const DEFAULT_HTML = `<html>
 <head>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
@@ -64,15 +50,12 @@ let htmlModel;
 let jsModel;
 
 let monacoLoaded = false;
+/** Helper method that loads monaco scripts asynchronously  */
 async function loadMonaco() {
-  // Load all those scripts above.
-
   if (monacoLoaded) {
     return;
   }
-
   monacoLoaded = true;
-
   async function loadJs(url) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
@@ -93,12 +76,17 @@ async function loadMonaco() {
     });
   }
 
-  await loadCss(
-    'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css'
-  );
-  await loadJs(
-    'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js'
-  );
+  await Promise.allSettled([
+    loadJs(`api_deps.js`),
+
+    loadCss(
+      'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css'
+    ),
+
+    loadJs(
+      'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js'
+    ),
+  ]);
 
   window.require.config({
     paths: {
@@ -147,9 +135,9 @@ function buildEditor() {
     folding: false,
   });
   // Set tabSize - this can be done only after editor is created.
-  editor.getModel().updateOptions({ tabSize: 2 });
+  editor.getModel().updateOptions({tabSize: 2});
   // Disable scrolling past the last line - we will expand editor if necessary.
-  editor.updateOptions({ scrollBeyondLastLine: false });
+  editor.updateOptions({scrollBeyondLastLine: false});
   window.editor = editor;
 }
 const page_widget = document.getElementById('page_widget');
@@ -174,47 +162,21 @@ let wFrame = null;
 const bntTabs = [btnTabJs, btnTabHtml, btnTabHelp];
 const pages = [page_editor, page_help, page_widget];
 
+/** Clears element's innerHTML */
 function purge(element) {
-  while (element.firstChild) {
-    element.removeChild(element.firstChild);
+  if (!element) {
+    return;
   }
+  element.innerHTML = '';
 }
 
-let lastListener;
+let widgetWindow = null;
 function createFrame() {
   // remove all data from page_widget
   purge(page_widget);
   wFrame = document.createElement('iframe');
   page_widget.appendChild(wFrame);
-  const widgetWindow = wFrame.contentWindow;
-  // Rewire messages between this widget, and the preview
-  if (lastListener) window.removeEventListener('message', lastListener);
-  lastListener = e => {
-    if (e.source === widgetWindow) {
-      // Hijicack configure message to inform Grist that we have custom configuration.
-      // data will have { iface: "CustomSectionAPI", meth: "configure", args: [{}] }
-      if (
-        e.data?.iface === 'CustomSectionAPI' &&
-        e.data?.meth === 'configure'
-      ) {
-        e.data.args ??= [{}];
-        e.data.args[0].hasCustomOptions = true;
-      }
-      window.parent.postMessage(e.data, '*');
-    } else if (e.source === window.parent) {
-      // If user clicks `Open confirguration` button, we will switch to the editor.
-      // The message that we will receive is:
-      // {"mtype":1,"reqId":6,"iface":"editOptions","meth":"invoke","args":[]}
-      if (e.data?.iface === 'editOptions' && e.data?.meth === 'invoke') {
-        if (state() !== 'editor') {
-          showEditor();
-        }
-      } else {
-        widgetWindow.postMessage(e.data, '*');
-      }
-    }
-  };
-  window.addEventListener('message', lastListener);
+  widgetWindow = wFrame.contentWindow;
 }
 
 function init() {
@@ -256,6 +218,7 @@ function changeTab(lang) {
   page_editor.style.display = 'block';
   page_help.style.display = 'none';
   editor.setModel(lang === 'js' ? jsModel : htmlModel);
+  editor.getModel().updateOptions({tabSize: 2});
   selectTab(lang == 'js' ? btnTabJs : btnTabHtml);
 }
 
@@ -271,7 +234,7 @@ function installWidget(code, html) {
     if (!html.includes('grist-plugin-api.js')) {
       content.document.write(
         `<script src="https://docs.getgrist.com/grist-plugin-api.js"></` +
-          `script>`
+        `script>`
       );
     }
     content.document.write(`<script>${code}</` + `script>`);
@@ -313,26 +276,13 @@ async function showEditor() {
   btnInstall.style.display = 'inline-block';
   btnReset.style.display = 'inline-block';
   changeTab('html');
+  widgetWindow = null;
 }
 
-const onOptions = function (clb) {
-  let listen = true;
-  let last = undefined;
-  grist.onOptions((...data) => {
-    if (listen) {
-      if (last !== undefined) {
-        if (JSON.stringify(last) === JSON.stringify(data)) {
-          return;
-        }
-        last = data;
-      }
-      clb(...data);
-    }
-  });
-  return () => void (listen = false);
-};
+let lastOptions = null;
 
-onOptions(async options => {
+grist.onOptions(async options => {
+  lastOptions = options;
   if (!options) {
     if (state() === 'installed') {
       // If we are already installed, check that we don't have any code shown.
@@ -369,16 +319,20 @@ onOptions(async options => {
 
 function btnInstall_onClick() {
   const options = {
-    _installed: true,
     _js: jsModel.getValue(),
     _html: htmlModel.getValue(),
   };
-  grist.setOptions(options);
+
   state('installed');
 
-  // Copy file contents into memory.
-  currentJs(options?._js);
-  currentHtml(options?._html);
+  // Compare options with lastOptions, and if they are the same, don't call setOptions.
+  if (JSON.stringify(options) !== JSON.stringify(lastOptions)) {
+    grist.setOptions(options);
+
+    // Copy file contents into memory.
+    currentJs(options?._js);
+    currentHtml(options?._html);
+  }
 
   // Hide editor.
   page_editor.style.display = 'none';
@@ -395,10 +349,59 @@ function bntReset_onClick() {
   jsModel.setValue(DEFAULT_JS);
 }
 
-grist.ready({
-  onEditOptions: () => {
-    if (state() !== 'editor') {
-      showEditor();
+// We are here very careful to not call configure endpoint, as it will reload the editor
+// in case the configuration is different (between editor and the edited widget).
+// If the edited widget has column mapping (with mandatory columns), Grist will hide us briefly
+// to check the mappings and give user a chance to configure them. But during this period our
+// builder will be removed from dom (iframe will be hidden). When columns will be mapped, widget
+// will be recreated, but then if we report back to Grist that we don't need any mapping (as we do
+// since we don't know yet what the edited widget will require or did send previously) Grist will
+// once again hide us to check for mappings. It will then realize that no mappings are needed and
+// render us back again. But our edited widget will once more send the mapping, and then we will
+// fall into loop.
+// So here we call low level API to report that we are ready, without configuring anything.
+// This won't tell Grist that we are support `Open configuration`, but since by default we are
+// showing a widget, it will call it's ready message we will intercept it in the listener, and
+// append this configuration ourselves. This way, Grist will receive consistent configuration
+// about mapped columns.
+// Sorry for the long comment, but this is a tricky part.
+grist.rpc.sendReadyMessage();
+
+// We need to register something here. It doesn't matter what, we intercept the message from Grist
+// below in the listener.
+grist.rpc.registerFunc('editOptions', () => {});
+
+window.addEventListener('message', e => {
+  // If we haven't created the widget yet, nothing to do here.
+  if (!widgetWindow) {
+    return;
+  }
+  if (e.source === widgetWindow) {
+    // Hijack configure message to inform Grist that we have custom configuration.
+    // data will have { iface: "CustomSectionAPI", meth: "configure", args: [{}] }
+    if (
+      e.data?.iface === 'CustomSectionAPI' &&
+      e.data?.meth === 'configure'
+    ) {
+      e.data.args ??= [{}];
+      e.data.args[0].hasCustomOptions = true;
+      // Here is the tricky part. Inner widget is calling ready method and configure method (as
+      // part of grist.ready() call). Since we don't call configure method at all, we just append
+      // the `hasCustomOptions` to the configure method, and send it back to Grist. This way Grist
+      // will receive same configuration of mapping columns each time, which will avoid the infinite
+      // loop problem described above.
     }
-  },
+    window.parent.postMessage(e.data, '*');
+  } else if (e.source === window.parent) {
+    // If user clicks `Open configuration` button, we will switch to the editor.
+    // The message that we will receive is:
+    // {"mtype":1,"reqId":6,"iface":"editOptions","meth":"invoke","args":[]}
+    if (e.data?.iface === 'editOptions' && e.data?.meth === 'invoke') {
+      if (state() !== 'editor') {
+        showEditor();
+      }
+    } else {
+      widgetWindow.postMessage(e.data, '*');
+    }
+  }
 });
