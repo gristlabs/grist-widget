@@ -140,6 +140,8 @@ function buildEditor() {
   editor.updateOptions({scrollBeyondLastLine: false});
   window.editor = editor;
 }
+
+let optionsTimeout = null;
 const page_widget = document.getElementById('page_widget');
 const page_editor = document.getElementById('page_editor');
 const page_help = document.getElementById('page_help');
@@ -222,6 +224,8 @@ function changeTab(lang) {
   selectTab(lang == 'js' ? btnTabJs : btnTabHtml);
 }
 
+
+
 function installWidget(code, html) {
   state('installed');
   code = code ?? jsModel.getValue();
@@ -250,6 +254,17 @@ function installWidget(code, html) {
   [...document.getElementsByClassName('_button')].forEach(
     e => (e.style.display = 'none')
   );
+
+
+  // We need to let know Grist that we have custom option. We assume custom widget will call it, but
+  // if it doesn't, we will call it ourselves.
+  if (!optionsTimeout) {
+    optionsTimeout = setTimeout(() => {
+      grist.sectionApi.configure({
+        hasCustomOptions: true
+      });
+    }, 500);
+  }
 }
 
 async function showEditor() {
@@ -390,6 +405,11 @@ window.addEventListener('message', e => {
       // the `hasCustomOptions` to the configure method, and send it back to Grist. This way Grist
       // will receive same configuration of mapping columns each time, which will avoid the infinite
       // loop problem described above.
+
+
+      // Clear the timeout if it was registered. If it was null it will do nothing, if it was
+      // already cleared it will be ignored.
+      clearTimeout(optionsTimeout);
     }
     window.parent.postMessage(e.data, '*');
   } else if (e.source === window.parent) {
