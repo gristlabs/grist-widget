@@ -16,9 +16,6 @@
           padding: 5px;
           text-align: center;
       }
-      textarea {
-          display: none; /* Hide the textarea */
-      }
       button {
           background-color: #C9E7CA;
           border: none;
@@ -46,14 +43,12 @@
   <body>
     <div class="content">
     <button id="copy" onclick="copyText()">Copy</button>
-    <textarea value="" id="text"></textarea>
+    <input type="hidden" id="text" value="">
     <div id="error"></div>
     <script>
       function copyText() {
         var copyText = document.getElementById("text");
-        copyText.select();
-        copyText.setSelectionRange(0, 99999);
-        document.execCommand("copy");
+        navigator.clipboard.writeText(copyText.value);
         document.getElementById('copy').innerHTML = "Copied";
       }
       function showError(msg) {
