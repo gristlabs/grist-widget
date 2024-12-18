@@ -110,50 +110,79 @@
     <script>
   
       let links = {
-          county: '',
-          streetView: '',
-          coStar: ''
-        };
-  
-        function openLink(type) {
-          const url = links[type];
-          if (url) {
-            window.open(url, '_blank');
-          } else {
-            showError(`No URL available for ${type}`);
-          }
+        county: '',
+        streetView: '',
+        coStar: '',
+        copy: ''
+      };
+
+      function openLink(type) {
+        const url = links[type];
+        if (url) {
+          window.open(url, '_blank');
+        } else {
+          showError(`No URL available for ${type}`);
         }
-  
-        function copyText() {
-          var copyText = document.getElementById("text");
-          navigator.clipboard.writeText(copyText.value);
-          document.getElementById('copy').innerHTML = "Copied";
+      }
+
+      function copyText() {
+  const textToCopy = links.copy; // Value to copy
+  if (textToCopy) {
+    // Create a temporary textarea element
+    const tempTextArea = document.createElement('textarea');
+    tempTextArea.value = textToCopy;
+    document.body.appendChild(tempTextArea);
+
+    // Select and copy the text
+    tempTextArea.select();
+    tempTextArea.setSelectionRange(0, 99999); // For mobile devices
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        document.getElementById('copy').innerHTML = "Copied!";
+        setTimeout(() => document.getElementById('copy').innerHTML = "Copy", 2000);
+      } else {
+        showError("Failed to copy text.");
+      }
+    } catch (err) {
+      console.error("Fallback: Unable to copy text.", err);
+      showError("Clipboard access denied.");
+    }
+
+    // Clean up the temporary textarea
+    document.body.removeChild(tempTextArea);
+  } else {
+    showError("No text available to copy. Please ensure the Copy column is set.");
+  }
+}
+
+      function showError(msg) {
+        const el = document.getElementById('error');
+        if (!msg) {
+          el.style.display = 'none';
+        } else {
+          el.innerText = msg;
+          el.style.display = 'block';
         }
-  
-        function showError(msg) {
-          const el = document.getElementById('error');
-          if (!msg) {
-            el.style.display = 'none';
-          } else {
-            el.innerText = msg;
-            el.style.display = 'block';
-          }
-        }
-  
-        grist.ready({
-            columns: ["County", "Street_View", "CoStar"]
-        });
-  
-        grist.onRecord(function(record) {
-          const mapped = grist.mapColumnNames(record);
-  
-          // Dynamically update links
-          links.county = mapped?.County || '';
-          links.streetView = mapped?.Street_View || '';
-          links.coStar = mapped?.CoStar || '';
-  
-          showError(""); // Clear any error
-        });
+      }
+
+      // Grist integration
+      grist.ready({
+          columns: ["County", "Street_View", "CoStar", "Copy"] // Add Copy column
+      });
+
+      grist.onRecord(function(record) {
+        const mapped = grist.mapColumnNames(record);
+
+        // Update dynamic links and Copy button value
+        links.county = mapped?.County || '';
+        links.streetView = mapped?.Street_View || '';
+        links.coStar = mapped?.CoStar || '';
+        links.copy = mapped?.Copy || '';
+
+        console.log("Mapped links:", links); // Debugging log to ensure mapping works
+        showError(""); // Clear any error
+      });
       </script>
     </div>
   </body>
