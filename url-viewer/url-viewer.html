@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Grist Computed URL Viewer</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <style>
+      iframe {
+	position: fixed; 
+	top: 0;
+	left: 0; bottom: 0; right: 0;
+	width:100%;
+	height:100%;
+	border:none;
+	margin:0;
+	padding:0;
+	overflow:hidden;
+      }
+     div#error {
+       position:fixed;
+       top:0; left:0; 
+       border:2px solid;
+       padding: 1em;
+       display: show;
+       font-size: x-large;
+       background-color: #fee;
+    </style>
+  </head>
+  <body>
+    <iframe id="inlineFrame">
+    </iframe>
+    <div id="error">Waiting for data...</div>
+    <script>
+      const err_div = document.getElementById('error');
+      grist.ready({columns: ['URL'], requiredAccess: 'read table'});
+      grist.onRecord(function(record, mappings) {
+	const mapped = grist.mapColumnNames(record, mappings);
+	if (mapped)
+	{
+	  err_div.style.display = 'none';
+	  document.getElementById('inlineFrame').src = mapped.URL;
+	}
+	else
+	{
+	  err_div.innerHTML = "Please set up the column mapping.";
+	  err_div.style.display = 'show';
+	}
+
+      });
+    </script>
+  </body>
+</html>
