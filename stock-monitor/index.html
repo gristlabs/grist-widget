@@ -1,0 +1,130 @@
+<html lang="en">
+
+<head>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <script src="https://unpkg.com/vue@3"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    td {
+      border-bottom: 1px solid lightgray;
+    }
+
+    tr {
+      font-weight: bold;
+      height: 34px;
+    }
+
+    button {
+      width: 100%;
+      max-width: 220px;
+    }
+
+    #loader,
+    #config {
+      position: absolute;
+      inset: 0px;
+      z-index: 10;
+      background: lightgray;
+      opacity: 0.9;
+      display: grid;
+      place-items: center;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+
+    <div v-if="error" style="color: red">
+      {{error}}
+    </div>
+
+    <div id="loader" v-if="waiting">
+      {{message}}
+    </div>
+
+    <div v-if="!apikey">
+      <a href="#" @click="config = true">
+        Click to set the API key.
+      </a>
+    </div>
+
+    <div id="config" v-if="config">
+      <div style="width: clamp(200px, 50%, 600px)">
+        Enter polygon.io API key<br />
+        <input type="password" v-model="apikey" /> <br />
+        <button @click="saveConfig()">Save</button><br />
+        <span><b>WARNING</b>: Your API key will be stored in the document in plaintext. Anyone who can access
+          this document will also have access to that key.
+        </span>
+      </div>
+    </div>
+
+    Last update was on {{updated ? new Date(updated).toLocaleDateString() : "-"}}
+    <button @click="refresh()" :disabled="!apikey || !list" style="top: 10px; position: sticky">Refresh</button>
+    <table style="width: 220px; text-align: left; font-family: Arial; font-size: 13px;">
+      <tr style=" color: gray; height: 24px">
+        <th>Symbol</th>
+        <th>Last</th>
+      </tr>
+      <tr v-for="s in list">
+        <td>{{s.Name}}</td>
+        <td style="text-align: right">{{s.Price ? new Intl.NumberFormat().format(s.Price) : 0}}</td>
+      </tr>
+    </table>
+  </div>
+  <div style="font-size: smaller; margin-top: 2em">
+    This is an example of a custom widget that can read
+    and update stock prices in a Grist table. Stock prices
+    are read from <a href="https://polygon.io/">polygon.io</a>.
+    <br />
+    In order to use this widget you need to:
+    <ol>
+      <li>Obtain your API key. To do it, go to
+        <a href="https://polygon.io/">https://polygon.io/</a>
+        and register for a free or paid account. After verification, you can get your
+        API key from <a href="https://polygon.io/dashboard/api-keys">this URL.</a>
+        Once you have the API Key, click on the "Click to set the API key" link at the top,
+        and paste your API Key. Your API key will be stored in this document in plaintext -
+        anyone who has access to this document will be able to see it.
+      </li>
+      <li>
+        Give full permission to this widget. Note that this will allow it to read and update
+        all data in this document.
+      </li>
+      <li>
+        Map columns using the <i>Creator Panel</i>. Click on the ellipsis menu in the top
+        right corner and select "Widget options". In the last section pick columns you
+        want to use. The <i>Symbol</i> column should contain a stock symbol that is used in Yahoo
+        Finance service (for example TSLA for Tesla, Inc.). The <i>Price</i> column is a column
+        that this widget will update.
+      </li>
+      <li>
+        Map columns using the Creator Panel. Click on the ellipsis menu in the top
+        right corner and select "Widget options". In the last section pick columns you
+        want to use. Symbol column should contain stock symbol that is used in Yahoo
+        Finance service (for example TSLA for Tesla, Inc.). Price column is a column
+        that this widget will update. <i>Updated</i> column is optional, this widget will
+        only read that column to provide you information on when stock prices were last updated.
+        You can use a <i>Trigger formula column</i> to track when the row was last updated.
+        <a href="https://support.getgrist.com/examples/2021-07-auto-stamps/">Read more about automatic time stamps</a>.
+      </li>
+    </ol>
+  </div>
+  <script src="index.js"></script>
+</body>
+
+</html>
