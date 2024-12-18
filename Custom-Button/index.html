@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Custom Widget</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <style>
+      html, body {
+          padding: 0;
+          margin: 0;
+          background-color: #C9E7CA; /* Green background */
+          font-family: Arial, sans-serif;
+      }
+
+      button {
+          border: none;
+          color: white;
+          padding: 8px 16px;
+          text-align: center;
+          text-decoration: none;
+          font-weight: bolder;
+          display: inline-block;
+          font-size: 14px;
+          border-radius: 8px; /* Rounded sides */
+          cursor: pointer;
+          transition: background-color 0.3s, box-shadow 0.2s ease-in-out;
+          white-space: nowrap;
+      }
+
+      button:hover {
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      #county-button {
+          background-color: #B0B0B0; /* Grey */
+      }
+      #county-button:hover {
+          background-color: #9C9C9C;
+      }
+
+      #street-view-button, #co-star-button {
+          background-color: #6CA0DC; /* Blue */
+      }
+      #street-view-button:hover, #co-star-button:hover {
+          background-color: #4A7FA6;
+      }
+
+      #copy {
+          background-color: #C9E7CA; /* Green */
+          color: black;
+          flex-grow: 1; /* Make it fill the space */
+          text-align: center;
+          border: 2px solid #A5D7A7;
+      }
+      #copy:hover {
+          background-color: #a5d7a7;
+      }
+
+      /* Layout container */
+      .content {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          height: 100vh;
+          padding: 10px;
+      }
+
+      .button-container {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin: 0 auto;
+          width: 90%;
+      }
+
+      .side-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+      }
+
+      #error {
+          display: none;
+          background: red;
+          color: white;
+          padding: 5px;
+          text-align: center;
+          margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      <div class="button-container">
+        <!-- Left Buttons -->
+        <div class="side-buttons">
+          <button id="county-button" onclick="openLink('county')">🔍 County</button>
+          <button id="street-view-button" onclick="openLink('streetView')">🚶‍♂️ Street View</button>
+        </div>
+        
+        <!-- Center Copy Button -->
+        <button id="copy" onclick="copyText()">Copy</button>
+        
+        <!-- Right Button -->
+        <div class="side-buttons">
+          <button id="co-star-button" onclick="openLink('coStar')">CoStar</button>
+        </div>
+      </div>
+      <div id="error"></div>
+    <script>
+  
+      let links = {
+          county: '',
+          streetView: '',
+          coStar: ''
+        };
+  
+        function openLink(type) {
+          const url = links[type];
+          if (url) {
+            window.open(url, '_blank');
+          } else {
+            showError(`No URL available for ${type}`);
+          }
+        }
+  
+        function copyText() {
+          var copyText = document.getElementById("text");
+          navigator.clipboard.writeText(copyText.value);
+          document.getElementById('copy').innerHTML = "Copied";
+        }
+  
+        function showError(msg) {
+          const el = document.getElementById('error');
+          if (!msg) {
+            el.style.display = 'none';
+          } else {
+            el.innerText = msg;
+            el.style.display = 'block';
+          }
+        }
+  
+        grist.ready({
+            columns: ["County", "Street_View", "CoStar"]
+        });
+  
+        grist.onRecord(function(record) {
+          const mapped = grist.mapColumnNames(record);
+  
+          // Dynamically update links
+          links.county = mapped?.County || '';
+          links.streetView = mapped?.Street_View || '';
+          links.coStar = mapped?.CoStar || '';
+  
+          showError(""); // Clear any error
+        });
+      </script>
+    </div>
+  </body>
+</html>
+
