@@ -1,0 +1,22 @@
+{
+  "name": "@antol/widget-drop-down",
+  "description": "Simple drop-down widget for Grist.",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Drop-down Widget",
+    "url": "https://gristlabs.github.io/grist-widget/drop-down/index.html",
+    "widgetId": "@gristlabs/widget-drop-down",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true,
+    "description": "Display a drop-down menu with options from a column.",
+    "authors": [
+      {
+        "name": "Antol Peshkov",
+        "url": "https://github.com/Antol"
+      }
+    ],
+    "isGristLabsMaintained": false
+  }
+}

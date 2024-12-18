@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Drop-down Widget</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--grist-theme-page-bg);
+      color: var(--grist-theme-text);
+    }
+    #container {
+      position: relative;
+      height: 100%;
+    }
+    #dropdown {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 2px;
+      height: 100%;
+      background-color: var(--grist-theme-page-panels-main-panel-bg);
+      border: 1px solid var(--grist-theme-table-body-border);
+      color: var(--grist-theme-text);
+    }
+    #error {
+      display: none;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 50%;
+      height: 100%;
+      background: rgba(208, 2, 27, 0.8);
+      color: white;
+      padding: 2px;
+      font-size: 12px;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    #dropdown:focus {
+      outline: 2px solid var(--grist-theme-cursor);
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <select id="dropdown"></select>
+    <div id="error"></div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
