@@ -13,7 +13,7 @@
           display: none;
           background: red;
           color: white;
-          padding: 20px;
+          padding: 10px;
           text-align: center;
       }
       textarea {
@@ -21,33 +21,33 @@
           box-sizing: border-box;
       }
       button {
-          background-color: #4CAF50;
+          background-color: #C9E7CA;
           border: none;
           color: white;
-          padding: 15px 32px;
+          padding: 7px 16px;
           text-align: center;
           text-decoration: none;
           display: inline-block;
-          font-size: 16px;
-          border-radius: 8px;
+          font-size: 8px;
+          border-radius: 4px;
       }
       button:hover {
-          background-color: #40A000;
+          background-color: #A5D7A7;
       }
       .content {
           display: flex;
           flex-direction: column;
-          height: 100vh;
-          padding: 20px;
+          height: 50vh;
+          padding: 10px;
       }
       .content div, .content button, .content textarea {
-          margin: 20px;
+          margin: 10px;
       }
     </style>
   </head>
   <body>
     <div class="content">
-    <button id="copy" onclick="copyText()">Copy Text</button>
+    <button id="copy" onclick="copyText()">Copy</button>
     <textarea value="" id="text"></textarea>
     <div id="error"></div>
     <script>
