@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Copy To Clipboard</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <style>
+      html, body {
+          padding: 0px;
+          margin: 0px;
+      }
+      #error {
+          display: none;
+          background: red;
+          color: white;
+          padding: 20px;
+          text-align: center;
+      }
+      textarea {
+          flex: 1;
+          box-sizing: border-box;
+      }
+      button {
+          background-color: #4CAF50;
+          border: none;
+          color: white;
+          padding: 15px 32px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          border-radius: 8px;
+      }
+      button:hover {
+          background-color: #40A000;
+      }
+      .content {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          padding: 20px;
+      }
+      .content div, .content button, .content textarea {
+          margin: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+    <button id="copy" onclick="copyText()">Copy Text</button>
+    <textarea value="" id="text"></textarea>
+    <div id="error"></div>
+    <script>
+      function copyText() {
+        var copyText = document.getElementById("text");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        document.getElementById('copy').innerHTML = "Copied";
+      }
+      function showError(msg) {
+        var el = document.getElementById('error')
+        if (!msg) {
+          el.style.display = 'none';
+        } else {
+          el.innerHTML = msg;
+          el.style.display = 'block';
+        }
+      }
+      // Returns first column from a record or undefined.
+      function firstColumn(record) {
+        return record ? record[Object.keys(record).filter(k => k !== 'id')[0]] : undefined;
+      }
+      function showData(data) {
+        showError("");
+        document.getElementById('text').value = data;
+        document.getElementById('copy').innerHTML = "Copy Text";
+      }
+      grist.ready({
+        columns: ["Column"]
+      });
+      grist.on('message', (e) => {
+        if (e.tableId) { tableId = e.tableId; }
+      });
+      grist.onRecord(function(record) {
+        const mapped = grist.mapColumnNames(record);
+        // We will fallback to reading a value from a first column to
+        // support old way of mapping (exposing only a single column).
+        // New widgets should only check if mapped object is truthy.
+        const value = mapped?.Column ?? firstColumn(record);
+        if (value === undefined) {
+          showError("Select a column to copy using the Creator Panel.");
+        } else {
+          showData(value);
+        }
+      });
+    </script>
+    </div>
+  </body>
+</html>
