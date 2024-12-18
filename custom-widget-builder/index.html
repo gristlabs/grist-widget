@@ -1,0 +1,166 @@
+<html lang="en" style="height: 100%; margin: 0px; padding: 0px">
+
+<head>
+  <meta charset="utf-8">
+  <title>Grist Fiddle</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    #page_widget {
+      flex: 1;
+      border: 0px;
+      display: none;
+    }
+
+    #page_widget iframe {
+      height: 100%;
+      width: 100%;
+      border: 0px;
+    }
+
+    ._tab {
+      border-bottom: 0px;
+      padding: 2px 8px;
+      border: 1px solid gray;
+      cursor: pointer;
+    }
+
+    ._tab.selected {
+      background: #16b378;
+      color: white;
+    }
+
+    html,
+    body {
+      font-size: 13px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Liberation Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+  </style>
+</head>
+
+<body style="height: 100%; display: flex; flex-direction: column; margin: 0px; overflow: hidden;">
+  <div id="_bar" style="display: none; flex: 0; justify-content: space-between; font-size: 12px; font-family: Arial, Helvetica, sans-serif;">
+    <div style="user-select: none;">
+      <span class="_tab" id="tab_html" onclick="changeTab('html');">HTML</span>
+      <span class="_tab" id="tab_js" onclick="changeTab('js');">JavaScript</span>
+      <span class="_tab" id="tab_help" onclick="changeTab('help');">Help</span>
+    </div>
+    <div>
+      <span class="_button" id="btnReset" onclick="bntReset_onClick();" style="padding: 2px 8px; border: 1px solid gray; cursor: pointer;">Reset</span>
+      <span class="_button" id="btnInstall" onclick="btnInstall_onClick();" style="padding: 2px 8px; border: 1px solid gray; cursor: pointer;">Preview</span>
+    </div>
+  </div>
+  <div id="page_editor" style="display: none; flex-grow:1; box-sizing: border-box; border-top:1px solid #a0a0a0;  border-bottom:1px solid #a0a0a0;">
+    <div id="container" style="border-top:0px; height: 100%; box-sizing: border-box;"></div>
+  </div>
+  <div id="page_widget">
+
+  </div>
+  <div id="page_help" style="display: none; overflow: hidden; flex-grow:1; box-sizing: border-box; border-top:1px solid #a0a0a0;  border-bottom:1px solid #a0a0a0;">
+    <div id="container_help" style="border-top:0px; height: 100%; box-sizing: border-box;">
+      <div style="padding: 10px; overflow-y: scroll; height: 100%;">
+        <style>
+          /* https://developer.mozilla.org/en-US/docs/Web/CSS/Nesting_selector */
+          #page_help {
+            h2 {
+              color: #333;
+            }
+
+            p {
+              margin: 10px 0;
+            }
+
+            ul {
+              margin: 10px 0;
+              padding-left: 20px;
+            }
+
+            li {
+              margin: 5px 0;
+            }
+
+            .note,
+            .developer-note {
+              background-color: #ffeeba;
+              border: 1px solid #ffeeba;
+              padding: 10px;
+              margin: 10px 0;
+              border-radius: 5px;
+            }
+
+            .developer-note {
+              background-color: #d1ecf1;
+              border-color: #bee5eb;
+            }
+
+            .developer-note h3 {
+              margin-top: 0;
+            }
+
+            .code-snippet {
+              background-color: #f8f9fa;
+              border: 1px solid #ddd;
+              padding: 10px;
+              margin: 10px 0;
+              border-radius: 5px;
+              font-family: "Courier New", Courier, monospace;
+            }
+          }
+        </style>
+
+        <h2>How to use this editor</h2>
+        <p>
+          This editor allows you to write code for a custom widget and "install" it inside a Grist document.
+        </p>
+        <p>
+          There are two tabs: <strong>JavaScript</strong> and <strong>HTML</strong>. The <strong>JavaScript</strong> tab is where you write code that interacts with the Grist plugin API, while the <strong>HTML</strong> tab is where you write the code that displays the results of the JavaScript code.
+        </p>
+
+        <h2>Modifying the Custom Widget</h2>
+        <p>
+          To open the editor, click the <code>"Open configuration"</code> button in the creator panel or clear saved filter settings for this tab.
+        </p>
+
+        <h2>Installing the Custom Widget</h2>
+        <ul>
+          <li>
+            When you click the <code>"Preview"</code> button, the widget (both the JavaScript and HTML code) will be saved in the document's metadata, and the editor will then replace itself with the widget you have created.
+          </li>
+          <li>
+            After installing the widget, you need to press the <code>"Save"</code> button and save the configuration for a tab. It works similarly to saving filters in Grist.
+          </li>
+        </ul>
+
+        <div class="note">
+          <strong>Note:</strong> There is no autosave feature, so if you refresh the page without installing or saving, the widget content will be lost.
+        </div>
+
+
+        <div class="developer-note">
+          <h3>Note for Developers</h3>
+          <p>
+            The widget's state is persisted in the widget's metadata as <strong>JSON</strong>, with content encoded as two properties: <code>_js</code> and <code>_html</code>.
+          </p>
+          <div class="code-snippet">
+            <pre><code>
+grist.setOptions({
+  _installed: true, // Flat indicating that the widget is installed.
+  _js: `...your js code....`,
+  _html: `...your html code...`,
+});
+            </code></pre>
+          </div>
+          <p>
+            In the final widget, the <code>_html</code> field is inserted as is into an iframe, and the <code>_js</code> field is embedded within a script tag afterwards.
+          </p>
+          <p>
+            For more details on custom widget development, please refer to the <a href="https://support.getgrist.com/widget-custom/" target="_blank">official Grist documentation</a>.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="api.js"></script>
+</body>
+
+</html>
