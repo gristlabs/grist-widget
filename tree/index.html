@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <style>
         #map { height: 900px; }
         .logo-overlay {
@@ -1907,6 +1909,12 @@
         
         // Add the cluster group to the map
         map.addLayer(markers);
+
+        var map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        L.Control.geocoder().addTo(map);
     </script>
 </body>
 </html>
