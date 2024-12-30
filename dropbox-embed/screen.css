@@ -102,37 +102,6 @@ html, body, #map {
   color: #555;
 }
 
-#search-box {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 1000;
-  background: white;
-  padding: 5px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-#search-box input {
-  width: 200px;
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
-
-#search-box button {
-  padding: 5px 10px;
-  border: none;
-  background-color: #007acc;
-  color: white;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-#search-box button:hover {
-  background-color: #005f99;
-}
-
 .leaflet-popup-content b {
   font-weight: bold;
 }
