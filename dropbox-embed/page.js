@@ -51,34 +51,7 @@ const selectedIcon =  new L.Icon({
 });
 const defaultIcon =  new L.Icon.Default();
 
-const searchInput = document.getElementById('search-input');
-const searchButton = document.getElementById('search-button');
 
-searchButton.addEventListener('click', () => {
-  performSearch(searchInput.value);
-});
-
-async function performSearch(query) {
-  if (!query.trim()) {
-    alert('Please enter a search term.');
-    return;
-  }
-
-  // Geocode the query
-  geocoder.geocode(query, (results) => {
-    if (!results || results.length === 0) {
-      alert('Location not found.');
-      return;
-    }
-
-    const { lat, lng } = results[0].center;
-
-    // Pan the map to the search result and add a marker
-    amap.setView([lat, lng], 15);
-    const searchMarker = L.marker([lat, lng], { title: query }).addTo(amap);
-    searchMarker.bindPopup(`<strong>${query}</strong>`).openPopup();
-  });
-}
 
 // Creates clusterIcons that highlight if they contain selected row
 // Given a function `() => selectedMarker`, return a cluster icon create function
