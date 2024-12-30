@@ -51,28 +51,34 @@ const selectedIcon =  new L.Icon({
 });
 const defaultIcon =  new L.Icon.Default();
 
-document.getElementById('search-button').addEventListener('click', async () => {
-  const query = document.getElementById('search-input').value.trim();
-  if (!query) return alert('Please enter a search term.');
+const searchInput = document.getElementById('search-input');
+const searchButton = document.getElementById('search-button');
 
-  // Use Leaflet's Geocoder to find location
+searchButton.addEventListener('click', () => {
+  performSearch(searchInput.value);
+});
+
+async function performSearch(query) {
+  if (!query.trim()) {
+    alert('Please enter a search term.');
+    return;
+  }
+
+  // Geocode the query
   geocoder.geocode(query, (results) => {
-    if (results.length === 0) {
+    if (!results || results.length === 0) {
       alert('Location not found.');
       return;
     }
 
     const { lat, lng } = results[0].center;
 
-    // Move the map to the search result
+    // Pan the map to the search result and add a marker
     amap.setView([lat, lng], 15);
-
-    // Optionally add a marker
     const searchMarker = L.marker([lat, lng], { title: query }).addTo(amap);
     searchMarker.bindPopup(`<strong>${query}</strong>`).openPopup();
   });
-});
-
+}
 
 // Creates clusterIcons that highlight if they contain selected row
 // Given a function `() => selectedMarker`, return a cluster icon create function
