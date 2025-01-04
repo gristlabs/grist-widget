@@ -2,113 +2,118 @@ require([
   "esri/Map",
   "esri/views/MapView",
   "esri/layers/FeatureLayer",
-  "esri/widgets/LayerList"
-], function (Map, MapView, FeatureLayer, LayerList) {
-  // Create the map with a hybrid basemap
+  "esri/widgets/LayerList",
+  "esri/renderers/SimpleRenderer",
+  "esri/symbols/SimpleLineSymbol",
+  "esri/symbols/SimpleFillSymbol"
+], function (Map, MapView, FeatureLayer, LayerList, SimpleRenderer, SimpleLineSymbol, SimpleFillSymbol) {
   var map = new Map({
     basemap: "hybrid"
   });
 
-  // Create the view centered on Oregon
   var view = new MapView({
     container: "myMap",
     map: map,
-    center: [-123.018723, 44.925675], // Longitude, Latitude
-    zoom: 12
+    center: [-123.018723, 44.925675],
+    zoom: 18
   });
 
-  // Define the Tax Code layer with custom styling and popup template
-  var taxCodeLayer = new FeatureLayer({
-    url: "https://services8.arcgis.com/8PAo5HGmvRMlF2eU/arcgis/rest/services/or_cadastral_wm/FeatureServer/2",
-    title: "Tax Code",
-    renderer: {
-      type: "simple", // Simple Renderer
-      symbol: {
-        type: "simple-fill", // Fill symbol for polygons
-        color: [255, 255, 178, 0.6], // Light yellow with transparency
-        outline: {
-          color: [255, 255, 0], // Yellow outline
+  // Define the Real Property layer
+  var realPropertyLayer = new FeatureLayer({
+    url: "https://services8.arcgis.com/8PAo5HGmvRMlF2eU/arcgis/rest/services/or_cadastral_wm/FeatureServer/6",
+    title: "Real Property",
+    outFields: ["*"],
+    visible: false,  // Hide this layer but keep it for queries
+    renderer: new SimpleRenderer({
+      symbol: new SimpleFillSymbol({
+        color: [0, 0, 0, 0],
+        outline: new SimpleLineSymbol({
+          color: [225, 237, 245, 0.5],
           width: 1
-        }
-      }
-    },
-    popupTemplate: {
-      title: "Tax Code Area",
-      content: "<b>Tax Code:</b> {TaxCode}<br><b>Description:</b> {Description}"
-    }
+        })
+      })
+    })
   });
 
-  // Define the Map Index layer with custom styling and popup template
-  var mapIndexLayer = new FeatureLayer({
-    url: "https://services8.arcgis.com/8PAo5HGmvRMlF2eU/arcgis/rest/services/or_cadastral_wm/FeatureServer/3",
-    title: "Map Index",
-    renderer: {
-      type: "simple",
-      symbol: {
-        type: "simple-fill",
-        color: [178, 223, 138, 0.6], // Light green with transparency
-        outline: {
-          color: [51, 160, 44], // Dark green outline
-          width: 1
-        }
-      }
-    },
-    popupTemplate: {
-      title: "Map Index",
-      content: "<b>Index Number:</b> {IndexNumber}<br><b>Additional Info:</b> {Info}"
-    }
-  });
-
-  // Define the Tax Lot layer with custom styling and popup template
+  // Define the Tax Lot layer with modified popup template
   var taxLotLayer = new FeatureLayer({
     url: "https://services8.arcgis.com/8PAo5HGmvRMlF2eU/arcgis/rest/services/or_cadastral_wm/FeatureServer/4",
-    title: "Tax Lot",
-    renderer: {
-      type: "simple",
-      symbol: {
-        type: "simple-fill",
-        color: [166, 206, 227, 0.6], // Light blue with transparency
-        outline: {
-          color: [31, 120, 180], // Dark blue outline
+    title: "Tax Lots",
+    outFields: ["*"],
+    renderer: new SimpleRenderer({
+      symbol: new SimpleFillSymbol({
+        color: [0, 0, 0, 0],
+        outline: new SimpleLineSymbol({
+          color: [225, 237, 245, 0.5],
           width: 1
-        }
-      }
-    },
-    popupTemplate: {
-      title: "Tax Lot Information",
-      content: "<b>Owner Name:</b> {OwnerName}<br><b>Tax Lot:</b> {TaxLot}"
-    }
+        })
+      }),
+      visualVariables: [{
+        type: "visibility",
+        minDataValue: 14,
+        maxDataValue: 15,
+        minSize: 0,
+        maxSize: 1
+      }]
+    })
   });
 
-  // Define the Real Property Table layer with custom styling and popup template
-  var realPropertyTableLayer = new FeatureLayer({
-    url: "https://services8.arcgis.com/8PAo5HGmvRMlF2eU/arcgis/rest/services/or_cadastral_wm/FeatureServer/6",
-    title: "Real Property Table",
-    renderer: {
-      type: "simple",
-      symbol: {
-        type: "simple-fill",
-        color: [251, 154, 153, 0.6], // Light red with transparency
-        outline: {
-          color: [227, 26, 28], // Dark red outline
-          width: 1
-        }
+  // Function to query real property information
+  function queryRealProperty(maptaxlot) {
+    const query = realPropertyLayer.createQuery();
+    query.where = `MapTaxlot = '${maptaxlot}'`;
+    query.outFields = ["*"];
+    return realPropertyLayer.queryFeatures(query);
+  }
+
+  // Set up view click event handler
+  view.on("click", function(event) {
+    view.hitTest(event).then(function(response) {
+      const taxLotFeature = response.results.find(result => 
+        result.graphic.layer === taxLotLayer
+      );
+
+      if (taxLotFeature) {
+        const maptaxlot = taxLotFeature.graphic.attributes.MapTaxlot;
+        
+        queryRealProperty(maptaxlot).then(function(results) {
+          if (results.features.length > 0) {
+            const propertyInfo = results.features[0].attributes;
+            
+            // Create and show popup
+            view.popup.open({
+              title: "Property Information",
+              location: event.mapPoint,
+              content: `
+                <div class="property-info">
+                  <p><strong>Map Taxlot:</strong> ${propertyInfo.MapTaxlot || 'N/A'}</p>
+                  <p><strong>Owner:</strong> ${propertyInfo.OwnerLine1 || 'N/A'}</p>
+                  <p><strong>Business Name:</strong> ${propertyInfo.OwnerLine2 || 'N/A'}</p>
+                  <p><strong>Additional Info:</strong> ${propertyInfo.OwnerLine3 || 'N/A'}</p>
+                  <p><strong>Mailing Address:</strong> ${propertyInfo.MailAdd1 || 'N/A'}</p>
+                  <p><strong>Mailing Address 2:</strong> ${propertyInfo.MailAdd2 || 'N/A'}</p>
+                  <p><strong>Mailing City:</strong> ${propertyInfo.MailCity || 'N/A'}</p>
+                  <p><strong>Mailing Zip:</strong> ${propertyInfo.MailZip || 'N/A'}</p>
+                  <p><strong>Site Address:</strong> ${propertyInfo.SiteAddNam || 'N/A'}</p>
+                  <p><strong>Site City:</strong> ${propertyInfo.SiteAddCty || 'N/A'}</p>
+                </div>
+              `
+            });
+          }
+        }).catch(function(error) {
+          console.error("Error querying real property:", error);
+        });
       }
-    },
-    popupTemplate: {
-      title: "Real Property Info",
-      content: "<b>Property ID:</b> {PropertyID}<br><b>Address:</b> {Address}"
-    }
+    });
   });
 
-  // Add the layers to the map
-  map.addMany([taxCodeLayer, mapIndexLayer, taxLotLayer, realPropertyTableLayer]);
+  // Add layers to the map
+  map.add(taxLotLayer);
+  map.add(realPropertyLayer);
 
-  // Add a Layer List widget for toggling visibility
+  // Add Layer List widget
   var layerList = new LayerList({
     view: view
   });
-
-  // Add the LayerList widget to the top-right corner of the view
   view.ui.add(layerList, "top-right");
 });
