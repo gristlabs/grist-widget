@@ -37,6 +37,7 @@ const GeocodedAddress = 'GeocodedAddress';
 let lastRecord;
 let lastRecords;
 
+
 //Color markers downloaded from leaflet repo, color-shifted to green
 //Used to show currently selected pin
 const selectedIcon =  new L.Icon({
@@ -50,7 +51,17 @@ const selectedIcon =  new L.Icon({
 });
 const defaultIcon =  new L.Icon.Default();
 
+
+
 // Creates clusterIcons that highlight if they contain selected row
+// Given a function `() => selectedMarker`, return a cluster icon create function
+// that can be passed to MarkerClusterGroup({iconCreateFunction: ... } )
+//
+// Cluster with selected record gets the '.marker-cluster-selected' class
+// (defined in screen.css)
+//
+// Copied from _defaultIconCreateFunction in ClusterMarkerGroup
+//    https://github.com/Leaflet/Leaflet.markercluster/blob/master/src/MarkerClusterGroup.js
 const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
   return function(cluster) {
     var childCount = cluster.getChildCount();
@@ -58,6 +69,10 @@ const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
     let isSelected = false;
     try {
       const selectedMarker = selectedMarkerGetter();
+
+      // hmm I think this is n log(n) to build all the clusters for the whole map.
+      // It's probably fine though, it only fires once when map markers
+      // are set up or when selectedRow changes
       isSelected = cluster.getAllChildMarkers().filter((m) => m == selectedMarker).length > 0;
     } catch (e) {
       console.error("WARNING: Error in clusterIconFactory in map widget");
@@ -126,15 +141,27 @@ let scanning = null;
 async function scan(tableId, records, mappings) {
   if (!writeAccess) { return; }
   for (const record of records) {
+    // We can only scan if Geocode column was mapped.
     if (!(Geocode in record)) { break; }
+    // And the value in the column is truthy.
     if (!record[Geocode]) { continue; }
+    // Get the address to search.
     const address = record.Address;
+    // Little caching here. We will set GeocodedAddress to last address we searched,
+    // so after next round - we will check if the address is indeed changed.
+    // But this field is optional, if it is not in the record (not mapped)
+    // we will find the location each time (if coordinates are empty).
     if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
+      // We have caching field, and last address is diffrent.
+      // So clear coordinates (as if the record wasn't scanned before)
       record[Longitude] = null;
       record[Latitude] = null;
     }
+    // If address is not empty, and coordinates are empty (or were cleared by cache)
     if (address && !record[Longitude]) {
+      // Find coordinates.
       const result = await geocode(address);
+      // Update them, and update cache (if the field was mapped)
       await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
         [mappings[Longitude]]: result.lng,
         [mappings[Latitude]]: result.lat,
@@ -155,6 +182,8 @@ function showProblem(txt) {
   document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
 }
 
+// Little extra wrinkle to deal with showing differences.  Should be taken
+// care of by Grist once diffing is out of beta.
 function parseValue(v) {
   if (typeof(v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
     const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
@@ -169,18 +198,20 @@ function getInfo(rec) {
     name: parseValue(rec[Name]),
     lng: parseValue(rec[Longitude]),
     lat: parseValue(rec[Latitude]),
-    propertyType: parseValue(rec['Property_Type']),
-    tenants: parseValue(rec['Tenants']),
-    secondaryType: parseValue(rec['Secondary_Type']),
-    imageUrl: parseValue(rec['ImageURL']),
-    costarLink: parseValue(rec['CoStar_URL']),
-    countyLink: parseValue(rec['County_Hyper']),
-    gisLink: parseValue(rec['GIS']),
+    propertyType: parseValue(rec['Property_Type']),  // Add Property Type column
+    tenants: parseValue(rec['Tenants']),  // Add Tenants column
+    secondaryType: parseValue(rec['Secondary_Type']),  // Add Secondary Type column
+    imageUrl: parseValue(rec['ImageURL']),  // Add Image URL column
+    costarLink: parseValue(rec['CoStar_URL']),  // Add CoStar link column
+    countyLink: parseValue(rec['County_Hyper']),  // Add County link column
+    gisLink: parseValue(rec['GIS']),  // Add GIS link column
   };
   return result;
 }
 
+// Function to clear last added markers. Used to clear the map when new record is selected.
 let clearMakers = () => {};
+
 let markers = [];
 
 function updateMap(data) {
@@ -196,6 +227,12 @@ function updateMap(data) {
     return;
   }
 
+
+  // Map tile source:
+  //    https://leaflet-extras.github.io/leaflet-providers/preview/
+  //    Old source was natgeo world map, but that only has data up to zoom 16
+  //    (can't zoom in tighter than about 10 city blocks across)
+  //
   const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
 
   const error = document.querySelector('.error');
@@ -205,43 +242,36 @@ function updateMap(data) {
       amap.off();
       amap.remove();
     } catch (e) {
+      // ignore
       console.warn(e);
     }
   }
   const map = L.map('map', {
     layers: [tiles],
-    wheelPxPerZoomLevel: 90,
+    wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
   });
 
-  // Add the search control
-  const searchControl = L.Control.Geocoder.nominatim({
-    defaultMarkGeocode: false,
-    position: 'topleft',
-    placeholder: 'Search for a location...'
-  });
-  searchControl.addTo(map);
-
-  // Handle the search result
-  searchControl.on('markgeocode', function(result) {
-    const bbox = result.geocode.bbox;
-    map.fitBounds([
-      [bbox.getSouth(), bbox.getWest()],
-      [bbox.getNorth(), bbox.getEast()]
-    ]);
-  });
-
+  // Make sure clusters always show up above points
+  // Default z-index for markers is 600, 650 is where tooltipPane z-index starts
   map.createPane('selectedMarker').style.zIndex = 620;
-  map.createPane('clusters').style.zIndex = 610;
-  map.createPane('otherMarkers').style.zIndex = 600;
+  map.createPane('clusters'      ).style.zIndex = 610;
+  map.createPane('otherMarkers'  ).style.zIndex = 600;
 
-  const points = [];
+  const points = []; //L.LatLng[], used for zooming to bounds of all markers
 
-  popups = {};
+  popups = {}; // Map: {[rowid]: L.marker}
+  // Make this before markerClusterGroup so iconCreateFunction
+  // can fetch the currently selected marker from popups by function closure
+
   markers = L.markerClusterGroup({
     disableClusteringAtZoom: 18,
-    maxClusterRadius: 30,
+    //If markers are very close together, they'd stay clustered even at max zoom
+    //This disables that behavior explicitly for max zoom (18)
+    maxClusterRadius: 30, //px, default 80
+    // default behavior clusters too aggressively. It's nice to see individual markers
     showCoverageOnHover: true,
-    clusterPane: 'clusters',
+
+    clusterPane: 'clusters', //lets us specify z-index, so cluster icons can be on top
     iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
   });
 
@@ -250,45 +280,47 @@ function updateMap(data) {
     selectMaker(id);
   });
 
-  for (const rec of data) {
-    const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(rec);
-    
-    if (String(lng) === '...') { continue; }
-    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-      continue;
-    }
-
-    const pt = new L.LatLng(lat, lng);
-    points.push(pt);
-
-    const marker = L.marker(pt, {
-      title: name,
-      id: id,
-      icon: (id == selectedRowId) ? selectedIcon : defaultIcon,
-      pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
-    });
-
-    const popupContent = `
-    <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-      <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${name}</strong>
-      ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-      <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${propertyType}</p>
-      <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${secondaryType}</p>
-      <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${tenants}</p>
-      <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
-        <a href="${costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
-        <a href="${countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
-        <a href="${gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
-      </div>
-    </div>
-    `;
-
-    marker.bindPopup(popupContent);
-    markers.addLayer(marker);
-
-    popups[id] = marker;
-  }
+for (const rec of data) {
+  const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(rec);
   
+  if (String(lng) === '...') { continue; }
+  if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
+    continue;
+  }
+
+  const pt = new L.LatLng(lat, lng);
+  points.push(pt);
+
+  const marker = L.marker(pt, {
+    title: name,
+    id: id,
+    icon: (id == selectedRowId) ?  selectedIcon : defaultIcon,
+    pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
+  });
+
+  // Build HTML content for the popup, similar to your Mapbox example
+  const imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
+  const popupContent = `
+  <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
+    <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${name}</strong>
+    ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${propertyType}</p>
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${secondaryType}</p>
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${tenants}</p>
+    <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
+      <a href="${costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
+      <a href="${countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
+      <a href="${gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
+    </div>
+  </div>
+`;
+
+  // Bind the custom HTML content to the marker's popup
+  marker.bindPopup(popupContent);
+  markers.addLayer(marker);
+
+  popups[id] = marker;
+}
   map.addLayer(markers);
 
   clearMakers = () => map.removeLayer(markers);
@@ -298,9 +330,9 @@ function updateMap(data) {
   } catch (err) {
     console.warn('cannot fit bounds');
   }
-
   function makeSureSelectedMarkerIsShown() {
     const rowId = selectedRowId;
+
     if (rowId && popups[rowId]) {
       var marker = popups[rowId];
       if (!marker._icon) { markers.zoomToShowLayer(marker); }
@@ -309,10 +341,10 @@ function updateMap(data) {
   }
 
   amap = map;
+
   makeSureSelectedMarkerIsShown();
 }
 
-// ... Rest of the original code remains exactly the same ...
 function selectMaker(id) {
    // Reset the options from the previously selected marker.
    const previouslyClicked = popups[selectedRowId];
