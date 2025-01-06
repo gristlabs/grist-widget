@@ -188,9 +188,11 @@ function updateMap(data) {
     }
   }
   const map = L.map('map', {
-    layers: [tiles],
-    wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
-  });
+  layers: [tiles],
+  center: [45.4801948, -122.79439996], // Default center (latitude, longitude)
+  zoom: 2, // Default zoom level
+  wheelPxPerZoomLevel: 90, // px, slows scrollwheel zoom
+});
 
   addSearchControl(map);
 
