@@ -57,7 +57,7 @@ let searchMarker;
 async function performSearch(query, map) {
   try {
     const response = await fetch(
-      `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=YOUR_MAPTILER_API_KEY`
+      `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=TbsQ5qLxJHC20Jv4Th7E`
     );
     const data = await response.json();
 
