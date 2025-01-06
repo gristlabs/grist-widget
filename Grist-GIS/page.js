@@ -423,6 +423,35 @@ function updateMap(data) {
     }
   }
 
+  // Add the search control to the map
+  const searchControl = L.Control.geocoder({
+    defaultMarkGeocode: false, // Prevent automatic marker placement
+    position: 'topright', // Position of the search bar
+    placeholder: 'Search address...', // Placeholder text
+  }).addTo(map);
+
+  // Handle search results
+  searchControl.on('markgeocode', function (e) {
+    const { center, name } = e.geocode;
+    const [lng, lat] = center;
+
+    // Remove existing search marker if any
+    if (window.searchMarker) {
+      map.removeLayer(window.searchMarker);
+    }
+
+    // Add a new marker at the searched location
+    window.searchMarker = L.marker([lat, lng], {
+      icon: goldPinIcon, // Use your custom gold pin icon
+    }).addTo(map);
+
+    // Add a popup with the address
+    window.searchMarker.bindPopup(name).openPopup();
+
+    // Pan the map to the searched location
+    map.setView([lat, lng], 15);
+  });
+
   // Ensure the selected marker is shown
   function makeSureSelectedMarkerIsShown() {
     if (selectedRowId && popups[selectedRowId]) {
@@ -440,7 +469,6 @@ function updateMap(data) {
   // Ensure the selected marker is visible
   makeSureSelectedMarkerIsShown();
 }
-
 function selectMaker(id) {
    // Reset the options from the previously selected marker.
    const previouslyClicked = popups[selectedRowId];
