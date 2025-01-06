@@ -101,6 +101,21 @@ html, body, #map {
   color: #555;
 }
 
+/* Ensure the search control is visible */
+.leaflet-control-geocoder {
+  background: white;
+  padding: 5px;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
+}
+
+.leaflet-control-geocoder input {
+  width: 200px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
 .leaflet-popup-content b {
   font-weight: bold;
 }
