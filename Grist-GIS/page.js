@@ -77,7 +77,7 @@ function addSearchControl() {
       return searchContainer;
     }
   });
-  map.addControl(new searchControl());
+  amap.addControl(new searchControl());
 
   // Prevent map interaction when using the search box
   L.DomEvent.disableClickPropagation(searchContainer);
@@ -109,19 +109,19 @@ async function performSearch(query) {
       
       // Remove existing search marker if any
       if (searchMarker) {
-        map.removeLayer(searchMarker);
+        amap.removeLayer(searchMarker);
       }
       
       // Add new marker with gold pin
       searchMarker = L.marker([lat, lng], {
         icon: goldPinIcon
-      }).addTo(map);
+      }).addTo(amap);
       
       // Add popup with address information
       searchMarker.bindPopup(location.place_name).openPopup();
       
       // Pan map to the location
-      map.setView([lat, lng], 15);
+      amap.setView([lat, lng], 15);
     }
   } catch (error) {
     console.error('Error performing search:', error);
@@ -544,6 +544,22 @@ function updateMode() {
     updateMap(lastRecords);
   }
 }
+// Initialize the map and handle records
+grist.onRecords(function (records, mappings) {
+  if (!amap) {
+    amap = L.map('map').setView([37.7749, -122.4194], 6);
+
+    L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+      attribution: 'Google Satellite',
+      maxZoom: 20,
+    }).addTo(amap);
+
+    // Add search control after map initialization
+    addSearchControl();
+  }
+
+  updateMap(records);
+});
 
 function onEditOptions() {
   const popup = document.getElementById("settings");
