@@ -501,6 +501,27 @@ function selectOnMap(rec) {
   }
 }
 
+// Initialize the map and handle records
+grist.onRecords(function (records, mappings) {
+  if (!amap) {
+    // Initialize the map if it hasn't been initialized yet
+    amap = L.map('map').setView([37.7749, -122.4194], 6);
+
+    // Add the tile layer
+    L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+      attribution: 'Google Satellite',
+      maxZoom: 20,
+    }).addTo(amap);
+
+    // Add the search control after map initialization
+    addSearchControl();
+  }
+
+  // Update the map with the new records
+  updateMap(records);
+});
+
+// Rest of your existing code...
 grist.onRecord((record, mappings) => {
   if (mode === 'single') {
     // If mappings are not done, we will assume that table has correct columns.
@@ -516,6 +537,7 @@ grist.onRecord((record, mappings) => {
     marker.openPopup();
   }
 });
+
 grist.onRecords((data, mappings) => {
   lastRecords = grist.mapColumnNames(data) || data;
   if (mode !== 'single') {
@@ -534,7 +556,7 @@ grist.onRecords((data, mappings) => {
 grist.onNewRecord(() => {
   clearMakers();
   clearMakers = () => {};
-})
+});
 
 function updateMode() {
   if (mode === 'single') {
@@ -544,22 +566,6 @@ function updateMode() {
     updateMap(lastRecords);
   }
 }
-// Initialize the map and handle records
-grist.onRecords(function (records, mappings) {
-  if (!amap) {
-    amap = L.map('map').setView([37.7749, -122.4194], 6);
-
-    L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
-      attribution: 'Google Satellite',
-      maxZoom: 20,
-    }).addTo(amap);
-
-    // Add search control after map initialization
-    addSearchControl();
-  }
-
-  updateMap(records);
-});
 
 function onEditOptions() {
   const popup = document.getElementById("settings");
