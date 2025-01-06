@@ -3,7 +3,20 @@
 "use strict";
 
 /* global grist, window */
-
+// Define custom gold pin using SVG
+const goldPinIcon = L.divIcon({
+  className: 'custom-pin',
+  html: `<svg width="30" height="45" viewBox="0 0 30 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M15 0C6.71572 0 0 6.71572 0 15C0 23.2843 15 45 15 45C15 45 30 23.2843 30 15C30 6.71572 23.2843 0 15 0Z" 
+          fill="#FFD700" 
+          stroke="#B8860B" 
+          stroke-width="2"/>
+    <circle cx="15" cy="15" r="6" fill="#B8860B"/>
+  </svg>`,
+  iconSize: [30, 45],
+  iconAnchor: [15, 45],
+  popupAnchor: [0, -45]
+});
 let amap;
 let popups = {};
 let selectedTableId = null;
@@ -36,7 +49,84 @@ const Address = 'Address';
 const GeocodedAddress = 'GeocodedAddress';
 let lastRecord;
 let lastRecords;
+// Function to add search control
+function addSearchControl() {
+  // Create search container
+  const searchContainer = L.DomUtil.create('div', 'leaflet-control-search');
+  searchContainer.style.backgroundColor = 'white';
+  searchContainer.style.padding = '5px';
+  searchContainer.style.margin = '10px';
+  searchContainer.style.borderRadius = '4px';
+  searchContainer.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)';
 
+  // Create search input
+  const searchInput = L.DomUtil.create('input', 'search-input', searchContainer);
+  searchInput.type = 'text';
+  searchInput.placeholder = 'Search address...';
+  searchInput.style.padding = '5px';
+  searchInput.style.width = '250px';
+  searchInput.style.border = '1px solid #ccc';
+  searchInput.style.borderRadius = '4px';
+
+  // Add the search container to the map
+  const searchControl = L.Control.extend({
+    options: {
+      position: 'topright'
+    },
+    onAdd: function() {
+      return searchContainer;
+    }
+  });
+  map.addControl(new searchControl());
+
+  // Prevent map interaction when using the search box
+  L.DomEvent.disableClickPropagation(searchContainer);
+  
+  // Handle search input
+  let timeoutId;
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      const query = e.target.value;
+      if (query.length > 2) {
+        performSearch(query);
+      }
+    }, 500);
+  });
+}
+
+// Function to perform geocoding search using MapTiler
+async function performSearch(query) {
+  try {
+    const response = await fetch(
+      `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=TbsQ5qLxJHC20Jv4Th7E`
+    );
+    const data = await response.json();
+    
+    if (data.features && data.features.length > 0) {
+      const location = data.features[0];
+      const [lng, lat] = location.center;
+      
+      // Remove existing search marker if any
+      if (searchMarker) {
+        map.removeLayer(searchMarker);
+      }
+      
+      // Add new marker with gold pin
+      searchMarker = L.marker([lat, lng], {
+        icon: goldPinIcon
+      }).addTo(map);
+      
+      // Add popup with address information
+      searchMarker.bindPopup(location.place_name).openPopup();
+      
+      // Pan map to the location
+      map.setView([lat, lng], 15);
+    }
+  } catch (error) {
+    console.error('Error performing search:', error);
+  }
+}
 
 //Color markers downloaded from leaflet repo, color-shifted to green
 //Used to show currently selected pin
@@ -50,8 +140,6 @@ const selectedIcon =  new L.Icon({
   shadowSize: [41, 41]
 });
 const defaultIcon =  new L.Icon.Default();
-
-
 
 // Creates clusterIcons that highlight if they contain selected row
 // Given a function `() => selectedMarker`, return a cluster icon create function
