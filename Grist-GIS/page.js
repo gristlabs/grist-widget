@@ -469,6 +469,7 @@ function updateMap(data) {
   // Ensure the selected marker is visible
   makeSureSelectedMarkerIsShown();
 }
+
 function selectMaker(id) {
    // Reset the options from the previously selected marker.
    const previouslyClicked = popups[selectedRowId];
