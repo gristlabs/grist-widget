@@ -305,131 +305,139 @@ let markers = [];
 function updateMap(data) {
   data = data || selectedRecords;
   selectedRecords = data;
+
+  // Check if data is valid
   if (!data || data.length === 0) {
     showProblem("No data found yet");
     return;
   }
+
+  // Check if required columns exist
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
-    " in the Creator Panel.");
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns in the Creator Panel.");
     return;
   }
 
-
-  // Map tile source:
-  //    https://leaflet-extras.github.io/leaflet-providers/preview/
-  //    Old source was natgeo world map, but that only has data up to zoom 16
-  //    (can't zoom in tighter than about 10 city blocks across)
-  //
-  const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
-
+  // Remove any existing error messages
   const error = document.querySelector('.error');
-  if (error) { error.remove(); }
+  if (error) {
+    error.remove();
+  }
+
+  // Remove the existing map if it exists
   if (amap) {
     try {
       amap.off();
       amap.remove();
     } catch (e) {
-      // ignore
       console.warn(e);
     }
   }
+
+  // Initialize the map
   const map = L.map('map', {
-    layers: [tiles],
-    wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
+    layers: [L.tileLayer(mapSource, { attribution: mapCopyright })],
+    wheelPxPerZoomLevel: 90, // Slows scrollwheel zoom
   });
 
-  // Make sure clusters always show up above points
-  // Default z-index for markers is 600, 650 is where tooltipPane z-index starts
+  // Create panes for markers and clusters
   map.createPane('selectedMarker').style.zIndex = 620;
-  map.createPane('clusters'      ).style.zIndex = 610;
-  map.createPane('otherMarkers'  ).style.zIndex = 600;
+  map.createPane('clusters').style.zIndex = 610;
+  map.createPane('otherMarkers').style.zIndex = 600;
 
-  const points = []; //L.LatLng[], used for zooming to bounds of all markers
+  // Array to store points for fitting bounds
+  const points = [];
 
-  popups = {}; // Map: {[rowid]: L.marker}
-  // Make this before markerClusterGroup so iconCreateFunction
-  // can fetch the currently selected marker from popups by function closure
+  // Clear the popups object
+  popups = {};
 
+  // Initialize the marker cluster group
   markers = L.markerClusterGroup({
     disableClusteringAtZoom: 18,
-    //If markers are very close together, they'd stay clustered even at max zoom
-    //This disables that behavior explicitly for max zoom (18)
-    maxClusterRadius: 30, //px, default 80
-    // default behavior clusters too aggressively. It's nice to see individual markers
+    maxClusterRadius: 30, // Reduce clustering radius
     showCoverageOnHover: true,
-
-    clusterPane: 'clusters', //lets us specify z-index, so cluster icons can be on top
+    clusterPane: 'clusters',
     iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
   });
 
+  // Handle marker clicks
   markers.on('click', (e) => {
     const id = e.layer.options.id;
     selectMaker(id);
   });
 
-for (const rec of data) {
-  const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(rec);
-  
-  if (String(lng) === '...') { continue; }
-  if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-    continue;
+  // Add markers for each record
+  for (const rec of data) {
+    const { id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink } = getInfo(rec);
+
+    // Skip invalid coordinates
+    if (String(lng) === '...' || (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01)) {
+      continue;
+    }
+
+    // Create a LatLng object for the marker
+    const pt = new L.LatLng(lat, lng);
+    points.push(pt);
+
+    // Create the marker
+    const marker = L.marker(pt, {
+      title: name,
+      id: id,
+      icon: (id == selectedRowId) ? selectedIcon : defaultIcon,
+      pane: (id == selectedRowId) ? 'selectedMarker' : 'otherMarkers',
+    });
+
+    // Build the popup content
+    const popupContent = `
+      <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
+        <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${name}</strong>
+        ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+        <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${propertyType}</p>
+        <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${secondaryType}</p>
+        <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${tenants}</p>
+        <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
+          <a href="${costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
+          <a href="${countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
+          <a href="${gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
+        </div>
+      </div>
+    `;
+
+    // Bind the popup to the marker
+    marker.bindPopup(popupContent);
+
+    // Add the marker to the cluster group and popups object
+    markers.addLayer(marker);
+    popups[id] = marker; // Ensure the marker is added to the popups object
   }
 
-  const pt = new L.LatLng(lat, lng);
-  points.push(pt);
-
-  const marker = L.marker(pt, {
-    title: name,
-    id: id,
-    icon: (id == selectedRowId) ?  selectedIcon : defaultIcon,
-    pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
-  });
-
-  // Build HTML content for the popup, similar to your Mapbox example
-  const imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
-  const popupContent = `
-  <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-    <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${name}</strong>
-    ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-    <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${propertyType}</p>
-    <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${secondaryType}</p>
-    <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${tenants}</p>
-    <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
-      <a href="${costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
-      <a href="${countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
-      <a href="${gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
-    </div>
-  </div>
-`;
-
-  // Bind the custom HTML content to the marker's popup
-  marker.bindPopup(popupContent);
-  markers.addLayer(marker);
-
-  popups[id] = marker;
-}
+  // Add the marker cluster group to the map
   map.addLayer(markers);
 
-  clearMakers = () => map.removeLayer(markers);
-
-  try {
-    map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
-  } catch (err) {
-    console.warn('cannot fit bounds');
+  // Fit the map to the bounds of all markers
+  if (points.length > 0) {
+    try {
+      map.fitBounds(new L.LatLngBounds(points), { maxZoom: 15, padding: [0, 0] });
+    } catch (err) {
+      console.warn('Cannot fit bounds:', err);
+    }
   }
-  function makeSureSelectedMarkerIsShown() {
-    const rowId = selectedRowId;
 
-    if (rowId && popups[rowId]) {
-      var marker = popups[rowId];
-      if (!marker._icon) { markers.zoomToShowLayer(marker); }
+  // Ensure the selected marker is shown
+  function makeSureSelectedMarkerIsShown() {
+    if (selectedRowId && popups[selectedRowId]) {
+      const marker = popups[selectedRowId];
+      if (!marker._icon) {
+        markers.zoomToShowLayer(marker);
+      }
       marker.openPopup();
     }
   }
 
+  // Store the map instance
   amap = map;
 
+  // Ensure the selected marker is visible
   makeSureSelectedMarkerIsShown();
 }
 
