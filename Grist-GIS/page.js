@@ -16,7 +16,6 @@ let mapCopyright = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USG
 const Name = "Name";
 // Required
 const Longitude = "Longitude";
-// Required
 const Latitude = "Latitude";
 // Optional - switch column to trigger geocoding
 // Columns used in page.js
@@ -37,182 +36,100 @@ const GeocodedAddress = 'GeocodedAddress';
 let lastRecord;
 let lastRecords;
 
-
-//Color markers downloaded from leaflet repo, color-shifted to green
-//Used to show currently selected pin
-const selectedIcon =  new L.Icon({
-  iconUrl: 'marker-icon-green.png',
-  iconRetinaUrl: 'marker-icon-green-2x.png',
-  shadowUrl: 'marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+// Add search marker icon definition
+const searchIcon = L.divIcon({
+  className: 'custom-pin',
+  html: `<svg width="30" height="45" viewBox="0 0 30 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M15 0C6.71572 0 0 6.71572 0 15C0 23.2843 15 45 15 45C15 45 30 23.2843 30 15C30 6.71572 23.2843 0 15 0Z" 
+          fill="#FFD700" 
+          stroke="#B8860B" 
+          stroke-width="2"/>
+    <circle cx="15" cy="15" r="6" fill="#B8860B"/>
+  </svg>`,
+  iconSize: [30, 45],
+  iconAnchor: [15, 45],
+  popupAnchor: [0, -45]
 });
-const defaultIcon =  new L.Icon.Default();
 
+// Add these variables
+let searchMarker;
 
+async function performSearch(query, map) {
+  try {
+    const response = await fetch(
+      `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=YOUR_MAPTILER_API_KEY`
+    );
+    const data = await response.json();
 
-// Creates clusterIcons that highlight if they contain selected row
-// Given a function `() => selectedMarker`, return a cluster icon create function
-// that can be passed to MarkerClusterGroup({iconCreateFunction: ... } )
-//
-// Cluster with selected record gets the '.marker-cluster-selected' class
-// (defined in screen.css)
-//
-// Copied from _defaultIconCreateFunction in ClusterMarkerGroup
-//    https://github.com/Leaflet/Leaflet.markercluster/blob/master/src/MarkerClusterGroup.js
-const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
-  return function(cluster) {
-    var childCount = cluster.getChildCount();
+    if (data.features && data.features.length > 0) {
+      const location = data.features[0];
+      const [lng, lat] = location.center;
 
-    let isSelected = false;
-    try {
-      const selectedMarker = selectedMarkerGetter();
+      // Remove existing search marker if any
+      if (searchMarker) {
+        map.removeLayer(searchMarker);
+      }
 
-      // hmm I think this is n log(n) to build all the clusters for the whole map.
-      // It's probably fine though, it only fires once when map markers
-      // are set up or when selectedRow changes
-      isSelected = cluster.getAllChildMarkers().filter((m) => m == selectedMarker).length > 0;
-    } catch (e) {
-      console.error("WARNING: Error in clusterIconFactory in map widget");
-      console.error(e);
+      // Add new marker with gold pin
+      searchMarker = L.marker([lat, lng], {
+        icon: searchIcon
+      }).addTo(map);
+
+      // Add popup with address information
+      searchMarker.bindPopup(location.place_name).openPopup();
+
+      // Pan map to the location
+      map.setView([lat, lng], 15);
     }
-
-    var c = ' marker-cluster-';
-    if (childCount < 10) {
-      c += 'small';
-    } else if (childCount < 100) {
-      c += 'medium';
-    } else {
-      c += 'large';
-    }
-
-    return new L.DivIcon({
-        html: '<div><span>'
-            + childCount
-            + ' <span aria-label="markers"></span>'
-            + '</span></div>',
-        className: 'marker-cluster' + c + (isSelected ? ' marker-cluster-selected' : ''),
-        iconSize: new L.Point(40, 40)
-    });
+  } catch (error) {
+    console.error('Error performing search:', error);
   }
-};
-
-const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
-if (URLSearchParams && location.search && geocoder) {
-  const c = new URLSearchParams(location.search).get('geocoder');
-  if (c && L.Control.Geocoder[c]) {
-    console.log('Using geocoder', c);
-    geocoder = L.Control.Geocoder[c]();
-  } else if (c) {
-    console.warn('Unsupported geocoder', c);
-  }
-  const m = new URLSearchParams(location.search).get('mode');
-  if (m) { mode = m; }
 }
 
-async function geocode(address) {
-  return new Promise((resolve, reject) => {
-    try {
-      geocoder.geocode(address, (v) => {
-        v = v[0];
-        if (v) { v = v.center; }
-        resolve(v);
-      });
-    } catch (e) {
-      console.log("Problem:", e);
-      reject(e);
+function addSearchControl(map) {
+  // Create search container
+  const searchContainer = L.DomUtil.create('div', 'leaflet-control-search');
+  searchContainer.style.backgroundColor = 'white';
+  searchContainer.style.padding = '5px';
+  searchContainer.style.margin = '10px';
+  searchContainer.style.borderRadius = '4px';
+  searchContainer.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)';
+
+  // Create search input
+  const searchInput = L.DomUtil.create('input', 'search-input', searchContainer);
+  searchInput.type = 'text';
+  searchInput.placeholder = 'Search address...';
+  searchInput.style.padding = '5px';
+  searchInput.style.width = '250px';
+  searchInput.style.border = '1px solid #ccc';
+  searchInput.style.borderRadius = '4px';
+
+  // Add the search container to the map
+  const searchControl = L.Control.extend({
+    options: {
+      position: 'topright'
+    },
+    onAdd: function() {
+      return searchContainer;
     }
   });
-}
+  map.addControl(new searchControl());
 
-async function delay(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+  // Prevent map interaction when using the search box
+  L.DomEvent.disableClickPropagation(searchContainer);
+
+  // Handle search input
+  let timeoutId;
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      const query = e.target.value;
+      if (query.length > 2) {
+        performSearch(query, map);
+      }
+    }, 500);
   });
 }
-
-// If widget has wright access
-let writeAccess = true;
-// A ongoing scanning promise, to check if we are in progress.
-let scanning = null;
-
-async function scan(tableId, records, mappings) {
-  if (!writeAccess) { return; }
-  for (const record of records) {
-    // We can only scan if Geocode column was mapped.
-    if (!(Geocode in record)) { break; }
-    // And the value in the column is truthy.
-    if (!record[Geocode]) { continue; }
-    // Get the address to search.
-    const address = record.Address;
-    // Little caching here. We will set GeocodedAddress to last address we searched,
-    // so after next round - we will check if the address is indeed changed.
-    // But this field is optional, if it is not in the record (not mapped)
-    // we will find the location each time (if coordinates are empty).
-    if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
-      // We have caching field, and last address is diffrent.
-      // So clear coordinates (as if the record wasn't scanned before)
-      record[Longitude] = null;
-      record[Latitude] = null;
-    }
-    // If address is not empty, and coordinates are empty (or were cleared by cache)
-    if (address && !record[Longitude]) {
-      // Find coordinates.
-      const result = await geocode(address);
-      // Update them, and update cache (if the field was mapped)
-      await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
-        [mappings[Longitude]]: result.lng,
-        [mappings[Latitude]]: result.lat,
-        ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
-      }] ]);
-      await delay(1000);
-    }
-  }
-}
-
-function scanOnNeed(mappings) {
-  if (!scanning && selectedTableId && selectedRecords) {
-    scanning = scan(selectedTableId, selectedRecords, mappings).then(() => scanning = null).catch(() => scanning = null);
-  }
-}
-
-function showProblem(txt) {
-  document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
-}
-
-// Little extra wrinkle to deal with showing differences.  Should be taken
-// care of by Grist once diffing is out of beta.
-function parseValue(v) {
-  if (typeof(v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
-    const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
-    return payload.remote || payload.local || payload.parent || payload;
-  }
-  return v;
-}
-
-function getInfo(rec) {
-  const result = {
-    id: rec.id,
-    name: parseValue(rec[Name]),
-    lng: parseValue(rec[Longitude]),
-    lat: parseValue(rec[Latitude]),
-    propertyType: parseValue(rec['Property_Type']),  // Add Property Type column
-    tenants: parseValue(rec['Tenants']),  // Add Tenants column
-    secondaryType: parseValue(rec['Secondary_Type']),  // Add Secondary Type column
-    imageUrl: parseValue(rec['ImageURL']),  // Add Image URL column
-    costarLink: parseValue(rec['CoStar_URL']),  // Add CoStar link column
-    countyLink: parseValue(rec['County_Hyper']),  // Add County link column
-    gisLink: parseValue(rec['GIS']),  // Add GIS link column
-  };
-  return result;
-}
-
-// Function to clear last added markers. Used to clear the map when new record is selected.
-let clearMakers = () => {};
-
-let markers = [];
 
 function updateMap(data) {
   data = data || selectedRecords;
@@ -227,12 +144,6 @@ function updateMap(data) {
     return;
   }
 
-
-  // Map tile source:
-  //    https://leaflet-extras.github.io/leaflet-providers/preview/
-  //    Old source was natgeo world map, but that only has data up to zoom 16
-  //    (can't zoom in tighter than about 10 city blocks across)
-  //
   const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
 
   const error = document.querySelector('.error');
@@ -250,6 +161,8 @@ function updateMap(data) {
     layers: [tiles],
     wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
   });
+
+  addSearchControl(map);
 
   // Make sure clusters always show up above points
   // Default z-index for markers is 600, 650 is where tooltipPane z-index starts
