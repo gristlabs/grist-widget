@@ -428,3 +428,5 @@ grist.onOptions((options, interaction) => {
   mapCopyright = newCopyright
   document.getElementById("mapCopyright").value = mapCopyright;
 });
+
+L.Control.geocoder().addTo(map);
