@@ -1,23 +1,23 @@
-<!-- HTML file (index.html): The HTML file contains the tags for the Map and Settings, and may include your custom XYZ tile provider in the mapSource field. -->
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet-src.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="screen.css" />
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <!-- MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <!-- next line is optional - only if geocoding is desired -->
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <!-- Leaflet Control Geocoder CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <script src="page.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="screen.css" />
   </head>
   <body>
-    <div id="map">
-    </div>
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Settings Panel -->
     <div id="settings">
       <div id="btnClose">Close</div>
       <label id="lblToggle" for="cbxMode">
@@ -36,5 +36,12 @@
         </tr>
       </table>
     </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet-src.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <script src="page.js"></script>
   </body>
 </html>
