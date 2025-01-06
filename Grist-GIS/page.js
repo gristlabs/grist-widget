@@ -432,7 +432,13 @@ function updateMap(data) {
 
   // Handle search results
   searchControl.on('markgeocode', function (e) {
-    const { center, name } = e.geocode;
+    const result = e.geocode;
+    if (!result || !result.center) {
+      console.error('Invalid geocoding result:', result);
+      return;
+    }
+
+    const { center, name } = result;
     const [lng, lat] = center;
 
     // Remove existing search marker if any
