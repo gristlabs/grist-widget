@@ -35,6 +35,36 @@ const Address = 'Address';
 const GeocodedAddress = 'GeocodedAddress';
 let lastRecord;
 let lastRecords;
+const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
+  return function(cluster) {
+    var childCount = cluster.getChildCount();
+
+    let isSelected = false;
+    try {
+      const selectedMarker = selectedMarkerGetter();
+
+      // Determine if this cluster contains the selected marker
+      isSelected = cluster.getAllChildMarkers().some((m) => m === selectedMarker);
+    } catch (e) {
+      console.error("Error in clusterIconFactory:", e);
+    }
+
+    var c = ' marker-cluster-';
+    if (childCount < 10) {
+      c += 'small';
+    } else if (childCount < 100) {
+      c += 'medium';
+    } else {
+      c += 'large';
+    }
+
+    return new L.DivIcon({
+      html: `<div><span>${childCount}</span></div>`,
+      className: `marker-cluster${c}${isSelected ? ' marker-cluster-selected' : ''}`,
+      iconSize: new L.Point(40, 40)
+    });
+  };
+};
 
 // Add search marker icon definition
 const searchIcon = L.divIcon({
