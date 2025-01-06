@@ -91,6 +91,9 @@ html, body, #map {
   margin-bottom: 5px;
   color: #333;
 }
+.marker-cluster-selected {
+  border: 3px solid #FFD700; /* Highlight selected cluster with a gold border */
+}
 
 .leaflet-popup-content h4 {
   font-size: 14px;
