@@ -39,6 +39,10 @@ export interface Schema {
   columns: Column[];
 }
 
+export const DATA = {
+  schema: null as Schema | null,
+}
+
 export async function fetchSchema(): Promise<Schema> {
   const [allColumns, tables, tableId] = await Promise.all([
     fetchColumnsFromGrist(),
@@ -140,28 +144,6 @@ export class Command<T = any> implements Subscribable<T> {
   }
 }
 
-type Infer<T> = T extends Some<infer U> ? U : T;
-
-/**
- * Identity Monad.
- */
-export class Some<T> {
-  constructor(private _value: T) {}
-  public map<U>(fn: (value: T) => U): Some<Infer<U>> {
-    const result = fn(this._value);
-    if (result instanceof Some) {
-      return result;
-    }
-    return new Some(result) as any;
-  }
-  public valueOf() {
-    return this._value;
-  }
-  public static of<T>(value: T) {
-    return new Some(value);
-  }
-}
-
 export function stringToValue(value: any) {
   if (['true', 'false'].includes(value)) {
     return value === 'true';
@@ -200,15 +182,15 @@ export function valueToString(value: any) {
 
 
 // Machinery to create observable for column labels.
-export const MY_COLUMNS = observable([] as Column[]);
-let __columnLabelCache = new Map<string, any>();
 export function buildColLabel(colId: string) {
-  if (__columnLabelCache.has(colId)) {
-    return __columnLabelCache.get(colId);
+  if (!DATA.schema) {
+    return colId;;
   }
-  const obs = computed(use => use(MY_COLUMNS).find(c => c.colId === colId)?.label || colId);
-  __columnLabelCache.set(colId, obs);
-  return obs;
+  if (!DATA.schema.columns || !DATA.schema.columns.length) {
+    return colId;
+  }
+  const column = DATA.schema.columns.find(c => c.colId === colId);
+  return (column ? column.label : colId) || colId;
 }
 
 /**
