@@ -9828,6 +9828,9 @@ ${nestedRules}`.replace(/&/g, className);
   async function fetchTables() {
     return toRecords(await grist.docApi.fetchTable("_grist_Tables"));
   }
+  var DATA = {
+    schema: null
+  };
   async function fetchSchema() {
     const [allColumns, tables, tableId] = await Promise.all([
       fetchColumnsFromGrist(),
@@ -9927,15 +9930,16 @@ ${nestedRules}`.replace(/&/g, className);
     }
     return String(value);
   }
-  var MY_COLUMNS = observable([]);
-  var __columnLabelCache = /* @__PURE__ */ new Map();
   function buildColLabel(colId) {
-    if (__columnLabelCache.has(colId)) {
-      return __columnLabelCache.get(colId);
+    if (!DATA.schema) {
+      return colId;
+      ;
     }
-    const obs = computed((use) => use(MY_COLUMNS).find((c6) => c6.colId === colId)?.label || colId);
-    __columnLabelCache.set(colId, obs);
-    return obs;
+    if (!DATA.schema.columns || !DATA.schema.columns.length) {
+      return colId;
+    }
+    const column = DATA.schema.columns.find((c6) => c6.colId === colId);
+    return (column ? column.label : colId) || colId;
   }
   function memo(fn, salt) {
     let prevKey = Symbol();
@@ -52698,7 +52702,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     async onAdd(item, callback) {
       let id2 = 0;
       try {
-        const group = idToName.get(item.group).split("|").map(stringToValue);
+        const group = idToCols.get(item.group);
         const start = (0, import_moment_timezone2.default)(item.start).format("YYYY-MM-DD");
         if (!(item.start instanceof Date)) {
           console.error("Invalid date");
@@ -52708,10 +52712,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         const values3 = [...group, start, end];
         const columns = [...mappings.get().Columns, mappings.get().From, mappings.get().To];
         const rawFields = Object.fromEntries(zip(columns, values3));
-        const fields = await liftFields(rawFields);
-        {
-          id2 = (await grist.selectedTable.create({ fields })).id;
-        }
+        const fields = await gristfyFields(rawFields);
+        id2 = (await grist.selectedTable.create({ fields })).id;
         await grist.setCursorPos({ rowId: id2 });
         callback(null);
         openCard();
@@ -52737,6 +52739,8 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
           div.innerText = formatCurrency.format(value);
         } else if (typeof value === "boolean") {
           div.innerHTML = `<input type="checkbox" ${value ? "checked" : ""} disabled>`;
+        } else if (Array.isArray(value)) {
+          div.innerText = value.join(", ");
         }
         div.classList.add("group-part");
         div.style.padding = "5px";
@@ -52813,14 +52817,13 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     timeline
   });
   var newMappings = hasChanged();
-  var schema;
   grist.onRecords(async (recs, maps) => {
     setTimeout(() => {
       document.body.classList.add("slow");
     }, 80);
     const areMappingsNew = newMappings(maps);
-    if (areMappingsNew || !schema) {
-      schema = await fetchSchema();
+    if (areMappingsNew || !DATA.schema) {
+      DATA.schema = await fetchSchema();
     }
     try {
       headerMonitor.pause();
@@ -53046,9 +53049,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       return;
     }
     const formatedValue = stringToValue(value);
-    const schema2 = elementId.split(":")[0];
+    const schema = elementId.split(":")[0];
     const [parent2, child] = elementId.split(":")[1].split(".");
-    if (child && schema2 === "timeline") {
+    if (child && schema === "timeline") {
       if (child === "scale") {
         currentScale.set(formatedValue);
         timeline.setOptions({
@@ -53063,7 +53066,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
           }
         });
       }
-    } else if (schema2 === "timeline") {
+    } else if (schema === "timeline") {
       timeline.setOptions({
         [parent2]: formatedValue
       });
@@ -53074,14 +53077,14 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         timeline.setGroups(groupSet);
         timeline.redraw();
       }
-    } else if (schema2 === "local") {
+    } else if (schema === "local") {
       if (!(parent2 in window)) {
         console.error(`Local variable ${parent2} not found in window`);
         return;
       }
       window[parent2].set(formatedValue);
     } else {
-      console.error(`Unknown schema ${schema2}`);
+      console.error(`Unknown schema ${schema}`);
     }
   }
   timeline.setGroups(groupSet);
@@ -53180,9 +53183,9 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   function openCard() {
     return grist.commandApi.run("viewAsCard");
   }
-  async function liftFields(fields) {
-    const allColumns = schema.allColumns;
-    const myColumns = schema.columns;
+  async function gristfyFields(fields) {
+    const allColumns = DATA.schema.allColumns;
+    const myColumns = DATA.schema.columns;
     let clone2 = null;
     const fetchTable = memo(async (tableId) => await grist.docApi.fetchTable(tableId));
     for (const colId in fields) {
@@ -53207,6 +53210,15 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
         const rowId = table.id[rowIndex];
         clone2 ??= { ...fields };
         clone2[colId] = rowId;
+      } else if (type === "ChoiceList") {
+        const value = fields[colId];
+        if (typeof value === "string") {
+          clone2 ??= { ...fields };
+          clone2[colId] = ["L", value];
+        } else if (Array.isArray(value)) {
+          clone2 ??= { ...fields };
+          clone2[colId] = ["L", ...value];
+        }
       }
     }
     return clone2 ?? fields;
@@ -53278,7 +53290,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   }
   cmdAddBlank.handle(addBlank);
   async function addBlank() {
-    const fields = await liftFields({
+    const fields = await gristfyFields({
       [mappings.get().From]: (0, import_moment_timezone2.default)().startOf("day").toDate(),
       [mappings.get().To]: (0, import_moment_timezone2.default)().endOf("isoWeek").toDate()
     });
@@ -53320,7 +53332,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
       )
     );
     await withElementSpinner(element, async () => {
-      const fields = await liftFields(row);
+      const fields = await gristfyFields(row);
       await grist.selectedTable.create({ fields });
     });
   }

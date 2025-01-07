@@ -2,6 +2,7 @@ import {buildCursor} from './cursor';
 import {headerMonitor, rewriteHeader} from './header';
 import {
   Command,
+  DATA,
   dateDesc,
   fetchSchema,
   hasChanged,
@@ -203,7 +204,7 @@ const options: TimelineOptions = {
   async onAdd(item, callback) {
     let id: number = 0;
     try {
-      const group = idToName.get(item.group).split('|').map(stringToValue);
+      const group = idToCols.get(item.group);
       const start = moment(item.start).format('YYYY-MM-DD');
 
       if (!(item.start instanceof Date)) {
@@ -217,8 +218,8 @@ const options: TimelineOptions = {
       const columns = [...mappings.get().Columns, mappings.get().From, mappings.get().To];
       const rawFields = Object.fromEntries(zip(columns, values));
 
-      const fields = await liftFields(rawFields);
-      {id = (await grist.selectedTable.create({fields})).id;}
+      const fields = await gristfyFields(rawFields);
+      id = (await grist.selectedTable.create({fields})).id;
 
       await grist.setCursorPos({rowId: id});
 
@@ -252,8 +253,10 @@ const options: TimelineOptions = {
       } else if (typeof value === 'number') {
         div.innerText = formatCurrency.format(value);
       } else if (typeof value === 'boolean') {
-        div.innerHTML = `<input type="checkbox" ${value ? 'checked' : ''
-          } disabled>`;
+        div.innerHTML = `<input type="checkbox" ${value ? 'checked' : '' } disabled>`;
+      } else if (Array.isArray(value)) {
+        // We only expect here to be array of strings.
+        div.innerText = value.join(', ');
       }
       div.classList.add('group-part');
       div.style.padding = '5px';
@@ -347,7 +350,6 @@ Object.assign((window as any), {
 
 const newMappings = hasChanged();
 
-let schema: Schema;
 
 // This is async iterator
 grist.onRecords(async (recs: any[], maps: any) => {
@@ -359,8 +361,8 @@ grist.onRecords(async (recs: any[], maps: any) => {
   }, 80);
 
   const areMappingsNew = newMappings(maps);
-  if (areMappingsNew || !schema) {
-    schema = await fetchSchema();
+  if (areMappingsNew || !DATA.schema) {
+    DATA.schema = await fetchSchema();
   }
 
   try {
@@ -821,9 +823,9 @@ function openCard() {
 /**
  * When creating a row in Grist we need to change values for Ref columns to row ids.
  */
-async function liftFields(fields: Record<string, any>) {
-  const allColumns = schema.allColumns;
-  const myColumns = schema.columns;
+async function gristfyFields(fields: Record<string, any>) {
+  const allColumns = DATA.schema!.allColumns;
+  const myColumns = DATA.schema!.columns;
   let clone = null as any;
 
   const fetchTable = memo(async (tableId: string) => await grist.docApi.fetchTable(tableId));
@@ -851,6 +853,15 @@ async function liftFields(fields: Record<string, any>) {
       const rowId = table.id[rowIndex];
       clone ??= {...fields};
       clone[colId] = rowId;
+    } else if (type === 'ChoiceList') {
+      const value = fields[colId];
+      if (typeof value === 'string') {
+        clone ??= {...fields};
+        clone[colId] = ['L', value];
+      } else if (Array.isArray(value)) {
+        clone ??= {...fields};
+        clone[colId] = ['L', ...value];
+      }
     }
   }
 
@@ -938,7 +949,7 @@ function openItemDrawer(itemId: number) {
 
 cmdAddBlank.handle(addBlank);
 async function addBlank() {
-  const fields = await liftFields({
+  const fields = await gristfyFields({
     [mappings.get().From]: moment().startOf('day').toDate(),
     [mappings.get().To]: moment().endOf('isoWeek').toDate(),
   });
@@ -987,7 +998,7 @@ async function duplicateSelected(ev: MouseEvent) {
   )!;
 
   await withElementSpinner(element, async () => {
-    const fields = await liftFields(row);
+    const fields = await gristfyFields(row);
     await grist.selectedTable.create({fields});
   });
 }
