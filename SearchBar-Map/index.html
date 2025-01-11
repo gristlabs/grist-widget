@@ -94,10 +94,22 @@
         // Add the cluster group to the map
         map.addLayer(markers);
 
+        // Create an overlay layers object for layer control
+        var overlayLayers = {
+            "Locations": markers
+        };
+
+        // Add layer control to map
+        L.control.layers(baseLayers, overlayLayers, {
+            position: 'topright',
+            collapsed: false
+        }).addTo(map);
+
         // Add search control
         var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
         var searchControl = L.esri.Geocoding.geosearch({
-            providers: [arcgisOnline]
+            providers: [arcgisOnline],
+            position: 'topleft'
         }).addTo(map);
 
         // Create a layer group for search results
