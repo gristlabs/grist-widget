@@ -39,10 +39,31 @@
         // Initialize the map and set view to Oregon
         var map = L.map('map').setView([44.0, -120.5], 7);
 
-        // Add OpenStreetMap tile layer
-        L.tileLayer('https://tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=bs12XjUq7hHD2pgakKp7AcM1Y3Dk7BkLvf162PpbLxMsvgyclXR5HLnYEnI2Zkoa', {
-            attribution: ''
-        }).addTo(map);
+        // Define base layers
+        var jawgStreets = L.tileLayer('https://tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=bs12XjUq7hHD2pgakKp7AcM1Y3Dk7BkLvf162PpbLxMsvgyclXR5HLnYEnI2Zkoa', {
+            attribution: '',
+            name: 'Jawg Streets'
+        });
+
+        var googleHybrid = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+            attribution: 'Google Hybrid',
+            name: 'Google Hybrid'
+        });
+
+        var maptilerSatellite = L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
+            attribution: 'MapTiler Satellite',
+            name: 'MapTiler Satellite'
+        });
+
+        // Create base layers object for layer control
+        var baseLayers = {
+            "Street Map": jawgStreets,
+            "Google Hybrid": googleHybrid,
+            "Satellite": maptilerSatellite
+        };
+
+        // Add default layer to map
+        jawgStreets.addTo(map);
 
         // Create a marker cluster group
         var markers = L.markerClusterGroup({
