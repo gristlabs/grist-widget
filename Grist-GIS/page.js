@@ -10,7 +10,6 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let markers = L.markerClusterGroup();
 let searchResults;
 let searchControl;
 
