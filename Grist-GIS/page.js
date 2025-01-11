@@ -49,84 +49,6 @@ const Address = 'Address';
 const GeocodedAddress = 'GeocodedAddress';
 let lastRecord;
 let lastRecords;
-// Function to add search control
-function addSearchControl() {
-  // Create search container
-  const searchContainer = L.DomUtil.create('div', 'leaflet-control-search');
-  searchContainer.style.backgroundColor = 'white';
-  searchContainer.style.padding = '5px';
-  searchContainer.style.margin = '10px';
-  searchContainer.style.borderRadius = '4px';
-  searchContainer.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)';
-
-  // Create search input
-  const searchInput = L.DomUtil.create('input', 'search-input', searchContainer);
-  searchInput.type = 'text';
-  searchInput.placeholder = 'Search address...';
-  searchInput.style.padding = '5px';
-  searchInput.style.width = '250px';
-  searchInput.style.border = '1px solid #ccc';
-  searchInput.style.borderRadius = '4px';
-
-  // Add the search container to the map
-  const searchControl = L.Control.extend({
-    options: {
-      position: 'topright'
-    },
-    onAdd: function() {
-      return searchContainer;
-    }
-  });
-  amap.addControl(new searchControl());
-
-  // Prevent map interaction when using the search box
-  L.DomEvent.disableClickPropagation(searchContainer);
-  
-  // Handle search input
-  let timeoutId;
-  searchInput.addEventListener('input', (e) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      const query = e.target.value;
-      if (query.length > 2) {
-        performSearch(query);
-      }
-    }, 500);
-  });
-}
-
-// Function to perform geocoding search using MapTiler
-async function performSearch(query) {
-  try {
-    const response = await fetch(
-      `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=TbsQ5qLxJHC20Jv4Th7E`
-    );
-    const data = await response.json();
-    
-    if (data.features && data.features.length > 0) {
-      const location = data.features[0];
-      const [lng, lat] = location.center;
-      
-      // Remove existing search marker if any
-      if (searchMarker) {
-        amap.removeLayer(searchMarker);
-      }
-      
-      // Add new marker with gold pin
-      searchMarker = L.marker([lat, lng], {
-        icon: goldPinIcon
-      }).addTo(amap);
-      
-      // Add popup with address information
-      searchMarker.bindPopup(location.place_name).openPopup();
-      
-      // Pan map to the location
-      amap.setView([lat, lng], 15);
-    }
-  } catch (error) {
-    console.error('Error performing search:', error);
-  }
-}
 
 //Color markers downloaded from leaflet repo, color-shifted to green
 //Used to show currently selected pin
@@ -334,11 +256,34 @@ function updateMap(data) {
     }
   }
 
-  // Initialize the map
-  const map = L.map('map', {
-    layers: [L.tileLayer(mapSource, { attribution: mapCopyright })],
-    wheelPxPerZoomLevel: 90, // Slows scrollwheel zoom
-  });
+  // Initialize the map and set view to Oregon
+        var map = L.map('map').setView([44.0, -120.5], 7);
+
+        // Define base layers
+        var jawgStreets = L.tileLayer('https://tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=bs12XjUq7hHD2pgakKp7AcM1Y3Dk7BkLvf162PpbLxMsvgyclXR5HLnYEnI2Zkoa', {
+            attribution: '',
+            name: 'Jawg Streets'
+        });
+
+        var googleHybrid = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+            attribution: 'Google Hybrid',
+            name: 'Google Hybrid'
+        });
+
+        var maptilerSatellite = L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
+            attribution: 'MapTiler Satellite',
+            name: 'MapTiler Satellite'
+        });
+
+        // Create base layers object for layer control
+        var baseLayers = {
+            "Street Map": jawgStreets,
+            "Google Hybrid": googleHybrid,
+            "Satellite": maptilerSatellite
+        };
+
+        // Add default layer to map
+        jawgStreets.addTo(map);
 
   // Create panes for markers and clusters
   map.createPane('selectedMarker').style.zIndex = 620;
@@ -422,41 +367,6 @@ function updateMap(data) {
       console.warn('Cannot fit bounds:', err);
     }
   }
-
-  // Add the search control to the map
-  const searchControl = L.Control.geocoder({
-    defaultMarkGeocode: false, // Prevent automatic marker placement
-    position: 'topright', // Position of the search bar
-    placeholder: 'Search address...', // Placeholder text
-  }).addTo(map);
-
-  // Handle search results
-  searchControl.on('markgeocode', function (e) {
-    const result = e.geocode;
-    if (!result || !result.center) {
-      console.error('Invalid geocoding result:', result);
-      return;
-    }
-
-    const { center, name } = result;
-    const [lng, lat] = center;
-
-    // Remove existing search marker if any
-    if (window.searchMarker) {
-      map.removeLayer(window.searchMarker);
-    }
-
-    // Add a new marker at the searched location
-    window.searchMarker = L.marker([lat, lng], {
-      icon: goldPinIcon, // Use your custom gold pin icon
-    }).addTo(map);
-
-    // Add a popup with the address
-    window.searchMarker.bindPopup(name).openPopup();
-
-    // Pan the map to the searched location
-    map.setView([lat, lng], 15);
-  });
 
   // Ensure the selected marker is shown
   function makeSureSelectedMarkerIsShown() {
@@ -668,21 +578,32 @@ grist.onOptions((options, interaction) => {
   mapCopyright = newCopyright
   document.getElementById("mapCopyright").value = mapCopyright;
 });
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
 
-  var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
+// Create an overlay layers object for layer control
+        var overlayLayers = {
+            "Locations": markers
+        };
 
-  var searchControl = L.esri.Geocoding.geosearch({
-    providers: [arcgisOnline]
-  }).addTo(map);
+        // Add layer control to map
+        L.control.layers(baseLayers, overlayLayers, {
+            position: 'topright',
+            collapsed: false
+        }).addTo(map);
 
-  var results = L.layerGroup().addTo(map);
+        // Add search control
+        var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
+        var searchControl = L.esri.Geocoding.geosearch({
+            providers: [arcgisOnline],
+            position: 'topleft'
+        }).addTo(map);
 
-  searchControl.on('results', function(data){
-    results.clearLayers();
-    for (var i = data.results.length - 1; i >= 0; i--) {
-      results.addLayer(L.marker(data.results[i].latlng));
-    }
-  });
+        // Create a layer group for search results
+        var searchResults = L.layerGroup().addTo(map);
+
+        // Handle search results
+        searchControl.on('results', function(data) {
+            searchResults.clearLayers();
+            for (var i = data.results.length - 1; i >= 0; i--) {
+                searchResults.addLayer(L.marker(data.results[i].latlng));
+            }
+        });
