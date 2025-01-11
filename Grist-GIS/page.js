@@ -1,146 +1,163 @@
-/* The JS file is responsible for setting up the map control, styling the markers, popups, and adding necessary script tags. */
-
 "use strict";
 
 /* global grist, window */
-// Define custom gold pin using SVG
-const goldPinIcon = L.divIcon({
-  className: 'custom-pin',
-  html: `<svg width="30" height="45" viewBox="0 0 30 45" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M15 0C6.71572 0 0 6.71572 0 15C0 23.2843 15 45 15 45C15 45 30 23.2843 30 15C30 6.71572 23.2843 0 15 0Z" 
-          fill="#FFD700" 
-          stroke="#B8860B" 
-          stroke-width="2"/>
-    <circle cx="15" cy="15" r="6" fill="#B8860B"/>
-  </svg>`,
-  iconSize: [30, 45],
-  iconAnchor: [15, 45],
-  popupAnchor: [0, -45]
-});
+// Map instance and control variables
 let amap;
 let popups = {};
 let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
-let mapCopyright = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
-// Required, Label value
-const Name = "Name";
-// Required
-const Longitude = "Longitude";
-// Required
-const Latitude = "Latitude";
-// Optional - switch column to trigger geocoding
-// Columns used in page.js
-const Property_Type = 'Property_Type';
-const Tenants = 'Tenants';
-const Secondary_Type = 'Secondary_Type';
-const ImageURL = 'ImageURL';
-const CoStar_URL = 'CoStar_URL';
-const County_Hyper = 'County_Hyper';
-const GIS = 'GIS';
-const Geocode = 'Geocode';
-// Optional - but required for geocoding. Field with address to find (might be formula)
-const Address = 'Address';
-// Optional - but useful for geocoding. Blank field which map uses
-//            to store last geocoded Address. Enables map widget
-//            to automatically update the geocoding if Address is changed
-const GeocodedAddress = 'GeocodedAddress';
-let lastRecord;
-let lastRecords;
+let markers = L.markerClusterGroup();
+let searchResults;
+let searchControl;
 
-//Color markers downloaded from leaflet repo, color-shifted to green
-//Used to show currently selected pin
-const selectedIcon =  new L.Icon({
-  iconUrl: 'marker-icon-green.png',
-  iconRetinaUrl: 'marker-icon-green-2x.png',
-  shadowUrl: 'marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-const defaultIcon =  new L.Icon.Default();
-
-// Creates clusterIcons that highlight if they contain selected row
-// Given a function `() => selectedMarker`, return a cluster icon create function
-// that can be passed to MarkerClusterGroup({iconCreateFunction: ... } )
-//
-// Cluster with selected record gets the '.marker-cluster-selected' class
-// (defined in screen.css)
-//
-// Copied from _defaultIconCreateFunction in ClusterMarkerGroup
-//    https://github.com/Leaflet/Leaflet.markercluster/blob/master/src/MarkerClusterGroup.js
-const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
-  return function(cluster) {
-    var childCount = cluster.getChildCount();
-
-    let isSelected = false;
-    try {
-      const selectedMarker = selectedMarkerGetter();
-
-      // hmm I think this is n log(n) to build all the clusters for the whole map.
-      // It's probably fine though, it only fires once when map markers
-      // are set up or when selectedRow changes
-      isSelected = cluster.getAllChildMarkers().filter((m) => m == selectedMarker).length > 0;
-    } catch (e) {
-      console.error("WARNING: Error in clusterIconFactory in map widget");
-      console.error(e);
-    }
-
-    var c = ' marker-cluster-';
-    if (childCount < 10) {
-      c += 'small';
-    } else if (childCount < 100) {
-      c += 'medium';
-    } else {
-      c += 'large';
-    }
-
-    return new L.DivIcon({
-        html: '<div><span>'
-            + childCount
-            + ' <span aria-label="markers"></span>'
-            + '</span></div>',
-        className: 'marker-cluster' + c + (isSelected ? ' marker-cluster-selected' : ''),
-        iconSize: new L.Point(40, 40)
-    });
+// Base layer configurations
+const baseLayers = {
+  streets: {
+    url: 'https://tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=bs12XjUq7hHD2pgakKp7AcM1Y3Dk7BkLvf162PpbLxMsvgyclXR5HLnYEnI2Zkoa',
+    attribution: '',
+    name: 'Street Map'
+  },
+  hybrid: {
+    url: 'http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',
+    attribution: 'Google Hybrid',
+    name: 'Google Hybrid'
+  },
+  satellite: {
+    url: 'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E',
+    attribution: 'MapTiler Satellite',
+    name: 'Satellite'
   }
 };
 
-const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
-if (URLSearchParams && location.search && geocoder) {
-  const c = new URLSearchParams(location.search).get('geocoder');
-  if (c && L.Control.Geocoder[c]) {
-    console.log('Using geocoder', c);
-    geocoder = L.Control.Geocoder[c]();
-  } else if (c) {
-    console.warn('Unsupported geocoder', c);
+// Column configurations
+const requiredColumns = {
+  Name: "Name",
+  Longitude: "Longitude",
+  Latitude: "Latitude"
+};
+
+const optionalColumns = {
+  Property_Type: 'Property_Type',
+  Tenants: 'Tenants',
+  Secondary_Type: 'Secondary_Type',
+  ImageURL: 'ImageURL',
+  CoStar_URL: 'CoStar_URL',
+  County_Hyper: 'County_Hyper',
+  GIS: 'GIS',
+  Geocode: 'Geocode',
+  Address: 'Address',
+  GeocodedAddress: 'GeocodedAddress'
+};
+
+// Initialize the map
+function initializeMap() {
+  if (amap) {
+    amap.remove();
   }
-  const m = new URLSearchParams(location.search).get('mode');
-  if (m) { mode = m; }
+
+  amap = L.map('map').setView([44.0, -120.5], 7);
+  
+  // Create and add base layers
+  const mapLayers = {};
+  Object.entries(baseLayers).forEach(([key, layer]) => {
+    mapLayers[layer.name] = L.tileLayer(layer.url, {
+      attribution: layer.attribution
+    });
+  });
+  
+  // Add default layer
+  mapLayers[baseLayers.streets.name].addTo(amap);
+
+  // Initialize marker cluster group with custom options
+  markers = L.markerClusterGroup({
+    disableClusteringAtZoom: 18,
+    maxClusterRadius: 30,
+    showCoverageOnHover: true,
+    iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId])
+  });
+
+  // Add layer control
+  L.control.layers(mapLayers, { "Locations": markers }, {
+    position: 'topright',
+    collapsed: false
+  }).addTo(amap);
+
+  // Add search control
+  const arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
+  searchControl = L.esri.Geocoding.geosearch({
+    providers: [arcgisOnline],
+    position: 'topleft'
+  }).addTo(amap);
+
+  // Initialize search results layer
+  searchResults = L.layerGroup().addTo(amap);
+
+  // Handle search results
+  searchControl.on('results', function(data) {
+    searchResults.clearLayers();
+    data.results.forEach(result => {
+      searchResults.addLayer(L.marker(result.latlng));
+    });
+  });
+
+  return amap;
 }
 
-async function geocode(address) {
-  return new Promise((resolve, reject) => {
-    try {
-      geocoder.geocode(address, (v) => {
-        v = v[0];
-        if (v) { v = v.center; }
-        resolve(v);
-      });
-    } catch (e) {
-      console.log("Problem:", e);
-      reject(e);
+// Update map with new data
+function updateMap(data) {
+  data = data || selectedRecords;
+  selectedRecords = data;
+
+  if (!data || data.length === 0) {
+    showProblem("No data found yet");
+    return;
+  }
+
+  // Verify required columns
+  if (!Object.values(requiredColumns).every(col => col in data[0])) {
+    showProblem("Missing required columns");
+    return;
+  }
+
+  // Clear existing markers
+  markers.clearLayers();
+  popups = {};
+
+  // Add markers for each record
+  const points = data.map(rec => {
+    const info = getInfo(rec);
+    if (!isValidCoordinate(info.lng, info.lat)) {
+      return null;
     }
-  });
-}
 
-async function delay(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+    const marker = createMarker(info);
+    if (marker) {
+      markers.addLayer(marker);
+      popups[info.id] = marker;
+    }
+    return new L.LatLng(info.lat, info.lng);
+  }).filter(Boolean);
+
+  // Add markers to map
+  amap.addLayer(markers);
+
+  // Fit bounds if there are points
+  if (points.length > 0) {
+    try {
+      amap.fitBounds(new L.LatLngBounds(points), { maxZoom: 15, padding: [0, 0] });
+    } catch (err) {
+      console.warn('Cannot fit bounds:', err);
+    }
+  }
+
+  // Show selected marker if exists
+  if (selectedRowId && popups[selectedRowId]) {
+    const marker = popups[selectedRowId];
+    markers.zoomToShowLayer(marker);
+    marker.openPopup();
+  }
 }
 
 // If widget has wright access
@@ -578,32 +595,3 @@ grist.onOptions((options, interaction) => {
   mapCopyright = newCopyright
   document.getElementById("mapCopyright").value = mapCopyright;
 });
-
-// Create an overlay layers object for layer control
-        var overlayLayers = {
-            "Locations": markers
-        };
-
-        // Add layer control to map
-        L.control.layers(baseLayers, overlayLayers, {
-            position: 'topright',
-            collapsed: false
-        }).addTo(map);
-
-        // Add search control
-        var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
-        var searchControl = L.esri.Geocoding.geosearch({
-            providers: [arcgisOnline],
-            position: 'topleft'
-        }).addTo(map);
-
-        // Create a layer group for search results
-        var searchResults = L.layerGroup().addTo(map);
-
-        // Handle search results
-        searchControl.on('results', function(data) {
-            searchResults.clearLayers();
-            for (var i = data.results.length - 1; i >= 0; i--) {
-                searchResults.addLayer(L.marker(data.results[i].latlng));
-            }
-        });
