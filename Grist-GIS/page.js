@@ -66,6 +66,35 @@ function initializeMap() {
     iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId])
   });
 
+  // Create an overlay layers object for layer control
+var overlayLayers = {
+    "Locations": markers
+};
+
+// Add layer control to map
+L.control.layers(baseLayers, overlayLayers, {
+    position: 'topright',
+    collapsed: false
+}).addTo(map);
+
+// Add search control
+var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
+var searchControl = L.esri.Geocoding.geosearch({
+    providers: [arcgisOnline],
+    position: 'topleft'
+}).addTo(map);
+
+// Create a layer group for search results
+var searchResults = L.layerGroup().addTo(map);
+
+// Handle search results
+searchControl.on('results', function(data) {
+    searchResults.clearLayers();
+    for (var i = data.results.length - 1; i >= 0; i--) {
+        searchResults.addLayer(L.marker(data.results[i].latlng));
+    }
+});
+
   // Add layer control
   L.control.layers(mapLayers, { "Locations": markers }, {
     position: 'topright',
