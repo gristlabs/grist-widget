@@ -1,7 +1,9 @@
+/* The JS file is responsible for setting up the map control, styling the markers, popups, and adding necessary script tags. */
+
 "use strict";
 
 /* global grist, window */
-// Map instance and control variables
+
 let amap;
 let popups = {};
 let selectedTableId = null;
@@ -12,44 +14,30 @@ let markers = L.markerClusterGroup();
 let searchResults;
 let searchControl;
 
-// Base layer configurations
-const baseLayers = {
-  streets: {
-    url: 'https://tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=bs12XjUq7hHD2pgakKp7AcM1Y3Dk7BkLvf162PpbLxMsvgyclXR5HLnYEnI2Zkoa',
-    attribution: '',
-    name: 'Street Map'
-  },
-  hybrid: {
-    url: 'http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',
-    attribution: 'Google Hybrid',
-    name: 'Google Hybrid'
-  },
-  satellite: {
-    url: 'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E',
-    attribution: 'MapTiler Satellite',
-    name: 'Satellite'
-  }
-};
-
-// Column configurations
-const requiredColumns = {
-  Name: "Name",
-  Longitude: "Longitude",
-  Latitude: "Latitude"
-};
-
-const optionalColumns = {
-  Property_Type: 'Property_Type',
-  Tenants: 'Tenants',
-  Secondary_Type: 'Secondary_Type',
-  ImageURL: 'ImageURL',
-  CoStar_URL: 'CoStar_URL',
-  County_Hyper: 'County_Hyper',
-  GIS: 'GIS',
-  Geocode: 'Geocode',
-  Address: 'Address',
-  GeocodedAddress: 'GeocodedAddress'
-};
+// Required, Label value
+const Name = "Name";
+// Required
+const Longitude = "Longitude";
+// Required
+const Latitude = "Latitude";
+// Optional - switch column to trigger geocoding
+// Columns used in page.js
+const Property_Type = 'Property_Type';
+const Tenants = 'Tenants';
+const Secondary_Type = 'Secondary_Type';
+const ImageURL = 'ImageURL';
+const CoStar_URL = 'CoStar_URL';
+const County_Hyper = 'County_Hyper';
+const GIS = 'GIS';
+const Geocode = 'Geocode';
+// Optional - but required for geocoding. Field with address to find (might be formula)
+const Address = 'Address';
+// Optional - but useful for geocoding. Blank field which map uses
+//            to store last geocoded Address. Enables map widget
+//            to automatically update the geocoding if Address is changed
+const GeocodedAddress = 'GeocodedAddress';
+let lastRecord;
+let lastRecords;
 
 // Initialize the map
 function initializeMap() {
@@ -105,59 +93,99 @@ function initializeMap() {
   return amap;
 }
 
-// Update map with new data
-function updateMap(data) {
-  data = data || selectedRecords;
-  selectedRecords = data;
+//Color markers downloaded from leaflet repo, color-shifted to green
+//Used to show currently selected pin
+const selectedIcon =  new L.Icon({
+  iconUrl: 'marker-icon-green.png',
+  iconRetinaUrl: 'marker-icon-green-2x.png',
+  shadowUrl: 'marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+const defaultIcon =  new L.Icon.Default();
 
-  if (!data || data.length === 0) {
-    showProblem("No data found yet");
-    return;
-  }
 
-  // Verify required columns
-  if (!Object.values(requiredColumns).every(col => col in data[0])) {
-    showProblem("Missing required columns");
-    return;
-  }
 
-  // Clear existing markers
-  markers.clearLayers();
-  popups = {};
+// Creates clusterIcons that highlight if they contain selected row
+// Given a function `() => selectedMarker`, return a cluster icon create function
+// that can be passed to MarkerClusterGroup({iconCreateFunction: ... } )
+//
+// Cluster with selected record gets the '.marker-cluster-selected' class
+// (defined in screen.css)
+//
+// Copied from _defaultIconCreateFunction in ClusterMarkerGroup
+//    https://github.com/Leaflet/Leaflet.markercluster/blob/master/src/MarkerClusterGroup.js
+const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
+  return function(cluster) {
+    var childCount = cluster.getChildCount();
 
-  // Add markers for each record
-  const points = data.map(rec => {
-    const info = getInfo(rec);
-    if (!isValidCoordinate(info.lng, info.lat)) {
-      return null;
-    }
-
-    const marker = createMarker(info);
-    if (marker) {
-      markers.addLayer(marker);
-      popups[info.id] = marker;
-    }
-    return new L.LatLng(info.lat, info.lng);
-  }).filter(Boolean);
-
-  // Add markers to map
-  amap.addLayer(markers);
-
-  // Fit bounds if there are points
-  if (points.length > 0) {
+    let isSelected = false;
     try {
-      amap.fitBounds(new L.LatLngBounds(points), { maxZoom: 15, padding: [0, 0] });
-    } catch (err) {
-      console.warn('Cannot fit bounds:', err);
-    }
-  }
+      const selectedMarker = selectedMarkerGetter();
 
-  // Show selected marker if exists
-  if (selectedRowId && popups[selectedRowId]) {
-    const marker = popups[selectedRowId];
-    markers.zoomToShowLayer(marker);
-    marker.openPopup();
+      // hmm I think this is n log(n) to build all the clusters for the whole map.
+      // It's probably fine though, it only fires once when map markers
+      // are set up or when selectedRow changes
+      isSelected = cluster.getAllChildMarkers().filter((m) => m == selectedMarker).length > 0;
+    } catch (e) {
+      console.error("WARNING: Error in clusterIconFactory in map widget");
+      console.error(e);
+    }
+
+    var c = ' marker-cluster-';
+    if (childCount < 10) {
+      c += 'small';
+    } else if (childCount < 100) {
+      c += 'medium';
+    } else {
+      c += 'large';
+    }
+
+    return new L.DivIcon({
+        html: '<div><span>'
+            + childCount
+            + ' <span aria-label="markers"></span>'
+            + '</span></div>',
+        className: 'marker-cluster' + c + (isSelected ? ' marker-cluster-selected' : ''),
+        iconSize: new L.Point(40, 40)
+    });
   }
+};
+
+const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
+if (URLSearchParams && location.search && geocoder) {
+  const c = new URLSearchParams(location.search).get('geocoder');
+  if (c && L.Control.Geocoder[c]) {
+    console.log('Using geocoder', c);
+    geocoder = L.Control.Geocoder[c]();
+  } else if (c) {
+    console.warn('Unsupported geocoder', c);
+  }
+  const m = new URLSearchParams(location.search).get('mode');
+  if (m) { mode = m; }
+}
+
+async function geocode(address) {
+  return new Promise((resolve, reject) => {
+    try {
+      geocoder.geocode(address, (v) => {
+        v = v[0];
+        if (v) { v = v.center; }
+        resolve(v);
+      });
+    } catch (e) {
+      console.log("Problem:", e);
+      reject(e);
+    }
+  });
+}
+
+async function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 // If widget has wright access
@@ -244,162 +272,128 @@ let markers = [];
 function updateMap(data) {
   data = data || selectedRecords;
   selectedRecords = data;
-
-  // Check if data is valid
-  if (!data || data.length === 0) {
-    showProblem("No data found yet");
-    return;
   }
-
-  // Check if required columns exist
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns in the Creator Panel.");
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
+    " in the Creator Panel.");
     return;
   }
 
-  // Remove any existing error messages
-  const error = document.querySelector('.error');
-  if (error) {
-    error.remove();
-  }
 
-  // Remove the existing map if it exists
+  // Map tile source:
+  //    https://leaflet-extras.github.io/leaflet-providers/preview/
+  //    Old source was natgeo world map, but that only has data up to zoom 16
+  //    (can't zoom in tighter than about 10 city blocks across)
+  //
+  const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
+
+  const error = document.querySelector('.error');
+  if (error) { error.remove(); }
   if (amap) {
     try {
       amap.off();
       amap.remove();
     } catch (e) {
+      // ignore
       console.warn(e);
     }
   }
+  const map = L.map('map', {
+    layers: [tiles],
+    wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
+  });
 
-  // Initialize the map and set view to Oregon
-        var map = L.map('map').setView([44.0, -120.5], 7);
-
-        // Define base layers
-        var jawgStreets = L.tileLayer('https://tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=bs12XjUq7hHD2pgakKp7AcM1Y3Dk7BkLvf162PpbLxMsvgyclXR5HLnYEnI2Zkoa', {
-            attribution: '',
-            name: 'Jawg Streets'
-        });
-
-        var googleHybrid = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
-            attribution: 'Google Hybrid',
-            name: 'Google Hybrid'
-        });
-
-        var maptilerSatellite = L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
-            attribution: 'MapTiler Satellite',
-            name: 'MapTiler Satellite'
-        });
-
-        // Create base layers object for layer control
-        var baseLayers = {
-            "Street Map": jawgStreets,
-            "Google Hybrid": googleHybrid,
-            "Satellite": maptilerSatellite
-        };
-
-        // Add default layer to map
-        jawgStreets.addTo(map);
-
-  // Create panes for markers and clusters
+  // Make sure clusters always show up above points
+  // Default z-index for markers is 600, 650 is where tooltipPane z-index starts
   map.createPane('selectedMarker').style.zIndex = 620;
-  map.createPane('clusters').style.zIndex = 610;
-  map.createPane('otherMarkers').style.zIndex = 600;
+  map.createPane('clusters'      ).style.zIndex = 610;
+  map.createPane('otherMarkers'  ).style.zIndex = 600;
 
-  // Array to store points for fitting bounds
-  const points = [];
+  const points = []; //L.LatLng[], used for zooming to bounds of all markers
 
-  // Clear the popups object
-  popups = {};
+  popups = {}; // Map: {[rowid]: L.marker}
+  // Make this before markerClusterGroup so iconCreateFunction
+  // can fetch the currently selected marker from popups by function closure
 
-  // Initialize the marker cluster group
   markers = L.markerClusterGroup({
     disableClusteringAtZoom: 18,
-    maxClusterRadius: 30, // Reduce clustering radius
+    //If markers are very close together, they'd stay clustered even at max zoom
+    //This disables that behavior explicitly for max zoom (18)
+    maxClusterRadius: 30, //px, default 80
+    // default behavior clusters too aggressively. It's nice to see individual markers
     showCoverageOnHover: true,
-    clusterPane: 'clusters',
+
+    clusterPane: 'clusters', //lets us specify z-index, so cluster icons can be on top
     iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
   });
 
-  // Handle marker clicks
   markers.on('click', (e) => {
     const id = e.layer.options.id;
     selectMaker(id);
   });
 
-  // Add markers for each record
-  for (const rec of data) {
-    const { id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink } = getInfo(rec);
-
-    // Skip invalid coordinates
-    if (String(lng) === '...' || (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01)) {
-      continue;
-    }
-
-    // Create a LatLng object for the marker
-    const pt = new L.LatLng(lat, lng);
-    points.push(pt);
-
-    // Create the marker
-    const marker = L.marker(pt, {
-      title: name,
-      id: id,
-      icon: (id == selectedRowId) ? selectedIcon : defaultIcon,
-      pane: (id == selectedRowId) ? 'selectedMarker' : 'otherMarkers',
-    });
-
-    // Build the popup content
-    const popupContent = `
-      <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-        <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${name}</strong>
-        ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-        <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${propertyType}</p>
-        <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${secondaryType}</p>
-        <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${tenants}</p>
-        <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
-          <a href="${costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
-          <a href="${countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
-          <a href="${gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
-        </div>
-      </div>
-    `;
-
-    // Bind the popup to the marker
-    marker.bindPopup(popupContent);
-
-    // Add the marker to the cluster group and popups object
-    markers.addLayer(marker);
-    popups[id] = marker; // Ensure the marker is added to the popups object
+for (const rec of data) {
+  const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(rec);
+  
+  if (String(lng) === '...') { continue; }
+  if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
+    continue;
   }
 
-  // Add the marker cluster group to the map
+  const pt = new L.LatLng(lat, lng);
+  points.push(pt);
+
+  const marker = L.marker(pt, {
+    title: name,
+    id: id,
+    icon: (id == selectedRowId) ?  selectedIcon : defaultIcon,
+    pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
+  });
+
+  // Build HTML content for the popup, similar to your Mapbox example
+  const imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
+  const popupContent = `
+  <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
+    <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${name}</strong>
+    ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${propertyType}</p>
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${secondaryType}</p>
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${tenants}</p>
+    <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
+      <a href="${costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
+      <a href="${countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
+      <a href="${gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
+    </div>
+  </div>
+`;
+
+  // Bind the custom HTML content to the marker's popup
+  marker.bindPopup(popupContent);
+  markers.addLayer(marker);
+
+  popups[id] = marker;
+}
   map.addLayer(markers);
 
-  // Fit the map to the bounds of all markers
-  if (points.length > 0) {
-    try {
-      map.fitBounds(new L.LatLngBounds(points), { maxZoom: 15, padding: [0, 0] });
-    } catch (err) {
-      console.warn('Cannot fit bounds:', err);
-    }
-  }
+  clearMakers = () => map.removeLayer(markers);
 
-  // Ensure the selected marker is shown
+  try {
+    map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
+  } catch (err) {
+    console.warn('cannot fit bounds');
+  }
   function makeSureSelectedMarkerIsShown() {
-    if (selectedRowId && popups[selectedRowId]) {
-      const marker = popups[selectedRowId];
-      if (!marker._icon) {
-        markers.zoomToShowLayer(marker);
-      }
+    const rowId = selectedRowId;
+
+    if (rowId && popups[rowId]) {
+      var marker = popups[rowId];
+      if (!marker._icon) { markers.zoomToShowLayer(marker); }
       marker.openPopup();
     }
   }
 
-  // Store the map instance
   amap = map;
 
-  // Ensure the selected marker is visible
   makeSureSelectedMarkerIsShown();
 }
 
@@ -471,96 +465,6 @@ function selectOnMap(rec) {
   }
 }
 
-// Initialize the map and handle records
-grist.onRecords(function (records, mappings) {
-  if (!amap) {
-    // Initialize the map if it hasn't been initialized yet
-    amap = L.map('map').setView([37.7749, -122.4194], 6);
-
-    // Add the tile layer
-    L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
-      attribution: 'Google Satellite',
-      maxZoom: 20,
-    }).addTo(amap);
-
-    // Add the search control after map initialization
-    addSearchControl();
-  }
-
-  // Update the map with the new records
-  updateMap(records);
-});
-
-// Rest of your existing code...
-grist.onRecord((record, mappings) => {
-  if (mode === 'single') {
-    // If mappings are not done, we will assume that table has correct columns.
-    // This is done to support existing widgets which where configured by
-    // renaming column names.
-    lastRecord = grist.mapColumnNames(record) || record;
-    selectOnMap(lastRecord);
-    scanOnNeed(defaultMapping(record, mappings));
-  } else {
-    const marker = selectMaker(record.id);
-    if (!marker) { return; }
-    markers.zoomToShowLayer(marker);
-    marker.openPopup();
-  }
-});
-
-grist.onRecords((data, mappings) => {
-  lastRecords = grist.mapColumnNames(data) || data;
-  if (mode !== 'single') {
-    // If mappings are not done, we will assume that table has correct columns.
-    // This is done to support existing widgets which where configured by
-    // renaming column names.
-    updateMap(lastRecords);
-    if (lastRecord) {
-      selectOnMap(lastRecord);
-    }
-    // We need to mimic the mappings for old widgets
-    scanOnNeed(defaultMapping(data[0], mappings));
-  }
-});
-
-grist.onNewRecord(() => {
-  clearMakers();
-  clearMakers = () => {};
-});
-
-function updateMode() {
-  if (mode === 'single') {
-    selectedRowId = lastRecord.id;
-    updateMap([lastRecord]);
-  } else {
-    updateMap(lastRecords);
-  }
-}
-
-function onEditOptions() {
-  const popup = document.getElementById("settings");
-  popup.style.display = 'block';
-  const btnClose = document.getElementById("btnClose");
-  btnClose.onclick = () => popup.style.display = 'none';
-  const checkbox = document.getElementById('cbxMode');
-  checkbox.checked = mode === 'multi' ? true : false;
-  checkbox.onchange = async (e) => {
-    const newMode = e.target.checked ? 'multi' : 'single';
-    if (newMode != mode) {
-      mode = newMode;
-      await grist.setOption('mode', mode);
-      updateMode();
-    }
-  }
-  [ "mapSource", "mapCopyright" ].forEach((opt) => {
-    const ipt = document.getElementById(opt)
-    ipt.onchange = async (e) => {
-      await grist.setOption(opt, e.target.value);
-    }
-  })
-}
-
-const optional = true;
 grist.ready({
   columns: [
     "Name",
@@ -595,3 +499,90 @@ grist.onOptions((options, interaction) => {
   mapCopyright = newCopyright
   document.getElementById("mapCopyright").value = mapCopyright;
 });
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
+
+  var searchControl = L.esri.Geocoding.geosearch({
+    providers: [arcgisOnline]
+  }).addTo(map);
+
+  var results = L.layerGroup().addTo(map);
+
+  searchControl.on('results', function(data){
+    results.clearLayers();
+    for (var i = data.results.length - 1; i >= 0; i--) {
+      results.addLayer(L.marker(data.results[i].latlng));
+    }
+  });
+
+// ... rest of your existing helper functions (getInfo, showProblem, etc.) ...
+grist.onRecord((record, mappings) => {
+  if (mode === 'single') {
+    // If mappings are not done, we will assume that table has correct columns.
+    // This is done to support existing widgets which where configured by
+    // renaming column names.
+    lastRecord = grist.mapColumnNames(record) || record;
+    selectOnMap(lastRecord);
+    scanOnNeed(defaultMapping(record, mappings));
+  } else {
+    const marker = selectMaker(record.id);
+    if (!marker) { return; }
+    markers.zoomToShowLayer(marker);
+    marker.openPopup();
+  }
+});
+grist.onRecords((data, mappings) => {
+  lastRecords = grist.mapColumnNames(data) || data;
+  if (mode !== 'single') {
+    // If mappings are not done, we will assume that table has correct columns.
+    // This is done to support existing widgets which where configured by
+    // renaming column names.
+    updateMap(lastRecords);
+    if (lastRecord) {
+      selectOnMap(lastRecord);
+    }
+    // We need to mimic the mappings for old widgets
+    scanOnNeed(defaultMapping(data[0], mappings));
+  }
+});
+
+grist.onNewRecord(() => {
+  clearMakers();
+  clearMakers = () => {};
+})
+
+function updateMode() {
+  if (mode === 'single') {
+    selectedRowId = lastRecord.id;
+    updateMap([lastRecord]);
+  } else {
+    updateMap(lastRecords);
+  }
+}
+
+function onEditOptions() {
+  const popup = document.getElementById("settings");
+  popup.style.display = 'block';
+  const btnClose = document.getElementById("btnClose");
+  btnClose.onclick = () => popup.style.display = 'none';
+  const checkbox = document.getElementById('cbxMode');
+  checkbox.checked = mode === 'multi' ? true : false;
+  checkbox.onchange = async (e) => {
+    const newMode = e.target.checked ? 'multi' : 'single';
+    if (newMode != mode) {
+      mode = newMode;
+      await grist.setOption('mode', mode);
+      updateMode();
+    }
+  }
+  [ "mapSource", "mapCopyright" ].forEach((opt) => {
+    const ipt = document.getElementById(opt)
+    ipt.onchange = async (e) => {
+      await grist.setOption(opt, e.target.value);
+    }
+  })
+}
+const optional = true;
