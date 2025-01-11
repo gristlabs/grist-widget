@@ -8,8 +8,8 @@
     <!-- MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-    <!-- Leaflet Control Geocoder CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <!-- Search Control CSS -->
+    <link rel="stylesheet" https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.css" />
     <!-- Custom CSS -->
     <link rel="stylesheet" href="screen.css" />
   </head>
@@ -30,17 +30,15 @@
           <td> <label id="lblSource" for="mapSource"> Source </label> </td>
           <td> <input id="mapSource"> </td>
         </tr>
-        <tr>
-          <td> <label id="lblCopyright" for="mapCopyright"> Copyright </label> </td>
-          <td> <input id="mapCopyright"> </td>
-        </tr>
       </table>
     </div>
 
     <!-- JavaScript Libraries -->
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet-src.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <!-- ESRI Leaflet for search -->
+    <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0/esri-leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script src="page.js"></script>
   </body>
