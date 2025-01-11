@@ -1,0 +1,94 @@
+<html>
+<head>
+    <title>Store Logo Map with Clustering and Search</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Clustering CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <!-- Search Control CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.css">
+    <style>
+        body { margin:0; padding:0; }
+        #map { 
+            position: absolute; 
+            top: 0; 
+            bottom: 0; 
+            right: 0; 
+            left: 0; 
+            height: 900px;
+        }
+        .logo-overlay {
+            width: 25px;
+            height: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <!-- Leaflet and plugins -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- ESRI Leaflet for search -->
+    <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0/esri-leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
+    
+    <script>
+        // Initialize the map and set view to Oregon
+        var map = L.map('map').setView([44.0, -120.5], 7);
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=bs12XjUq7hHD2pgakKp7AcM1Y3Dk7BkLvf162PpbLxMsvgyclXR5HLnYEnI2Zkoa', {
+            attribution: ''
+        }).addTo(map);
+
+        // Create a marker cluster group
+        var markers = L.markerClusterGroup({
+            maxClusterRadius: 35
+        });
+
+        // Function to add logo overlay
+        function addLogoOverlay(lat, lng, logoUrl) {
+            var logoIcon = L.icon({
+                iconUrl: logoUrl,
+                iconSize: [35, 35],
+                iconAnchor: [25, 25],
+            });
+            var marker = L.marker([lat, lng], { icon: logoIcon });
+            markers.addLayer(marker);
+        }
+
+        // Add your locations
+        addLogoOverlay(45.551483, -122.903465, 'https://upload.wikimedia.org/wikipedia/commons/2/20/Dutch_Bros_Coffee_wordmark.svg');
+        addLogoOverlay(45.503908, -122.522899, 'https://upload.wikimedia.org/wikipedia/commons/2/20/Dutch_Bros_Coffee_wordmark.svg');
+        addLogoOverlay(45.519211, -123.10437, 'https://upload.wikimedia.org/wikipedia/commons/2/20/Dutch_Bros_Coffee_wordmark.svg');
+        addLogoOverlay(45.503939, -122.483825, 'https://upload.wikimedia.org/wikipedia/commons/2/20/Dutch_Bros_Coffee_wordmark.svg');
+        addLogoOverlay(42.04982, -124.2569847, 'https://upload.wikimedia.org/wikipedia/commons/2/20/Dutch_Bros_Coffee_wordmark.svg');
+        addLogoOverlay(42.2089191, -121.7508268, 'https://upload.wikimedia.org/wikipedia/commons/2/20/Dutch_Bros_Coffee_wordmark.svg');
+        addLogoOverlay(42.279165, -122.8207062, 'https://upload.wikimedia.org/wikipedia/commons/2/20/Dutch_Bros_Coffee_wordmark.svg');
+        addLogoOverlay(45.5187932, -122.4702868, 'https://upload.wikimedia.org/wikipedia/commons/2/20/Dutch_Bros_Coffee_wordmark.svg');
+
+        // Add the cluster group to the map
+        map.addLayer(markers);
+
+        // Add search control
+        var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
+        var searchControl = L.esri.Geocoding.geosearch({
+            providers: [arcgisOnline]
+        }).addTo(map);
+
+        // Create a layer group for search results
+        var searchResults = L.layerGroup().addTo(map);
+
+        // Handle search results
+        searchControl.on('results', function(data) {
+            searchResults.clearLayers();
+            for (var i = data.results.length - 1; i >= 0; i--) {
+                searchResults.addLayer(L.marker(data.results[i].latlng));
+            }
+        });
+    </script>
+</body>
+</html>
