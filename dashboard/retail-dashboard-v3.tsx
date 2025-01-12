@@ -77,13 +77,17 @@ const RetailDashboard = () => {
   
   useEffect(() => {
     const loadData = async () => {
-      try {
-        const response = await window.fs.readFile('Markets.xlsx');
-        const workbook = XLSX.read(response, {
-          cellStyles: true,
-          cellDates: true,
-          cellNF: true
-        });
+  try {
+    const response = await fetch(`${process.env.PUBLIC_URL}/Markets.xlsx`);
+    const arrayBuffer = await response.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(sheet, { range: 2 });
+    setData(jsonData);
+  } catch (error) {
+    console.error('Error loading data:', error);
+  }
+};
         
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(sheet, { range: 2 });
