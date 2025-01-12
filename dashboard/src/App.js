@@ -1,4 +1,7 @@
-const { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = Recharts;
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import * as XLSX from 'xlsx';
+import _ from 'lodash';
 
 const MarketMap = ({ data }) => {
   useEffect(() => {
@@ -220,4 +223,4 @@ const RetailDashboard = () => {
   );
 };
 
-ReactDOM.render(<RetailDashboard />, document.getElementById('root'));
+export default RetailDashboard;
