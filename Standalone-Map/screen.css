@@ -78,11 +78,6 @@ html, body {
   margin-right: 5px;
 }
 
-/* Show the expanded layers control when the toggle is clicked */
-.leaflet-control-layers-expanded.visible {
-  display: block;
-}
-
 /* Marker cluster styling */
 .marker-cluster {
   background-color: rgba(255, 255, 255, 0.6);
@@ -119,6 +114,7 @@ html, body {
   border-radius: 5px;
   display: none; /* Initially hidden */
   z-index: 1000; /* Ensure it sits above the map */
+}
 
 #btnClose {
   cursor: pointer;
@@ -128,6 +124,7 @@ html, body {
 #btnClose:hover {
   text-decoration: underline;
 }
+
 #lblText {
   min-width: 100px;
   display: inline-block;
@@ -174,6 +171,7 @@ html, body {
   margin-bottom: 5px;
   color: #333;
 }
+
 .marker-cluster-selected {
   border: 3px solid #FFD700; /* Highlight selected cluster with a gold border */
 }
@@ -183,6 +181,7 @@ html, body {
   margin: 5px 0;
   color: #555;
 }
+
 .leaflet-popup-content b {
   font-weight: bold;
 }
