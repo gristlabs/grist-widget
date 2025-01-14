@@ -21,30 +21,33 @@
         margin: 0;
       }
       .container {
-        max-width: 800px;
+        max-width: 1200px;
         margin: 20px auto;
         padding: 20px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+      }
+      .card {
         background: white;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-      }
-      .project-list {
-        list-style: none;
-        padding: 0;
-      }
-      .project-item {
-        margin: 15px 0;
-        padding: 12px;
-        background: #f9f9f9;
         border: 1px solid #ddd;
-        border-radius: 6px;
-        transition: all 0.2s ease;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
       }
-      .project-item:hover {
-        background: #e0f7fa;
-        border-color: #4CAF50;
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
-      .project-link {
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .card-header a {
         text-decoration: none;
         color: #333;
         font-weight: bold;
@@ -52,26 +55,18 @@
         display: inline-flex;
         align-items: center;
       }
-      .project-link span {
+      .card-header a span {
         font-size: 1.2rem;
         margin-right: 8px;
       }
-      .description {
-        margin: 8px 0 0 28px;
-        font-size: 0.9rem;
-        color: #555;
-      }
       .status {
-        margin-left: auto;
         color: green;
         font-size: 1.2rem;
-        display: flex;
-        align-items: center;
       }
-      .project-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+      .description {
+        margin-top: 10px;
+        font-size: 0.9rem;
+        color: #555;
       }
     </style>
   </head>
@@ -81,65 +76,65 @@
       <p>Explore my projects and widgets below!</p>
     </header>
     <div class="container">
-      <ul class="project-list">
-        <li class="project-item">
-          <div class="project-header">
-            <a class="project-link" href="County-SimpleMap/"><span>🗺️</span>County-SimpleMap</a>
+      <div class="grid">
+        <div class="card">
+          <div class="card-header">
+            <a href="County-SimpleMap/"><span>🗺️</span>County-SimpleMap</a>
             <div class="status">✅</div>
           </div>
           <p class="description">A simple interactive map for visualizing county-level data.</p>
-        </li>
-        <li class="project-item">
-          <div class="project-header">
-            <a class="project-link" href="Custom-Button/"><span>⏹️</span>Custom-Button</a>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <a href="Custom-Button/"><span>⏹️</span>Custom-Button</a>
           </div>
           <p class="description">A demo of a custom button widget with Grist integration.</p>
-        </li>
-        <li class="project-item">
-          <div class="project-header">
-            <a class="project-link" href="Grist-GIS/"><span>🌎</span>Grist-GIS</a>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <a href="Grist-GIS/"><span>🌎</span>Grist-GIS</a>
             <div class="status">✅</div>
           </div>
           <p class="description">A GIS tool for exploring and analyzing geographical data.</p>
-        </li>
-        <li class="project-item">
-          <div class="project-header">
-            <a class="project-link" href="Images-Viewer/">Images-Viewer</a>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <a href="Images-Viewer/">Images-Viewer</a>
           </div>
           <p class="description">A lightweight image gallery viewer with zoom capabilities.</p>
-        </li>
-        <li class="project-item">
-          <div class="project-header">
-            <a class="project-link" href="Market-Dashboard/">Market-Dashboard</a>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <a href="Market-Dashboard/">Market-Dashboard</a>
           </div>
           <p class="description">A dashboard for monitoring market trends and data.</p>
-        </li>
-        <li class="project-item">
-          <div class="project-header">
-            <a class="project-link" href="SearchBar-Map/"><span>🔍</span>SearchBar-Map</a>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <a href="SearchBar-Map/"><span>🔍</span>SearchBar-Map</a>
           </div>
           <p class="description">An interactive map with a search bar to locate points of interest.</p>
-        </li>
-        <li class="project-item">
-          <div class="project-header">
-            <a class="project-link" href="clipboard/">clipboard</a>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <a href="clipboard/">clipboard</a>
           </div>
           <p class="description">A clipboard manager widget for copying and pasting data.</p>
-        </li>
-        <li class="project-item">
-          <div class="project-header">
-            <a class="project-link" href="custom-widget-builder/">custom-widget-builder</a>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <a href="custom-widget-builder/">custom-widget-builder</a>
           </div>
           <p class="description">A tool to build custom widgets for Grist projects.</p>
-        </li>
-        <li class="project-item">
-          <div class="project-header">
-            <a class="project-link" href="geojson/"><span>📂</span>geojson</a>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <a href="geojson/"><span>📂</span>geojson</a>
             <div class="status">✅</div>
           </div>
           <p class="description">Displays GeoJSON files for mapping and visualization.</p>
-        </li>
-      </ul>
+        </div>
+      </div>
     </div>
   </body>
 </html>
