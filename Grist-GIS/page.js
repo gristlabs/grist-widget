@@ -309,25 +309,28 @@ function onEditOptions() {
 }
 
 const optional = true;
-grist.ready({
-  columns: [
-    "Name",
-    { name: "Longitude", type: 'Numeric'} ,
-    { name: "Latitude", type: 'Numeric'},
-    { name: "Property_Type", type: 'Choice'} ,
-    { name: "Tenants", type: 'ChoiceList'} ,
-    { name: "Secondary_Type", type: 'ChoiceList'} ,
-    { name: "ImageURL", type: 'Text'} ,
-    { name: "CoStar_URL", type: 'Text'} ,
-    { name: "County_Hyper", type: 'Text'} ,
-    { name: "GIS", type: 'Text'} ,
-    { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
-    { name: "Address", type: 'Text', optional, optional},
-    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
-  ],
-  allowSelectBy: true,
-  onEditOptions
+document.addEventListener("DOMContentLoaded", function () {
+  grist.ready({
+    columns: [
+      "Name",
+      { name: "Longitude", type: 'Numeric' },
+      { name: "Latitude", type: 'Numeric' },
+      { name: "Property_Type", type: 'Choice' },
+      { name: "Tenants", type: 'ChoiceList' },
+      { name: "Secondary_Type", type: 'ChoiceList' },
+      { name: "ImageURL", type: 'Text' },
+      { name: "CoStar_URL", type: 'Text' },
+      { name: "County_Hyper", type: 'Text' },
+      { name: "GIS", type: 'Text' },
+      { name: "Geocode", type: 'Bool', title: 'Geocode', optional: true },
+      { name: "Address", type: 'Text', optional: true },
+      { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional: true },
+    ],
+    allowSelectBy: true,
+    onEditOptions
+  });
 });
+
 
 grist.onOptions((options, interaction) => {
   writeAccess = interaction.accessLevel === 'full';
