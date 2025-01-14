@@ -32,29 +32,46 @@
         list-style: none;
         padding: 0;
       }
-      .project-list li {
-        margin: 10px 0;
-      }
-      .project-link {
-        display: block;
-        text-decoration: none;
-        color: #333;
+      .project-item {
+        margin: 15px 0;
+        padding: 12px;
         background: #f9f9f9;
-        padding: 12px 16px;
-        border-radius: 6px;
         border: 1px solid #ddd;
+        border-radius: 6px;
         transition: all 0.2s ease;
-        font-weight: bold;
-        font-size: 1rem;
       }
-      .project-link:hover {
+      .project-item:hover {
         background: #e0f7fa;
         border-color: #4CAF50;
-        color: #2a7a75;
+      }
+      .project-link {
+        text-decoration: none;
+        color: #333;
+        font-weight: bold;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
       }
       .project-link span {
         font-size: 1.2rem;
         margin-right: 8px;
+      }
+      .description {
+        margin: 8px 0 0 28px;
+        font-size: 0.9rem;
+        color: #555;
+      }
+      .status {
+        margin-left: auto;
+        color: green;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+      }
+      .project-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
       }
     </style>
   </head>
@@ -65,21 +82,63 @@
     </header>
     <div class="container">
       <ul class="project-list">
-        <li><a class="project-link" href="County-SimpleMap/"><span>🗺️</span>County-SimpleMap</a></li>
-        <li><a class="project-link" href="Custom-Button/"><span>⏹️</span>Custom-Button</a></li>
-        <li><a class="project-link" href="Grist-GIS/"><span>🌎</span>Grist-GIS</a></li>
-        <li><a class="project-link" href="Images-Viewer/">Images-Viewer</a></li>
-        <li><a class="project-link" href="Market-Dashboard/">Market-Dashboard</a></li>
-        <li><a class="project-link" href="SearchBar-Map/"><span>🔍</span>SearchBar-Map</a></li>
-        <li><a class="project-link" href="clipboard/">clipboard</a></li>
-        <li><a class="project-link" href="custom-widget-builder/">custom-widget-builder</a></li>
-        <li><a class="project-link" href="dashboard/">dashboard</a></li>
-        <li><a class="project-link" href="dropbox-embed/"><span>🗺️</span>dropbox-embed</a></li>
-        <li><a class="project-link" href="geojson/"><span>📂</span>geojson</a></li>
-        <li><a class="project-link" href="tree/">tree</a></li>
-        <li><a class="project-link" href="url-viewer/">url-viewer</a></li>
-        <li><a class="project-link" href="webframe/">webframe</a></li>
-        <li><a class="project-link" href="googleSheet-map/"><span>🗺️</span>googleSheet-map</a></li>
+        <li class="project-item">
+          <div class="project-header">
+            <a class="project-link" href="County-SimpleMap/"><span>🗺️</span>County-SimpleMap</a>
+            <div class="status">✅</div>
+          </div>
+          <p class="description">A simple interactive map for visualizing county-level data.</p>
+        </li>
+        <li class="project-item">
+          <div class="project-header">
+            <a class="project-link" href="Custom-Button/"><span>⏹️</span>Custom-Button</a>
+          </div>
+          <p class="description">A demo of a custom button widget with Grist integration.</p>
+        </li>
+        <li class="project-item">
+          <div class="project-header">
+            <a class="project-link" href="Grist-GIS/"><span>🌎</span>Grist-GIS</a>
+            <div class="status">✅</div>
+          </div>
+          <p class="description">A GIS tool for exploring and analyzing geographical data.</p>
+        </li>
+        <li class="project-item">
+          <div class="project-header">
+            <a class="project-link" href="Images-Viewer/">Images-Viewer</a>
+          </div>
+          <p class="description">A lightweight image gallery viewer with zoom capabilities.</p>
+        </li>
+        <li class="project-item">
+          <div class="project-header">
+            <a class="project-link" href="Market-Dashboard/">Market-Dashboard</a>
+          </div>
+          <p class="description">A dashboard for monitoring market trends and data.</p>
+        </li>
+        <li class="project-item">
+          <div class="project-header">
+            <a class="project-link" href="SearchBar-Map/"><span>🔍</span>SearchBar-Map</a>
+          </div>
+          <p class="description">An interactive map with a search bar to locate points of interest.</p>
+        </li>
+        <li class="project-item">
+          <div class="project-header">
+            <a class="project-link" href="clipboard/">clipboard</a>
+          </div>
+          <p class="description">A clipboard manager widget for copying and pasting data.</p>
+        </li>
+        <li class="project-item">
+          <div class="project-header">
+            <a class="project-link" href="custom-widget-builder/">custom-widget-builder</a>
+          </div>
+          <p class="description">A tool to build custom widgets for Grist projects.</p>
+        </li>
+        <li class="project-item">
+          <div class="project-header">
+            <a class="project-link" href="geojson/"><span>📂</span>geojson</a>
+            <div class="status">✅</div>
+          </div>
+          <p class="description">Displays GeoJSON files for mapping and visualization.</p>
+        </li>
       </ul>
     </div>
   </body>
