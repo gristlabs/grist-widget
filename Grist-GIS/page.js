@@ -50,14 +50,14 @@ const selectedIcon = new L.Icon({
 const defaultIcon = new L.Icon.Default();
 
 const baseLayers = {
-  "Street Map": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
+  "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+    attribution: 'Google Hybrid'
   }),
   "Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
-    attribution: '&copy; MapTiler Satellite'
+    attribution: 'MapTiler Satellite'
   }),
-  "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
-    attribution: '&copy; Google Hybrid'
+  "Street Map": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: 'openstreetmap'
   })
 };
 
