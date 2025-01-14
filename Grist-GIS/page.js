@@ -10,9 +10,8 @@ let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
-let searchResults;
-let searchControl;
-
+let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+let mapCopyright = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
 // Required, Label value
 const Name = "Name";
 // Required
@@ -38,81 +37,6 @@ const GeocodedAddress = 'GeocodedAddress';
 let lastRecord;
 let lastRecords;
 
-// Initialize the map
-function initializeMap() {
-  if (amap) {
-    amap.remove();
-  }
-
-  amap = L.map('map').setView([44.0, -120.5], 7);
-  
-  // Create and add base layers
-  const mapLayers = {};
-  Object.entries(baseLayers).forEach(([key, layer]) => {
-    mapLayers[layer.name] = L.tileLayer(layer.url, {
-      attribution: layer.attribution
-    });
-  });
-  
-  // Add default layer
-  mapLayers[baseLayers.streets.name].addTo(amap);
-
-  // Initialize marker cluster group with custom options
-  markers = L.markerClusterGroup({
-    disableClusteringAtZoom: 18,
-    maxClusterRadius: 30,
-    showCoverageOnHover: true,
-    iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId])
-  });
-
-  // Create an overlay layers object for layer control
-var overlayLayers = {
-    "Locations": markers
-};
-
-// Add layer control to map
-L.control.layers(baseLayers, overlayLayers, {
-    position: 'topright',
-    collapsed: false
-}).addTo(map);
-
-// Add search control
-var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
-var searchControl = L.esri.Geocoding.geosearch({
-    providers: [arcgisOnline],
-    position: 'topleft'
-}).addTo(map);
-
-// Create a layer group for search results
-var searchResults = L.layerGroup().addTo(map);
-
-// Handle search results
-searchControl.on('results', function(data) {
-    searchResults.clearLayers();
-    for (var i = data.results.length - 1; i >= 0; i--) {
-        searchResults.addLayer(L.marker(data.results[i].latlng));
-    }
-});
-
-  // Add layer control
-  L.control.layers(mapLayers, { "Locations": markers }, {
-    position: 'topright',
-    collapsed: false
-  }).addTo(amap);
-
-  // Initialize search results layer
-  searchResults = L.layerGroup().addTo(amap);
-
-  // Handle search results
-  searchControl.on('results', function(data) {
-    searchResults.clearLayers();
-    data.results.forEach(result => {
-      searchResults.addLayer(L.marker(result.latlng));
-    });
-  });
-
-  return amap;
-}
 
 //Color markers downloaded from leaflet repo, color-shifted to green
 //Used to show currently selected pin
@@ -293,6 +217,9 @@ let markers = [];
 function updateMap(data) {
   data = data || selectedRecords;
   selectedRecords = data;
+  if (!data || data.length === 0) {
+    showProblem("No data found yet");
+    return;
   }
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
     showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
@@ -486,54 +413,6 @@ function selectOnMap(rec) {
   }
 }
 
-grist.ready({
-  columns: [
-    "Name",
-    { name: "Longitude", type: 'Numeric'} ,
-    { name: "Latitude", type: 'Numeric'},
-    { name: "Property_Type", type: 'Choice'} ,
-    { name: "Tenants", type: 'ChoiceList'} ,
-    { name: "Secondary_Type", type: 'ChoiceList'} ,
-    { name: "ImageURL", type: 'Text'} ,
-    { name: "CoStar_URL", type: 'Text'} ,
-    { name: "County_Hyper", type: 'Text'} ,
-    { name: "GIS", type: 'Text'} ,
-    { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
-    { name: "Address", type: 'Text', optional, optional},
-    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
-  ],
-  allowSelectBy: true,
-  onEditOptions
-});
-
-grist.onOptions((options, interaction) => {
-  writeAccess = interaction.accessLevel === 'full';
-  const newMode = options?.mode ?? mode;
-  mode = newMode;
-  if (newMode != mode && lastRecords) {
-    updateMode();
-  }
-  const newSource = options?.mapSource ?? mapSource;
-  mapSource = newSource;
-  document.getElementById("mapSource").value = mapSource;
-  const newCopyright = options?.mapCopyright ?? mapCopyright;
-  mapCopyright = newCopyright
-  document.getElementById("mapCopyright").value = mapCopyright;
-});
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
-
-  var results = L.layerGroup().addTo(map);
-
-  searchControl.on('results', function(data){
-    results.clearLayers();
-    for (var i = data.results.length - 1; i >= 0; i--) {
-      results.addLayer(L.marker(data.results[i].latlng));
-    }
-  });
-
-// ... rest of your existing helper functions (getInfo, showProblem, etc.) ...
 grist.onRecord((record, mappings) => {
   if (mode === 'single') {
     // If mappings are not done, we will assume that table has correct columns.
@@ -600,4 +479,57 @@ function onEditOptions() {
     }
   })
 }
+
 const optional = true;
+grist.ready({
+  columns: [
+    "Name",
+    { name: "Longitude", type: 'Numeric'} ,
+    { name: "Latitude", type: 'Numeric'},
+    { name: "Property_Type", type: 'Choice'} ,
+    { name: "Tenants", type: 'ChoiceList'} ,
+    { name: "Secondary_Type", type: 'ChoiceList'} ,
+    { name: "ImageURL", type: 'Text'} ,
+    { name: "CoStar_URL", type: 'Text'} ,
+    { name: "County_Hyper", type: 'Text'} ,
+    { name: "GIS", type: 'Text'} ,
+    { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
+    { name: "Address", type: 'Text', optional, optional},
+    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
+  ],
+  allowSelectBy: true,
+  onEditOptions
+});
+
+grist.onOptions((options, interaction) => {
+  writeAccess = interaction.accessLevel === 'full';
+  const newMode = options?.mode ?? mode;
+  mode = newMode;
+  if (newMode != mode && lastRecords) {
+    updateMode();
+  }
+  const newSource = options?.mapSource ?? mapSource;
+  mapSource = newSource;
+  document.getElementById("mapSource").value = mapSource;
+  const newCopyright = options?.mapCopyright ?? mapCopyright;
+  mapCopyright = newCopyright
+  document.getElementById("mapCopyright").value = mapCopyright;
+});
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
+
+  var searchControl = L.esri.Geocoding.geosearch({
+    providers: [arcgisOnline]
+  }).addTo(map);
+
+  var results = L.layerGroup().addTo(map);
+
+  searchControl.on('results', function(data){
+    results.clearLayers();
+    for (var i = data.results.length - 1; i >= 0; i--) {
+      results.addLayer(L.marker(data.results[i].latlng));
+    }
+  });
