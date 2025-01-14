@@ -55,13 +55,21 @@ function initializeMap() {
     // Add a custom toggle button
     const toggleButton = L.DomUtil.create('div', 'leaflet-control-layers-toggle');
     toggleButton.style.cursor = 'pointer';
-    toggleButton.onclick = function () {
+
+    // Debugging: Check if the button is created
+    console.log("Toggle button created:", toggleButton);
+
+    // Prevent event propagation to avoid conflicts
+    L.DomEvent.disableClickPropagation(toggleButton); // Prevent map clicks from interfering
+    L.DomEvent.on(toggleButton, 'click', function (e) {
+      console.log("Toggle button clicked"); // Debugging: Check if the click event is firing
+      L.DomEvent.stopPropagation(e); // Stop the event from bubbling up
       if (layersContainer.style.display === 'none') {
         layersContainer.style.display = 'block';
       } else {
         layersContainer.style.display = 'none';
       }
-    };
+    });
 
     // Insert the toggle button before the layers container
     const controlContainer = layersControl.getContainer().parentElement;
