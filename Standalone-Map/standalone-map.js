@@ -16,14 +16,17 @@ const selectedIcon = new L.Icon({
 const defaultIcon = new L.Icon.Default();
 
 const baseLayers = {
-  "Street Map": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }),
-  "Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
-    attribution: '&copy; MapTiler Satellite'
-  }),
   "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
-    attribution: '&copy; Google Hybrid'
+    attribution: 'Google Hybrid'
+  }),
+  "MapTiler Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
+    attribution: ''
+  }),
+  "ArcGIS": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: ''
+  }),
+  "openstreetmap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: ''
   })
 };
 
@@ -31,7 +34,7 @@ const overlayLayers = {};
 
 function initializeMap() {
   amap = L.map('map', {
-    layers: [baseLayers["Street Map"]],
+    layers: [baseLayers["Google Hybrid"]],
     center: [45.5283, -122.8081], // Default center (USA)
     zoom: 4, // Default zoom level
     wheelPxPerZoomLevel: 90
