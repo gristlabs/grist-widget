@@ -524,12 +524,6 @@ grist.onOptions((options, interaction) => {
     attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
   }).addTo(map);
 
-  var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
-
-  var searchControl = L.esri.Geocoding.geosearch({
-    providers: [arcgisOnline]
-  }).addTo(map);
-
   var results = L.layerGroup().addTo(map);
 
   searchControl.on('results', function(data){
