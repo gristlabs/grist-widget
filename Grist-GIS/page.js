@@ -100,13 +100,6 @@ searchControl.on('results', function(data) {
     collapsed: false
   }).addTo(amap);
 
-  // Add search control
-  const arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
-  searchControl = L.esri.Geocoding.geosearch({
-    providers: [arcgisOnline],
-    position: 'topleft'
-  }).addTo(amap);
-
   // Initialize search results layer
   searchResults = L.layerGroup().addTo(amap);
 
