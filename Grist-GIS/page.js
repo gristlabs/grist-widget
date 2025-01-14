@@ -11,7 +11,7 @@ let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
 let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
-let mapCopyright = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
+let mapCopyright = 'Esri';
 // Required, Label value
 const Name = "Name";
 // Required
@@ -38,9 +38,7 @@ let lastRecord;
 let lastRecords;
 
 
-//Color markers downloaded from leaflet repo, color-shifted to green
-//Used to show currently selected pin
-const selectedIcon =  new L.Icon({
+const selectedIcon = new L.Icon({
   iconUrl: 'marker-icon-green.png',
   iconRetinaUrl: 'marker-icon-green-2x.png',
   shadowUrl: 'marker-shadow.png',
@@ -49,88 +47,78 @@ const selectedIcon =  new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
-const defaultIcon =  new L.Icon.Default();
+const defaultIcon = new L.Icon.Default();
 
-
-
-// Creates clusterIcons that highlight if they contain selected row
-// Given a function `() => selectedMarker`, return a cluster icon create function
-// that can be passed to MarkerClusterGroup({iconCreateFunction: ... } )
-//
-// Cluster with selected record gets the '.marker-cluster-selected' class
-// (defined in screen.css)
-//
-// Copied from _defaultIconCreateFunction in ClusterMarkerGroup
-//    https://github.com/Leaflet/Leaflet.markercluster/blob/master/src/MarkerClusterGroup.js
-const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
-  return function(cluster) {
-    var childCount = cluster.getChildCount();
-
-    let isSelected = false;
-    try {
-      const selectedMarker = selectedMarkerGetter();
-
-      // hmm I think this is n log(n) to build all the clusters for the whole map.
-      // It's probably fine though, it only fires once when map markers
-      // are set up or when selectedRow changes
-      isSelected = cluster.getAllChildMarkers().filter((m) => m == selectedMarker).length > 0;
-    } catch (e) {
-      console.error("WARNING: Error in clusterIconFactory in map widget");
-      console.error(e);
-    }
-
-    var c = ' marker-cluster-';
-    if (childCount < 10) {
-      c += 'small';
-    } else if (childCount < 100) {
-      c += 'medium';
-    } else {
-      c += 'large';
-    }
-
-    return new L.DivIcon({
-        html: '<div><span>'
-            + childCount
-            + ' <span aria-label="markers"></span>'
-            + '</span></div>',
-        className: 'marker-cluster' + c + (isSelected ? ' marker-cluster-selected' : ''),
-        iconSize: new L.Point(40, 40)
-    });
-  }
+const baseLayers = {
+  "Street Map": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }),
+  "Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
+    attribution: '&copy; MapTiler Satellite'
+  }),
+  "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+    attribution: '&copy; Google Hybrid'
+  })
 };
 
-const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
-if (URLSearchParams && location.search && geocoder) {
-  const c = new URLSearchParams(location.search).get('geocoder');
-  if (c && L.Control.Geocoder[c]) {
-    console.log('Using geocoder', c);
-    geocoder = L.Control.Geocoder[c]();
-  } else if (c) {
-    console.warn('Unsupported geocoder', c);
-  }
-  const m = new URLSearchParams(location.search).get('mode');
-  if (m) { mode = m; }
-}
+const overlayLayers = {};
 
-async function geocode(address) {
-  return new Promise((resolve, reject) => {
-    try {
-      geocoder.geocode(address, (v) => {
-        v = v[0];
-        if (v) { v = v.center; }
-        resolve(v);
-      });
-    } catch (e) {
-      console.log("Problem:", e);
-      reject(e);
+function initializeMap() {
+  amap = L.map('map', {
+    layers: [baseLayers["Street Map"]],
+    wheelPxPerZoomLevel: 90
+  });
+
+  L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: false }).addTo(amap);
+
+  const searchControl = L.esri.Geocoding.geosearch({
+    providers: [L.esri.Geocoding.arcgisOnlineProvider()],
+    position: 'topleft'
+  }).addTo(amap);
+
+  const searchResults = L.layerGroup().addTo(amap);
+
+  searchControl.on('results', function (data) {
+    searchResults.clearLayers();
+    for (let i = data.results.length - 1; i >= 0; i--) {
+      searchResults.addLayer(L.marker(data.results[i].latlng));
     }
   });
+
+  overlayLayers["Search Results"] = searchResults;
+
+  return amap;
 }
 
-async function delay(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+function updateMap(data) {
+  if (!amap) {
+    amap = initializeMap();
+  }
+
+  const markers = L.markerClusterGroup();
+  data.forEach(record => {
+    const marker = L.marker([record.Latitude, record.Longitude], {
+      title: record.Name,
+      icon: record.id === selectedRowId ? selectedIcon : defaultIcon
+    });
+
+    const popupContent = `<div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
+    <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${name}</strong>
+    ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${propertyType}</p>
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${secondaryType}</p>
+    <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${tenants}</p>
+    <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
+      <a href="${costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
+      <a href="${countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
+      <a href="${gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
+    </div>`;
+
+    marker.bindPopup(popupContent);
+    markers.addLayer(marker);
   });
+
+  amap.addLayer(markers);
 }
 
 // If widget has wright access
@@ -214,136 +202,6 @@ let clearMakers = () => {};
 
 let markers = [];
 
-function updateMap(data) {
-  data = data || selectedRecords;
-  selectedRecords = data;
-  if (!data || data.length === 0) {
-    showProblem("No data found yet");
-    return;
-  }
-  if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
-    " in the Creator Panel.");
-    return;
-  }
-
-
-  // Map tile source:
-  //    https://leaflet-extras.github.io/leaflet-providers/preview/
-  //    Old source was natgeo world map, but that only has data up to zoom 16
-  //    (can't zoom in tighter than about 10 city blocks across)
-  //
-  const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
-
-  const error = document.querySelector('.error');
-  if (error) { error.remove(); }
-  if (amap) {
-    try {
-      amap.off();
-      amap.remove();
-    } catch (e) {
-      // ignore
-      console.warn(e);
-    }
-  }
-  const map = L.map('map', {
-    layers: [tiles],
-    wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
-  });
-
-  // Make sure clusters always show up above points
-  // Default z-index for markers is 600, 650 is where tooltipPane z-index starts
-  map.createPane('selectedMarker').style.zIndex = 620;
-  map.createPane('clusters'      ).style.zIndex = 610;
-  map.createPane('otherMarkers'  ).style.zIndex = 600;
-
-  const points = []; //L.LatLng[], used for zooming to bounds of all markers
-
-  popups = {}; // Map: {[rowid]: L.marker}
-  // Make this before markerClusterGroup so iconCreateFunction
-  // can fetch the currently selected marker from popups by function closure
-
-  markers = L.markerClusterGroup({
-    disableClusteringAtZoom: 18,
-    //If markers are very close together, they'd stay clustered even at max zoom
-    //This disables that behavior explicitly for max zoom (18)
-    maxClusterRadius: 30, //px, default 80
-    // default behavior clusters too aggressively. It's nice to see individual markers
-    showCoverageOnHover: true,
-
-    clusterPane: 'clusters', //lets us specify z-index, so cluster icons can be on top
-    iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
-  });
-
-  markers.on('click', (e) => {
-    const id = e.layer.options.id;
-    selectMaker(id);
-  });
-
-for (const rec of data) {
-  const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(rec);
-  
-  if (String(lng) === '...') { continue; }
-  if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-    continue;
-  }
-
-  const pt = new L.LatLng(lat, lng);
-  points.push(pt);
-
-  const marker = L.marker(pt, {
-    title: name,
-    id: id,
-    icon: (id == selectedRowId) ?  selectedIcon : defaultIcon,
-    pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
-  });
-
-  // Build HTML content for the popup, similar to your Mapbox example
-  const imageTag = imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto;" />` : `<p>No Image Available</p>`;
-  const popupContent = `
-  <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-    <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${name}</strong>
-    ${imageUrl ? `<img src="${imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-    <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${propertyType}</p>
-    <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${secondaryType}</p>
-    <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${tenants}</p>
-    <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
-      <a href="${costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
-      <a href="${countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
-      <a href="${gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
-    </div>
-  </div>
-`;
-
-  // Bind the custom HTML content to the marker's popup
-  marker.bindPopup(popupContent);
-  markers.addLayer(marker);
-
-  popups[id] = marker;
-}
-  map.addLayer(markers);
-
-  clearMakers = () => map.removeLayer(markers);
-
-  try {
-    map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
-  } catch (err) {
-    console.warn('cannot fit bounds');
-  }
-  function makeSureSelectedMarkerIsShown() {
-    const rowId = selectedRowId;
-
-    if (rowId && popups[rowId]) {
-      var marker = popups[rowId];
-      if (!marker._icon) { markers.zoomToShowLayer(marker); }
-      marker.openPopup();
-    }
-  }
-
-  amap = map;
-
-  makeSureSelectedMarkerIsShown();
-}
 
 function selectMaker(id) {
    // Reset the options from the previously selected marker.
@@ -428,6 +286,7 @@ grist.onRecord((record, mappings) => {
     marker.openPopup();
   }
 });
+
 grist.onRecords((data, mappings) => {
   lastRecords = grist.mapColumnNames(data) || data;
   if (mode !== 'single') {
