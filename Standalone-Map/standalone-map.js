@@ -55,6 +55,13 @@ function initializeMap() {
     // Add a custom toggle button
     const toggleButton = L.DomUtil.create('div', 'leaflet-control-layers-toggle');
     toggleButton.style.cursor = 'pointer';
+    toggleButton.style.zIndex = 1000; // Ensure it's above other elements
+    toggleButton.style.position = 'relative'; // Ensure it respects z-index
+    toggleButton.style.backgroundColor = 'white'; // Add a background to make it visible
+    toggleButton.style.border = '1px solid #ccc'; // Add a border for better visibility
+    toggleButton.style.borderRadius = '4px'; // Rounded corners
+    toggleButton.style.padding = '5px'; // Add some padding
+    toggleButton.style.boxShadow = '0 1px 5px rgba(0, 0, 0, 0.4)'; // Add a shadow for better visibility
 
     // Debugging: Check if the button is created
     console.log("Toggle button created:", toggleButton);
