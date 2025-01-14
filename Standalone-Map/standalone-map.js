@@ -70,10 +70,15 @@ function updateMap(data) {
     amap = initializeMap();
   }
 
+  console.log("GeoJSON data loaded:", data); // Debug: Check if data is loaded
+
   const markers = L.markerClusterGroup();
   data.features.forEach(feature => {
     const record = feature.properties;
-    const marker = L.marker([record.geometry.coordinates[1], record.geometry.coordinates[0]], {
+    const coordinates = feature.geometry.coordinates;
+    console.log("Processing feature:", record.Name, "Coordinates:", coordinates); // Debug: Check each feature
+
+    const marker = L.marker([coordinates[1], coordinates[0]], {
       title: record.Name,
       icon: defaultIcon
     });
@@ -96,6 +101,7 @@ function updateMap(data) {
   });
 
   amap.addLayer(markers);
+  console.log("Markers added to map"); // Debug: Confirm markers are added
 }
 
 // Load GeoJSON data and update the map
