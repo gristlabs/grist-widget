@@ -17,7 +17,7 @@ const defaultIcon = new L.Icon.Default();
 
 const baseLayers = {
   "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
-    attribution: 'Google Hybrid'
+    attribution: ''
   }),
   "MapTiler Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
     attribution: ''
