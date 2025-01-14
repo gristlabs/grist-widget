@@ -37,8 +37,35 @@ function initializeMap() {
     wheelPxPerZoomLevel: 90
   });
 
-  L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: false }).addTo(amap);
+  // Create the layers control
+  const layersControl = L.control.layers(baseLayers, overlayLayers, {
+    position: 'topright',
+    collapsed: false // Set to false to prevent default collapsing
+  }).addTo(amap);
 
+  // Customize the layers control to minimize by default
+  const layersContainer = layersControl.getContainer();
+  if (layersContainer) {
+    layersContainer.classList.add('leaflet-control-layers-expanded');
+    layersContainer.style.display = 'none'; // Hide the expanded control by default
+
+    // Add a custom toggle button
+    const toggleButton = L.DomUtil.create('div', 'leaflet-control-layers-toggle');
+    toggleButton.style.cursor = 'pointer';
+    toggleButton.onclick = function () {
+      if (layersContainer.style.display === 'none') {
+        layersContainer.style.display = 'block';
+      } else {
+        layersContainer.style.display = 'none';
+      }
+    };
+
+    // Insert the toggle button before the layers container
+    const controlContainer = layersControl.getContainer().parentElement;
+    controlContainer.insertBefore(toggleButton, layersContainer);
+  }
+
+  // Add the search control
   const searchControl = L.esri.Geocoding.geosearch({
     providers: [L.esri.Geocoding.arcgisOnlineProvider()],
     position: 'topleft'
