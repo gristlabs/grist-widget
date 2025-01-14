@@ -351,11 +351,4 @@ grist.onOptions((options, interaction) => {
   if (mapSourceElement) {
     mapSourceElement.value = mapSource;
   }
-
-  const newCopyright = options?.mapCopyright ?? mapCopyright;
-  mapCopyright = newCopyright;
-  const mapCopyrightElement = document.getElementById("mapCopyright");
-  if (mapCopyrightElement) {
-    mapCopyrightElement.value = mapCopyright;
-  }
 });
