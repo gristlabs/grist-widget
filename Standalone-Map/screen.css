@@ -12,26 +12,56 @@ html, body {
   padding: 0;
 }
 
-/* Geocoder control styling */
-.leaflet-control-geocoder {
-  background: white;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+/* Custom CSS for minimized layers control */
+.leaflet-control-layers {
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  background-clip: padding-box;
   border-radius: 4px;
-  max-width: 300px;
-}
-
-.leaflet-control-geocoder input {
-  font-size: 14px;
-  padding: 8px;
-  width: calc(100% - 16px);
-  border: none;
-  outline: none;
-  border-radius: 4px;
-}
-
-.leaflet-control-geocoder-expanded {
-  width: 300px;
+  background-color: white;
   padding: 5px;
+}
+
+.leaflet-control-layers-toggle {
+  width: 36px;
+  height: 36px;
+  background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/layers.png');
+  background-size: 26px 26px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.leaflet-control-layers-expanded {
+  display: none;
+  padding: 6px 10px 6px 6px;
+  color: #333;
+  background: white;
+}
+
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+  margin: 0;
+  padding: 0;
+}
+
+.leaflet-control-layers-expanded .leaflet-control-layers-base {
+  margin-bottom: 5px;
+}
+
+.leaflet-control-layers-expanded .leaflet-control-layers-overlays {
+  margin-top: 5px;
+}
+
+.leaflet-control-layers-expanded label {
+  display: block;
+  font-size: 14px;
+}
+
+.leaflet-control-layers-expanded input {
+  margin-right: 5px;
+}
+
+/* Show the expanded layers control when the toggle is clicked */
+.leaflet-control-layers-expanded.visible {
+  display: block;
 }
 
 /* Marker cluster styling */
