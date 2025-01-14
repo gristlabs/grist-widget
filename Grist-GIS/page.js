@@ -66,6 +66,8 @@ const overlayLayers = {};
 function initializeMap() {
   amap = L.map('map', {
     layers: [baseLayers["Street Map"]],
+    center: [45.5283,  -122.8081], // Default center (USA)
+    zoom: 4, // Default zoom level
     wheelPxPerZoomLevel: 90
   });
 
@@ -89,6 +91,9 @@ function initializeMap() {
 
   return amap;
 }
+amap.on('load', function () {
+  // Map is fully loaded and ready for interaction
+});
 
 function updateMap(data) {
   if (!amap) {
@@ -331,12 +336,14 @@ grist.onOptions((options, interaction) => {
   if (newMode != mode && lastRecords) {
     updateMode();
   }
+
   const newSource = options?.mapSource ?? mapSource;
   mapSource = newSource;
   const mapSourceElement = document.getElementById("mapSource");
   if (mapSourceElement) {
     mapSourceElement.value = mapSource;
   }
+
   const newCopyright = options?.mapCopyright ?? mapCopyright;
   mapCopyright = newCopyright;
   const mapCopyrightElement = document.getElementById("mapCopyright");
