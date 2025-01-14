@@ -21,20 +21,39 @@ html, body {
   padding: 5px;
 }
 
-/* Ensure the toggle button is clickable and on top */
+/* Ensure the toggle button is visible and properly positioned */
 .leaflet-control-layers-toggle {
-  z-index: 1000; /* Ensure it's above other elements */
-  position: relative; /* Ensure it respects z-index */
+  width: 36px;
+  height: 36px;
+  background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/layers.png'); /* Default layers icon */
+  background-size: 26px 26px;
+  background-position: center;
+  background-repeat: no-repeat;
   background-color: white; /* Add a background to make it visible */
   border: 1px solid #ccc; /* Add a border for better visibility */
   border-radius: 4px; /* Rounded corners */
   padding: 5px; /* Add some padding */
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4); /* Add a shadow for better visibility */
+  cursor: pointer; /* Ensure the cursor changes to a pointer */
+  z-index: 1000; /* Ensure it's above other elements */
+  position: relative; /* Ensure it respects z-index */
 }
 
 /* Ensure the layers control is above other elements */
 .leaflet-control-layers-expanded {
   z-index: 1000; /* Ensure it's above other elements */
   position: relative; /* Ensure it respects z-index */
+  background-color: white; /* Add a background to make it visible */
+  border: 1px solid #ccc; /* Add a border for better visibility */
+  border-radius: 4px; /* Rounded corners */
+  padding: 10px; /* Add some padding */
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4); /* Add a shadow for better visibility */
+  display: none; /* Hide the expanded control by default */
+}
+
+/* Show the expanded layers control when the toggle is clicked */
+.leaflet-control-layers-expanded.visible {
+  display: block;
 }
 
 .leaflet-control-layers-expanded .leaflet-control-layers-list {
