@@ -21,20 +21,20 @@ html, body {
   padding: 5px;
 }
 
+/* Ensure the toggle button is clickable and on top */
 .leaflet-control-layers-toggle {
-  width: 36px;
-  height: 36px;
-  background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/layers.png');
-  background-size: 26px 26px;
-  background-position: center;
-  background-repeat: no-repeat;
+  z-index: 1000; /* Ensure it's above other elements */
+  position: relative; /* Ensure it respects z-index */
+  background-color: white; /* Add a background to make it visible */
+  border: 1px solid #ccc; /* Add a border for better visibility */
+  border-radius: 4px; /* Rounded corners */
+  padding: 5px; /* Add some padding */
 }
 
+/* Ensure the layers control is above other elements */
 .leaflet-control-layers-expanded {
-  display: none;
-  padding: 6px 10px 6px 6px;
-  color: #333;
-  background: white;
+  z-index: 1000; /* Ensure it's above other elements */
+  position: relative; /* Ensure it respects z-index */
 }
 
 .leaflet-control-layers-expanded .leaflet-control-layers-list {
