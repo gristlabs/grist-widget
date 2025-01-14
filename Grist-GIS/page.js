@@ -66,9 +66,14 @@ const overlayLayers = {};
 function initializeMap() {
   amap = L.map('map', {
     layers: [baseLayers["Street Map"]],
-    center: [45.5283,  -122.8081], // Default center (USA)
+    center: [45.5283, -122.8081], // Default center (USA)
     zoom: 4, // Default zoom level
     wheelPxPerZoomLevel: 90
+  });
+
+  // Attach the load event listener after the map is initialized
+  amap.on('load', function () {
+    console.log("Map is fully loaded and ready for interaction");
   });
 
   L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: false }).addTo(amap);
@@ -91,9 +96,6 @@ function initializeMap() {
 
   return amap;
 }
-amap.on('load', function () {
-  // Map is fully loaded and ready for interaction
-});
 
 function updateMap(data) {
   if (!amap) {
