@@ -48,6 +48,13 @@
         font-size: 1rem;
         font-weight: bold;
       }
+      .card-header a {
+        text-decoration: none;
+        color: #333;
+      }
+      .card-header a:hover {
+        text-decoration: underline;
+      }
       .description {
         margin: 10px 0;
         font-size: 0.9rem;
@@ -90,30 +97,42 @@
       <!-- Grid of Project Cards -->
       <div class="grid">
         <div class="card">
-          <div class="card-header">County-SimpleMap</div>
+          <div class="card-header">
+            <a href="https://sgfroerer.github.io/gmaps-grist-widgets/County-SimpleMap/" target="_blank">County-SimpleMap</a>
+          </div>
           <p class="description">A simple interactive map for visualizing county-level data.</p>
           <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/County-SimpleMap/')">Preview</button>
         </div>
         <div class="card">
-          <div class="card-header">Custom-Button</div>
+          <div class="card-header">
+            <a href="https://sgfroerer.github.io/gmaps-grist-widgets/Custom-Button/" target="_blank">Custom-Button</a>
+          </div>
           <p class="description">A demo of a custom button widget with Grist integration.</p>
           <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Custom-Button/')">Preview</button>
         </div>
         <div class="card">
-          <div class="card-header">Grist-GIS</div>
+          <div class="card-header">
+            <a href="https://sgfroerer.github.io/gmaps-grist-widgets/Grist-GIS/" target="_blank">Grist-GIS</a>
+          </div>
           <p class="description">A GIS tool for exploring and analyzing geographical data.</p>
           <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Grist-GIS/')">Preview</button>
         </div>
         <div class="card">
-          <div class="card-header">SearchBar-Map</div>
+          <div class="card-header">
+            <a href="https://sgfroerer.github.io/gmaps-grist-widgets/SearchBar-Map/" target="_blank">SearchBar-Map</a>
+          </div>
           <p class="description">An interactive map with a search bar to locate points of interest.</p>
           <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/SearchBar-Map/')">Preview</button>
         </div>
         <div class="card">
-          <div class="card-header">geojson</div>
+          <div class="card-header">
+            <a href="https://sgfroerer.github.io/gmaps-grist-widgets/geojson/" target="_blank">geojson</a>
+          </div>
           <p class="description">Displays GeoJSON files for mapping and visualization.</p>
           <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/geojson/')">Preview</button>
         </div>
+        <!-- Add the remaining cards below -->
+        <!-- Follow the same structure as above, with the correct folder name and hosted URL -->
       </div>
 
       <!-- Preview Window -->
