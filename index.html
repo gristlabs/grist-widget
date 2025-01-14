@@ -37,104 +37,101 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         padding: 20px;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-align: center;
       }
       .card:hover {
         transform: translateY(-5px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
       .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .card-header a {
-        text-decoration: none;
-        color: #333;
-        font-weight: bold;
+        margin-bottom: 10px;
         font-size: 1rem;
-        display: inline-flex;
-        align-items: center;
-      }
-      .card-header a span {
-        font-size: 1.2rem;
-        margin-right: 8px;
-      }
-      .status {
-        color: green;
-        font-size: 1.2rem;
+        font-weight: bold;
       }
       .description {
-        margin-top: 10px;
+        margin: 10px 0;
         font-size: 0.9rem;
         color: #555;
+      }
+      .btn {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        font-size: 0.9rem;
+      }
+      .btn:hover {
+        background-color: #45a049;
+      }
+      #preview {
+        margin-top: 30px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        display: none;
+      }
+      #preview iframe {
+        width: 100%;
+        height: 500px;
+        border: none;
       }
     </style>
   </head>
   <body>
     <header>
       <h1>My Grist Widgets</h1>
-      <p>Explore my projects and widgets below!</p>
+      <p>Explore and preview my projects below!</p>
     </header>
     <div class="container">
+      <!-- Grid of Project Cards -->
       <div class="grid">
         <div class="card">
-          <div class="card-header">
-            <a href="County-SimpleMap/"><span>🗺️</span>County-SimpleMap</a>
-            <div class="status">✅</div>
-          </div>
+          <div class="card-header">County-SimpleMap</div>
           <p class="description">A simple interactive map for visualizing county-level data.</p>
+          <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/County-SimpleMap/')">Preview</button>
         </div>
         <div class="card">
-          <div class="card-header">
-            <a href="Custom-Button/"><span>⏹️</span>Custom-Button</a>
-          </div>
+          <div class="card-header">Custom-Button</div>
           <p class="description">A demo of a custom button widget with Grist integration.</p>
+          <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Custom-Button/')">Preview</button>
         </div>
         <div class="card">
-          <div class="card-header">
-            <a href="Grist-GIS/"><span>🌎</span>Grist-GIS</a>
-            <div class="status">✅</div>
-          </div>
+          <div class="card-header">Grist-GIS</div>
           <p class="description">A GIS tool for exploring and analyzing geographical data.</p>
+          <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Grist-GIS/')">Preview</button>
         </div>
         <div class="card">
-          <div class="card-header">
-            <a href="Images-Viewer/">Images-Viewer</a>
-          </div>
-          <p class="description">A lightweight image gallery viewer with zoom capabilities.</p>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <a href="Market-Dashboard/">Market-Dashboard</a>
-          </div>
-          <p class="description">A dashboard for monitoring market trends and data.</p>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <a href="SearchBar-Map/"><span>🔍</span>SearchBar-Map</a>
-          </div>
+          <div class="card-header">SearchBar-Map</div>
           <p class="description">An interactive map with a search bar to locate points of interest.</p>
+          <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/SearchBar-Map/')">Preview</button>
         </div>
         <div class="card">
-          <div class="card-header">
-            <a href="clipboard/">clipboard</a>
-          </div>
-          <p class="description">A clipboard manager widget for copying and pasting data.</p>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <a href="custom-widget-builder/">custom-widget-builder</a>
-          </div>
-          <p class="description">A tool to build custom widgets for Grist projects.</p>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <a href="geojson/"><span>📂</span>geojson</a>
-            <div class="status">✅</div>
-          </div>
+          <div class="card-header">geojson</div>
           <p class="description">Displays GeoJSON files for mapping and visualization.</p>
+          <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/geojson/')">Preview</button>
         </div>
       </div>
+
+      <!-- Preview Window -->
+      <div id="preview">
+        <iframe id="preview-frame" src=""></iframe>
+      </div>
     </div>
+
+    <script>
+      function previewProject(url) {
+        // Display the preview window and load the selected project
+        const preview = document.getElementById('preview');
+        const frame = document.getElementById('preview-frame');
+        frame.src = url;
+        preview.style.display = 'block';
+        // Scroll to the preview section
+        preview.scrollIntoView({ behavior: 'smooth' });
+      }
+    </script>
   </body>
 </html>
