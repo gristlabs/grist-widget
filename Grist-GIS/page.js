@@ -333,8 +333,14 @@ grist.onOptions((options, interaction) => {
   }
   const newSource = options?.mapSource ?? mapSource;
   mapSource = newSource;
-  document.getElementById("mapSource").value = mapSource;
+  const mapSourceElement = document.getElementById("mapSource");
+  if (mapSourceElement) {
+    mapSourceElement.value = mapSource;
+  }
   const newCopyright = options?.mapCopyright ?? mapCopyright;
-  mapCopyright = newCopyright
-  document.getElementById("mapCopyright").value = mapCopyright;
+  mapCopyright = newCopyright;
+  const mapCopyrightElement = document.getElementById("mapCopyright");
+  if (mapCopyrightElement) {
+    mapCopyrightElement.value = mapCopyright;
+  }
 });
