@@ -71,8 +71,12 @@ function initializeMap() {
     layers: [baseLayers["Google Hybrid"]],
     center: [45.5283, -122.8081], // Default center (USA)
     zoom: 4, // Default zoom level
-    wheelPxPerZoomLevel: 90
+    wheelPxPerZoomLevel: 90,
+    attributionControl: false // Disable the default attribution control
   });
+
+  // Add custom attribution if needed (optional)
+  amap.attributionControl.setPrefix(''); // Remove "Leaflet" prefix
 
   // Attach the load event listener after the map is initialized
   amap.on('load', function () {
@@ -357,20 +361,11 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
   const minimapContainer = document.getElementById('minimap-container');
   const toggleButton = document.getElementById('toggleMinimap');
-  const googleMapIframe = document.getElementById('googleMap');
 
-  // Toggle minimap height and toolbar visibility
+  // Toggle minimap visibility
   toggleButton.addEventListener('click', function () {
-    minimapContainer.classList.toggle('expanded');
-    if (minimapContainer.classList.contains('expanded')) {
-      googleMapIframe.style.pointerEvents = 'auto'; // Enable interaction
-    } else {
-      googleMapIframe.style.pointerEvents = 'none'; // Disable interaction
-    }
+    minimapContainer.classList.toggle('collapsed');
   });
-
-  // Initially hide the toolbar by adjusting the iframe URL
-  googleMapIframe.src = "https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ui=0"; // `ui=0` hides the toolbar
 });
 
 grist.onOptions((options, interaction) => {
