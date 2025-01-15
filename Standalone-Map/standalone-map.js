@@ -1,7 +1,7 @@
 "use strict";
 
 let amap;
-const geoJSONUrl = "https://raw.githubusercontent.com/sgfroerer/gmaps-grist-widgets/master/geojson/Refined.geojson";
+const geoJSONUrl = "https://raw.githubusercontent.com/sgfroerer/gmaps-grist-widgets/master/geojson/Refined.geojson"; // Update with your GeoJSON URL
 
 const selectedIcon = new L.Icon({
   iconUrl: 'marker-icon-green.png',
@@ -25,7 +25,7 @@ const baseLayers = {
   "ArcGIS": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
     attribution: ''
   }),
-  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  "openstreetmap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: ''
   })
 };
@@ -40,64 +40,48 @@ function initializeMap() {
     wheelPxPerZoomLevel: 90
   });
 
-  // Create a custom toggle button
-  const toggleButton = L.DomUtil.create('div', 'leaflet-control-layers-toggle');
-  toggleButton.style.cursor = 'pointer';
-  toggleButton.style.zIndex = 1000; // Ensure it's above other elements
-  toggleButton.style.position = 'absolute'; // Position it absolutely
-  toggleButton.style.top = '10px'; // Position from the top
-  toggleButton.style.right = '10px'; // Position from the right
-  toggleButton.style.backgroundColor = 'white'; // Add a background to make it visible
-  toggleButton.style.border = '1px solid #ccc'; // Add a border for better visibility
-  toggleButton.style.borderRadius = '4px'; // Rounded corners
-  toggleButton.style.padding = '5px'; // Add some padding
-  toggleButton.style.boxShadow = '0 1px 5px rgba(0, 0, 0, 0.4)'; // Add a shadow for better visibility
-  toggleButton.innerHTML = 'Layers'; // Add text to the button
+  // Create the layers control
+  const layersControl = L.control.layers(baseLayers, overlayLayers, {
+    position: 'topright',
+    collapsed: false // Set to false to prevent default collapsing
+  }).addTo(amap);
 
-  // Create a container for the layers control
-  const layersContainer = L.DomUtil.create('div', 'leaflet-control-layers-expanded');
-  layersContainer.style.display = 'none'; // Hide the expanded control by default
-  layersContainer.style.position = 'absolute'; // Position it absolutely
-  layersContainer.style.top = '50px'; // Position below the toggle button
-  layersContainer.style.right = '10px'; // Position from the right
-  layersContainer.style.backgroundColor = 'white'; // Add a background to make it visible
-  layersContainer.style.border = '1px solid #ccc'; // Add a border for better visibility
-  layersContainer.style.borderRadius = '4px'; // Rounded corners
-  layersContainer.style.padding = '10px'; // Add some padding
-  layersContainer.style.boxShadow = '0 1px 5px rgba(0, 0, 0, 0.4)'; // Add a shadow for better visibility
+  // Customize the layers control to minimize by default
+  const layersContainer = layersControl.getContainer();
+  if (layersContainer) {
+    layersContainer.classList.add('leaflet-control-layers-expanded');
+    layersContainer.style.display = 'none'; // Hide the expanded control by default
 
-  // Add the base layers to the layers container
-  for (const [name, layer] of Object.entries(baseLayers)) {
-    const label = L.DomUtil.create('label');
-    const input = L.DomUtil.create('input', '', label);
-    input.type = 'radio';
-    input.name = 'baseLayer';
-    input.value = name;
-    input.onchange = () => {
-      amap.eachLayer((l) => {
-        if (baseLayers[name] !== l) amap.removeLayer(l);
-      });
-      amap.addLayer(baseLayers[name]);
-    };
-    label.appendChild(document.createTextNode(name));
-    layersContainer.appendChild(label);
+    // Add a custom toggle button
+    const toggleButton = L.DomUtil.create('div', 'leaflet-control-layers-toggle');
+    toggleButton.style.cursor = 'pointer';
+    toggleButton.style.zIndex = 1000; // Ensure it's above other elements
+    toggleButton.style.position = 'relative'; // Ensure it respects z-index
+    toggleButton.style.backgroundColor = 'white'; // Add a background to make it visible
+    toggleButton.style.border = '1px solid #ccc'; // Add a border for better visibility
+    toggleButton.style.borderRadius = '4px'; // Rounded corners
+    toggleButton.style.padding = '5px'; // Add some padding
+    toggleButton.style.boxShadow = '0 1px 5px rgba(0, 0, 0, 0.4)'; // Add a shadow for better visibility
+
+    // Debugging: Check if the button is created
+    console.log("Toggle button created:", toggleButton);
+
+    // Prevent event propagation to avoid conflicts
+    L.DomEvent.disableClickPropagation(toggleButton); // Prevent map clicks from interfering
+    L.DomEvent.on(toggleButton, 'click', function (e) {
+      console.log("Toggle button clicked"); // Debugging: Check if the click event is firing
+      L.DomEvent.stopPropagation(e); // Stop the event from bubbling up
+      if (layersContainer.style.display === 'none') {
+        layersContainer.style.display = 'block';
+      } else {
+        layersContainer.style.display = 'none';
+      }
+    });
+
+    // Insert the toggle button before the layers container
+    const controlContainer = layersControl.getContainer().parentElement;
+    controlContainer.insertBefore(toggleButton, layersContainer);
   }
-
-  // Add the toggle button and layers container to the map
-  amap.getContainer().appendChild(toggleButton);
-  amap.getContainer().appendChild(layersContainer);
-
-  // Toggle the layers container visibility on button click
-  L.DomEvent.disableClickPropagation(toggleButton); // Prevent map clicks from interfering
-  L.DomEvent.on(toggleButton, 'click', function (e) {
-    console.log("Toggle button clicked"); // Debugging: Check if the click event is firing
-    L.DomEvent.stopPropagation(e); // Stop the event from bubbling up
-    if (layersContainer.style.display === 'none') {
-      layersContainer.style.display = 'block';
-    } else {
-      layersContainer.style.display = 'none';
-    }
-  });
 
   // Add the search control
   const searchControl = L.esri.Geocoding.geosearch({
