@@ -16,6 +16,16 @@ const selectedIcon = new L.Icon({
 
 const defaultIcon = new L.Icon.Default();
 
+// Create a custom gold icon for search results
+const searchIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
 const baseLayers = {
   "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
     attribution: ''
@@ -41,11 +51,19 @@ function initializeMap() {
     wheelPxPerZoomLevel: 90
   });
 
-  // Create the layers control and add it directly to the map
-  L.control.layers(baseLayers, overlayLayers, {
+  // Create the layers control
+  const layersControl = new L.Control.Layers(baseLayers, overlayLayers, {
     position: 'topright',
-    collapsed: true // Set to true to allow default collapse behavior
-  }).addTo(amap);
+    collapsed: false
+  });
+  
+  // Add the control to the map
+  layersControl.addTo(amap);
+  
+  // Ensure the control container has proper z-index and pointer events
+  const controlContainer = layersControl.getContainer();
+  controlContainer.style.zIndex = '1000';
+  controlContainer.style.pointerEvents = 'auto';
 
   // Add the search control
   const searchControl = L.esri.Geocoding.geosearch({
@@ -64,7 +82,10 @@ function initializeMap() {
     if (data.results && data.results.length > 0) {
       // Add markers for search results
       data.results.forEach(result => {
-        L.marker(result.latlng).addTo(searchResults);
+        L.marker(result.latlng, {
+          icon: searchIcon,
+          title: 'Search Result'
+        }).addTo(searchResults);
       });
       
       // Zoom to the first result
