@@ -125,12 +125,12 @@ function updateMap(data) {
 
     const popupContent = `<div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
       <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${record.Name}</strong>
-      ${record["Pop-up IMG"] ? `<img src="${record["Pop-up IMG"]}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-      <p style="margin: 4px 0; font-size: 11px;"><strong>Property Address:</strong> ${record["Property Address"]}</p>
-      <p style="margin: 4px 0; font-size: 11px;"><strong>City:</strong> ${record.City}</p>
-      <p style="margin: 4px 0; font-size: 11px;"><strong>Property Type:</strong> ${record["Property Type"]}</p>
-      <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${record.Tenants}</p>
-      <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
+      ${record["Pop-up IMG"] ? `<img src="${record["Pop-up IMG"]}" alt="Image" style="width: 100%; height: auto; border-radius: 2px; margin-bottom: 3px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+      <p style="margin: 2px 0; font-size: 11px;"><strong>Property Address:</strong> ${record["Property Address"]}</p>
+      <p style="margin: 2px 0; font-size: 11px;"><strong>City:</strong> ${record.City}</p>
+      <p style="margin: 2px 0; font-size: 11px;"><strong>Property Type:</strong> ${record["Property Type"]}</p>
+      <p style="margin: 2px 0; font-size: 11px;"><strong>Tenants:</strong> ${record.Tenants}</p>
+      <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 3px;">
         <a href="${record["CoStar URL"]}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
         <a href="${record["County Prop Search"]}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
         <a href="${record.GIS}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
