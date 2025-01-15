@@ -354,6 +354,24 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+  const minimapContainer = document.getElementById('minimap-container');
+  const toggleButton = document.getElementById('toggleMinimap');
+  const googleMapIframe = document.getElementById('googleMap');
+
+  // Toggle minimap height and toolbar visibility
+  toggleButton.addEventListener('click', function () {
+    minimapContainer.classList.toggle('expanded');
+    if (minimapContainer.classList.contains('expanded')) {
+      googleMapIframe.style.pointerEvents = 'auto'; // Enable interaction
+    } else {
+      googleMapIframe.style.pointerEvents = 'none'; // Disable interaction
+    }
+  });
+
+  // Initially hide the toolbar by adjusting the iframe URL
+  googleMapIframe.src = "https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ui=0"; // `ui=0` hides the toolbar
+});
 
 grist.onOptions((options, interaction) => {
   writeAccess = interaction.accessLevel === 'full';
