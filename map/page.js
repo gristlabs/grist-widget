@@ -103,18 +103,14 @@ if (URLSearchParams && location.search && geocoder) {
 }
 
 async function geocode(address) {
-  return new Promise((resolve, reject) => {
-    try {
-      geocoder.geocode(address, (v) => {
-        v = v[0];
-        if (v) { v = v.center; }
-        resolve(v);
-      });
-    } catch (e) {
-      console.log("Problem:", e);
-      reject(e);
-    }
-  });
+  const results = await geocoder.geocode(address);
+  let v = results[0];
+
+  if (v) {
+    v = v.center;
+  }
+
+  return v;
 }
 
 async function delay(ms) {
