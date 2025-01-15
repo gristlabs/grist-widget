@@ -97,8 +97,26 @@ function initializeMap() {
 
   overlayLayers["Search Results"] = searchResults;
 
+  // Synchronize with Google Map
+  var googleMapIframe = document.getElementById('googleMap');
+
+  // Function to sync Leaflet map with Google MyMap
+  function syncMaps() {
+    // Sync the Leaflet map with the iframe's view
+    amap.on('moveend', function() {
+      var center = amap.getCenter();
+      var zoom = amap.getZoom();
+      var ll = center.lat + ',' + center.lng;
+      googleMapIframe.src = "https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=" + ll + "&z=" + zoom;
+    });
+  }
+
+  syncMaps();
+
   return amap;
 }
+
+// Rest of the existing code remains unchanged...
 
 function updateMap(data) {
   if (!amap) {
