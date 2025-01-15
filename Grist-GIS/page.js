@@ -75,9 +75,6 @@ function initializeMap() {
     attributionControl: false // Disable the default attribution control
   });
 
-  // Add custom attribution if needed (optional)
-  amap.attributionControl.setPrefix(''); // Remove "Leaflet" prefix
-
   // Attach the load event listener after the map is initialized
   amap.on('load', function () {
     console.log("Map is fully loaded and ready for interaction");
@@ -87,7 +84,8 @@ function initializeMap() {
 
   const searchControl = L.esri.Geocoding.geosearch({
     providers: [L.esri.Geocoding.arcgisOnlineProvider()],
-    position: 'topleft'
+    position: 'topleft',
+    attribution: false // Disable attribution for the geocoder
   }).addTo(amap);
 
   const searchResults = L.layerGroup().addTo(amap);
@@ -102,24 +100,33 @@ function initializeMap() {
   overlayLayers["Search Results"] = searchResults;
 
   // Synchronize with Google Map
-  var googleMapIframe = document.getElementById('googleMap');
+  const googleMapIframe = document.getElementById('googleMap');
 
   // Function to sync Leaflet map with Google MyMap
   function syncMaps() {
     // Sync the Leaflet map with the iframe's view
     amap.on('moveend', function() {
-      var center = amap.getCenter();
-      var zoom = amap.getZoom();
-      var ll = center.lat + ',' + center.lng;
+      const center = amap.getCenter();
+      const zoom = amap.getZoom();
+      const ll = center.lat + ',' + center.lng;
       googleMapIframe.src = "https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=" + ll + "&z=" + zoom;
     });
   }
 
   syncMaps();
 
+  // Collapsible minimap logic
+  const minimapContainer = document.getElementById('minimap-container');
+  const toggleButton = document.getElementById('toggleMinimap');
+
+  if (toggleButton && minimapContainer) {
+    toggleButton.addEventListener('click', function () {
+      minimapContainer.classList.toggle('collapsed');
+    });
+  }
+
   return amap;
 }
-
 // Rest of the existing code remains unchanged...
 
 function updateMap(data) {
