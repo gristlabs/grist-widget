@@ -1,7 +1,8 @@
 "use strict";
 
 let amap;
-const geoJSONUrl = "https://raw.githubusercontent.com/sgfroerer/gmaps-grist-widgets/master/geojson/Refined.geojson"; // Update with your GeoJSON URL
+let markersLayer; // Global variable to store markers
+const geoJSONUrl = "https://raw.githubusercontent.com/sgfroerer/gmaps-grist-widgets/master/geojson/Refined.geojson";
 
 const selectedIcon = new L.Icon({
   iconUrl: 'marker-icon-green.png',
@@ -35,70 +36,41 @@ const overlayLayers = {};
 function initializeMap() {
   amap = L.map('map', {
     layers: [baseLayers["Google Hybrid"]],
-    center: [45.5283, -122.8081], // Default center (USA)
-    zoom: 4, // Default zoom level
+    center: [45.5283, -122.8081],
+    zoom: 4,
     wheelPxPerZoomLevel: 90
   });
 
-  // Create the layers control
-  const layersControl = L.control.layers(baseLayers, overlayLayers, {
+  // Create the layers control and add it directly to the map
+  L.control.layers(baseLayers, overlayLayers, {
     position: 'topright',
-    collapsed: false // Set to false to prevent default collapsing
+    collapsed: true // Set to true to allow default collapse behavior
   }).addTo(amap);
-
-  // Customize the layers control to minimize by default
-  const layersContainer = layersControl.getContainer();
-  if (layersContainer) {
-    layersContainer.classList.add('leaflet-control-layers-expanded');
-    layersContainer.style.display = 'none'; // Hide the expanded control by default
-
-    // Add a custom toggle button
-    const toggleButton = L.DomUtil.create('div', 'leaflet-control-layers-toggle');
-    toggleButton.style.cursor = 'pointer';
-    toggleButton.style.zIndex = 1000; // Ensure it's above other elements
-    toggleButton.style.position = 'relative'; // Ensure it respects z-index
-    toggleButton.style.backgroundColor = 'white'; // Add a background to make it visible
-    toggleButton.style.border = '1px solid #ccc'; // Add a border for better visibility
-    toggleButton.style.borderRadius = '4px'; // Rounded corners
-    toggleButton.style.padding = '5px'; // Add some padding
-    toggleButton.style.boxShadow = '0 1px 5px rgba(0, 0, 0, 0.4)'; // Add a shadow for better visibility
-
-    // Debugging: Check if the button is created
-    console.log("Toggle button created:", toggleButton);
-
-    // Prevent event propagation to avoid conflicts
-    L.DomEvent.disableClickPropagation(toggleButton); // Prevent map clicks from interfering
-    L.DomEvent.on(toggleButton, 'click', function (e) {
-      console.log("Toggle button clicked"); // Debugging: Check if the click event is firing
-      L.DomEvent.stopPropagation(e); // Stop the event from bubbling up
-      if (layersContainer.style.display === 'none') {
-        layersContainer.style.display = 'block';
-      } else {
-        layersContainer.style.display = 'none';
-      }
-    });
-
-    // Insert the toggle button before the layers container
-    const controlContainer = layersControl.getContainer().parentElement;
-    controlContainer.insertBefore(toggleButton, layersContainer);
-  }
 
   // Add the search control
   const searchControl = L.esri.Geocoding.geosearch({
     providers: [L.esri.Geocoding.arcgisOnlineProvider()],
-    position: 'topleft'
+    position: 'topleft',
+    useMapBounds: false,
+    zoomToResult: true
   }).addTo(amap);
 
+  // Create a separate layer for search results
   const searchResults = L.layerGroup().addTo(amap);
 
+  // Handle search results
   searchControl.on('results', function (data) {
     searchResults.clearLayers();
-    for (let i = data.results.length - 1; i >= 0; i--) {
-      searchResults.addLayer(L.marker(data.results[i].latlng));
+    if (data.results && data.results.length > 0) {
+      // Add markers for search results
+      data.results.forEach(result => {
+        L.marker(result.latlng).addTo(searchResults);
+      });
+      
+      // Zoom to the first result
+      amap.setView(data.results[0].latlng, 16);
     }
   });
-
-  overlayLayers["Search Results"] = searchResults;
 
   return amap;
 }
@@ -115,13 +87,15 @@ function updateMap(data) {
     amap = initializeMap();
   }
 
-  console.log("GeoJSON data loaded:", data); // Debug: Check if data is loaded
+  // Create marker cluster group if it doesn't exist
+  if (!markersLayer) {
+    markersLayer = L.markerClusterGroup();
+    amap.addLayer(markersLayer);
+  }
 
-  const markers = L.markerClusterGroup();
   data.features.forEach(feature => {
     const record = feature.properties;
     const coordinates = feature.geometry.coordinates;
-    console.log("Processing feature:", record.Name, "Coordinates:", coordinates); // Debug: Check each feature
 
     const marker = L.marker([coordinates[1], coordinates[0]], {
       title: record.Name,
@@ -142,18 +116,15 @@ function updateMap(data) {
       </div>`;
 
     marker.bindPopup(popupContent);
-    markers.addLayer(marker);
+    markersLayer.addLayer(marker);
   });
-
-  amap.addLayer(markers);
-  console.log("Markers added to map"); // Debug: Confirm markers are added
 }
 
-// Load GeoJSON data and update the map
+// Initialize map when DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
   initializeMap();
 
-  // Fetch and display combined GeoJSON data
+  // Fetch and display GeoJSON data
   fetchGeoJSON(geoJSONUrl, function (data) {
     updateMap(data);
   });
