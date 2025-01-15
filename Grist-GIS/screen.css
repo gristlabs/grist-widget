@@ -17,12 +17,17 @@ body {
   bottom: 20px;
   right: 20px;
   width: 300px;
-  height: 200px;
+  height: 200px; /* Default height */
   border: 2px solid #ccc;
   border-radius: 8px;
   overflow: hidden;
   z-index: 1000;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  transition: height 0.3s ease; /* Smooth transition for height change */
+}
+
+#minimap-container.expanded {
+  height: 400px; /* Taller height when expanded */
 }
 
 #googleMap {
@@ -31,6 +36,22 @@ body {
   border: none;
 }
 
+#toggleMinimap {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  background: #007acc;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+#toggleMinimap:hover {
+  background: #005f99;
+}
 /* Geocoder control styling */
 .leaflet-control-geocoder {
   background: white;
