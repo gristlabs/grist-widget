@@ -33,21 +33,6 @@ html, body {
   cursor: pointer;
 }
 
-.leaflet-control-layers-expanded {
-  z-index: 1000;
-  position: relative;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 10px;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.4);
-  display: none;
-}
-
-.leaflet-control-layers-expanded.visible {
-  display: block;
-}
-
 .leaflet-control-layers-expanded .leaflet-control-layers-list {
   margin: 0;
   padding: 0;
@@ -176,4 +161,21 @@ html, body {
 
 .leaflet-popup-content b {
   font-weight: bold;
+}
+
+.leaflet-control-layers {
+  background: #fff;
+  padding: 6px 10px 6px 6px;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+  pointer-events: auto !important;
+}
+
+.leaflet-control-layers label {
+  margin-bottom: 5px;
+  display: block;
+}
+
+.leaflet-control-layers-list {
+  margin-bottom: 0;
 }
