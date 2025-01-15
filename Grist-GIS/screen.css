@@ -26,8 +26,9 @@ body {
   transition: height 0.3s ease; /* Smooth transition for height change */
 }
 
-#minimap-container.expanded {
-  height: 400px; /* Taller height when expanded */
+#minimap-container.collapsed {
+  height: 0; /* Collapsed state */
+  border: none; /* Remove border when collapsed */
 }
 
 #googleMap {
@@ -52,6 +53,7 @@ body {
 #toggleMinimap:hover {
   background: #005f99;
 }
+
 /* Geocoder control styling */
 .leaflet-control-geocoder {
   background: white;
