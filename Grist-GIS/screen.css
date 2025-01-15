@@ -33,8 +33,9 @@ body {
 
 #googleMap {
   width: 100%;
-  height: 100%;
+  height: 120%; /* Make the iframe taller than the container */
   border: none;
+  margin-top: -40px; /* Shift the iframe up to hide the top bar */
 }
 
 #toggleMinimap {
