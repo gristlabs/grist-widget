@@ -56,7 +56,7 @@ function initializeMap() {
     console.log("Map is fully loaded and ready for interaction");
   });
 
-  L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: false }).addTo(amap);
+  L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: true }).addTo(amap);
 
   const searchControl = L.esri.Geocoding.geosearch({
     providers: [L.esri.Geocoding.arcgisOnlineProvider()],
@@ -89,6 +89,16 @@ function initializeMap() {
   }
 
   syncMaps();
+  
+    // Collapsible minimap logic
+  const minimapContainer = document.getElementById('minimap-container');
+  const toggleButton = document.getElementById('toggleMinimap');
+
+  if (toggleButton && minimapContainer) {
+    toggleButton.addEventListener('click', function () {
+      minimapContainer.classList.toggle('collapsed');
+    });
+  }
 
   return amap;
 }
@@ -140,7 +150,14 @@ function updateMap(data) {
 
 // Initialize map when DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
-  initializeMap();
+  const minimapContainer = document.getElementById('minimap-container');
+  const toggleButton = document.getElementById('toggleMinimap');
+
+  // Toggle minimap visibility
+  toggleButton.addEventListener('click', function () {
+    minimapContainer.classList.toggle('collapsed');
+  });
+
 
   // Fetch and display GeoJSON data
   fetchGeoJSON(geoJSONUrl, function (data) {
