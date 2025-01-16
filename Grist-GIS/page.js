@@ -102,18 +102,28 @@ function initializeMap() {
   // Synchronize with Google Map
   const googleMapIframe = document.getElementById('googleMap');
 
-  // Function to sync Leaflet map with Google MyMap
-  function syncMaps() {
-    // Sync the Leaflet map with the iframe's view
-    amap.on('moveend', function() {
-      const center = amap.getCenter();
-      const zoom = amap.getZoom();
-      const ll = center.lat + ',' + center.lng;
-      googleMapIframe.src = "https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=" + ll + "&z=" + zoom;
-    });
-  }
+  if (googleMapIframe) {
+    // Function to sync Leaflet map with Google MyMap
+    function syncMaps() {
+      // Sync the Leaflet map with the iframe's view
+      amap.on('moveend', function () {
+        const center = amap.getCenter();
+        const zoom = amap.getZoom();
+        const ll = `${center.lat},${center.lng}`;
+        googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}`;
+      });
 
-  syncMaps();
+      // Trigger sync on initial load
+      const initialCenter = amap.getCenter();
+      const initialZoom = amap.getZoom();
+      const initialLL = `${initialCenter.lat},${initialCenter.lng}`;
+      googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${initialLL}&z=${initialZoom}`;
+    }
+
+    syncMaps();
+  } else {
+    console.error("Google MyMap iframe not found!");
+  }
 
   // Collapsible minimap logic
   const minimapContainer = document.getElementById('minimap-container');
@@ -127,6 +137,7 @@ function initializeMap() {
 
   return amap;
 }
+
 // Rest of the existing code remains unchanged...
 
 function updateMap(data) {
