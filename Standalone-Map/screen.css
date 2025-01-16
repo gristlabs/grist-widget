@@ -144,8 +144,8 @@ body {
 
 /* Popup Header and Text */
 .leaflet-popup-content h3 {
-  font-size: 18px;
-  margin-bottom: 5px;
+  font-size: 25px;
+  margin-bottom: 50px;
   color: #333;
 }
 
@@ -161,4 +161,11 @@ body {
 
 .leaflet-popup-content b {
   font-weight: bold;
+}
+
+/* Popup Header and Text */
+.leaflet-popup-content h3 {
+  font-size: 18px;
+  margin-bottom: 5px;
+  color: #333;
 }
