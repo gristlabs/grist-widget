@@ -72,7 +72,6 @@ function initializeMap() {
     center: [45.5283, -122.8081], // Default center (USA)
     zoom: 4, // Default zoom level
     wheelPxPerZoomLevel: 90,
-    attributionControl: false // Disable the default attribution control
   });
 
   // Attach the load event listener after the map is initialized
@@ -81,7 +80,7 @@ function initializeMap() {
   });
 
   // Add layer control
-  L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: false }).addTo(amap);
+  L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: true }).addTo(amap);
 
   // Add Esri Geocoder search control
   const searchControl = L.esri.Geocoding.geosearch({
