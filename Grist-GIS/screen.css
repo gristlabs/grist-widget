@@ -17,10 +17,10 @@ body {
   bottom: 20px;
   right: 20px;
   width: 300px;
-  height: 200px; /* Default height */
+  height: 250px; /* Increased height to hide the top bar */
   border: 2px solid #ccc;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: hidden; /* Hide overflow */
   z-index: 1000;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   transition: height 0.3s ease; /* Smooth transition for height change */
@@ -29,13 +29,14 @@ body {
 #minimap-container.collapsed {
   height: 0; /* Collapsed state */
   border: none; /* Remove border when collapsed */
+  padding: 0; /* Remove padding when collapsed */
 }
 
 #googleMap {
   width: 100%;
-  height: 120%; /* Make the iframe taller than the container */
+  height: 140%; /* Increase height further to hide the top bar */
   border: none;
-  margin-top: -40px; /* Shift the iframe up to hide the top bar */
+  margin-top: -60px; /* Adjust this value to fully hide the top bar */
 }
 
 #toggleMinimap {
