@@ -5,184 +5,190 @@
     <title>Custom Widget</title>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <style>
-      html, body {
-          padding: 5;
-          margin: 0;
-          background-color: #C9E7CA; /* Green background */
-          font-family: Arial, sans-serif;
-      }
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    
+    .nav-container {
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      background-color: #F6F3E8;
+      padding: 0;
+    }
 
-      button {
-          border: none;
-          color: white;
-          padding: 5px 10px;
-          text-align: center;
-          text-decoration: none;
-          font-weight: bolder;
-          display: inline-block;
-          font-size: 14px;
-          border-radius: 8px; /* Rounded sides */
-          cursor: pointer;
-          transition: background-color 0.3s, box-shadow 0.2s ease-in-out;
-          white-space: nowrap;
-      }
+    .nav-bar {
+      align-items: center;
+      display: flex;
+      width: 100%;
+      gap: 10px;
+      padding: 0;
+    }
 
-      button:hover {
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      }
+    .button-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 20px;
+    }
 
-      #county-button {
-          background-color: #B0B0B0; /* Grey */
-      }
-      #county-button:hover {
-          background-color: #9C9C9C;
-      }
+    .side-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
 
-      #street-view-button, #co-star-button {
-          background-color: #6CA0DC; /* Blue */
-      }
-      #street-view-button:hover, #co-star-button:hover {
-          background-color: #4A7FA6;
-      }
+    .copy-btn {
+      align-self: stretch;
+      border-radius: 8px;
+      background-color: #A6D7A7;
+      min-height: 50px;
+      width: 100px;
+      padding: 5px 10px;
+      color: #333;
+      font: 500 12px/18px Arial;
+      border: none;
+      font-weight: bolder;
+      cursor: pointer;
+    }
 
-      #copy {
-          background-color: #C9E7CA; /* Green */
-          color: black;
-          flex-grow: 1; /* Make it fill the space */
-          text-align: center;
-          border: 2px solid #A5D7A7;
-      }
-      #copy:hover {
-          background-color: #a5d7a7;
-      }
+    .copy-btn:hover {
+      background-color: #95c696;
+    }
 
-      /* Layout container */
-      .content {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          height: 50vh;
-          padding: 5px;
-      }
+    .link-button {
+      background-color: #C6F4C5;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      text-decoration: none;
+      color: #333;
+      display: inline-block;
+    }
 
-      .button-container {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin: 0 auto;
-          width: 90%;
-      }
+    .link-button:hover {
+      background-color: #b5e3b4;
+    }
 
-      .side-buttons {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-      }
+    #co-star {
+      background-color: #ADD8E6;
+    }
 
-      #error {
-          display: none;
-          background: red;
-          color: white;
-          padding: 5px;
-          text-align: center;
-          margin-top: 5px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="content">
+    #co-star:hover {
+      background-color: #9cc7d5;
+    }
+
+    #street-view {
+      background-color: #E5D9B7;
+    }
+
+    #street-view:hover {
+      background-color: #d4c8a6;
+    }
+
+    #error {
+      color: red;
+      font-size: 12px;
+      text-align: center;
+      margin-top: 5px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="nav-container">
+    <nav class="nav-bar" role="navigation">
       <div class="button-container">
         <!-- Left Buttons -->
         <div class="side-buttons">
-          <button id="county-button" onclick="openLink('county')">🔍 County</button>
-          <button id="street-view-button" onclick="openLink('streetView')">🚶‍♂️ Street View</button>
+          <a id="county" class="link-button" href="#" draggable="true">🔍</a>
+          <a id="gis" class="link-button" href="#" draggable="true">🌎</a>
         </div>
         
         <!-- Center Copy Button -->
-        <button id="copy" onclick="copyText()">Copy</button>
+        <button class="copy-btn" id="copy" onclick="copyText()">Copy</button>
         
-        <!-- Right Button -->
+        <!-- Right Buttons -->
         <div class="side-buttons">
-          <button id="co-star-button" onclick="openLink('coStar')">CoStar</button>
+          <a id="co-star" class="link-button" href="#" draggable="true">🏢</a>
+          <a id="street-view" class="link-button" href="#" draggable="true">🛣️</a>
         </div>
       </div>
       <div id="error"></div>
-    <script>
+    </nav>
+  </div>
+  <script>
   
       let links = {
-        county: '',
-        streetView: '',
-        coStar: '',
-        copy: ''
-      };
+      county: '',
+      streetView: '',
+      coStar: '',
+      gis: '',
+      copy: ''
+    };
 
-      function openLink(type) {
-        const url = links[type];
-        if (url) {
-          window.open(url, '_blank');
-        } else {
-          showError(`No URL available for ${type}`);
-        }
-      }
-
-      function copyText() {
-  const textToCopy = links.copy; // Value to copy
-  if (textToCopy) {
-    // Create a temporary textarea element
-    const tempTextArea = document.createElement('textarea');
-    tempTextArea.value = textToCopy;
-    document.body.appendChild(tempTextArea);
-
-    // Select and copy the text
-    tempTextArea.select();
-    tempTextArea.setSelectionRange(0, 99999); // For mobile devices
-    try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        document.getElementById('copy').innerHTML = "Copied!";
-        setTimeout(() => document.getElementById('copy').innerHTML = "Copy", 2000);
-      } else {
-        showError("Failed to copy text.");
-      }
-    } catch (err) {
-      console.error("Fallback: Unable to copy text.", err);
-      showError("Clipboard access denied.");
+    function updateLinks() {
+      document.getElementById('county').href = links.county || '#';
+      document.getElementById('street-view').href = links.streetView || '#';
+      document.getElementById('co-star').href = links.coStar || '#';
+      document.getElementById('gis').href = links.gis || '#';
     }
 
-    // Clean up the temporary textarea
-    document.body.removeChild(tempTextArea);
-  } else {
-    showError("No text available to copy. Please ensure the Copy column is set.");
-  }
-}
-
-      function showError(msg) {
-        const el = document.getElementById('error');
-        if (!msg) {
-          el.style.display = 'none';
-        } else {
-          el.innerText = msg;
-          el.style.display = 'block';
+    function copyText() {
+      const textToCopy = links.copy;
+      if (textToCopy) {
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = textToCopy;
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        tempTextArea.setSelectionRange(0, 99999);
+        try {
+          document.execCommand('copy');
+          const copyBtn = document.getElementById('copy');
+          copyBtn.innerHTML = "Copied!";
+          setTimeout(() => copyBtn.innerHTML = "Copy", 2000);
+        } catch (err) {
+          console.error("Clipboard access denied.", err);
+          showError("Clipboard access denied.");
         }
+        document.body.removeChild(tempTextArea);
+      } else {
+        showError("No text available to copy.");
       }
+    }
 
-      // Grist integration
-      grist.ready({
-          columns: ["County", "Street_View", "CoStar", "Copy"] // Add Copy column
-      });
+    function showError(msg) {
+      const el = document.getElementById('error');
+      if (!msg) {
+        el.style.display = 'none';
+      } else {
+        el.innerText = msg;
+        el.style.display = 'block';
+      }
+    }
 
-      grist.onRecord(function(record) {
-        const mapped = grist.mapColumnNames(record);
+    // Grist integration
+    grist.ready({
+      columns: ["County", "Street_View", "CoStar", "GIS", "Copy"]
+    });
 
-        // Update dynamic links and Copy button value
-        links.county = mapped?.County || '';
-        links.streetView = mapped?.Street_View || '';
-        links.coStar = mapped?.CoStar || '';
-        links.copy = mapped?.Copy || '';
-
-        console.log("Mapped links:", links); // Debugging log to ensure mapping works
-        showError(""); // Clear any error
-      });
+    grist.onRecord(function(record) {
+      const mapped = grist.mapColumnNames(record);
+      
+      links.county = mapped?.County || '';
+      links.streetView = mapped?.Street_View || '';
+      links.coStar = mapped?.CoStar || '';
+      links.gis = mapped?.GIS || '';
+      links.copy = mapped?.Copy || '';
+      
+      updateLinks();
+      showError("");
+    });
       </script>
     </div>
   </body>
