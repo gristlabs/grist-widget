@@ -19,11 +19,33 @@
     <!-- ESRI Leaflet Geocoder JS -->
     <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0/esri-leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
-    <!-- Custom JS -->
-    <script src="standalone-map.js"></script>
+    <!-- Leaflet Sync JS -->
+    <script src="https://unpkg.com/leaflet-sync/dist/leaflet.sync.js"></script>
   </head>
   <body>
-    <!-- Map Container -->
+    <!-- Map Containers -->
     <div id="map"></div>
+    <div id="minimap-container">
+      <iframe id="googleMap" src="https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA" allowfullscreen></iframe>
+    </div>
+    <!-- Settings Panel -->
+    <div id="settings">
+      <div id="btnClose">Close</div>
+      <label id="lblToggle" for="cbxMode">
+        <input type="checkbox" id="cbxMode">
+        <span id="lblText">All locations</span>
+      </label>
+      <br/>
+      <table>
+        <tr>
+          <td> <label id="lblSource" for="mapSource"> Source </label> </td>
+          <td> <input id="mapSource"> </td>
+        </tr>
+        <tr>
+          <td> <label id="lblCopyright" for="mapCopyright"> Copyright </label> </td>
+          <td> <input id="mapCopyright"> </td>
+        </tr>
+      </table>
+    </div>
   </body>
 </html>
