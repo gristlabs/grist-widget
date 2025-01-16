@@ -46,52 +46,49 @@ const overlayLayers = {};
 function initializeMap() {
   amap = L.map('map', {
     layers: [baseLayers["Google Hybrid"]],
-    center: [45.5283, -122.8081],
-    zoom: 4,
+    center: [45.5283, -122.8081], // Default center (USA)
+    zoom: 4, // Default zoom level
     wheelPxPerZoomLevel: 90
   });
 
-  // Create the layers control
-  const layersControl = new L.Control.Layers(baseLayers, overlayLayers, {
-    position: 'topright',
-    collapsed: false
+  // Attach the load event listener after the map is initialized
+  amap.on('load', function () {
+    console.log("Map is fully loaded and ready for interaction");
   });
-  
-  // Add the control to the map
-  layersControl.addTo(amap);
-  
-  // Ensure the control container has proper z-index and pointer events
-  const controlContainer = layersControl.getContainer();
-  controlContainer.style.zIndex = '1000';
-  controlContainer.style.pointerEvents = 'auto';
 
-  // Add the search control
+  L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: false }).addTo(amap);
+
   const searchControl = L.esri.Geocoding.geosearch({
     providers: [L.esri.Geocoding.arcgisOnlineProvider()],
-    position: 'topleft',
-    useMapBounds: false,
-    zoomToResult: true
+    position: 'topleft'
   }).addTo(amap);
 
-  // Create a separate layer for search results
   const searchResults = L.layerGroup().addTo(amap);
 
-  // Handle search results
   searchControl.on('results', function (data) {
     searchResults.clearLayers();
-    if (data.results && data.results.length > 0) {
-      // Add markers for search results
-      data.results.forEach(result => {
-        L.marker(result.latlng, {
-          icon: searchIcon,
-          title: 'Search Result'
-        }).addTo(searchResults);
-      });
-      
-      // Zoom to the first result
-      amap.setView(data.results[0].latlng, 16);
+    for (let i = data.results.length - 1; i >= 0; i--) {
+      searchResults.addLayer(L.marker(data.results[i].latlng));
     }
   });
+
+  overlayLayers["Search Results"] = searchResults;
+
+  // Synchronize with Google Map
+  var googleMapIframe = document.getElementById('googleMap');
+
+  // Function to sync Leaflet map with Google MyMap
+  function syncMaps() {
+    // Sync the Leaflet map with the iframe's view
+    amap.on('moveend', function() {
+      var center = amap.getCenter();
+      var zoom = amap.getZoom();
+      var ll = center.lat + ',' + center.lng;
+      googleMapIframe.src = "https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=" + ll + "&z=" + zoom;
+    });
+  }
+
+  syncMaps();
 
   return amap;
 }
