@@ -80,8 +80,10 @@ function initializeMap() {
     console.log("Map is fully loaded and ready for interaction");
   });
 
+  // Add layer control
   L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: false }).addTo(amap);
 
+  // Add Esri Geocoder search control
   const searchControl = L.esri.Geocoding.geosearch({
     providers: [L.esri.Geocoding.arcgisOnlineProvider()],
     position: 'topleft',
