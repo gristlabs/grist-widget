@@ -89,8 +89,8 @@ function initializeMap() {
   }
 
   syncMaps();
-  
-    // Collapsible minimap logic
+
+  // Collapsible minimap logic
   const minimapContainer = document.getElementById('minimap-container');
   const toggleButton = document.getElementById('toggleMinimap');
 
@@ -130,22 +130,97 @@ function updateMap(data) {
       icon: defaultIcon
     });
 
-    const popupContent = `<div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-      <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${record.Name}</strong>
-      ${record["Pop-up IMG"] ? `<img src="${record["Pop-up IMG"]}" alt="Image" style="width: 100%; height: auto; border-radius: 2px; margin-bottom: 3px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-      <p style="margin: 2px 0; font-size: 11px;"><strong>Property Address:</strong> ${record["Property Address"]}</p>
-      <p style="margin: 2px 0; font-size: 11px;"><strong>City:</strong> ${record.City}</p>
-      <p style="margin: 2px 0; font-size: 11px;"><strong>Property Type:</strong> ${record["Property Type"]}</p>
-      <p style="margin: 2px 0; font-size: 11px;"><strong>Tenants:</strong> ${record.Tenants}</p>
-      <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 3px;">
-        <a href="${record["CoStar URL"]}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
-        <a href="${record["County Prop Search"]}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
-        <a href="${record.GIS}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
-      </div>`;
+    const popupContent = `
+      <div class="bg-white rounded-lg shadow-lg overflow-hidden" style="max-width: 200px;">
+        <!-- Header -->
+        <div class="p-3 border-b border-gray-200">
+          <h3 class="text-sm font-semibold text-gray-800">${record.Name}</h3>
+        </div>
+
+        <!-- Image Section -->
+        <div class="relative">
+          ${record["Pop-up IMG"] ? `
+            <img src="${record["Pop-up IMG"]}" alt="Property Image" class="w-full h-24 object-cover cursor-pointer hover:opacity-90" onclick="openLightbox('${record["Pop-up IMG"]}')" />
+          ` : `
+            <div class="w-full h-24 bg-gray-100 flex items-center justify-center text-gray-500 text-xs">
+              No Image Available
+            </div>
+          `}
+        </div>
+
+        <!-- Property Details -->
+        <div class="p-3 space-y-2">
+          <div class="text-xs text-gray-700">
+            <strong>Address:</strong> ${record["Property Address"]}
+          </div>
+          <div class="text-xs text-gray-700">
+            <strong>City:</strong> ${record.City}
+          </div>
+          <div class="text-xs text-gray-700">
+            <strong>Type:</strong> ${record["Property Type"]}
+          </div>
+
+          <!-- Collapsible Tenants Section -->
+          <div class="text-xs text-gray-700">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleTenants(this)">
+              <strong>Tenants:</strong>
+              <span class="text-gray-500">▼</span>
+            </div>
+            <div class="mt-1 hidden">
+              ${record.Tenants || "No tenants listed"}
+            </div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="p-3 bg-gray-50 flex gap-2">
+          <a href="${record["CoStar URL"]}" class="popup-button costar-button text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" target="_blank">CoStar</a>
+          <a href="${record["County Prop Search"]}" class="popup-button county-button text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors" target="_blank">County</a>
+          <a href="${record.GIS}" class="popup-button gis-button text-xs px-2 py-1 bg-yellow-400 text-gray-800 rounded hover:bg-yellow-500 transition-colors" target="_blank">GIS</a>
+        </div>
+      </div>
+    `;
 
     marker.bindPopup(popupContent);
     markersLayer.addLayer(marker);
   });
+
+  // Initialize Tippy.js for buttons
+  tippy('.popup-button', {
+    content: (reference) => {
+      if (reference.classList.contains('costar-button')) {
+        return 'Open in CoStar';
+      } else if (reference.classList.contains('county-button')) {
+        return 'Open in County Property Search';
+      } else if (reference.classList.contains('gis-button')) {
+        return 'Open in GIS';
+      }
+    },
+    placement: 'top',
+    arrow: true,
+    animation: 'fade',
+  });
+}
+
+// Lightbox function for image preview
+function openLightbox(imageUrl) {
+  const lightbox = document.createElement('div');
+  lightbox.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+  lightbox.innerHTML = `
+    <div class="relative">
+      <img src="${imageUrl}" alt="Full-size Image" class="max-w-full max-h-full" />
+      <button onclick="this.parentElement.parentElement.remove()" class="absolute top-2 right-2 bg-white rounded-full p-1 hover:bg-gray-200">
+        ✕
+      </button>
+    </div>
+  `;
+  document.body.appendChild(lightbox);
+}
+
+// Toggle tenants section
+function toggleTenants(element) {
+  const tenantsSection = element.nextElementSibling;
+  tenantsSection.classList.toggle('hidden');
 }
 
 // Initialize map when DOM is loaded
@@ -157,7 +232,6 @@ document.addEventListener("DOMContentLoaded", function () {
   toggleButton.addEventListener('click', function () {
     minimapContainer.classList.toggle('collapsed');
   });
-
 
   // Fetch and display GeoJSON data
   fetchGeoJSON(geoJSONUrl, function (data) {
