@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- MarkerCluster CSS -->
@@ -10,21 +10,17 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <!-- Geocoder CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.css" />
-    <!-- Tippy.js CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/dist/tippy.css" />
-    <!-- Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <!-- Custom CSS -->
     <link rel="stylesheet" href="screen.css" />
-  </head>
-  <body class="bg-[#B9DFF8] min-h-screen">
-    <!-- Map Containers -->
-    <div id="map" class="w-full h-screen"></div>
-    <div id="minimap-container" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-2">
-      <iframe id="googleMap" src="https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA" allowfullscreen class="w-64 h-48 rounded-lg"></iframe>
-      <button id="toggleMinimap" class="mt-2 w-full bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors">Toggle Minimap</button>
-    </div>
-
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+    
+    <!-- Tippy.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/dist/tippy.css" />
+    <!-- Tippy.js JS -->
+    <script src="https://unpkg.com/tippy.js@6.3.7/dist/tippy.umd.min.js"></script>
+    
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- MarkerCluster JS -->
@@ -34,9 +30,32 @@
     <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
     <!-- Leaflet Sync JS -->
     <script src="https://unpkg.com/leaflet-sync/dist/leaflet.sync.js"></script>
-    <!-- Tippy.js JS -->
-    <script src="https://unpkg.com/tippy.js@6.3.7/dist/tippy.umd.min.js"></script>
-    <!-- Custom JS -->
-    <script src="script.js"></script>
+  </head>
+  <body>
+    <!-- Map Containers -->
+    <div id="map"></div>
+    <div id="minimap-container">
+      <iframe id="googleMap" src="https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA" allowfullscreen></iframe>
+      <button id="toggleMinimap">Toggle Minimap</button>
+    </div>
+    <!-- Settings Panel -->
+    <div id="settings">
+      <div id="btnClose">Close</div>
+      <label id="lblToggle" for="cbxMode">
+        <input type="checkbox" id="cbxMode">
+        <span id="lblText">All locations</span>
+      </label>
+      <br/>
+      <table>
+        <tr>
+          <td> <label id="lblSource" for="mapSource"> Source </label> </td>
+          <td> <input id="mapSource"> </td>
+        </tr>
+        <tr>
+          <td> <label id="lblCopyright" for="mapCopyright"> Copyright </label> </td>
+          <td> <input id="mapCopyright"> </td>
+        </tr>
+      </table>
+    </div>
   </body>
 </html>
