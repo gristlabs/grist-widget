@@ -13,6 +13,7 @@
     display: flex;
     justify-content: space-between; /* Push side buttons to edges */
     align-items: center;
+    gap: 10px; /* Spacing between groups */
     padding: 10px;
     margin-bottom: 20px; /* Spacing below the button group */
   }
@@ -21,14 +22,20 @@
   .side-buttons {
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Spacing between stacked buttons */
+    gap: 5px; /* Reduced spacing between stacked buttons */
+  }
+
+  /* Left and Right Side Buttons */
+  .side-buttons.left,
+  .side-buttons.right {
+    width: 100px; /* Fixed width for side buttons */
   }
 
   /* Base Button Styling */
   .btn {
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 8px;
+    padding: 8px 12px; /* Smaller padding for compactness */
+    font-size: 14px;
+    border-radius: 6px;
     border: 1px solid #e0e0e0; /* Light border */
     background-color: #ffffff; /* White background */
     color: #4f46e5; /* Indigo text color */
@@ -37,16 +44,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 50px; /* Fixed width for uniformity */
-    height: 50px; /* Fixed height for uniformity */
+    text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    width: 100%; /* Full width of parent container */
   }
 
   /* Hover Effect */
   .btn:hover {
     background-color: #f9fafb; /* Light gray background on hover */
     border-color: #d1d5db; /* Slightly darker border on hover */
-    transform: translateY(-2px); /* Slight lift */
+    transform: translateY(-1px); /* Slight lift */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
   }
 
@@ -61,8 +68,8 @@
     background-color: rgba(16, 185, 129, 0.8); /* Less bright, more opaque green */
     color: white; /* White text */
     border-color: rgba(16, 185, 129, 0.8); /* Matching border */
-    width: 60px; /* Slightly larger for emphasis */
-    height: 60px; /* Slightly larger for emphasis */
+    width: 150px; /* Wider than side buttons */
+    height: 50px; /* Slightly taller for emphasis */
   }
 
   .copy-btn:hover {
@@ -156,7 +163,7 @@
     <!-- Button Group -->
 <div class="button-container">
   <!-- Left Buttons (County and GIS) -->
-  <div class="side-buttons">
+  <div class="side-buttons left">
     <a id="county" class="btn" href="#" aria-label="County">🔍</a>
     <a id="gis" class="btn" href="#" aria-label="GIS">🌎</a>
   </div>
@@ -165,7 +172,7 @@
   <button id="copy" class="btn copy-btn" aria-label="Copy">📋</button>
   
   <!-- Right Buttons (CoStar and Street View) -->
-  <div class="side-buttons">
+  <div class="side-buttons right">
     <a id="co-star" class="btn" href="#" aria-label="CoStar">🏢</a>
     <a id="street-view" class="btn" href="#" aria-label="Street View">🛣️</a>
   </div>
