@@ -1,196 +1,155 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Custom Widget</title>
-    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <style>
-    body {
-      margin: 0;
-      padding: 0;
-    }
-    
-    .nav-container {
-      border-radius: 0;
-      display: flex;
-      flex-direction: column;
-      background-color: #F6F3E8;
-      padding: 0;
-    }
-
-    .nav-bar {
-      align-items: center;
-      display: flex;
-      width: 100%;
-      gap: 10px;
-      padding: 0;
-    }
-
-    .button-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 0 auto;
-      width: 100%;
-      padding: 20px;
-    }
-
-    .side-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .copy-btn {
-      align-self: stretch;
-      border-radius: 8px;
-      background-color: #A6D7A7;
-      min-height: 50px;
-      width: 100px;
-      padding: 5px 10px;
-      color: #333;
-      font: 500 12px/18px Arial;
-      border: none;
-      font-weight: bolder;
-      cursor: pointer;
-    }
-
-    .copy-btn:hover {
-      background-color: #95c696;
-    }
-
-    .link-button {
-      background-color: #C6F4C5;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 12px;
-      text-decoration: none;
-      color: #333;
-      display: inline-block;
-    }
-
-    .link-button:hover {
-      background-color: #b5e3b4;
-    }
-
-    #co-star {
-      background-color: #ADD8E6;
-    }
-
-    #co-star:hover {
-      background-color: #9cc7d5;
-    }
-
-    #street-view {
-      background-color: #E5D9B7;
-    }
-
-    #street-view:hover {
-      background-color: #d4c8a6;
-    }
-
-    #error {
-      color: red;
-      font-size: 12px;
-      text-align: center;
-      margin-top: 5px;
-      display: none;
-    }
-  </style>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="nav-container">
-    <nav class="nav-bar" role="navigation">
-      <div class="button-container">
-        <!-- Left Buttons -->
-        <div class="side-buttons">
-          <a id="county" class="link-button" href="#" draggable="true">🔍</a>
-          <a id="gis" class="link-button" href="#" draggable="true">🌎</a>
+<body class="bg-[#B9DFF8] min-h-screen">
+  <div class="w-full max-w-5xl mx-auto p-4 pt-8">
+    <!-- Header Banner -->
+    <div class="bg-[#408095] rounded-lg p-4 text-white sticky top-0 z-50 backdrop-filter backdrop-blur shadow-lg">
+      <h1 id="owner_name" class="text-3xl font-bold">Owner Name</h1>
+      <div class="flex items-center gap-4 text-left mb-3">
+        <div>
+          <span class="text-yellow-200">📞</span>
+          <span id="phone" class="text-yellow-200 font-bold">Phone</span>
         </div>
-        
-        <!-- Center Copy Button -->
-        <button class="copy-btn" id="copy" onclick="copyText()">Copy</button>
-        
-        <!-- Right Buttons -->
-        <div class="side-buttons">
-          <a id="co-star" class="link-button" href="#" draggable="true">🏢</a>
-          <a id="street-view" class="link-button" href="#" draggable="true">🛣️</a>
+        <div>
+          <span class="text-yellow-200">📧</span>
+          <span id="email" class="px-3 py-1 rounded-md text-sm font-medium">Email</span>
+        </div>
+        <div>
+          <span class="text-yellow-200">🏠</span>
+          <span id="owner_address" class="px-3 py-1 rounded-md text-sm font-medium">Address</span>
         </div>
       </div>
-      <div id="error"></div>
-    </nav>
+      <div class="mt-2 pt-2 border-t border-blue-300">
+        <div class="grid grid-cols-3 gap-4 mb-3">
+          <div>
+            <span class="text-yellow-200">👤 Gender</span>
+            <div id="gender" class="font-medium">Gender</div>
+          </div>
+          <div>
+            <span class="text-yellow-200">🎂 Age</span>
+            <div id="age" class="font-medium">Age</div>
+          </div>
+          <div class="text-right">
+            <span class="text-yellow-200">📅 Last Contact</span>
+            <div id="last_contact" class="font-medium">Last Contact</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Properties Owned -->
+    <div class="bg-[#DAEBF1] rounded-lg shadow p-4 mt-4 text-[#1B4D3E] border-2 border-[#90CDF4]">
+      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">🏘️ Properties Owned</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-[#f4f4f4] border-b-2 border-[#333]">
+              <th class="p-2 text-left">Property Address</th>
+              <th class="p-2 text-left">Property Type</th>
+              <th class="p-2 text-left">Secondary Type</th>
+              <th class="p-2 text-left">Image</th>
+            </tr>
+          </thead>
+          <tbody id="properties_list">
+            <!-- Properties will be dynamically inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
+
   <script>
-  
-      let links = {
-      county: '',
-      streetView: '',
-      coStar: '',
-      gis: '',
-      copy: ''
-    };
-
-    function updateLinks() {
-      document.getElementById('county').href = links.county || '#';
-      document.getElementById('street-view').href = links.streetView || '#';
-      document.getElementById('co-star').href = links.coStar || '#';
-      document.getElementById('gis').href = links.gis || '#';
+    function formatDate(date) {
+      if (!date) return '';
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
     }
 
-    function copyText() {
-      const textToCopy = links.copy;
-      if (textToCopy) {
-        const tempTextArea = document.createElement('textarea');
-        tempTextArea.value = textToCopy;
-        document.body.appendChild(tempTextArea);
-        tempTextArea.select();
-        tempTextArea.setSelectionRange(0, 99999);
-        try {
-          document.execCommand('copy');
-          const copyBtn = document.getElementById('copy');
-          copyBtn.innerHTML = "Copied!";
-          setTimeout(() => copyBtn.innerHTML = "Copy", 2000);
-        } catch (err) {
-          console.error("Clipboard access denied.", err);
-          showError("Clipboard access denied.");
-        }
-        document.body.removeChild(tempTextArea);
-      } else {
-        showError("No text available to copy.");
+    function setElementText(id, value) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = value || '';
       }
     }
 
-    function showError(msg) {
-      const el = document.getElementById('error');
-      if (!msg) {
-        el.style.display = 'none';
-      } else {
-        el.innerText = msg;
-        el.style.display = 'block';
-      }
-    }
-
-    // Grist integration
     grist.ready({
-      columns: ["County", "Street_View", "CoStar", "GIS", "Copy"]
+      requiredTables: ['Owners_', 'Properties_']
     });
 
     grist.onRecord(function(record) {
-      const mapped = grist.mapColumnNames(record);
-      
-      links.county = mapped?.County || '';
-      links.streetView = mapped?.Street_View || '';
-      links.coStar = mapped?.CoStar || '';
-      links.gis = mapped?.GIS || '';
-      links.copy = mapped?.Copy || '';
-      
-      updateLinks();
-      showError("");
-    });
-      </script>
-    </div>
-  </body>
-</html>
+      console.log("Current Record:", record); // Debugging
 
+      if (!record) return;
+
+      // Owner Information
+      const ownerFields = {
+        'owner_name': record.Name,
+        'phone': record.Phone,
+        'email': record.Email,
+        'owner_address': record.Owner_Address,
+        'gender': record.Gender,
+        'age': record.Age?.toString(),
+        'last_contact': formatDate(record.Last_Contact)
+      };
+
+      // Update all owner fields
+      Object.entries(ownerFields).forEach(([id, value]) => {
+        setElementText(id, value);
+      });
+
+      // Properties Owned
+      const propertiesList = document.getElementById('properties_list');
+      propertiesList.innerHTML = '';
+
+      if (Array.isArray(record.Properties_) && record.Properties_.length > 0) {
+        console.log("Properties Data:", record.Properties_); // Debugging
+
+        record.Properties_.forEach(property => {
+          const propertyRow = document.createElement('tr');
+          propertyRow.className = 'border-b border-[#ddd] hover:bg-gray-50';
+
+          // Debugging: Log each property object
+          console.log("Property Object:", property);
+
+          // Handle missing or invalid data
+          const propertyAddress = property.Property_Address || 'N/A';
+          const propertyType = property.Property_Type || 'N/A';
+          const secondaryTypes = Array.isArray(property.Secondary_Type) 
+            ? property.Secondary_Type.join(', ') 
+            : (property.Secondary_Type || 'N/A');
+          const imageURL = property.ImageURLs || '';
+
+          propertyRow.innerHTML = `
+            <td class="p-2">${propertyAddress}</td>
+            <td class="p-2">${propertyType}</td>
+            <td class="p-2">${secondaryTypes}</td>
+            <td class="p-2">
+              ${imageURL ? `
+                <img src="${imageURL}" 
+                     alt="Property Image" 
+                     class="w-32 h-24 object-cover border border-gray-300"
+                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 24%22><rect width=%2232%22 height=%2224%22 fill=%22%23ddd%22/><text x=%2250%%22 y=%2250%%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 font-family=%22Arial%22 fill=%22%23666%22>No Image</text></svg>'">
+              ` : '<div class="w-32 h-24 bg-gray-200 flex items-center justify-center text-gray-500 text-sm">No Image</div>'}
+            </td>
+          `;
+          propertiesList.appendChild(propertyRow);
+        });
+      } else {
+        propertiesList.innerHTML = `
+          <tr>
+            <td colspan="4" class="p-2 text-center text-gray-600">No properties found.</td>
+          </tr>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
