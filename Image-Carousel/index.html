@@ -10,25 +10,27 @@
 
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      padding: 0;
       font-family: 'DM Sans', sans-serif;
       background-color: #f8f9fa;
+      overflow: hidden; /* Prevent scrollbars */
     }
 
     .container-fluid {
-      padding: 8px;
+      padding: 0; /* Remove padding */
     }
 
     /* Compact Button Layout */
     .controls-wrapper {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 6px;
+      margin-bottom: 2px; /* Reduced margin */
+      padding: 4px; /* Minimal padding */
     }
 
     .button-group {
@@ -38,14 +40,14 @@
 
     /* Modern Button Styling */
     .action-btn {
-      height: 40px;
-      min-width: 40px;
-      padding: 0 12px;
+      height: 25px;
+      min-width: 30px;
+      padding: 0 10px;
       border: none;
-      border-radius: 8px;
+      border-radius: 4px;
       background: rgba(0, 0, 0, 0.05);
       color: #4f46e5;
-      font-size: 16px;
+      font-size: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -65,6 +67,7 @@
       background: rgba(129, 214, 129, 0.8);
       color: black;
       font-weight: 500;
+      font-size: 16px;
       max-width: 300px;
     }
 
@@ -75,18 +78,17 @@
     /* Image Carousel */
     .cards {
       position: relative;
-      width: 66.9%;
-      height: 200px;
-      margin-bottom: 20px;
+      width: 100%; /* Full width of the container */
+      height: 120px; /* Reduced height */
+      display: flex;
+      justify-content: center; /* Center images horizontally */
+      align-items: center; /* Center images vertically */
     }
 
     .card {
       position: absolute;
-      width: 60%;
-      height: 100%;
-      left: 0;
-      right: 0;
-      margin: auto;
+      width: 60%; /* Width of each image */
+      height: 100%; /* Height of each image */
       transition: transform 0.4s ease, opacity 0.4s ease;
       cursor: pointer;
       border-radius: 10px;
@@ -97,7 +99,7 @@
     .card img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: cover; /* Maintain aspect ratio */
       border-radius: 10px;
     }
 
@@ -162,5 +164,6 @@
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+  <script src="page.js"></script>
+  </body>
 </html>
