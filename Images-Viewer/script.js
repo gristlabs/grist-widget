@@ -1,4 +1,4 @@
-    let links = {
+let links = {
       county: '',
       streetView: '',
       coStar: '',
@@ -18,8 +18,8 @@
       if (textToCopy) {
         navigator.clipboard.writeText(textToCopy).then(() => {
           const copyBtn = document.getElementById('copy');
-          copyBtn.textContent = "Copied!";
-          setTimeout(() => copyBtn.textContent = "Copy", 2000);
+          copyBtn.textContent = "✓ Copied!";
+          setTimeout(() => copyBtn.textContent = "📋 Copy", 2000);
         }).catch(err => {
           console.error("Clipboard access denied.", err);
         });
@@ -32,10 +32,10 @@
         nextEl: '.swiper-button-next',
         prevEl: '.swiper-button-prev',
       },
-      loop: true, // Enable infinite loop
+      loop: true,
       autoplay: {
-        delay: 3000, // Auto-slide every 3 seconds
-        disableOnInteraction: false, // Continue autoplay after user interaction
+        delay: 3000,
+        disableOnInteraction: false,
       },
     });
 
@@ -67,7 +67,7 @@
       });
     });
 
-    // Add event listeners to buttons
+    // Add event listeners
     document.getElementById('county').addEventListener('click', () => window.open(links.county, '_blank'));
     document.getElementById('gis').addEventListener('click', () => window.open(links.gis, '_blank'));
     document.getElementById('co-star').addEventListener('click', () => window.open(links.coStar, '_blank'));
