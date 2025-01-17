@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Modern Image Viewer</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @import url("https://fonts.googleapis.com/css?family=DM+Sans:400,500,700&display=swap");
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'DM Sans', sans-serif;
+      background-color: #f8f9fa;
+    }
+
+    .container-fluid {
+      padding: 8px;
+    }
+
+    /* Compact Button Layout */
+    .controls-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 4px;
+    }
+
+    /* Modern Button Styling */
+    .action-btn {
+      height: 40px;
+      min-width: 40px;
+      padding: 0 12px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.05);
+      color: #4f46e5;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .action-btn:hover {
+      background: rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .copy-btn {
+      flex-grow: 1;
+      background: rgba(129, 214, 129, 0.8);
+      color: black;
+      font-weight: 500;
+      max-width: 300px;
+    }
+
+    .copy-btn:hover {
+      background: rgba(5, 150, 105, 0.9);
+    }
+
+    /* Image Carousel */
+    .cards {
+      position: relative;
+      width: 66.9%;
+      height: 200px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      position: absolute;
+      width: 60%;
+      height: 100%;
+      left: 0;
+      right: 0;
+      margin: auto;
+      transition: transform 0.4s ease, opacity 0.4s ease;
+      cursor: pointer;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    input[type="radio"] {
+      display: none;
+    }
+
+    #item-1:checked ~ .cards #image-3,
+    #item-2:checked ~ .cards #image-1,
+    #item-3:checked ~ .cards #image-2 {
+      transform: translateX(-40%) scale(0.8);
+      opacity: 0.4;
+      z-index: 0;
+    }
+
+    #item-1:checked ~ .cards #image-2,
+    #item-2:checked ~ .cards #image-3,
+    #item-3:checked ~ .cards #image-1 {
+      transform: translateX(40%) scale(0.8);
+      opacity: 0.4;
+      z-index: 0;
+    }
+
+    #item-1:checked ~ .cards #image-1,
+    #item-2:checked ~ .cards #image-2,
+    #item-3:checked ~ .cards #image-3 {
+      transform: translateX(0) scale(1);
+      opacity: 1;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <!-- Controls -->
+    <div class="controls-wrapper">
+      <div class="button-group">
+        <a id="county" class="action-btn" href="#" aria-label="County">🔍</a>
+        <a id="gis" class="action-btn" href="#" aria-label="GIS">🌎</a>
+      </div>
+      <button id="copy" class="action-btn copy-btn" aria-label="Copy">📋</button>
+      <div class="button-group">
+        <a id="co-star" class="action-btn" href="#" aria-label="CoStar">🏢</a>
+        <a id="street-view" class="action-btn" href="#" aria-label="Street View">🛣️</a>
+      </div>
+    </div>
+
+    <!-- Image Carousel -->
+    <input type="radio" name="slider" id="item-1" checked>
+    <input type="radio" name="slider" id="item-2">
+    <input type="radio" name="slider" id="item-3">
+    <div class="cards">
+      <label class="card" for="item-1" id="image-1">
+        <img src="" alt="Property Image">
+      </label>
+      <label class="card" for="item-2" id="image-2">
+        <img src="" alt="Property Image">
+      </label>
+      <label class="card" for="item-3" id="image-3">
+        <img src="" alt="Property Image">
+      </label>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
