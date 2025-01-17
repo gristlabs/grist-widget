@@ -53,14 +53,11 @@ class ImageRotator {
 class SwipeHandler {
   _startX;
   _endX;
-  //this sets the minimum swipe distance, to avoid noise and to filter actual swipes from just moving fingers
-  _treshold = 100;
+  _treshold = 100; // Minimum swipe distance
   onSwipeLeft;
   onSwipeRight;
 
-  //Function to handle swipes
   _handleTouch() {
-    //calculate the distance on x-axis and o y-axis. Check whether had the great moving ratio.
     const xDist = this._endX - this._startX;
     if (Math.abs(xDist) > this._treshold) {
       if (xDist > 0) {
@@ -83,6 +80,83 @@ class SwipeHandler {
   }
 }
 
+let links = {
+  county: '',
+  streetView: '',
+  coStar: '',
+  gis: '',
+  copy: ''
+};
+
+function updateLinks() {
+  document.getElementById('county').href = links.county || '#';
+  document.getElementById('street-view').href = links.streetView || '#';
+  document.getElementById('co-star').href = links.coStar || '#';
+  document.getElementById('gis').href = links.gis || '#';
+}
+
+function copyText() {
+  const textToCopy = links.copy;
+  if (textToCopy) {
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      const copyBtn = document.getElementById('copy');
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => copyBtn.textContent = "Copy", 2000);
+    }).catch(err => {
+      console.error("Clipboard access denied.", err);
+    });
+  }
+}
+
+// Initialize Swiper
+const swiper = new Swiper('.swiper-container', {
+  navigation: {
+    nextEl: '.swiper-button-next',
+    prevEl: '.swiper-button-prev',
+  },
+  loop: true, // Enable infinite loop
+  autoplay: {
+    delay: 3000, // Auto-slide every 3 seconds
+    disableOnInteraction: false, // Continue autoplay after user interaction
+  },
+});
+
+// Grist integration
+grist.ready({
+  columns: ["County", "Street_View", "CoStar", "GIS", "Copy", "ImageUrl"]
+});
+
+grist.onRecord(function(record) {
+  const mapped = grist.mapColumnNames(record);
+  
+  links.county = mapped?.County || '';
+  links.streetView = mapped?.Street_View || '';
+  links.coStar = mapped?.CoStar || '';
+  links.gis = mapped?.GIS || '';
+  links.copy = mapped?.Copy || '';
+
+  updateLinks();
+
+  // Update the image carousel
+  const imageUrls = mapped?.ImageUrl?.split(' ') || [];
+  swiper.removeAllSlides();
+  imageUrls.forEach(url => {
+    swiper.appendSlide(`
+      <div class="swiper-slide">
+        <img src="${url}" alt="Property Image" />
+      </div>
+    `);
+  });
+});
+
+// Add event listeners to buttons
+document.getElementById('county').addEventListener('click', () => window.open(links.county, '_blank'));
+document.getElementById('gis').addEventListener('click', () => window.open(links.gis, '_blank'));
+document.getElementById('co-star').addEventListener('click', () => window.open(links.coStar, '_blank'));
+document.getElementById('street-view').addEventListener('click', () => window.open(links.streetView, '_blank'));
+document.getElementById('copy').addEventListener('click', copyText);
+
+// Initialize ImageRotator and SwipeHandler
 let imageRotator;
 let swipeHandler;
 imageRotator = new ImageRotator('viewer');
@@ -117,43 +191,3 @@ function toggleNavigationButtons(show = false) {
     buttons.style.display = 'none';
   }
 }
-
-grist.ready({
-  columns: [{ name: "ImageUrl", title: 'Image URL', type: 'Text' }],
-  requiredAccess: 'read table',
-});
-
-// Helper function that reads first value from a table with a single column.
-function singleColumn(record) {
-  const columns = Object.keys(record || {}).filter(k => k !== 'id');
-  return columns.length === 1 ? record[columns[0]] : undefined;
-}
-
-grist.onNewRecord(() => {
-  showError("");
-  viewer.style.display = 'none';
-});
-grist.onRecord(function (record) {
-  // If user picked all columns, this helper function will return a mapped record.
-  const mapped = grist.mapColumnNames(record);
-  // We will fallback to reading a value from a single column to
-  // support old way of mapping (exposing only a single column).
-  // New widgets should only check if mapped object is truthy.
-  const data = mapped ? mapped.ImageUrl : singleColumn(record);
-  delete record.id;
-  let showNavigation = false;
-  if (data === undefined) {
-    showError("Please choose a column to show in the Creator Panel.");
-  } else {
-    showError("");
-    if (!data) {
-      viewer.style.display = 'none';
-    } else {
-      const imageUrlRegex = /(https?:\/\/[^\s]+)/g;
-      urls = data.match(imageUrlRegex) || [];
-      imageRotator.setImages(urls);
-      showNavigation = urls.length > 1;
-    }
-    toggleNavigationButtons(showNavigation);
-  }
-});
