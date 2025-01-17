@@ -16,13 +16,33 @@ let links = {
     function copyText() {
       const textToCopy = links.copy;
       if (textToCopy) {
-        navigator.clipboard.writeText(textToCopy).then(() => {
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = textToCopy;
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        tempTextArea.setSelectionRange(0, 99999);
+        try {
+          document.execCommand('copy');
           const copyBtn = document.getElementById('copy');
           copyBtn.textContent = "✓ Copied!";
           setTimeout(() => copyBtn.textContent = "📋", 2000);
-        }).catch(err => {
+        } catch (err) {
           console.error("Clipboard access denied.", err);
-        });
+          showError("Clipboard access denied.");
+        }
+        document.body.removeChild(tempTextArea);
+      } else {
+        showError("No text available to copy.");
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error');
+      if (!msg) {
+        el.style.display = 'none';
+      } else {
+        el.innerText = msg;
+        el.style.display = 'block';
       }
     }
 
@@ -41,6 +61,7 @@ let links = {
       links.copy = mapped?.Copy || '';
 
       updateLinks();
+      showError("");
 
       // Update the image carousel
       const imageUrls = mapped?.ImageUrl?.split(' ') || [];
