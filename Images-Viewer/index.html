@@ -1,189 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
-  <title>A cheap and cheerful image viewer</title>
+  <title>Modern Image Viewer</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
-<style>
-  /* Button Container */
-  .button-container {
-    display: flex;
-    justify-content: space-between; /* Push side buttons to edges */
-    align-items: center;
-    gap: 10px; /* Spacing between groups */
-    padding: 0px;
-    margin-bottom: 20px; /* Spacing below the button group */
-  }
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f8f9fa;
+    }
 
-  /* Side Buttons Group */
-  .side-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 5px; /* Reduced spacing between stacked buttons */
-  }
+    .container-fluid {
+      padding: 8px;
+    }
 
-  /* Left and Right Side Buttons */
-  .side-buttons.left,
-  .side-buttons.right {
-    width: 100px; /* Fixed width for side buttons */
-  }
+    /* Compact Button Layout */
+    .controls-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      height: 40px;
+    }
 
-  /* Base Button Styling */
-  .btn {
-    padding: 1px 1px; /* Smaller padding for compactness */
-    font-size: 14px;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0; /* Light border */
-    background-color: #ffffff; /* White background */
-    color: #4f46e5; /* Indigo text color */
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    width: 100%; /* Full width of parent container */
-  }
+    .button-group {
+      display: flex;
+      gap: 4px;
+      height: 100%;
+    }
 
-  /* Hover Effect */
-  .btn:hover {
-    background-color: #f9fafb; /* Light gray background on hover */
-    border-color: #d1d5db; /* Slightly darker border on hover */
-    transform: translateY(-1px); /* Slight lift */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
-  }
+    /* Modern Button Styling */
+    .action-btn {
+      height: 40px;
+      min-width: 40px;
+      padding: 0 12px;
+      border: none;
+      border-radius: 8px;
+      background: white;
+      color: #4f46e5;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
 
-  /* Active/Clicked Effect */
-  .btn:active {
-    transform: translateY(0); /* Reset lift */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Reset shadow */
-  }
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
 
-  /* Copy Button Specific Styling */
-  .copy-btn {
-    background-color: rgba(14,166,116, 0.8); /* Less bright, more opaque green */
-    color: white; /* White text */
-    border-color: rgba(14,166,116, 0.8); /* Matching border */
-    width: 300px; /* Wider than side buttons */
-    height: 50px; /* Slightly taller for emphasis */
-  }
+    .copy-btn {
+      flex-grow: 1;
+      background: #10b981;
+      color: white;
+      font-weight: 500;
+      max-width: 300px;
+    }
 
-  .copy-btn:hover {
-    background-color: rgba(5, 150, 105, 0.9); /* Slightly darker green on hover */
-    border-color: rgba(5, 150, 105, 0.9);
-  }
+    /* Image Viewer Styling */
+    .swiper-container {
+      height: 300px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-  /* CoStar Button Specific Styling */
-  #co-star {
-    background-color: #ADD8E6; /* Light blue background */
-    border-color: #ADD8E6;
-  }
+    .swiper-slide {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8f9fa;
+    }
 
-  #co-star:hover {
-    background-color: #9cc7d5; /* Slightly darker blue on hover */
-    border-color: #9cc7d5;
-  }
+    .swiper-slide img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
 
-  /* Street View Button Specific Styling */
-  #street-view {
-    background-color: #E5D9B7; /* Light beige background */
-    border-color: #E5D9B7;
-  }
+    /* Navigation Arrows */
+    .swiper-button-next,
+    .swiper-button-prev {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 50%;
+      color: #10b981;
+    }
 
-  #street-view:hover {
-    background-color: #d4c8a6; /* Slightly darker beige on hover */
-    border-color: #d4c8a6;
-  }
-
-  /* Disabled State for Buttons */
-  .btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background-color: #f3f4f6; /* Light gray */
-    border-color: #e0e0e0;
-    color: #9ca3af; /* Gray text */
-  }
-
-  /* Swiper Container Styling */
-  .swiper-container {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    background-color: transparent; /* Remove white background */
-  }
-
-  .swiper-slide {
-    display: flex;
-    justify-content: center;
-    align-items: center; /* Center images vertically */
-    background-color: transparent; /* Remove white background */
-  }
-
-  .swiper-slide img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    border-radius: 4px;
-  }
-
-  /* Updated Navigation Buttons */
-  .swiper-button-next,
-  .swiper-button-prev {
-    color: #10b981; /* Green color for arrows */
-    background-color: rgba(255, 255, 255, 0.5); /* More transparent white background */
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    transition: background-color 0.2s ease;
-  }
-
-  .swiper-button-next:hover,
-  .swiper-button-prev:hover {
-    background-color: rgba(255, 255, 255, 0.9); /* Solid white on hover */
-  }
-
-  /* Arrow Icons */
-  .swiper-button-next::after,
-  .swiper-button-prev::after {
-    font-size: 20px; /* Smaller arrow size */
-    font-weight: bold;
-  }
-</style>
+    .swiper-button-next:after,
+    .swiper-button-prev:after {
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
 </head>
-<body class="bg-light">
-  <div class="container-fluid h-100 p-4">
-    <!-- Button Group -->
-<div class="button-container">
-  <!-- Left Buttons (County and GIS) -->
-  <div class="side-buttons left">
-    <a id="county" class="btn" href="#" aria-label="County">🔍</a>
-    <a id="gis" class="btn" href="#" aria-label="GIS">🌎</a>
-  </div>
-  
-  <!-- Center Copy Button -->
-  <button id="copy" class="btn copy-btn" aria-label="Copy">📋</button>
-  
-  <!-- Right Buttons (CoStar and Street View) -->
-  <div class="side-buttons right">
-    <a id="co-star" class="btn" href="#" aria-label="CoStar">🏢</a>
-    <a id="street-view" class="btn" href="#" aria-label="Street View">🛣️</a>
-  </div>
-</div>
+<body>
+  <div class="container-fluid">
+    <!-- Controls -->
+    <div class="controls-wrapper">
+      <div class="button-group">
+        <a id="county" class="action-btn" href="#" aria-label="County">🔍</a>
+        <a id="gis" class="action-btn" href="#" aria-label="GIS">🌎</a>
+      </div>
+      
+      <button id="copy" class="action-btn copy-btn" aria-label="Copy">📋 Copy</button>
+      
+      <div class="button-group">
+        <a id="co-star" class="action-btn" href="#" aria-label="CoStar">🏢</a>
+        <a id="street-view" class="action-btn" href="#" aria-label="Street View">🛣️</a>
+      </div>
+    </div>
 
     <!-- Image Carousel -->
-    <div class="swiper-container flex-grow bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="swiper-container">
       <div class="swiper-wrapper">
         <!-- Slides will be dynamically inserted here -->
       </div>
-      <!-- Add Navigation Buttons -->
       <div class="swiper-button-next"></div>
       <div class="swiper-button-prev"></div>
     </div>
@@ -192,5 +132,4 @@
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
   <script src="script.js"></script>
 </body>
-
 </html>
