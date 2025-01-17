@@ -22,7 +22,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 4px; /* Reduced space */
       height: 40px;
     }
 
@@ -39,37 +39,43 @@
       padding: 0 12px;
       border: none;
       border-radius: 8px;
-      background: white;
-      color: #4f46e5;
+      background: rgba(0, 0, 0, 0.05); /* Transparent grey background */
+      color: #4f46e5; /* Icon color */
       font-size: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     .action-btn:hover {
+      background: rgba(0, 0, 0, 0.1); /* Slightly darker on hover */
       transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     }
 
     .copy-btn {
       flex-grow: 1;
-      background: #10b981;
-      color: white;
+      background: rgba(129,214,129, 0.8); /* Soft green background */
+      color: black;
       font-weight: 500;
       max-width: 300px;
     }
 
+    .copy-btn:hover {
+      background: rgba(5, 150, 105, 0.9); /* Slightly darker green on hover */
+    }
+
     /* Image Viewer Styling */
     .swiper-container {
-      height: 300px;
-      border-radius: 12px;
+      height: 200px;
+      border-radius: 16px;
       overflow: hidden;
       background: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: relative; /* Required for absolute positioning of arrows */
     }
 
     .swiper-slide {
@@ -90,9 +96,28 @@
     .swiper-button-prev {
       width: 36px;
       height: 36px;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255, 255, 255, 0.7); /* More transparent white background */
       border-radius: 50%;
       color: #10b981;
+      position: absolute; /* Position arrows over the images */
+      top: 50%; /* Center vertically */
+      transform: translateY(-50%); /* Adjust for exact vertical centering */
+      z-index: 10; /* Ensure arrows are above the images */
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+      transition: background-color 0.2s ease;
+    }
+
+    .swiper-button-next:hover,
+    .swiper-button-prev:hover {
+      background: rgba(255, 255, 255, 0.9); /* Slightly less transparent on hover */
+    }
+
+    .swiper-button-next {
+      right: 10px; /* Position next arrow on the right */
+    }
+
+    .swiper-button-prev {
+      left: 10px; /* Position previous arrow on the left */
     }
 
     .swiper-button-next:after,
