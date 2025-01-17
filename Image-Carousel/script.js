@@ -24,7 +24,7 @@ let links = {
         try {
           document.execCommand('copy');
           const copyBtn = document.getElementById('copy');
-          copyBtn.textContent = "✓ Copied!";
+          copyBtn.textContent = "✅";
           setTimeout(() => copyBtn.textContent = "📋", 2000);
         } catch (err) {
           console.error("Clipboard access denied.", err);
