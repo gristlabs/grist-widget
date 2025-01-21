@@ -59,15 +59,16 @@ grist.onRecord(function(record) {
   links.coStar = mapped?.CoStar || '';
   links.gis = mapped?.GIS || '';
   links.copy = mapped?.Copy || '';
+  links.ImageUrl = mapped?.ImageUrl || '';
 
   updateLinks();
   showError("");
 
   // Update the image carousel
-  const imageUrls = mapped?.ImageUrl?.split(' ') || [];
+  const imageUrls = links.ImageUrl.split(' ').filter(url => url.trim() !== '');
   const cards = document.querySelectorAll('.card');
 
-  // Clear existing images and hide unused cards
+  // Clear existing images and adjust visibility
   cards.forEach((card, index) => {
     const img = card.querySelector('img');
     if (index < imageUrls.length) {
@@ -95,14 +96,13 @@ document.getElementById('copy').addEventListener('click', copyText);
 
 // Automatic shuffling for the carousel
 let currentIndex = 1;
-const totalCards = 3; // Total number of cards in the carousel
 
 function autoShuffle() {
-  const radioButtons = document.querySelectorAll('input[name="slider"]');
-  const imageUrls = links.ImageUrl?.split(' ') || [];
+  const imageUrls = links.ImageUrl.split(' ').filter(url => url.trim() !== '');
   const totalItems = imageUrls.length;
 
   if (totalItems > 0) {
+    const radioButtons = document.querySelectorAll('input[name="slider"]');
     if (radioButtons[currentIndex - 1]) {
       radioButtons[currentIndex - 1].checked = true;
     }
