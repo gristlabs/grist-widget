@@ -52,34 +52,20 @@ function showError(msg) {
 }
 
 function createCarousel(imageUrls) {
-  const carouselContainer = document.getElementById('carousel-container');
-  carouselContainer.innerHTML = ''; // Clear existing content
+  const carousel = document.getElementById('carousel');
+  carousel.innerHTML = ''; // Clear existing content
 
   if (imageUrls.length === 0) {
     showError("No images available.");
     return;
   }
 
-  // Create radio buttons and cards dynamically
   imageUrls.forEach((url, index) => {
-    const radio = document.createElement('input');
-    radio.type = 'radio';
-    radio.name = 'slider';
-    radio.id = `item-${index + 1}`;
-    if (index === 0) radio.checked = true; // Select the first item by default
-
-    const label = document.createElement('label');
-    label.className = 'card';
-    label.htmlFor = `item-${index + 1}`;
-    label.id = `image-${index + 1}`;
-
     const img = document.createElement('img');
     img.src = url;
     img.alt = `Property Image ${index + 1}`;
-
-    label.appendChild(img);
-    carouselContainer.appendChild(radio);
-    carouselContainer.appendChild(label);
+    img.style.display = index === 0 ? 'block' : 'none'; // Show the first image
+    carousel.appendChild(img);
   });
 
   totalItems = imageUrls.length;
@@ -88,11 +74,10 @@ function createCarousel(imageUrls) {
 function autoShuffle() {
   if (totalItems === 0) return;
 
-  const radioButtons = document.querySelectorAll('input[name="slider"]');
-  if (radioButtons[currentIndex]) {
-    radioButtons[currentIndex].checked = true;
-  }
+  const images = document.querySelectorAll('#carousel img');
+  images[currentIndex].style.display = 'none'; // Hide the current image
   currentIndex = (currentIndex + 1) % totalItems; // Move to the next image
+  images[currentIndex].style.display = 'block'; // Show the next image
 }
 
 // Grist integration
