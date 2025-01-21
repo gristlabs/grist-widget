@@ -3,8 +3,13 @@ let links = {
   streetView: '',
   coStar: '',
   gis: '',
-  copy: ''
+  copy: '',
+  ImageUrl: ''
 };
+
+let currentIndex = 0;
+let totalItems = 0;
+let autoShuffleInterval;
 
 function updateLinks() {
   document.getElementById('county').href = links.county || '#';
@@ -46,6 +51,50 @@ function showError(msg) {
   }
 }
 
+function createCarousel(imageUrls) {
+  const carouselContainer = document.getElementById('carousel-container');
+  carouselContainer.innerHTML = ''; // Clear existing content
+
+  if (imageUrls.length === 0) {
+    showError("No images available.");
+    return;
+  }
+
+  // Create radio buttons and cards dynamically
+  imageUrls.forEach((url, index) => {
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'slider';
+    radio.id = `item-${index + 1}`;
+    if (index === 0) radio.checked = true; // Select the first item by default
+
+    const label = document.createElement('label');
+    label.className = 'card';
+    label.htmlFor = `item-${index + 1}`;
+    label.id = `image-${index + 1}`;
+
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = `Property Image ${index + 1}`;
+
+    label.appendChild(img);
+    carouselContainer.appendChild(radio);
+    carouselContainer.appendChild(label);
+  });
+
+  totalItems = imageUrls.length;
+}
+
+function autoShuffle() {
+  if (totalItems === 0) return;
+
+  const radioButtons = document.querySelectorAll('input[name="slider"]');
+  if (radioButtons[currentIndex]) {
+    radioButtons[currentIndex].checked = true;
+  }
+  currentIndex = (currentIndex + 1) % totalItems; // Move to the next image
+}
+
 // Grist integration
 grist.ready({
   columns: ["County", "Street_View", "CoStar", "GIS", "Copy", "ImageUrl"]
@@ -66,24 +115,12 @@ grist.onRecord(function(record) {
 
   // Update the image carousel
   const imageUrls = links.ImageUrl.split(' ').filter(url => url.trim() !== '');
-  const cards = document.querySelectorAll('.card');
+  createCarousel(imageUrls);
 
-  // Clear existing images and adjust visibility
-  cards.forEach((card, index) => {
-    const img = card.querySelector('img');
-    if (index < imageUrls.length) {
-      img.src = imageUrls[index];
-      card.style.display = 'block';
-    } else {
-      img.src = '';
-      card.style.display = 'none';
-    }
-  });
-
-  // Adjust carousel logic based on the number of images
-  const totalItems = imageUrls.length;
-  if (totalItems > 0) {
-    document.getElementById('item-1').checked = true;
+  // Restart auto-shuffling
+  clearInterval(autoShuffleInterval);
+  if (imageUrls.length > 0) {
+    autoShuffleInterval = setInterval(autoShuffle, 3000);
   }
 });
 
@@ -93,22 +130,3 @@ document.getElementById('gis').addEventListener('click', () => window.open(links
 document.getElementById('co-star').addEventListener('click', () => window.open(links.coStar, '_blank'));
 document.getElementById('street-view').addEventListener('click', () => window.open(links.streetView, '_blank'));
 document.getElementById('copy').addEventListener('click', copyText);
-
-// Automatic shuffling for the carousel
-let currentIndex = 1;
-
-function autoShuffle() {
-  const imageUrls = links.ImageUrl.split(' ').filter(url => url.trim() !== '');
-  const totalItems = imageUrls.length;
-
-  if (totalItems > 0) {
-    const radioButtons = document.querySelectorAll('input[name="slider"]');
-    if (radioButtons[currentIndex - 1]) {
-      radioButtons[currentIndex - 1].checked = true;
-    }
-    currentIndex = (currentIndex % totalItems) + 1; // Move to the next image
-  }
-}
-
-// Set interval for automatic shuffling (e.g., every 3 seconds)
-setInterval(autoShuffle, 3000);
