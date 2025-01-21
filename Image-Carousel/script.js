@@ -64,19 +64,24 @@ let links = {
       showError("");
 
       // Update the image carousel
-      const imageUrls = mapped?.ImageUrl?.split(' ') || [];
-      const cards = document.querySelectorAll('.card img');
-
+      let imageUrls = mapped?.ImageUrl?.split(' ') || [];
+      // Prevent empty slots by duplicating existing images
+      if (imageUrls.length > 0) {
+        while (imageUrls.length < 3) {
+          imageUrls.push(...imageUrls);
+        }
+        imageUrls = imageUrls.slice(0, 3); // Keep only first 3 items
+      }
+      
       // Clear existing images
       cards.forEach(card => card.src = '');
-
+      
       // Load new images
       imageUrls.forEach((url, index) => {
         if (cards[index]) {
           cards[index].src = url;
         }
       });
-    });
 
     // Add event listeners
     document.getElementById('county').addEventListener('click', () => window.open(links.county, '_blank'));
