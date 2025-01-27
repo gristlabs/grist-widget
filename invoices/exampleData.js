@@ -42,4 +42,5 @@ const exampleData = {
   Deduction: null,
   Taxes: null,
   Total: 615,
+  Paid: true,
 };
