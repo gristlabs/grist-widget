@@ -360,19 +360,19 @@ for (const rec of data) {
 function selectMaker(id) {
    // Reset the options from the previously selected marker.
    const previouslyClicked = popups[selectedRowId];
-   if (previouslyClicked) {
+   if (previouslyClicked) { // Check if previouslyClicked exists
      previouslyClicked.setIcon(defaultIcon);
      previouslyClicked.pane = 'otherMarkers';
    }
    const marker = popups[id];
-   if (!marker) { return null; }
+   if (!marker) { return null; } // Check if marker for new id exists
 
    // Remember the new selected marker.
    selectedRowId = id;
 
    // Set the options for the newly selected marker.
    marker.setIcon(selectedIcon);
-   previouslyClicked.pane = 'selectedMarker';
+   marker.pane = 'selectedMarker'; // Correctly set pane for the *new* marker
 
    // Rerender markers in this cluster
    markers.refreshClusters();
