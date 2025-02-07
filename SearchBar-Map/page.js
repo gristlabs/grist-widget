@@ -1,8 +1,6 @@
-/* The JS file is responsible for setting up the map control, styling the markers, popups, and adding necessary script tags. */
-
 "use strict";
 
-/* global grist, window */
+/* global grist, window, L */ // Make sure L is declared as a global
 
 let amap;
 let popups = {};
@@ -11,7 +9,7 @@ let selectedRowId = null;
 let selectedRecords = null;
 let mode = 'multi';
 let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
-let mapCopyright = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
+let mapCopyright = 'Tiles © Esri — Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
 // Required, Label value
 const Name = "Name";
 // Required
@@ -52,16 +50,7 @@ const selectedIcon =  new L.Icon({
 const defaultIcon =  new L.Icon.Default();
 
 
-
 // Creates clusterIcons that highlight if they contain selected row
-// Given a function `() => selectedMarker`, return a cluster icon create function
-// that can be passed to MarkerClusterGroup({iconCreateFunction: ... } )
-//
-// Cluster with selected record gets the '.marker-cluster-selected' class
-// (defined in screen.css)
-//
-// Copied from _defaultIconCreateFunction in ClusterMarkerGroup
-//    https://github.com/Leaflet/Leaflet.markercluster/blob/master/src/MarkerClusterGroup.js
 const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
   return function(cluster) {
     var childCount = cluster.getChildCount();
@@ -69,10 +58,6 @@ const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
     let isSelected = false;
     try {
       const selectedMarker = selectedMarkerGetter();
-
-      // hmm I think this is n log(n) to build all the clusters for the whole map.
-      // It's probably fine though, it only fires once when map markers
-      // are set up or when selectedRow changes
       isSelected = cluster.getAllChildMarkers().filter((m) => m == selectedMarker).length > 0;
     } catch (e) {
       console.error("WARNING: Error in clusterIconFactory in map widget");
@@ -212,7 +197,23 @@ function getInfo(rec) {
 // Function to clear last added markers. Used to clear the map when new record is selected.
 let clearMakers = () => {};
 
-let markers = [];
+let markers; // Declare markers outside updateMap for wider scope
+
+// --- Base Layers from Grist-GIS.js ---
+const baseLayers = {
+  "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+    attribution: 'Google Hybrid'
+  }),
+  "MapTiler Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
+    attribution: ''
+  }),
+  "ArcGIS": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: ''
+  }),
+  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: ''
+  })
+};
 
 function updateMap(data) {
   data = data || selectedRecords;
@@ -227,14 +228,6 @@ function updateMap(data) {
     return;
   }
 
-
-  // Map tile source:
-  //    https://leaflet-extras.github.io/leaflet-providers/preview/
-  //    Old source was natgeo world map, but that only has data up to zoom 16
-  //    (can't zoom in tighter than about 10 city blocks across)
-  //
-  const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
-
   const error = document.querySelector('.error');
   if (error) { error.remove(); }
   if (amap) {
@@ -242,14 +235,33 @@ function updateMap(data) {
       amap.off();
       amap.remove();
     } catch (e) {
-      // ignore
       console.warn(e);
     }
   }
   const map = L.map('map', {
-    layers: [tiles],
+    layers: [baseLayers["ArcGIS"]], // Default base layer - you can change this
     wheelPxPerZoomLevel: 90, //px, default 60, slows scrollwheel zoom
   });
+
+  // --- Add Layer Control from Grist-GIS.js ---
+  L.control.layers(baseLayers, {}, { position: 'topright', collapsed: true }).addTo(map);
+
+  // --- Add Search Control from Grist-GIS.js (modified to remove Google sync) ---
+  const searchControl = L.esri.Geocoding.geosearch({
+    providers: [L.esri.Geocoding.arcgisOnlineProvider()],
+    position: 'topleft',
+    attribution: false // Disable attribution for the geocoder
+  }).addTo(map);
+
+  const searchResults = L.layerGroup().addTo(map);
+
+  searchControl.on('results', function (searchData) {
+    searchResults.clearLayers();
+    for (let i = searchData.results.length - 1; i >= 0; i--) {
+      searchResults.addLayer(L.marker(searchData.results[i].latlng));
+    }
+  });
+
 
   // Make sure clusters always show up above points
   // Default z-index for markers is 600, 650 is where tooltipPane z-index starts
@@ -282,7 +294,7 @@ function updateMap(data) {
 
 for (const rec of data) {
   const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(rec);
-  
+
   if (String(lng) === '...') { continue; }
   if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
     continue;
@@ -515,21 +527,3 @@ grist.onOptions((options, interaction) => {
   mapCopyright = newCopyright
   document.getElementById("mapCopyright").value = mapCopyright;
 });
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
-
-  var arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
-
-  var searchControl = L.esri.Geocoding.geosearch({
-    providers: [arcgisOnline]
-  }).addTo(map);
-
-  var results = L.layerGroup().addTo(map);
-
-  searchControl.on('results', function(data){
-    results.clearLayers();
-    for (var i = data.results.length - 1; i >= 0; i--) {
-      results.addLayer(L.marker(data.results[i].latlng));
-    }
-  });
