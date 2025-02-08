@@ -95,49 +95,122 @@ html, body, #map {
   display: inline-block;
 }
 
-/* Popup styles */
-.leaflet-popup-content img {
+/* Minimap styles */
+#minimap-container {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  height: 250px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#minimap-container.collapsed {
+  height: 0;
+  border: none;
+  box-shadow: none;
+}
+
+#googleMap {
   width: 100%;
-  height: auto;
-  margin-bottom: 10px;
-  border-radius: 5px;
+  height: 130%;
+  border: none;
+  margin-top: -60px;
 }
 
-.popup-buttons {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-}
-
-.popup-button {
-  display: inline-block;
-  padding: 8px 12px;
-  background-color: #DBEFDC;
+#toggleMinimap {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  background: #007acc;
   color: white;
-  text-decoration: none;
+  border: none;
+  padding: 6px 12px;
   border-radius: 4px;
-  font-size: 14px;
-  text-align: center;
+  cursor: pointer;
+  z-index: 1001;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
 }
 
-.popup-button:hover {
-  background-color: #A5D7A7;
+#toggleMinimap:hover {
+  background: #005f99;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+#toggleMinimap:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Popup styles */
+.leaflet-popup-content {
+  margin: 8px;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .leaflet-popup-content h3 {
-  font-size: 18px;
-  margin-bottom: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
   color: #333;
 }
 
-.leaflet-popup-content h4 {
-  font-size: 14px;
-  margin: 5px 0;
-  color: #555;
+.leaflet-popup-content p {
+  margin: 4px 0;
+  font-size: 11px;
 }
 
-.leaflet-popup-content b {
-  font-weight: bold;
+.leaflet-popup-content img {
+  width: 100%;
+  max-height: 120px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.popup-button {
+  flex: 1;
+  font-size: 10px;
+  padding: 4px;
+  border-radius: 3px;
+  text-decoration: none;
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+.popup-button:hover {
+  opacity: 0.9;
+}
+
+.popup-button[href*="CoStar"] {
+  background-color: #007acc;
+  color: white;
+}
+
+.popup-button[href*="County"] {
+  background-color: #28a745;
+  color: white;
+}
+
+.popup-button[href*="GIS"] {
+  background-color: #ffc107;
+  color: black;
 }
 
 /* Error styling */
