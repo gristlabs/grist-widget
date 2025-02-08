@@ -1,4 +1,5 @@
 <!-- HTML file (index.html): The HTML file contains the tags for the Map and Settings, and may include your custom XYZ tile provider in the mapSource field. -->
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -18,6 +19,7 @@
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet-src.js"></script>
     <!-- MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
     <!-- ESRI Leaflet JS -->
     <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0/esri-leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
@@ -47,12 +49,12 @@
       <br/>
       <table>
         <tr>
-          <td> <label id="lblSource" for="mapSource"> Source </label> </td>
-          <td> <input id="mapSource"> </td>
+            <td><label id="lblSource" for="mapSource">Source</label></td>
+            <td><input id="mapSource"></td>
         </tr>
         <tr>
-          <td> <label id="lblCopyright" for="mapCopyright"> Copyright </label> </td>
-          <td> <input id="mapCopyright"> </td>
+            <td><label id="lblCopyright" for="mapCopyright">Copyright</label></td>
+            <td><input id="mapCopyright"></td>
         </tr>
       </table>
     </div>
