@@ -324,25 +324,25 @@ function updateMap(data) {
         pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
       });
 
-      // Store the data needed for popup creation
-      marker.popupData = {name, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink};
-      
-      // Bind popup creation to the first click
-      marker.on('click', function(e) {
+        // Store the data needed for popup creation
+        marker.popupData = {name, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink};
+        
+        // Bind popup creation to the first click
+        marker.on('click', function(e) {
         if (!this.getPopup()) {
           const data = this.popupData;
           const popupContent = `
           <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-            <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${data.name}</strong>
-            ${data.imageUrl ? `<img src="${data.imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-            <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${data.propertyType}</p>
-            <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${data.secondaryType}</p>
-            <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${data.tenants}</p>
-            <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
-              <a href="${data.costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
-              <a href="${data.countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
-              <a href="${data.gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
-            </div>
+          <h3>${data.name}</h3>
+          ${data.imageUrl ? `<img src="${data.imageUrl}" alt="Property Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+          <p style="margin: 4px 0;"><strong>Type:</strong> ${data.propertyType}</p>
+          <p style="margin: 4px 0;"><strong>Secondary:</strong> ${data.secondaryType}</p>
+          <p style="margin: 4px 0;"><strong>Tenants:</strong> ${data.tenants}</p>
+          <div class="popup-buttons">
+            <a href="${data.costarLink}" class="popup-button" target="_blank">CoStar</a>
+            <a href="${data.countyLink}" class="popup-button" target="_blank">County</a>
+            <a href="${data.gisLink}" class="popup-button" target="_blank">GIS</a>
+          </div>
           </div>`;
           this.bindPopup(popupContent);
           this.openPopup();
@@ -392,15 +392,42 @@ function updateMap(data) {
   amap.addLayer(markers);
   clearMakers = () => amap.removeLayer(markers);
 
+  // Synchronize with Google Map
+  const googleMapIframe = document.getElementById('googleMap');
+
+  // Function to sync Leaflet map with Google MyMap
+  function syncMaps() {
+    // Sync the Leaflet map with the iframe's view
+    amap.on('moveend', function() {
+      const center = amap.getCenter();
+      const zoom = amap.getZoom();
+      const ll = `${center.lat},${center.lng}`;
+      googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}&ui=0`;
+    });
+  }
+
+  syncMaps();
+
+  // Add minimap toggle functionality
+  const minimapContainer = document.getElementById('minimap-container');
+  const toggleButton = document.getElementById('toggleMinimap');
+
+  if (toggleButton && minimapContainer) {
+    toggleButton.addEventListener('click', function() {
+      minimapContainer.classList.toggle('collapsed');
+    });
+    // Ensure minimap is initially hidden
+    minimapContainer.classList.add('collapsed');
+  }
+
   try {
+    const { bounds, center } = calculateInitialView(points);
     if (points.length > 0) {
-      const { bounds, center } = calculateInitialView(points);
       const maxZoom = points.length === 1 ? 18 : 
                       points.length <= 100 ? 12 : 
                       points.length <= 1000 ? 10 : 8;
       
       if (points.length > 5000) {
-        // For very large datasets, just center the map instead of fitting bounds
         amap.setView(center, 6, { animate: false });
       } else {
         amap.fitBounds(bounds, {
@@ -410,12 +437,13 @@ function updateMap(data) {
         });
       }
     } else {
-      amap.setView([39.8283, -98.5795], 4, { animate: false });
+      amap.setView(center, 4, { animate: false });
     }
   } catch (err) {
     console.warn('Cannot set initial view:', err);
-    amap.setView([39.8283, -98.5795], 4, { animate: false });
+    amap.setView(center, 4, { animate: false });
   }
+
 
   if (selectedRowId && popups[selectedRowId]) {
     const marker = popups[selectedRowId];
@@ -445,19 +473,19 @@ function selectMaker(id) {
    // Create and open popup if it doesn't exist
    if (!marker.getPopup() && marker.popupData) {
    const data = marker.popupData;
-   const popupContent = `
-   <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-     <strong style="font-size: 13px; display: block; margin-bottom: 4px;">${data.name}</strong>
-     ${data.imageUrl ? `<img src="${data.imageUrl}" alt="Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-     <p style="margin: 4px 0; font-size: 11px;"><strong>Type:</strong> ${data.propertyType}</p>
-     <p style="margin: 4px 0; font-size: 11px;"><strong>Secondary:</strong> ${data.secondaryType}</p>
-     <p style="margin: 4px 0; font-size: 11px;"><strong>Tenants:</strong> ${data.tenants}</p>
-     <div class="popup-buttons" style="display: flex; gap: 4px; margin-top: 6px;">
-     <a href="${data.costarLink}" style="font-size: 10px; padding: 4px 6px; background-color: #007acc; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">CoStar</a>
-     <a href="${data.countyLink}" style="font-size: 10px; padding: 4px 6px; background-color: #28a745; color: white; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">County</a>
-     <a href="${data.gisLink}" style="font-size: 10px; padding: 4px 6px; background-color: #ffc107; color: black; border-radius: 3px; text-decoration: none;" class="popup-button" target="_blank">GIS</a>
+     const popupContent = `
+     <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
+     <h3>${data.name}</h3>
+     ${data.imageUrl ? `<img src="${data.imageUrl}" alt="Property Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+     <p style="margin: 4px 0;"><strong>Type:</strong> ${data.propertyType}</p>
+     <p style="margin: 4px 0;"><strong>Secondary:</strong> ${data.secondaryType}</p>
+     <p style="margin: 4px 0;"><strong>Tenants:</strong> ${data.tenants}</p>
+     <div class="popup-buttons">
+       <a href="${data.costarLink}" class="popup-button" target="_blank">CoStar</a>
+       <a href="${data.countyLink}" class="popup-button" target="_blank">County</a>
+       <a href="${data.gisLink}" class="popup-button" target="_blank">GIS</a>
      </div>
-   </div>`;
+     </div>`;
    marker.bindPopup(popupContent);
    }
 
