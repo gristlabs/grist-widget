@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <!-- Geocoder CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.css" />
+    <!-- Tippy.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/dist/tippy.css" />
     <!-- Custom CSS -->
     <link rel="stylesheet" href="screen.css" />
     <!-- Leaflet JS -->
@@ -21,13 +23,20 @@
     <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
     <!-- Geocoder JS -->
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <!-- Leaflet Sync JS -->
+    <script src="https://unpkg.com/leaflet-sync/dist/leaflet.sync.js"></script>
+    <!-- Tippy.js JS -->
+    <script src="https://unpkg.com/tippy.js@6.3.7/dist/tippy.umd.min.js"></script>
     <!-- Grist API -->
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <!-- Custom JS -->
     <script src="page.js"></script>
   </head>
   <body>
-    <div id="map">
+    <div id="map"></div>
+    <div id="minimap-container" class="collapsed">
+      <iframe id="googleMap" src="https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ui=0" allowfullscreen></iframe>
+      <button id="toggleMinimap" title="Toggle Mini Map">Toggle Mini Map</button>
     </div>
     <div id="settings">
       <div id="btnClose">Close</div>
