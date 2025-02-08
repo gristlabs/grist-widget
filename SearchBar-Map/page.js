@@ -2,6 +2,22 @@
 
 /* global grist, window, L */ // Make sure L is declared as a global
 
+function createPopupContent({name, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink}) {
+  return `
+    <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
+      <h3>${name}</h3>
+      ${imageUrl ? `<img src="${imageUrl}" alt="Property Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
+      <p style="margin: 4px 0;"><strong>Type:</strong> ${propertyType}</p>
+      <p style="margin: 4px 0;"><strong>Secondary:</strong> ${secondaryType}</p>
+      <p style="margin: 4px 0;"><strong>Tenants:</strong> ${tenants}</p>
+      <div class="popup-buttons">
+        <a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>
+        <a href="${countyLink}" class="popup-button" target="_blank">County</a>
+        <a href="${gisLink}" class="popup-button" target="_blank">GIS</a>
+      </div>
+    </div>`;
+}
+
 let amap;
 let popups = {};
 let selectedTableId = null;
@@ -257,35 +273,71 @@ function updateMap(data) {
   const defaultTiles = L.tileLayer(mapSource, { attribution: mapCopyright });
   amap = L.map('map', {
     layers: [defaultTiles],
-    wheelPxPerZoomLevel: 90,
-    preferCanvas: true, // Use canvas renderer for better performance
-    maxZoom: 18,
-    minZoom: 2,
-    zoomAnimation: false, // Disable zoom animation for better performance
-    markerZoomAnimation: false,
-    maxBounds: [[-90, -180], [90, 180]], // Restrict panning to world bounds
+    center: [45.5283, -122.8081],
+    zoom: 4,
+    wheelPxPerZoomLevel: 90
   });
 
-  // Add zoom/move event handlers
-  amap.on('zoomend moveend', () => {
-    // Refresh clusters after zoom/move to ensure proper display
-    if (markers) {
-      markers.refreshClusters();
+  // Add layer control
+  L.control.layers(baseLayers, {}, { position: 'topright', collapsed: true }).addTo(amap);
+
+  // Initialize marker cluster group
+  markers = L.markerClusterGroup({
+    maxClusterRadius: 80,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: true,
+    zoomToBoundsOnClick: true,
+    chunkedLoading: true,
+    chunkInterval: 200,
+    animate: false
+  });
+
+  // Add event handlers
+  markers.on('clusterclick', function(e) {
+    if (!e.layer) return;
+    try {
+      e.layer.spiderfy();
+    } catch (e) {
+      console.warn('Error handling cluster click:', e);
     }
   });
 
-  // Add layer control for base layers
-  L.control.layers(baseLayers, {}, { position: 'topright', collapsed: true }).addTo(amap);
+  // Add markers
+  data.forEach(record => {
+    const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(record);
+    
+    if (!lng || !lat || String(lng) === '...' || 
+        isNaN(lng) || isNaN(lat) || 
+        Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
+      return;
+    }
 
-  // Add ArcGIS Online search control
-  const arcgisOnline = L.esri.Geocoding.arcgisOnlineProvider();
+    const marker = L.marker([lat, lng], {
+      title: name,
+      id: id,
+      icon: (id == selectedRowId) ? selectedIcon : defaultIcon
+    });
+
+    marker.on('click', function() {
+      selectMaker(this.options.id);
+    });
+
+    const popupContent = createPopupContent({name, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink});
+    marker.bindPopup(popupContent);
+    markers.addLayer(marker);
+    popups[id] = marker;
+  });
+
+  // Add marker cluster to map
+  amap.addLayer(markers);
+
+  // Add search control
   const searchControl = L.esri.Geocoding.geosearch({
-    providers: [arcgisOnline],
+    providers: [L.esri.Geocoding.arcgisOnlineProvider()],
     position: 'topleft',
     attribution: false
   }).addTo(amap);
 
-  // Add search results layer
   const searchResults = L.layerGroup().addTo(amap);
   searchControl.on('results', function(data) {
     searchResults.clearLayers();
@@ -294,212 +346,125 @@ function updateMap(data) {
     }
   });
 
-  // Make sure clusters always show up above points
-  amap.createPane('selectedMarker').style.zIndex = 620;
-  amap.createPane('clusters').style.zIndex = 610;
-  amap.createPane('otherMarkers').style.zIndex = 600;
+  // Initialize minimap
+  const minimapContainer = document.getElementById('minimap-container');
+  const toggleButton = document.getElementById('toggleMinimap');
+  const googleMapIframe = document.getElementById('googleMap');
 
-  // Function to create markers in batches
-  function createMarkersInBatches(data, points, markers, popups) {
-    const batchSize = 1000;
-    let currentBatch = [];
-    
-    for (const rec of data) {
-      const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(rec);
+  if (minimapContainer && toggleButton && googleMapIframe) {
+    try {
+      // Initialize minimap in collapsed state
+      minimapContainer.classList.add('collapsed');
 
-      // Skip invalid or missing coordinates
-      if (!lng || !lat || String(lng) === '...' || String(lat) === '...' || 
-          isNaN(lng) || isNaN(lat) || 
-          Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-        continue;
-      }
-
-      const pt = new L.LatLng(lat, lng);
-      points.push(pt);
-
-      const marker = L.marker(pt, {
-        title: name,
-        id: id,
-        icon: (id == selectedRowId) ? selectedIcon : defaultIcon,
-        pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
-      });
-
-        // Store the data needed for popup creation
-        marker.popupData = {name, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink};
-        
-        // Bind popup creation to the first click
-        marker.on('click', function(e) {
-        if (!this.getPopup()) {
-          const data = this.popupData;
-          const popupContent = `
-          <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-          <h3>${data.name}</h3>
-          ${data.imageUrl ? `<img src="${data.imageUrl}" alt="Property Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-          <p style="margin: 4px 0;"><strong>Type:</strong> ${data.propertyType}</p>
-          <p style="margin: 4px 0;"><strong>Secondary:</strong> ${data.secondaryType}</p>
-          <p style="margin: 4px 0;"><strong>Tenants:</strong> ${data.tenants}</p>
-          <div class="popup-buttons">
-            <a href="${data.costarLink}" class="popup-button" target="_blank">CoStar</a>
-            <a href="${data.countyLink}" class="popup-button" target="_blank">County</a>
-            <a href="${data.gisLink}" class="popup-button" target="_blank">GIS</a>
-          </div>
-          </div>`;
-          this.bindPopup(popupContent);
-          this.openPopup();
+      // Add toggle functionality with error handling
+      toggleButton.addEventListener('click', function() {
+        try {
+          minimapContainer.classList.toggle('collapsed');
+          if (!minimapContainer.classList.contains('collapsed')) {
+            // Update minimap when showing
+            const center = amap.getCenter();
+            const zoom = amap.getZoom();
+            const ll = `${center.lat},${center.lng}`;
+            googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}&ui=0`;
+          }
+        } catch (e) {
+          console.warn('Error toggling minimap:', e);
         }
       });
 
-      currentBatch.push(marker);
-      popups[id] = marker;
+      // Sync minimap with main map only when visible
+      amap.on('moveend', function() {
+        try {
+          if (!minimapContainer.classList.contains('collapsed')) {
+            const center = amap.getCenter();
+            const zoom = amap.getZoom();
+            const ll = `${center.lat},${center.lng}`;
+            googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}&ui=0`;
+          }
+        } catch (e) {
+          console.warn('Error syncing minimap:', e);
+        }
+      });
 
-      if (currentBatch.length === batchSize) {
-        markers.addLayers(currentBatch);
-        currentBatch = [];
+      // Initial sync with error handling
+      try {
+        const center = amap.getCenter();
+        const zoom = amap.getZoom();
+        const ll = `${center.lat},${center.lng}`;
+        googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}&ui=0`;
+      } catch (e) {
+        console.warn('Error setting initial minimap state:', e);
+        googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ui=0`;
       }
-    }
-
-    // Add any remaining markers
-    if (currentBatch.length > 0) {
-      markers.addLayers(currentBatch);
+    } catch (e) {
+      console.warn('Error initializing minimap:', e);
     }
   }
 
-  const points = [];
-  popups = {};
+  // Add bounds fitting
+  const points = data.map(record => {
+    const {lat, lng} = getInfo(record);
+    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return null;
+    return [lat, lng];
+  }).filter(point => point !== null);
 
-  markers = L.markerClusterGroup({
-    disableClusteringAtZoom: 18,
-    maxClusterRadius: 30,
-    chunkedLoading: true,
-    chunkInterval: 50, 
-    chunkDelay: 1,
-    showCoverageOnHover: true,
-    clusterPane: 'clusters',
-    iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
-    zoomToBoundsOnClick: true,
-    spiderfyOnMaxZoom: true,
-    removeOutsideVisibleBounds: true,
-    animate: false
-  });
-
-  markers.on('click', (e) => {
-    const id = e.layer.options.id;
-    selectMaker(id);
-  });
-
-  createMarkersInBatches(data, points, markers, popups);
-
-  amap.addLayer(markers);
-  clearMakers = () => amap.removeLayer(markers);
-
-  // Synchronize with Google Map
-  const googleMapIframe = document.getElementById('googleMap');
-
-  // Function to sync Leaflet map with Google MyMap
-  function syncMaps() {
-    // Sync the Leaflet map with the iframe's view
-    amap.on('moveend', function() {
-      const center = amap.getCenter();
-      const zoom = amap.getZoom();
-      const ll = `${center.lat},${center.lng}`;
-      googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}&ui=0`;
-    });
-  }
-
-  syncMaps();
-
-  // Add minimap toggle functionality
-  const minimapContainer = document.getElementById('minimap-container');
-  const toggleButton = document.getElementById('toggleMinimap');
-
-  if (toggleButton && minimapContainer) {
-    toggleButton.addEventListener('click', function() {
-      minimapContainer.classList.toggle('collapsed');
-    });
-    // Ensure minimap is initially hidden
-    minimapContainer.classList.add('collapsed');
-  }
-
-  try {
-    const { bounds, center } = calculateInitialView(points);
-    if (points.length > 0) {
-      const maxZoom = points.length === 1 ? 18 : 
-                      points.length <= 100 ? 12 : 
-                      points.length <= 1000 ? 10 : 8;
-      
-      if (points.length > 5000) {
-        amap.setView(center, 6, { animate: false });
-      } else {
-        amap.fitBounds(bounds, {
-          maxZoom: maxZoom,
-          padding: [50, 50],
-          animate: false
-        });
-      }
-    } else {
-      amap.setView(center, 4, { animate: false });
+  if (points.length > 0) {
+    try {
+      const bounds = L.latLngBounds(points);
+      amap.fitBounds(bounds, { padding: [50, 50] });
+    } catch (e) {
+      console.warn('Error fitting bounds:', e);
+      amap.setView([39.8283, -98.5795], 4);
     }
-  } catch (err) {
-    console.warn('Cannot set initial view:', err);
-    amap.setView(center, 4, { animate: false });
+  } else {
+    amap.setView([39.8283, -98.5795], 4);
   }
 
-
+  // Show selected marker if exists
   if (selectedRowId && popups[selectedRowId]) {
     const marker = popups[selectedRowId];
-    if (!marker._icon) { markers.zoomToShowLayer(marker); }
+    if (!marker._icon) {
+      markers.zoomToShowLayer(marker);
+    }
     marker.openPopup();
   }
+
+  clearMakers = () => {
+    if (markers) {
+      markers.clearLayers();
+      amap.removeLayer(markers);
+    }
+  };
 }
+
+
 
 
 function selectMaker(id) {
-   // Reset the options from the previously selected marker.
-   const previouslyClicked = popups[selectedRowId];
-   if (previouslyClicked) {
-   previouslyClicked.setIcon(defaultIcon);
-   previouslyClicked.pane = 'otherMarkers';
-   }
-   const marker = popups[id];
-   if (!marker) { return null; }
+  // Reset the options from the previously selected marker.
+  const previouslyClicked = popups[selectedRowId];
+  if (previouslyClicked) {
+    previouslyClicked.setIcon(defaultIcon);
+  }
 
-   // Remember the new selected marker.
-   selectedRowId = id;
+  const marker = popups[id];
+  if (!marker) { return null; }
 
-   // Set the options for the newly selected marker.
-   marker.setIcon(selectedIcon);
-   marker.pane = 'selectedMarker';
+  // Remember the new selected marker.
+  selectedRowId = id;
 
-   // Create and open popup if it doesn't exist
-   if (!marker.getPopup() && marker.popupData) {
-   const data = marker.popupData;
-     const popupContent = `
-     <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-     <h3>${data.name}</h3>
-     ${data.imageUrl ? `<img src="${data.imageUrl}" alt="Property Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-     <p style="margin: 4px 0;"><strong>Type:</strong> ${data.propertyType}</p>
-     <p style="margin: 4px 0;"><strong>Secondary:</strong> ${data.secondaryType}</p>
-     <p style="margin: 4px 0;"><strong>Tenants:</strong> ${data.tenants}</p>
-     <div class="popup-buttons">
-       <a href="${data.costarLink}" class="popup-button" target="_blank">CoStar</a>
-       <a href="${data.countyLink}" class="popup-button" target="_blank">County</a>
-       <a href="${data.gisLink}" class="popup-button" target="_blank">GIS</a>
-     </div>
-     </div>`;
-   marker.bindPopup(popupContent);
-   }
+  // Set the options for the newly selected marker.
+  marker.setIcon(selectedIcon);
 
-   // Rerender markers in this cluster
-   markers.refreshClusters();
+  // Open the popup
+  marker.openPopup();
 
-   // Open the popup
-   marker.openPopup();
+  // Update the selected row in Grist.
+  grist.setCursorPos?.({rowId: id}).catch(() => {});
 
-   // Update the selected row in Grist.
-   grist.setCursorPos?.({rowId: id}).catch(() => {});
-
-   return marker;
+  return marker;
 }
+
 
 
 grist.on('message', (e) => {
