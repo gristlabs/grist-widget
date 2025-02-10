@@ -61,22 +61,24 @@ function createPopupContent({name, propertyType, tenants, secondaryType, imageUr
   return `
     <div class="custom-popup">
       <div class="popup-header">
-        <h3>${name}</h3>
+        <h3>${name || 'Unnamed Location'}</h3>
       </div>
       <div class="popup-content">
         ${imageUrl ? 
           `<img src="${imageUrl}" alt="${name}" class="popup-image" onerror="this.style.display='none'"/>` : 
           ''}
         <div class="popup-info">
-          <p><strong>Type:</strong> ${propertyType || 'N/A'}</p>
-          <p><strong>Secondary:</strong> ${secondaryType || 'N/A'}</p>
-          <p><strong>Tenants:</strong> ${tenants || 'N/A'}</p>
+          ${propertyType ? `<p><strong>Type:</strong> ${propertyType}</p>` : ''}
+          ${secondaryType ? `<p><strong>Secondary:</strong> ${secondaryType}</p>` : ''}
+          ${tenants ? `<p><strong>Tenants:</strong> ${tenants}</p>` : ''}
         </div>
-        <div class="popup-buttons">
-          ${costarLink ? `<a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>` : ''}
-          ${countyLink ? `<a href="${countyLink}" class="popup-button" target="_blank">County</a>` : ''}
-          ${gisLink ? `<a href="${gisLink}" class="popup-button" target="_blank">GIS</a>` : ''}
-        </div>
+        ${(costarLink || countyLink || gisLink) ? `
+          <div class="popup-buttons">
+            ${costarLink ? `<a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>` : ''}
+            ${countyLink ? `<a href="${countyLink}" class="popup-button" target="_blank">County</a>` : ''}
+            ${gisLink ? `<a href="${gisLink}" class="popup-button" target="_blank">GIS</a>` : ''}
+          </div>
+        ` : ''}
       </div>
     </div>`;
 }
@@ -89,8 +91,8 @@ function updateGoogleMinimap() {
   const zoom = amap.getZoom();
   const ll = `${center.lat},${center.lng}`;
   
-  // Update the Google MyMaps embed URL with current view
-  iframe.src = `https://www.google.com/maps/d/embed?mid=${GOOGLE_MAPS_EMBED_ID}&ll=${ll}&z=${zoom}&ui=1`;
+  // Update the Google MyMaps embed URL with current view and hide UI elements
+  iframe.src = `https://www.google.com/maps/d/embed?mid=${GOOGLE_MAPS_EMBED_ID}&ll=${ll}&z=${zoom}&ehbc=2E312F&ui=0`;
 }
 
 function initMinimap() {
@@ -119,6 +121,34 @@ function initMinimap() {
 
   // Initial minimap setup
   updateGoogleMinimap();
+}
+
+function showProblem(txt) {
+  document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
+}
+
+function parseValue(v) {
+  if (typeof(v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
+    const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
+    return payload.remote || payload.local || payload.parent || payload;
+  }
+  return v;
+}
+
+function getInfo(rec) {
+  return {
+    id: rec.id,
+    name: parseValue(rec[Name]),
+    lng: parseValue(rec[Longitude]),
+    lat: parseValue(rec[Latitude]),
+    propertyType: parseValue(rec[Property_Type]),
+    tenants: parseValue(rec[Tenants]),
+    secondaryType: parseValue(rec[Secondary_Type]),
+    imageUrl: parseValue(rec[ImageURL]),
+    costarLink: parseValue(rec[CoStar_URL]),
+    countyLink: parseValue(rec[County_Hyper]),
+    gisLink: parseValue(rec[GIS])
+  };
 }
 
 function updateMap(data) {
@@ -250,255 +280,8 @@ function updateMap(data) {
   }
 }
 
-function getInfo(rec) {
-  const result = {
-    id: rec.id,
-    name: parseValue(rec[Name]),
-    lng: parseValue(rec[Longitude]),
-    lat: parseValue(rec[Latitude]),
-    propertyType: parseValue(rec['Property_Type']),  // Add Property Type column
-    tenants: parseValue(rec['Tenants']),  // Add Tenants column
-    secondaryType: parseValue(rec['Secondary_Type']),  // Add Secondary Type column
-    imageUrl: parseValue(rec['ImageURL']),  // Add Image URL column
-    costarLink: parseValue(rec['CoStar_URL']),  // Add CoStar link column
-    countyLink: parseValue(rec['County_Hyper']),  // Add County link column
-    gisLink: parseValue(rec['GIS']),  // Add GIS link column
-  };
-  return result;
-}
-
-// Function to clear last added markers. Used to clear the map when new record is selected.
-let clearMakers = () => {};
-
-let markers; // Declare markers outside updateMap for wider scope
-
-// --- Base Layers from Grist-GIS.js ---
-const baseLayers = {
-  "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
-    attribution: 'Google Hybrid'
-  }),
-  "MapTiler Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
-    attribution: ''
-  }),
-  "ArcGIS": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-    attribution: ''
-  }),
-  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: ''
-  })
-};
-
-function calculateInitialView(points) {
-  if (points.length === 0) {
-    return { center: [39.8283, -98.5795], zoom: 4 }; // Default to USA center
-  }
-  
-  const bounds = L.latLngBounds(points);
-  const center = bounds.getCenter();
-  return { bounds, center };
-}
-
-
-
-
-
-function updateMap(data) {
-  data = data || selectedRecords;
-  selectedRecords = data;
-  if (!data || data.length === 0) {
-    showProblem("No data found yet");
-    return;
-  }
-  if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns in the Creator Panel.");
-    return;
-  }
-
-  const error = document.querySelector('.error');
-  if (error) { error.remove(); }
-  
-  if (amap) {
-    try {
-      amap.off();
-      amap.remove();
-    } catch (e) {
-      console.warn(e);
-    }
-  }
-
-  // Initialize map with default tile layer
-  const defaultTiles = L.tileLayer(mapSource, { attribution: mapCopyright });
-  amap = L.map('map', {
-    layers: [defaultTiles],
-    center: [45.5283, -122.8081],
-    zoom: 4,
-    wheelPxPerZoomLevel: 90
-  });
-
-  // Add layer control
-  L.control.layers(baseLayers, {}, { position: 'topright', collapsed: true }).addTo(amap);
-
-  // Initialize marker cluster group
-  markers = L.markerClusterGroup({
-    maxClusterRadius: 80,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: true,
-    zoomToBoundsOnClick: true,
-    chunkedLoading: true,
-    chunkInterval: 200,
-    animate: false
-  });
-
-  // Add event handlers
-  markers.on('clusterclick', function(e) {
-    if (!e.layer) return;
-    try {
-      e.layer.spiderfy();
-    } catch (e) {
-      console.warn('Error handling cluster click:', e);
-    }
-  });
-
-  // Add markers
-  data.forEach(record => {
-    const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(record);
-    
-    if (!lng || !lat || String(lng) === '...' || 
-        isNaN(lng) || isNaN(lat) || 
-        Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-      return;
-    }
-
-    const marker = L.marker([lat, lng], {
-      title: name,
-      id: id,
-      icon: (id == selectedRowId) ? selectedIcon : defaultIcon
-    });
-
-    marker.on('click', function() {
-      selectMaker(this.options.id);
-    });
-
-    const popupContent = createPopupContent({name, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink});
-    marker.bindPopup(popupContent);
-    markers.addLayer(marker);
-    popups[id] = marker;
-  });
-
-  // Add marker cluster to map
-  amap.addLayer(markers);
-
-  // Add search control
-  const searchControl = L.esri.Geocoding.geosearch({
-    providers: [L.esri.Geocoding.arcgisOnlineProvider()],
-    position: 'topleft',
-    attribution: false
-  }).addTo(amap);
-
-  const searchResults = L.layerGroup().addTo(amap);
-  searchControl.on('results', function(data) {
-    searchResults.clearLayers();
-    for (let i = data.results.length - 1; i >= 0; i--) {
-      searchResults.addLayer(L.marker(data.results[i].latlng));
-    }
-  });
-
-  // Initialize minimap
-  const minimapContainer = document.getElementById('minimap-container');
-  const toggleButton = document.getElementById('toggleMinimap');
-  const googleMapIframe = document.getElementById('googleMap');
-
-  if (minimapContainer && toggleButton && googleMapIframe) {
-    try {
-      // Initialize minimap in collapsed state
-      minimapContainer.classList.add('collapsed');
-
-      // Add toggle functionality with error handling
-      toggleButton.addEventListener('click', function() {
-        try {
-          minimapContainer.classList.toggle('collapsed');
-          if (!minimapContainer.classList.contains('collapsed')) {
-            // Update minimap when showing
-            const center = amap.getCenter();
-            const zoom = amap.getZoom();
-            const ll = `${center.lat},${center.lng}`;
-            googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}&ui=0`;
-          }
-        } catch (e) {
-          console.warn('Error toggling minimap:', e);
-        }
-      });
-
-      // Sync minimap with main map only when visible
-      amap.on('moveend', function() {
-        try {
-          if (!minimapContainer.classList.contains('collapsed')) {
-            const center = amap.getCenter();
-            const zoom = amap.getZoom();
-            const ll = `${center.lat},${center.lng}`;
-            googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}&ui=0`;
-          }
-        } catch (e) {
-          console.warn('Error syncing minimap:', e);
-        }
-      });
-
-      // Initial sync with error handling
-      try {
-        const center = amap.getCenter();
-        const zoom = amap.getZoom();
-        const ll = `${center.lat},${center.lng}`;
-        googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}&ui=0`;
-      } catch (e) {
-        console.warn('Error setting initial minimap state:', e);
-        googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ui=0`;
-      }
-    } catch (e) {
-      console.warn('Error initializing minimap:', e);
-    }
-  }
-
-  // Add bounds fitting
-  const points = data.map(record => {
-    const {lat, lng} = getInfo(record);
-    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return null;
-    return [lat, lng];
-  }).filter(point => point !== null);
-
-  if (points.length > 0) {
-    try {
-      const bounds = L.latLngBounds(points);
-      amap.fitBounds(bounds, { padding: [50, 50] });
-    } catch (e) {
-      console.warn('Error fitting bounds:', e);
-      amap.setView([39.8283, -98.5795], 4);
-    }
-  } else {
-    amap.setView([39.8283, -98.5795], 4);
-  }
-
-  // Show selected marker if exists
-  if (selectedRowId && popups[selectedRowId]) {
-    const marker = popups[selectedRowId];
-    if (!marker._icon) {
-      markers.zoomToShowLayer(marker);
-    }
-    marker.openPopup();
-  }
-
-  clearMakers = () => {
-    if (markers) {
-      markers.clearLayers();
-      amap.removeLayer(markers);
-    }
-  };
-}
-
-
-
-
 function selectMaker(id) {
-  // Reset the options from the previously selected marker.
+  // Reset the options from the previously selected marker
   const previouslyClicked = popups[selectedRowId];
   if (previouslyClicked) {
     previouslyClicked.setIcon(defaultIcon);
@@ -507,26 +290,88 @@ function selectMaker(id) {
   const marker = popups[id];
   if (!marker) { return null; }
 
-  // Remember the new selected marker.
+  // Remember the new selected marker
   selectedRowId = id;
 
-  // Set the options for the newly selected marker.
+  // Set the options for the newly selected marker
   marker.setIcon(selectedIcon);
 
   // Open the popup
   marker.openPopup();
 
-  // Update the selected row in Grist.
+  // Update the selected row in Grist
   grist.setCursorPos?.({rowId: id}).catch(() => {});
 
   return marker;
 }
 
+// Grist integration code
+let lastRecord;
+let lastRecords;
+let writeAccess = true;
+let scanning = null;
 
+const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
+if (URLSearchParams && location.search && geocoder) {
+  const c = new URLSearchParams(location.search).get('geocoder');
+  if (c && L.Control.Geocoder[c]) {
+    console.log('Using geocoder', c);
+    geocoder = L.Control.Geocoder[c]();
+  } else if (c) {
+    console.warn('Unsupported geocoder', c);
+  }
+  const m = new URLSearchParams(location.search).get('mode');
+  if (m) { mode = m; }
+}
 
-grist.on('message', (e) => {
-  if (e.tableId) { selectedTableId = e.tableId; }
-});
+async function geocode(address) {
+  return new Promise((resolve, reject) => {
+    try {
+      geocoder.geocode(address, (v) => {
+        v = v[0];
+        if (v) { v = v.center; }
+        resolve(v);
+      });
+    } catch (e) {
+      console.log("Problem:", e);
+      reject(e);
+    }
+  });
+}
+
+async function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function scan(tableId, records, mappings) {
+  if (!writeAccess) { return; }
+  for (const record of records) {
+    if (!(Geocode in record)) { break; }
+    if (!record[Geocode]) { continue; }
+    const address = record.Address;
+    if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
+      record[Longitude] = null;
+      record[Latitude] = null;
+    }
+    if (address && !record[Longitude]) {
+      const result = await geocode(address);
+      await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
+        [mappings[Longitude]]: result.lng,
+        [mappings[Latitude]]: result.lat,
+        ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
+      }] ]);
+      await delay(1000);
+    }
+  }
+}
+
+function scanOnNeed(mappings) {
+  if (!scanning && selectedTableId && selectedRecords) {
+    scanning = scan(selectedTableId, selectedRecords, mappings).then(() => scanning = null).catch(() => scanning = null);
+  }
+}
 
 function hasCol(col, anything) {
   return anything && typeof anything === 'object' && col in anything;
@@ -554,9 +399,7 @@ function defaultMapping(record, mappings) {
 }
 
 function selectOnMap(rec) {
-  // If this is already selected row, do nothing (to avoid flickering)
   if (selectedRowId === rec.id) { return; }
-
   selectedRowId = rec.id;
   if (mode === 'single') {
     updateMap([rec]);
@@ -565,11 +408,12 @@ function selectOnMap(rec) {
   }
 }
 
+grist.on('message', (e) => {
+  if (e.tableId) { selectedTableId = e.tableId; }
+});
+
 grist.onRecord((record, mappings) => {
   if (mode === 'single') {
-    // If mappings are not done, we will assume that table has correct columns.
-    // This is done to support existing widgets which where configured by
-    // renaming column names.
     lastRecord = grist.mapColumnNames(record) || record;
     selectOnMap(lastRecord);
     scanOnNeed(defaultMapping(record, mappings));
@@ -580,25 +424,24 @@ grist.onRecord((record, mappings) => {
     marker.openPopup();
   }
 });
+
 grist.onRecords((data, mappings) => {
   lastRecords = grist.mapColumnNames(data) || data;
   if (mode !== 'single') {
-    // If mappings are not done, we will assume that table has correct columns.
-    // This is done to support existing widgets which where configured by
-    // renaming column names.
     updateMap(lastRecords);
     if (lastRecord) {
       selectOnMap(lastRecord);
     }
-    // We need to mimic the mappings for old widgets
     scanOnNeed(defaultMapping(data[0], mappings));
   }
 });
 
+let clearMakers = () => {};
+
 grist.onNewRecord(() => {
   clearMakers();
   clearMakers = () => {};
-})
+});
 
 function updateMode() {
   if (mode === 'single') {
@@ -646,7 +489,7 @@ grist.ready({
     { name: "County_Hyper", type: 'Text'} ,
     { name: "GIS", type: 'Text'} ,
     { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
-    { name: "Address", type: 'Text', optional, optional},
+    { name: "Address", type: 'Text', optional},
     { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
   ],
   allowSelectBy: true,
@@ -664,6 +507,6 @@ grist.onOptions((options, interaction) => {
   mapSource = newSource;
   document.getElementById("mapSource").value = mapSource;
   const newCopyright = options?.mapCopyright ?? mapCopyright;
-  mapCopyright = newCopyright
+  mapCopyright = newCopyright;
   document.getElementById("mapCopyright").value = mapCopyright;
 });
