@@ -1,39 +1,23 @@
 "use strict";
 
-/* global grist, window, L */ // Make sure L is declared as a global
+/* global grist, window, L */
 
-function createPopupContent({name, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink}) {
-  return `
-    <div style="font-size: 12px; line-height: 1.3; padding: 8px; max-width: 160px;">
-      <h3>${name}</h3>
-      ${imageUrl ? `<img src="${imageUrl}" alt="Property Image" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 6px;" />` : `<p style="margin: 0;">No Image Available</p>`}
-      <p style="margin: 4px 0;"><strong>Type:</strong> ${propertyType}</p>
-      <p style="margin: 4px 0;"><strong>Secondary:</strong> ${secondaryType}</p>
-      <p style="margin: 4px 0;"><strong>Tenants:</strong> ${tenants}</p>
-      <div class="popup-buttons">
-        <a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>
-        <a href="${countyLink}" class="popup-button" target="_blank">County</a>
-        <a href="${gisLink}" class="popup-button" target="_blank">GIS</a>
-      </div>
-    </div>`;
-}
-
+// Configuration
+const GOOGLE_MAPS_EMBED_ID = '1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA'; // Your Google MyMaps ID
+let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+let mapCopyright = 'Tiles © Esri';
+let mode = 'multi';
 let amap;
 let popups = {};
 let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
-let mode = 'multi';
-let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
-let mapCopyright = 'Tiles © Esri — Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
-// Required, Label value
+let markers;
+
+// Required column names
 const Name = "Name";
-// Required
 const Longitude = "Longitude";
-// Required
 const Latitude = "Latitude";
-// Optional - switch column to trigger geocoding
-// Columns used in page.js
 const Property_Type = 'Property_Type';
 const Tenants = 'Tenants';
 const Secondary_Type = 'Secondary_Type';
@@ -42,19 +26,27 @@ const CoStar_URL = 'CoStar_URL';
 const County_Hyper = 'County_Hyper';
 const GIS = 'GIS';
 const Geocode = 'Geocode';
-// Optional - but required for geocoding. Field with address to find (might be formula)
 const Address = 'Address';
-// Optional - but useful for geocoding. Blank field which map uses
-//            to store last geocoded Address. Enables map widget
-//            to automatically update the geocoding if Address is changed
 const GeocodedAddress = 'GeocodedAddress';
-let lastRecord;
-let lastRecords;
 
+// Base map layers
+const baseLayers = {
+  "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+    attribution: 'Google Hybrid'
+  }),
+  "MapTiler Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
+    attribution: ''
+  }),
+  "ArcGIS": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: ''
+  }),
+  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: ''
+  })
+};
 
-//Color markers downloaded from leaflet repo, color-shifted to green
-//Used to show currently selected pin
-const selectedIcon =  new L.Icon({
+// Custom icons
+const selectedIcon = new L.Icon({
   iconUrl: 'marker-icon-green.png',
   iconRetinaUrl: 'marker-icon-green-2x.png',
   shadowUrl: 'marker-shadow.png',
@@ -63,134 +55,199 @@ const selectedIcon =  new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
-const defaultIcon =  new L.Icon.Default();
+const defaultIcon = new L.Icon.Default();
 
+function createPopupContent({name, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink}) {
+  return `
+    <div class="custom-popup">
+      <div class="popup-header">
+        <h3>${name}</h3>
+      </div>
+      <div class="popup-content">
+        ${imageUrl ? 
+          `<img src="${imageUrl}" alt="${name}" class="popup-image" onerror="this.style.display='none'"/>` : 
+          ''}
+        <div class="popup-info">
+          <p><strong>Type:</strong> ${propertyType || 'N/A'}</p>
+          <p><strong>Secondary:</strong> ${secondaryType || 'N/A'}</p>
+          <p><strong>Tenants:</strong> ${tenants || 'N/A'}</p>
+        </div>
+        <div class="popup-buttons">
+          ${costarLink ? `<a href="${costarLink}" class="popup-button" target="_blank">CoStar</a>` : ''}
+          ${countyLink ? `<a href="${countyLink}" class="popup-button" target="_blank">County</a>` : ''}
+          ${gisLink ? `<a href="${gisLink}" class="popup-button" target="_blank">GIS</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
 
-// Creates clusterIcons that highlight if they contain selected row
-const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
-  return function(cluster) {
-    var childCount = cluster.getChildCount();
+function updateGoogleMinimap() {
+  const iframe = document.getElementById('googleMap');
+  if (!iframe || !amap) return;
 
-    let isSelected = false;
+  const center = amap.getCenter();
+  const zoom = amap.getZoom();
+  const ll = `${center.lat},${center.lng}`;
+  
+  // Update the Google MyMaps embed URL with current view
+  iframe.src = `https://www.google.com/maps/d/embed?mid=${GOOGLE_MAPS_EMBED_ID}&ll=${ll}&z=${zoom}&ui=1`;
+}
+
+function initMinimap() {
+  const minimapContainer = document.getElementById('minimap-container');
+  const toggleButton = document.getElementById('toggleMinimap');
+  
+  if (!minimapContainer || !toggleButton) return;
+
+  // Initialize in collapsed state
+  minimapContainer.classList.add('collapsed');
+
+  // Toggle minimap visibility
+  toggleButton.addEventListener('click', () => {
+    minimapContainer.classList.toggle('collapsed');
+    if (!minimapContainer.classList.contains('collapsed')) {
+      updateGoogleMinimap();
+    }
+  });
+
+  // Sync minimap with main map movements
+  amap.on('moveend', () => {
+    if (!minimapContainer.classList.contains('collapsed')) {
+      updateGoogleMinimap();
+    }
+  });
+
+  // Initial minimap setup
+  updateGoogleMinimap();
+}
+
+function updateMap(data) {
+  data = data || selectedRecords;
+  selectedRecords = data;
+  
+  if (!data || data.length === 0) {
+    showProblem("No data found yet");
+    return;
+  }
+  
+  if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude");
+    return;
+  }
+
+  const error = document.querySelector('.error');
+  if (error) { error.remove(); }
+  
+  if (amap) {
     try {
-      const selectedMarker = selectedMarkerGetter();
-      isSelected = cluster.getAllChildMarkers().filter((m) => m == selectedMarker).length > 0;
+      amap.off();
+      amap.remove();
     } catch (e) {
-      console.error("WARNING: Error in clusterIconFactory in map widget");
-      console.error(e);
+      console.warn(e);
+    }
+  }
+
+  // Initialize map
+  const defaultTiles = L.tileLayer(mapSource, { attribution: mapCopyright });
+  amap = L.map('map', {
+    layers: [defaultTiles],
+    center: [45.5283, -122.8081],
+    zoom: 4,
+    wheelPxPerZoomLevel: 90
+  });
+
+  // Add layer control
+  L.control.layers(baseLayers, {}, { position: 'topright', collapsed: true }).addTo(amap);
+
+  // Initialize marker cluster group
+  markers = L.markerClusterGroup({
+    maxClusterRadius: 80,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: true,
+    zoomToBoundsOnClick: true,
+    chunkedLoading: true,
+    chunkInterval: 200,
+    animate: false
+  });
+
+  // Add markers
+  data.forEach(record => {
+    const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(record);
+    
+    if (!lng || !lat || String(lng) === '...' || 
+        isNaN(lng) || isNaN(lat) || 
+        Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
+      return;
     }
 
-    var c = ' marker-cluster-';
-    if (childCount < 10) {
-      c += 'small';
-    } else if (childCount < 100) {
-      c += 'medium';
-    } else {
-      c += 'large';
-    }
-
-    return new L.DivIcon({
-        html: '<div><span>'
-            + childCount
-            + ' <span aria-label="markers"></span>'
-            + '</span></div>',
-        className: 'marker-cluster' + c + (isSelected ? ' marker-cluster-selected' : ''),
-        iconSize: new L.Point(40, 40)
+    const marker = L.marker([lat, lng], {
+      title: name,
+      id: id,
+      icon: (id == selectedRowId) ? selectedIcon : defaultIcon
     });
-  }
-};
 
-const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
-if (URLSearchParams && location.search && geocoder) {
-  const c = new URLSearchParams(location.search).get('geocoder');
-  if (c && L.Control.Geocoder[c]) {
-    console.log('Using geocoder', c);
-    geocoder = L.Control.Geocoder[c]();
-  } else if (c) {
-    console.warn('Unsupported geocoder', c);
-  }
-  const m = new URLSearchParams(location.search).get('mode');
-  if (m) { mode = m; }
-}
+    marker.on('click', function() {
+      selectMaker(this.options.id);
+    });
 
-async function geocode(address) {
-  return new Promise((resolve, reject) => {
+    const popupContent = createPopupContent({
+      name, 
+      propertyType, 
+      tenants, 
+      secondaryType, 
+      imageUrl, 
+      costarLink, 
+      countyLink, 
+      gisLink
+    });
+    
+    marker.bindPopup(popupContent, {
+      maxWidth: 300,
+      className: 'custom-popup'
+    });
+    
+    markers.addLayer(marker);
+    popups[id] = marker;
+  });
+
+  amap.addLayer(markers);
+
+  // Add search control
+  const searchControl = L.esri.Geocoding.geosearch({
+    providers: [L.esri.Geocoding.arcgisOnlineProvider()],
+    position: 'topleft',
+    useMapBounds: false,
+    attribution: false
+  }).addTo(amap);
+
+  // Initialize minimap
+  initMinimap();
+
+  // Fit bounds to markers
+  const points = data.map(record => {
+    const {lat, lng} = getInfo(record);
+    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return null;
+    return [lat, lng];
+  }).filter(point => point !== null);
+
+  if (points.length > 0) {
     try {
-      geocoder.geocode(address, (v) => {
-        v = v[0];
-        if (v) { v = v.center; }
-        resolve(v);
-      });
+      const bounds = L.latLngBounds(points);
+      amap.fitBounds(bounds, { padding: [50, 50] });
     } catch (e) {
-      console.log("Problem:", e);
-      reject(e);
-    }
-  });
-}
-
-async function delay(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
-// If widget has wright access
-let writeAccess = true;
-// A ongoing scanning promise, to check if we are in progress.
-let scanning = null;
-
-async function scan(tableId, records, mappings) {
-  if (!writeAccess) { return; }
-  for (const record of records) {
-    // We can only scan if Geocode column was mapped.
-    if (!(Geocode in record)) { break; }
-    // And the value in the column is truthy.
-    if (!record[Geocode]) { continue; }
-    // Get the address to search.
-    const address = record.Address;
-    // Little caching here. We will set GeocodedAddress to last address we searched,
-    // so after next round - we will check if the address is indeed changed.
-    // But this field is optional, if it is not in the record (not mapped)
-    // we will find the location each time (if coordinates are empty).
-    if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
-      // We have caching field, and last address is diffrent.
-      // So clear coordinates (as if the record wasn't scanned before)
-      record[Longitude] = null;
-      record[Latitude] = null;
-    }
-    // If address is not empty, and coordinates are empty (or were cleared by cache)
-    if (address && !record[Longitude]) {
-      // Find coordinates.
-      const result = await geocode(address);
-      // Update them, and update cache (if the field was mapped)
-      await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
-        [mappings[Longitude]]: result.lng,
-        [mappings[Latitude]]: result.lat,
-        ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
-      }] ]);
-      await delay(1000);
+      console.warn('Error fitting bounds:', e);
+      amap.setView([39.8283, -98.5795], 4);
     }
   }
-}
 
-function scanOnNeed(mappings) {
-  if (!scanning && selectedTableId && selectedRecords) {
-    scanning = scan(selectedTableId, selectedRecords, mappings).then(() => scanning = null).catch(() => scanning = null);
+  // Show selected marker if exists
+  if (selectedRowId && popups[selectedRowId]) {
+    const marker = popups[selectedRowId];
+    if (!marker._icon) {
+      markers.zoomToShowLayer(marker);
+    }
+    marker.openPopup();
   }
-}
-
-function showProblem(txt) {
-  document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
-}
-
-// Little extra wrinkle to deal with showing differences.  Should be taken
-// care of by Grist once diffing is out of beta.
-function parseValue(v) {
-  if (typeof(v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
-    const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
-    return payload.remote || payload.local || payload.parent || payload;
-  }
-  return v;
 }
 
 function getInfo(rec) {
