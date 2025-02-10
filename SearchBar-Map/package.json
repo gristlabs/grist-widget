@@ -3,6 +3,12 @@
   "description": "Widget for showing geolocated data on a map.",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
+  "scripts": {
+    "start": "serve ."
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  },
   "grist": [
     {
       "name": "Map",
