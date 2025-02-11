@@ -84,15 +84,38 @@ function createPopupContent({name, propertyType, tenants, secondaryType, imageUr
 }
 
 function updateGoogleMinimap() {
-  const iframe = document.getElementById('googleMap');
-  if (!iframe || !amap) return;
+    const iframe = document.getElementById('googleMap');
+    if (!iframe || !amap) return;
 
-  const center = amap.getCenter();
-  const zoom = amap.getZoom();
-  const ll = `${center.lat},${center.lng}`;
+    const center = amap.getCenter();
+    const zoom = amap.getZoom();
+    const ll = `${center.lat},${center.lng}`;
 
-  // Update the Google MyMaps embed URL with current view and hide UI elements
-  iframe.src = `https://www.google.com/maps/d/embed?mid=${GOOGLE_MAPS_EMBED_ID}&ll=${ll}&z=${zoom}&output=embed`;
+    // Update the Google MyMaps embed URL.
+    iframe.src = `https://www.google.com/maps/d/embed?mid=${GOOGLE_MAPS_EMBED_ID}&ll=${ll}&z=${zoom}&output=embed`;
+
+    // Inject CSS to remove padding/margins *inside* the iframe.
+    iframe.onload = () => {
+        try {
+            const style = iframe.contentDocument.createElement('style');
+            style.textContent = `
+                html, body {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                /* Additional styling to ensure full coverage */
+                #mapDiv, #mapCanvas {
+                    width: 100% !important;
+                    height: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+            `;
+            iframe.contentDocument.head.appendChild(style);
+        } catch (error) {
+            console.error("Error injecting styles into iframe:", error);
+        }
+    };
 }
 
 function initMinimap() {
@@ -118,9 +141,6 @@ function initMinimap() {
       updateGoogleMinimap();
     }
   });
-
-  // Initial minimap setup
-  updateGoogleMinimap();
 }
 
 function showProblem(txt) {
@@ -183,7 +203,7 @@ function updateMap(data) {
     try {
       const bounds = L.latLngBounds(points);
       initialCenter = bounds.getCenter();
-      initialZoom = amap ? amap.getBoundsZoom(bounds) : 10; // Use existing map's zoom if available
+      initialZoom = amap ? amap.getBoundsZoom(bounds) : 10; // Use existing map's zoom if available, default to 10
     } catch (e) {
       console.warn('Error fitting bounds:', e);
     }
@@ -191,13 +211,13 @@ function updateMap(data) {
 
 
     if (amap) {
-    try {
-        amap.off();
-        amap.remove();
-    } catch (e) {
-        console.warn(e);
+        try{
+            amap.off();
+            amap.remove();
+        } catch (e) {
+            console.warn(e);
+        }
     }
-  }
 
   // Initialize map
   const defaultTiles = L.tileLayer(mapSource, { attribution: mapCopyright });
@@ -273,8 +293,7 @@ function updateMap(data) {
     attribution: false
   }).addTo(amap);
 
-  // Initialize minimap
-  initMinimap();
+
 
 
     if (points.length > 0) {
@@ -288,7 +307,7 @@ function updateMap(data) {
         }
     }
 
-  // Show selected marker if exists
+      // Show selected marker if exists
   if (selectedRowId && popups[selectedRowId]) {
     const marker = popups[selectedRowId];
     if (!marker._icon) {
@@ -296,6 +315,9 @@ function updateMap(data) {
     }
     marker.openPopup();
   }
+
+    // Initialize minimap *after* main map setup
+    initMinimap();
 }
 
 function selectMaker(id) {
