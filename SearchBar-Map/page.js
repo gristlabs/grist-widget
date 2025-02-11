@@ -83,7 +83,6 @@ function createPopupContent({ name, propertyType, tenants, secondaryType, imageU
     </div>`;
 }
 
-
 function updateGoogleMinimap() {
     const iframe = document.getElementById('googleMap');
     if (!iframe || !amap) return;
@@ -95,36 +94,30 @@ function updateGoogleMinimap() {
     // Update the Google MyMaps embed URL.
     iframe.src = `https://www.google.com/maps/d/embed?mid=${GOOGLE_MAPS_EMBED_ID}&ll=${ll}&z=${zoom}&output=embed`;
 
-    // Use MutationObserver to wait for #mapholder to be present.
     iframe.onload = () => {
-        try {
-            const observer = new MutationObserver((mutations, observerInstance) => {
+        let intervalId;
+
+        // Try to apply styles immediately.
+        function applyStyles() {
+            try {
                 const mapholder = iframe.contentDocument.getElementById('mapholder');
                 if (mapholder) {
-                    const style = iframe.contentDocument.createElement('style');
-                    style.textContent = `
-                        #mapholder {
-                            position: static !important;
-                            padding: 0 !important;
-                        }
-                    `;
-                    iframe.contentDocument.head.appendChild(style);
-                    observerInstance.disconnect(); // Stop observing once applied.
+                    mapholder.style.position = 'static';
+                    mapholder.style.padding = '0';
+                    clearInterval(intervalId); // Stop polling!
+                    console.log("Minimap styles applied successfully!");
                 }
-            });
-
-            // Start observing the iframe's body.
-            observer.observe(iframe.contentDocument.body, {
-                childList: true,
-                subtree: true
-            });
-
-        } catch (error) {
-            console.error("Error injecting styles into iframe:", error);
+            } catch (error) {
+              // Ignore errors, iframe content might not be accessible yet.
+            }
         }
+
+        applyStyles(); // Try immediately
+
+        // Poll for #mapholder and apply styles.
+        intervalId = setInterval(applyStyles, 100); // Check every 100ms
     };
 }
-
 function initMinimap() {
     const minimapContainer = document.getElementById('minimap-container');
     const toggleButton = document.getElementById('toggleMinimap');
