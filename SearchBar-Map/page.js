@@ -64,8 +64,8 @@ function createPopupContent({name, propertyType, tenants, secondaryType, imageUr
         <h3>${name || 'Unnamed Location'}</h3>
       </div>
       <div class="popup-content">
-        ${imageUrl ? 
-          `<img src="${imageUrl}" alt="${name}" class="popup-image" onerror="this.style.display='none'"/>` : 
+        ${imageUrl ?
+          `<img src="${imageUrl}" alt="${name}" class="popup-image" onerror="this.style.display='none'"/>` :
           ''}
         <div class="popup-info">
           ${propertyType ? `<p><strong>Type:</strong> ${propertyType}</p>` : ''}
@@ -90,15 +90,15 @@ function updateGoogleMinimap() {
   const center = amap.getCenter();
   const zoom = amap.getZoom();
   const ll = `${center.lat},${center.lng}`;
-  
+
   // Update the Google MyMaps embed URL with current view and hide UI elements
-  iframe.src = `https://www.google.com/maps/d/embed?mid=${GOOGLE_MAPS_EMBED_ID}&ll=${ll}&z=${zoom}&ehbc=2E312F&ui=0`;
+  iframe.src = `https://www.google.com/maps/d/embed?mid=${GOOGLE_MAPS_EMBED_ID}&ll=${ll}&z=${zoom}&output=embed`;
 }
 
 function initMinimap() {
   const minimapContainer = document.getElementById('minimap-container');
   const toggleButton = document.getElementById('toggleMinimap');
-  
+
   if (!minimapContainer || !toggleButton) return;
 
   // Initialize in collapsed state
@@ -154,12 +154,12 @@ function getInfo(rec) {
 function updateMap(data) {
   data = data || selectedRecords;
   selectedRecords = data;
-  
+
   if (!data || data.length === 0) {
     showProblem("No data found yet");
     return;
   }
-  
+
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
     showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude");
     return;
@@ -167,13 +167,35 @@ function updateMap(data) {
 
   const error = document.querySelector('.error');
   if (error) { error.remove(); }
-  
-  if (amap) {
+
+
+  // Calculate bounds *before* initializing the map
+  const points = data.map(record => {
+    const {lat, lng} = getInfo(record);
+    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return null;
+    return [lat, lng];
+  }).filter(point => point !== null);
+
+  let initialCenter = [39.8283, -98.5795]; // Default center (USA)
+  let initialZoom = 4;
+
+  if (points.length > 0) {
     try {
-      amap.off();
-      amap.remove();
+      const bounds = L.latLngBounds(points);
+      initialCenter = bounds.getCenter();
+      initialZoom = amap ? amap.getBoundsZoom(bounds) : 10; // Use existing map's zoom if available
     } catch (e) {
-      console.warn(e);
+      console.warn('Error fitting bounds:', e);
+    }
+  }
+
+
+    if (amap) {
+    try {
+        amap.off();
+        amap.remove();
+    } catch (e) {
+        console.warn(e);
     }
   }
 
@@ -181,10 +203,11 @@ function updateMap(data) {
   const defaultTiles = L.tileLayer(mapSource, { attribution: mapCopyright });
   amap = L.map('map', {
     layers: [defaultTiles],
-    center: [45.5283, -122.8081],
-    zoom: 4,
+    center: initialCenter, // Use calculated center
+    zoom: initialZoom,       // Use calculated zoom
     wheelPxPerZoomLevel: 90
   });
+
 
   // Add layer control
   L.control.layers(baseLayers, {}, { position: 'topright', collapsed: true }).addTo(amap);
@@ -203,9 +226,9 @@ function updateMap(data) {
   // Add markers
   data.forEach(record => {
     const {id, name, lng, lat, propertyType, tenants, secondaryType, imageUrl, costarLink, countyLink, gisLink} = getInfo(record);
-    
-    if (!lng || !lat || String(lng) === '...' || 
-        isNaN(lng) || isNaN(lat) || 
+
+    if (!lng || !lat || String(lng) === '...' ||
+        isNaN(lng) || isNaN(lat) ||
         Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
       return;
     }
@@ -221,21 +244,21 @@ function updateMap(data) {
     });
 
     const popupContent = createPopupContent({
-      name, 
-      propertyType, 
-      tenants, 
-      secondaryType, 
-      imageUrl, 
-      costarLink, 
-      countyLink, 
+      name,
+      propertyType,
+      tenants,
+      secondaryType,
+      imageUrl,
+      costarLink,
+      countyLink,
       gisLink
     });
-    
+
     marker.bindPopup(popupContent, {
       maxWidth: 200,
       className: 'custom-popup'
     });
-    
+
     markers.addLayer(marker);
     popups[id] = marker;
   });
@@ -253,22 +276,17 @@ function updateMap(data) {
   // Initialize minimap
   initMinimap();
 
-  // Fit bounds to markers
-  const points = data.map(record => {
-    const {lat, lng} = getInfo(record);
-    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return null;
-    return [lat, lng];
-  }).filter(point => point !== null);
 
-  if (points.length > 0) {
-    try {
-      const bounds = L.latLngBounds(points);
-      amap.fitBounds(bounds, { padding: [50, 50] });
-    } catch (e) {
-      console.warn('Error fitting bounds:', e);
-      amap.setView([39.8283, -98.5795], 4);
+    if (points.length > 0) {
+        try {
+          const bounds = L.latLngBounds(points);
+          amap.fitBounds(bounds, { padding: [50, 50] });
+        } catch (e) {
+          console.warn('Error fitting bounds:', e);
+          //Fallback
+          amap.setView(initialCenter, initialZoom);
+        }
     }
-  }
 
   // Show selected marker if exists
   if (selectedRowId && popups[selectedRowId]) {
