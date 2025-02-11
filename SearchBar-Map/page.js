@@ -232,7 +232,7 @@ function updateMap(data) {
     });
     
     marker.bindPopup(popupContent, {
-      maxWidth: 300,
+      maxWidth: 200,
       className: 'custom-popup'
     });
     
@@ -494,19 +494,4 @@ grist.ready({
   ],
   allowSelectBy: true,
   onEditOptions
-});
-
-grist.onOptions((options, interaction) => {
-  writeAccess = interaction.accessLevel === 'full';
-  const newMode = options?.mode ?? mode;
-  mode = newMode;
-  if (newMode != mode && lastRecords) {
-    updateMode();
-  }
-  const newSource = options?.mapSource ?? mapSource;
-  mapSource = newSource;
-  document.getElementById("mapSource").value = mapSource;
-  const newCopyright = options?.mapCopyright ?? mapCopyright;
-  mapCopyright = newCopyright;
-  document.getElementById("mapCopyright").value = mapCopyright;
 });
