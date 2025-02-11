@@ -1,10 +1,17 @@
 /* Base styles */
 html, body, #map {
-  width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
+}
+
+.error {
+  margin: 1em;
+  padding: 1em;
+  border: 1px solid #ff0000;
+  background: #fff0f0;
+  border-radius: 4px;
 }
 
 /* Settings panel styles */
@@ -26,11 +33,18 @@ html, body, #map {
   padding: 5px;
 }
 
-/* Enhanced popup styles - smaller and cleaner */
+/* Enhanced popup styles - modern and clean */
 .custom-popup {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   max-width: 200px !important;
   padding: 0 !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  border-radius: 8px !important;
 }
 
 .leaflet-popup-content {
@@ -40,28 +54,28 @@ html, body, #map {
 
 .popup-header {
   background: #f8f9fa;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-bottom: 1px solid #e9ecef;
-  border-radius: 4px 4px 0 0;
 }
 
 .popup-header h3 {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: #212529;
   font-weight: 600;
   line-height: 1.3;
 }
 
 .popup-content {
-  padding: 10px;
+  padding: 12px;
+  background: white;
 }
 
 .popup-image {
   width: 100%;
   height: 120px;
   object-fit: cover;
-  border-radius: 3px;
+  border-radius: 4px;
   margin-bottom: 8px;
 }
 
@@ -70,24 +84,24 @@ html, body, #map {
 }
 
 .popup-info p {
-  margin: 3px 0;
-  font-size: 11px;
+  margin: 4px 0;
+  font-size: 12px;
   color: #495057;
   display: flex;
   align-items: baseline;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
 .popup-info strong {
-  min-width: 60px;
+  min-width: 65px;
   color: #212529;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .popup-buttons {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  gap: 6px;
   margin-top: 8px;
 }
 
@@ -95,12 +109,12 @@ html, body, #map {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 6px;
+  padding: 4px 8px;
   background: #f8f9fa;
   color: #212529;
   text-decoration: none;
-  border-radius: 2px;
-  font-size: 10px;
+  border-radius: 4px;
+  font-size: 11px;
   border: 1px solid #dee2e6;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -119,7 +133,7 @@ html, body, #map {
   width: 300px;
   height: 200px;
   background: white;
-  border-radius: 4px;
+  border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   z-index: 1000;
   overflow: hidden;
@@ -127,14 +141,14 @@ html, body, #map {
 }
 
 #minimap-container.collapsed {
-  transform: translateY(100%);
+  transform: translateY(calc(100% + 20px));
 }
 
 #googleMap {
   width: 100%;
   height: 130%;
   border: none;
-  margin-top: -40px; /* Hide the Google Maps top bar */
+  margin-top: -40px;
 }
 
 #toggleMinimap {
@@ -144,16 +158,18 @@ html, body, #map {
   background: white;
   border: none;
   padding: 6px 12px;
-  border-radius: 4px 4px 0 0;
+  border-radius: 8px 8px 0 0;
   cursor: pointer;
   box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
   font-size: 12px;
-  transition: background-color 0.2s ease;
+  color: #495057;
+  transition: all 0.2s ease;
   z-index: 1001;
 }
 
 #toggleMinimap:hover {
   background: #f8f9fa;
+  color: #212529;
 }
 
 /* Marker cluster customization */
@@ -183,24 +199,4 @@ html, body, #map {
 
 .marker-cluster-selected {
   border: 3px solid #4CAF50;
-}
-
-/* Hide Leaflet top bar */
-.leaflet-top {
-  top: 10px !important;
-}
-
-.leaflet-control-zoom {
-  margin-left: 10px !important;
-}
-
-/* Improve search control appearance */
-.geocoder-control-input {
-  padding: 6px 10px !important;
-  font-size: 13px !important;
-}
-
-.geocoder-control-suggestions {
-  margin-top: 0 !important;
-  border-radius: 0 0 4px 4px !important;
 }
