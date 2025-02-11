@@ -132,9 +132,9 @@ html, body, #map {
 
 #googleMap {
   width: 100%;
-  height: 130%;
+  height: 100%; /* Corrected height */
   border: none;
-  margin-top: -40px; /* Hide the Google Maps top bar */
+  /* Removed margin-top */
 }
 
 #toggleMinimap {
