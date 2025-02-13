@@ -2,32 +2,30 @@
 
 /* global grist, window, L */
 
-// Core state variables (initialized to safe defaults)
-let selectedTableId = null;
-let writeAccess = true;
-let scanning = null;
-let amap = null;
-let markersLayer = null; // Initialize to null
-let mapContainer = null;
-let selectedRowId = null;
-let selectedRecords = null;
-let mode = 'multi';
-let lastRecord = null;
-let lastRecords = null;
-
-// Handlers and initialization flags
-let cleanupHandlers = [];
-let mapEventHandlers = [];
-let mapInitialized = false;
-let minimapInitialized = false;
-let searchResults = null;
-let mapReady = false;
-let initializationInProgress = false;
-let mapContainerReady = false;
-let popups = {};
-
-// A flag to track if Grist is fully initialized
-let gristInitialized = false;
+// State variables, organized into an object for easier management
+const state = {
+    selectedTableId: null,
+    writeAccess: true, // Default to true
+    scanning: null,
+    amap: null,
+    markersLayer: null,
+    mapContainer: null,
+    selectedRowId: null,
+    selectedRecords: null,
+    mode: 'multi',
+    lastRecord: null,
+    lastRecords: null,
+    cleanupHandlers: [],
+    mapEventHandlers: [],
+    mapInitialized: false,
+    minimapInitialized: false,
+    searchResults: null,
+    mapReady: false,
+    initializationInProgress: false,
+    mapContainerReady: false,
+    popups: {},
+    gristInitialized: false,
+};
 
 
 // Required column names (constants are good practice)
@@ -123,7 +121,7 @@ function createPopupContent(record) {
 }
 
 function initializeMinimap(amap) {
-    if (minimapInitialized) return;
+    if (state.minimapInitialized) return;
 
     const minimapContainer = document.getElementById('minimap-container');
     const toggleButton = document.getElementById('toggleMinimap');
@@ -145,8 +143,8 @@ function initializeMinimap(amap) {
         if (toggleText) toggleText.textContent = isCollapsed ? 'Expand Map' : 'Minimize Map';
         if (toggleIcon) toggleIcon.textContent = isCollapsed ? '🔼' : '🔽';
         if (!isCollapsed) {
-            const center = amap.getCenter();
-            const zoom = amap.getZoom();
+            const center = state.amap.getCenter();
+            const zoom = state.amap.getZoom();
             const ll = `${center.lat},${center.lng}`;
             const iframe = document.getElementById('googleMap');
             if (iframe) {
@@ -156,37 +154,37 @@ function initializeMinimap(amap) {
     };
 
     toggleButton.addEventListener('click', toggleHandler);
-    mapEventHandlers.push(() => toggleButton.removeEventListener('click', toggleHandler));
+    state.mapEventHandlers.push(() => toggleButton.removeEventListener('click', toggleHandler));
 
-    minimapInitialized = true;
+    state.minimapInitialized = true;
 }
 
 
 function ensureMapContainer() {
-    mapContainer = document.getElementById('map');
-    if (!mapContainer) {
+    state.mapContainer = document.getElementById('map');
+    if (!state.mapContainer) {
         throw new Error('Map container not found');
     }
 
     // Clear any existing content
-    mapContainer.innerHTML = '';
+    state.mapContainer.innerHTML = '';
 
     // Add loading indicator
     const loadingDiv = document.createElement('div');
     loadingDiv.className = 'map-loading';
     loadingDiv.innerHTML = 'Initializing map...';
-    mapContainer.appendChild(loadingDiv);
+    state.mapContainer.appendChild(loadingDiv);
 
-    mapContainerReady = true;
+    state.mapContainerReady = true;
 }
 
 function initializeMap() {
-    if (initializationInProgress) {
+    if (state.initializationInProgress) {
         console.warn('Map initialization already in progress');
         return null;
     }
 
-    initializationInProgress = true;
+    state.initializationInProgress = true;
 
     try {
         cleanup();
@@ -194,7 +192,7 @@ function initializeMap() {
 
         // Create map with Google Hybrid as default
         const googleHybrid = baseLayers["Google Hybrid"];
-        amap = L.map('map', {
+        state.amap = L.map('map', {
             center: [45.5283, -122.8081],
             zoom: 4,
             wheelPxPerZoomLevel: 90,
@@ -214,10 +212,10 @@ function initializeMap() {
         L.control.layers(baseLayers, {}, {
             position: 'topright',
             collapsed: true
-        }).addTo(amap);
+        }).addTo(state.amap);
 
         // Initialize marker cluster
-        markersLayer = L.markerClusterGroup({
+        state.markersLayer = L.markerClusterGroup({
             maxClusterRadius: 80,
             spiderfyOnMaxZoom: true,
             showCoverageOnHover: false,
@@ -229,11 +227,11 @@ function initializeMap() {
             spiderfyDistanceMultiplier: 1.5,
             iconCreateFunction: selectedRowClusterIconFactory(() => {
                 // Use markersLayer directly, as it's now guaranteed to be initialized
-                return markersLayer.getLayers().find(m => m.options.id === selectedRowId);
+                return state.markersLayer.getLayers().find(m => m.options.id === state.selectedRowId);
             })
         });
 
-        amap.addLayer(markersLayer);
+        state.amap.addLayer(state.markersLayer);
 
         // Initialize search with proper cleanup
         const searchControl = L.esri.Geocoding.geosearch({
@@ -250,17 +248,17 @@ function initializeMap() {
             useMapCenter: false,
             autoComplete: true,
             autoCompleteDelay: 250
-        }).addTo(amap);
+        }).addTo(state.amap);
 
         // Create search results layer with custom pane
-        amap.createPane('searchPane');
-        amap.getPane('searchPane').style.zIndex = 450; // Above markers but below popups
-        searchResults = L.layerGroup([], { pane: 'searchPane' }).addTo(amap);
+        state.amap.createPane('searchPane');
+        state.amap.getPane('searchPane').style.zIndex = 450; // Above markers but below popups
+        state.searchResults = L.layerGroup([], { pane: 'searchPane' }).addTo(state.amap);
 
         // Search handler with proper cleanup
         const searchHandler = (data) => {
-            if (searchResults) {
-                searchResults.clearLayers();
+            if (state.searchResults) {
+                state.searchResults.clearLayers();
                 if (data.results?.length > 0) {
                     data.results.forEach(result => {
                         const searchMarker = L.marker(result.latlng, {
@@ -273,17 +271,17 @@ function initializeMap() {
                             pane: 'searchPane'
                         });
                         searchMarker.bindPopup(result.text || 'Location');
-                        searchResults.addLayer(searchMarker);
+                        state.searchResults.addLayer(searchMarker);
                     });
 
                     // If only one result, zoom to it
                     if (data.results.length === 1) {
-                        amap.setView(data.results[0].latlng, 16, { animate: false });
-                        searchResults.getLayers()[0].openPopup();
+                        state.amap.setView(data.results[0].latlng, 16, { animate: false });
+                        state.searchResults.getLayers()[0].openPopup();
                     } else {
                         // If multiple results, fit bounds to show all
                         const bounds = L.latLngBounds(data.results.map(r => r.latlng));
-                        amap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                        state.amap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
                     }
                 }
             }
@@ -291,8 +289,8 @@ function initializeMap() {
 
         // Add error and loading state handlers
         const searchStartHandler = () => {
-            if (searchResults) {
-                searchResults.clearLayers();
+            if (state.searchResults) {
+                state.searchResults.clearLayers();
             }
             const input = document.querySelector('.leaflet-control-geocoder-form input');
             if (input) {
@@ -314,8 +312,8 @@ function initializeMap() {
         };
 
         const searchClearHandler = () => {
-            if (searchResults) {
-                searchResults.clearLayers();
+            if (state.searchResults) {
+                state.searchResults.clearLayers();
             }
             searchEndHandler();
         };
@@ -329,16 +327,16 @@ function initializeMap() {
         searchControl.on('clear', searchClearHandler);
 
         // Add cleanup handlers
-        mapEventHandlers.push(() => {
+        state.mapEventHandlers.push(() => {
             searchControl.off('results', searchHandler);
             searchControl.off('searchstart', searchStartHandler);
             searchControl.off('requeststart', searchStartHandler);
             searchControl.off('requestend', searchEndHandler);
             searchControl.off('error', searchErrorHandler);
             searchControl.off('clear', searchClearHandler);
-            if (searchResults) {
-                searchResults.clearLayers();
-                amap.removeLayer(searchResults);
+            if (state.searchResults) {
+                state.searchResults.clearLayers();
+                state.amap.removeLayer(state.searchResults);
             }
         });
 
@@ -348,20 +346,20 @@ function initializeMap() {
             console.error('Map error:', e);
             showProblem('An error occurred with the map. Please refresh the page.');
         };
-        amap.on('error', errorHandler);
-        mapEventHandlers.push(() => amap.off('error', errorHandler));
+        state.amap.on('error', errorHandler);
+        state.mapEventHandlers.push(() => state.amap.off('error', errorHandler));
 
         const loadHandler = () => {
             console.log('Map loaded successfully');
-            mapReady = true;
+            state.mapReady = true;
         };
-        amap.on('load', loadHandler);
-        mapEventHandlers.push(() => amap.off('load', loadHandler));
+        state.amap.on('load', loadHandler);
+        state.mapEventHandlers.push(() => state.amap.off('load', loadHandler));
 
         const moveHandler = () => {
-            if (minimapInitialized && !document.getElementById('minimap-container').classList.contains('collapsed')) {
-                const center = amap.getCenter();
-                const zoom = amap.getZoom();
+            if (state.minimapInitialized && !document.getElementById('minimap-container').classList.contains('collapsed')) {
+                const center = state.amap.getCenter();
+                const zoom = state.amap.getZoom();
                 const ll = `${center.lat},${center.lng}`;
                 const iframe = document.getElementById('googleMap');
                 if (iframe) {
@@ -369,23 +367,23 @@ function initializeMap() {
                 }
             }
         };
-        amap.on('moveend', moveHandler);
-        mapEventHandlers.push(() => amap.off('moveend', moveHandler));
+        state.amap.on('moveend', moveHandler);
+        state.mapEventHandlers.push(() => state.amap.off('moveend', moveHandler));
 
 
         // Initialize minimap after all other components
-        amap.whenReady(() => {
+        state.amap.whenReady(() => {
             // Remove loading indicator
-            const loadingDiv = mapContainer.querySelector('.map-loading');
+            const loadingDiv = state.mapContainer.querySelector('.map-loading');
             if (loadingDiv) {
                 loadingDiv.remove();
             }
 
-            initializeMinimap(amap);
-            mapInitialized = true;  // Set the flag here
+            initializeMinimap(state.amap);
+            state.mapInitialized = true;  // Set the flag here
         });
 
-        return amap;
+        return state.amap;
 
     } catch (error) {
 
@@ -393,7 +391,7 @@ function initializeMap() {
         showProblem('Failed to initialize map. Please refresh the page.');
         return null;
     } finally {
-        initializationInProgress = false;
+        state.initializationInProgress = false;
     }
 }
 
@@ -405,7 +403,7 @@ function updateMap(records) {
     }
 
     // Check if map and markersLayer are initialized before proceeding
-    if (!mapInitialized || !markersLayer) {
+    if (!state.mapInitialized || !state.markersLayer) {
         console.warn('Map or markersLayer not fully initialized, delaying update');
         setTimeout(() => updateMap(records), 500); // Retry after a short delay
         return;
@@ -419,9 +417,9 @@ function updateMap(records) {
         }
 
         // Clean up existing markers and handlers
-        markersLayer.clearLayers(); // Clear existing markers
-        cleanupHandlers.forEach(cleanup => cleanup());
-        cleanupHandlers = [];
+        state.markersLayer.clearLayers(); // Clear existing markers
+        state.cleanupHandlers.forEach(cleanup => cleanup());
+        state.cleanupHandlers = [];
 
         const batchSize = 100;
         const markers = [];
@@ -434,12 +432,12 @@ function updateMap(records) {
                 const marker = L.marker([record.Latitude, record.Longitude], {
                     title: record.Name || '',
                     id: record.id,
-                    icon: (record.id === selectedRowId) ? selectedIcon : defaultIcon
+                    icon: (record.id === state.selectedRowId) ? selectedIcon : defaultIcon
                 });
 
                 const clickHandler = () => selectMarker(marker.options.id);
                 marker.on('click', clickHandler);
-                cleanupHandlers.push(() => marker.off('click', clickHandler));
+                state.cleanupHandlers.push(() => marker.off('click', clickHandler));
 
                 marker.bindPopup(createPopupContent(record));
                 markers.push(marker);
@@ -447,11 +445,11 @@ function updateMap(records) {
         }
 
         if (markers.length > 0) {
-            markersLayer.addLayers(markers);
+            state.markersLayer.addLayers(markers);
 
-            const bounds = markersLayer.getBounds();
+            const bounds = state.markersLayer.getBounds();
             if (bounds.isValid()) {
-                amap.fitBounds(bounds, {
+                state.amap.fitBounds(bounds, {
                     padding: [50, 50],
                     maxZoom: 15,
                     animate: false
@@ -466,7 +464,7 @@ function updateMap(records) {
 
 function selectMarker(id) {
     // Ensure markersLayer exists and has the getLayers method
-    if (!markersLayer || typeof markersLayer.getLayers !== 'function') {
+    if (!state.markersLayer || typeof state.markersLayer.getLayers !== 'function') {
         console.warn('markersLayer is not properly initialized.');
         return;
     }
@@ -476,13 +474,13 @@ function selectMarker(id) {
     }
 
     try {
-        const markers = markersLayer.getLayers();
+        const markers = state.markersLayer.getLayers();
         if (!markers || !markers.length) {
             console.warn('No markers available');
             return;
         }
 
-        const previousMarker = markers.find(m => m.options.id === selectedRowId);
+        const previousMarker = markers.find(m => m.options.id === state.selectedRowId);
         if (previousMarker) {
             previousMarker.setIcon(defaultIcon);
         }
@@ -493,7 +491,7 @@ function selectMarker(id) {
             return;
         }
 
-        selectedRowId = id;
+        state.selectedRowId = id;
         newMarker.setIcon(selectedIcon);
         newMarker.openPopup();
 
@@ -569,7 +567,7 @@ if (URLSearchParams && location.search && geocoder) {
         console.warn('Unsupported geocoder', c);
     }
     const m = new URLSearchParams(location.search).get('mode');
-    if (m) { mode = m; }
+    if (m) { state.mode = m; }
 }
 
 async function geocode(address) {
@@ -595,7 +593,7 @@ async function delay(ms) {
 
 async function scan(tableId, records, mappings) {
 
-    if (!writeAccess || !tableId || !records || !mappings) {
+    if (!state.writeAccess || !tableId || !records || !mappings) {
         console.warn('Missing required parameters for scan');
         return;
     }
@@ -647,31 +645,31 @@ async function scan(tableId, records, mappings) {
 
 function scanOnNeed(mappings) {
     // Only proceed if Grist is initialized AND we have a tableId
-    if (!gristInitialized || !selectedTableId || !mappings) {
-        if (!gristInitialized) {
+    if (!state.gristInitialized || !state.selectedTableId || !mappings) {
+        if (!state.gristInitialized) {
             console.warn("Grist not fully initialized yet.");
         }
-        if (!selectedTableId) {
+        if (!state.selectedTableId) {
             console.warn("Table ID not yet set.");
         }
         return;
     }
 
-    if (!scanning) {
+    if (!state.scanning) {
         try {
-            if (!selectedRecords) {
+            if (!state.selectedRecords) {
                 console.warn('No records selected');
                 return;
             }
-            scanning = scan(selectedTableId, selectedRecords, mappings)
-                .then(() => scanning = null)
+            state.scanning = scan(state.selectedTableId, state.selectedRecords, mappings)
+                .then(() => state.scanning = null)
                 .catch((error) => {
                     console.error('Scan error:', error);
-                    scanning = null;
+                    state.scanning = null;
                 });
         } catch (error) {
             console.error('Error in scanOnNeed:', error);
-            scanning = null;
+            state.scanning = null;
         }
     }
 }
@@ -735,16 +733,16 @@ function defaultMapping(record, mappings) {
 
 // Modified selectOnMap to check for map initialization
 function selectOnMap(rec) {
-    if (!mapInitialized || !markersLayer) {
+    if (!state.mapInitialized || !state.markersLayer) {
         console.warn("Map not initialized in selectOnMap, delaying selection.");
         setTimeout(() => selectOnMap(rec), 500); // Retry
         return;
     }
     // If this is already selected row, do nothing (to avoid flickering)
-    if (selectedRowId === rec.id) { return; }
+    if (state.selectedRowId === rec.id) { return; }
 
-    selectedRowId = rec.id;
-    if (mode === 'single') {
+    state.selectedRowId = rec.id;
+    if (state.mode === 'single') {
       updateMap([rec]);
     } else {
     const marker = selectMaker(rec.id); // Call selectMaker *after* map initialization
@@ -760,15 +758,15 @@ function selectOnMap(rec) {
 function zoomToMarker(marker) {
     if (!marker) return;
 
-    const cluster = markersLayer.getVisibleParent(marker);
+    const cluster = state.markersLayer.getVisibleParent(marker);
     if (cluster) {
         const bounds = cluster.getBounds().pad(0.5);
-        amap.fitBounds(bounds);
+        state.amap.fitBounds(bounds);
         setTimeout(() => {
             marker.openPopup();
         }, 500);
     } else {
-        amap.setView(marker.getLatLng(), Math.max(amap.getZoom(), 15));
+        state.amap.setView(marker.getLatLng(), Math.max(state.amap.getZoom(), 15));
         marker.openPopup();
     }
 }
@@ -778,101 +776,96 @@ function zoomToMarker(marker) {
 function cleanup() {
     // Clean up Grist handlers first
     try {
-        if (gristInitialized) {
+        if (state.gristInitialized) {
             grist.onRecord(() => { });
             grist.onRecords(() => { });
             grist.on('message', () => { });
-            gristInitialized = false;
-            selectedTableId = null;
-            selectedRecords = null;
-            selectedRowId = null;
+            state.gristInitialized = false;
+            state.selectedTableId = null;
+            state.selectedRecords = null;
+            state.selectedRowId = null;
         }
     } catch (e) {
         console.error('Error cleaning up Grist handlers:', e);
     }
 
-    mapReady = false;
-    mapInitialized = false;
-    minimapInitialized = false;
-    mapContainerReady = false;
+    state.mapReady = false;
+    state.mapInitialized = false;
+    state.minimapInitialized = false;
+    state.mapContainerReady = false;
 
     // Clean up map event handlers
-    mapEventHandlers.forEach(cleanup => {
+    state.mapEventHandlers.forEach(cleanup => {
         try {
             cleanup();
         } catch (e) {
             console.error('Error cleaning up map event handler:', e);
         }
     });
-    mapEventHandlers = [];
+    state.mapEventHandlers = [];
 
     // Clean up other event handlers
-    cleanupHandlers.forEach(cleanup => {
+    state.cleanupHandlers.forEach(cleanup => {
         try {
             cleanup();
         } catch (e) {
             console.error('Error during cleanup:', e);
         }
     });
-    cleanupHandlers = [];
+    state.cleanupHandlers = [];
 
     // Clean up search results and pane
-    if (searchResults) {
+    if (state.searchResults) {
         try {
-            searchResults.clearLayers();
-            if (amap) {
-                amap.removeLayer(searchResults);
-                if (amap.getPane('searchPane')) {
-                    amap.getPane('searchPane').remove();
+            state.searchResults.clearLayers();
+            if (state.amap) {
+                state.amap.removeLayer(state.searchResults);
+                if (state.amap.getPane('searchPane')) {
+                    state.amap.getPane('searchPane').remove();
                 }
             }
-            searchResults = null;
+            state.searchResults = null;
         } catch (e) {
             console.error('Error cleaning up search results:', e);
         }
     }
 
     // Clean up markers
-    if (markersLayer) {
+    if (state.markersLayer) {
         try {
-            markersLayer.clearLayers();
-            if (amap) {
-                amap.removeLayer(markersLayer);
+            state.markersLayer.clearLayers();
+            if (state.amap) {
+                state.amap.removeLayer(state.markersLayer);
             }
-            markersLayer = null;
+            state.markersLayer = null;
         } catch (e) {
             console.error('Error cleaning up markers:', e);
         }
     }
 
     // Clean up map
-    if (amap) {
+    if (state.amap) {
         try {
             // Remove all layers
-            amap.eachLayer((layer) => {
+            state.amap.eachLayer((layer) => {
                 try {
-                    amap.removeLayer(layer);
+                    state.amap.removeLayer(layer);
                 } catch (e) {
                     console.error('Error removing layer:', e);
                 }
             });
 
             // Remove map instance
-            amap.remove();
-            amap = null;
+            state.amap.remove();
+            state.amap = null;
         } catch (e) {
             console.error('Error removing map:', e);
         }
     }
 
     // Clean up DOM
-    if (mapContainer) {
-        mapContainer.innerHTML = '';
+    if (state.mapContainer) {
+        state.mapContainer.innerHTML = '';
     }
 
-    // Reset minimap iframe
-    const iframe = document.getElementById('googleMap');
-    if (iframe) {
-        iframe.src = 'about:blank';
-    }
-}
+    // Reset
