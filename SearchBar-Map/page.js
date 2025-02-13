@@ -61,12 +61,12 @@ const baseLayers = {
     maxZoom: 19
   }),
   "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
+    attribution: '',
     maxZoom: 19
   })
 };
 
-const defaultBaseLayer = "OpenStreetMap"; // Use OpenStreetMap as default since it's more reliable
+const defaultBaseLayer = "MapTiler Satellite"; // Use OpenStreetMap as default since it's more reliable
 
 function createPopupContent(record) {
   return `
@@ -121,7 +121,7 @@ function initializeMinimap(amap) {
   const toggleHandler = () => {
     minimapContainer.classList.toggle('collapsed');
     const isCollapsed = minimapContainer.classList.contains('collapsed');
-    if (toggleText) toggleText.textContent = isCollapsed ? 'Expand Map' : 'Minimize Map';
+    if (toggleText) toggleText.textContent = isCollapsed ? 'Expand' : 'Collapse';
     if (toggleIcon) toggleIcon.textContent = isCollapsed ? '🔼' : '🔽';
     if (!isCollapsed) {
       const center = amap.getCenter();
@@ -170,24 +170,6 @@ function initializeMap() {
   try {
     cleanup();
     ensureMapContainer();
-
-    // Create map with Google Hybrid as default
-    const googleHybrid = baseLayers["Google Hybrid"];
-    amap = L.map('map', {
-      center: [45.5283, -122.8081],
-      zoom: 4,
-      wheelPxPerZoomLevel: 90,
-      zoomControl: true,
-      attributionControl: false,
-      preferCanvas: true,
-      renderer: L.canvas(),
-      maxZoom: 19,
-      minZoom: 2,
-      fadeAnimation: false,
-      zoomAnimation: false,
-      markerZoomAnimation: false,
-      layers: [googleHybrid] // Set Google Hybrid as default layer
-    });
 
     // Add layer control
     L.control.layers(baseLayers, {}, { 
