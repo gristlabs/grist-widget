@@ -95,8 +95,8 @@ function createPopupContent(record) {
       </div>
       ${record.ImageURL ? `
         <div class="relative h-24">
-          <img src="${record.ImageURL}" alt="Property Image" 
-               class="w-full h-full object-cover cursor-pointer hover:opacity-90" 
+          <img src="${record.ImageURL}" alt="Property Image"
+               class="w-full h-full object-cover cursor-pointer hover:opacity-90"
                onclick="openLightbox('${record.ImageURL}')" />
         </div>
       ` : ''}
@@ -412,8 +412,9 @@ function updateMap(records) {
 
     try {
         if (!records.length) {
-            showProblem("No data found yet");
-            return;
+          //showProblem("No data found yet"); //Removed to avoid conflict
+          console.warn("No data to display");
+          return;
         }
 
         // Clean up existing markers and handlers
@@ -674,9 +675,6 @@ function scanOnNeed(mappings) {
     }
 }
 
-function showProblem(txt) {
-    document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
-}
 
 // Little extra wrinkle to deal with showing differences.  Should be taken
 // care of by Grist once diffing is out of beta.
@@ -868,4 +866,12 @@ function cleanup() {
         state.mapContainer.innerHTML = '';
     }
 
-    // Reset
+    // Reset minimap iframe
+    const iframe = document.getElementById('googleMap');
+    if (iframe) {
+        iframe.src = 'about:blank';
+    }
+}
+
+// Add window unload handlers and global error handler
+window.addEventListener
