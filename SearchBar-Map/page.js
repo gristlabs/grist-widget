@@ -61,7 +61,7 @@ const baseLayers = {
     maxZoom: 19
   }),
   "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '',
+    attribution: '© OpenStreetMap contributors',
     maxZoom: 19
   })
 };
@@ -121,7 +121,7 @@ function initializeMinimap(amap) {
   const toggleHandler = () => {
     minimapContainer.classList.toggle('collapsed');
     const isCollapsed = minimapContainer.classList.contains('collapsed');
-    if (toggleText) toggleText.textContent = isCollapsed ? 'Expand' : 'Collapse';
+    if (toggleText) toggleText.textContent = isCollapsed ? 'Expand Map' : 'Minimize Map';
     if (toggleIcon) toggleIcon.textContent = isCollapsed ? '🔼' : '🔽';
     if (!isCollapsed) {
       const center = amap.getCenter();
@@ -170,6 +170,24 @@ function initializeMap() {
   try {
     cleanup();
     ensureMapContainer();
+
+    // Create map with Google Hybrid as default
+    const googleHybrid = baseLayers["Google Hybrid"];
+    amap = L.map('map', {
+      center: [45.5283, -122.8081],
+      zoom: 4,
+      wheelPxPerZoomLevel: 90,
+      zoomControl: true,
+      attributionControl: false,
+      preferCanvas: true,
+      renderer: L.canvas(),
+      maxZoom: 19,
+      minZoom: 2,
+      fadeAnimation: false,
+      zoomAnimation: false,
+      markerZoomAnimation: false,
+      layers: [googleHybrid] // Set Google Hybrid as default layer
+    });
 
     // Add layer control
     L.control.layers(baseLayers, {}, { 
@@ -606,40 +624,6 @@ function getInfo(rec) {
   };
   return result;
 }
-
-// Function to clear last added markers. Used to clear the map when new record is selected.
-let clearMakers = () => {};
-
-let markers; // Declare markers outside updateMap for wider scope
-
-// --- Base Layers from Grist-GIS.js ---
-const baseLayers = {
-  "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-    attribution: 'Google Hybrid',
-    maxZoom: 20,
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-  }),
-  "MapTiler Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
-    attribution: '',
-    maxZoom: 20
-  }),
-  "ArcGIS": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-    attribution: '',
-    maxZoom: 19
-  }),
-  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
-  })
-};
-
-
-
-
-
-
-
-
 
 function selectMaker(id) {
   // Reset the options from the previously selected marker.
