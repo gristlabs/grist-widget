@@ -4,49 +4,34 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <!-- MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <!-- Geocoder CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.css" />
-    <!-- Tippy.js CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/dist/tippy.css" />
-    <!-- Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-    <!-- DaisyUI CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
     <!-- Custom CSS -->
     <link rel="stylesheet" href="screen.css" />
   </head>
-  <body class="bg-[#B9DFF8] min-h-screen">
-    <!-- Map Containers -->
-    <div id="map" class="w-full h-screen"></div>
-    <div id="minimap-container">
+  <body>
+    <div id="map"></div>
+    
+    <div id="minimap-container" class="collapsed">
       <button id="toggleMinimap">
-        <span class="toggle-text">Minimize Map</span>
-        <span class="toggle-icon">🔽</span>
+        <span class="toggle-text">Expand Map</span>
+        <span class="toggle-icon">🔼</span>
       </button>
-      <iframe id="googleMap" src="https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA" allowfullscreen></iframe>
+      <iframe id="googleMap" src="about:blank" data-src="https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ui=0" allowfullscreen></iframe>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- MarkerCluster JS -->
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <!-- ESRI Leaflet Geocoder JS -->
     <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0/esri-leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
-    <!-- Leaflet Sync JS -->
-    <script src="https://unpkg.com/leaflet-sync/dist/leaflet.sync.js"></script>
-    <!-- Tippy.js JS -->
-    <script src="https://unpkg.com/tippy.js@6.3.7/dist/tippy.umd.min.js"></script>
-    <!-- Tailwind JS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Grist API -->
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <!-- Custom JS -->
-    <script src="page.js"></script>
+    <script src="page.js" defer></script>
   </body>
 </html>
