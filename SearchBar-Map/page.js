@@ -27,6 +27,8 @@ let mapContainerReady = false;
 let popups = {};
 
 
+
+
 // Required column names
 const Name = "Name";
 const Longitude = "Longitude";
@@ -643,8 +645,26 @@ async function scan(tableId, records, mappings) {
 }
 
 function scanOnNeed(mappings) {
-  if (!scanning && selectedTableId && selectedRecords) {
-    scanning = scan(selectedTableId, selectedRecords, mappings).then(() => scanning = null).catch(() => scanning = null);
+  if (!scanning && mappings) {
+    try {
+      if (!selectedTableId) {
+        console.warn('Table ID not yet set');
+        return;
+      }
+      if (!selectedRecords) {
+        console.warn('No records selected');
+        return;
+      }
+      scanning = scan(selectedTableId, selectedRecords, mappings)
+        .then(() => scanning = null)
+        .catch((error) => {
+          console.error('Scan error:', error);
+          scanning = null;
+        });
+    } catch (error) {
+      console.error('Error in scanOnNeed:', error);
+      scanning = null;
+    }
   }
 }
 
@@ -703,14 +723,8 @@ function selectMaker(id) {
 
 
 
-grist.on('message', (e) => {
-  if (e.tableId) {
-    selectedTableId = e.tableId;
-    console.log('Table ID set:', selectedTableId);
-  }
-});
-
 function hasCol(col, anything) {
+
   return anything && typeof anything === 'object' && col in anything;
 }
 
@@ -808,6 +822,21 @@ grist.onNewRecord(() => {
 
 // Add cleanup function
 function cleanup() {
+  // Clean up Grist handlers first
+  try {
+    if (gristInitialized) {
+      grist.onRecord(() => {});
+      grist.onRecords(() => {});
+      grist.on('message', () => {});
+      gristInitialized = false;
+      selectedTableId = null;
+      selectedRecords = null;
+      selectedRowId = null;
+    }
+  } catch (e) {
+    console.error('Error cleaning up Grist handlers:', e);
+  }
+
   mapReady = false;
   mapInitialized = false;
   minimapInitialized = false;
@@ -899,41 +928,107 @@ function cleanup() {
 window.addEventListener('unload', cleanup);
 window.addEventListener('beforeunload', cleanup);
 
-window.onerror = function(msg, url, lineNo, columnNo, error) {
-  const errorDetails = {
-    message: msg,
-    url: url,
-    line: lineNo,
-    column: columnNo,
-    error: error
-  };
-  
-  console.error('Global error:', errorDetails);
+// Initialize Grist
+let gristInitialized = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Clean up any existing state
   cleanup();
-  showProblem('An error occurred. Please refresh the page.');
-  return false;
-};
 
-// Grist integration
+  // Set up error handler first
+  window.onerror = function(msg, url, lineNo, columnNo, error) {
+    const errorDetails = {
+      message: msg,
+      url: url,
+      line: lineNo,
+      column: columnNo,
+      error: error
+    };
+    console.error('Global error:', errorDetails);
+    cleanup();
+    showProblem('An error occurred. Please refresh the page.');
+    return false;
+  };
 
-grist.ready({
-  columns: [
-    { name: "Name", type: "Text" },
-    { name: "Latitude", type: "Numeric" },
-    { name: "Longitude", type: "Numeric" },
-    { name: "Property_Type", type: "Choice", optional: true },
-    { name: "Tenants", type: "ChoiceList", optional: true },
-    { name: "Secondary_Type", type: "ChoiceList", optional: true },
-    { name: "ImageURL", type: "Text", optional: true },
-    { name: "CoStar_URL", type: "Text", optional: true },
-    { name: "County_Hyper", type: "Text", optional: true },
-    { name: "GIS", type: "Text", optional: true },
-    { name: "Address", type: "Text", optional: true },
-    { name: "GeocodedAddress", type: "Text", optional: true },
-    { name: "Geocode", type: "Bool", optional: true }
-  ],
-  allowSelectBy: true,
-  onEditPermission: (hasEditPerm) => {
-    writeAccess = hasEditPerm;
+  // Initialize Grist with proper error handling
+  try {
+    grist.ready({
+      columns: [
+        { name: "Name", type: "Text" },
+        { name: "Latitude", type: "Numeric" },
+        { name: "Longitude", type: "Numeric" },
+        { name: "Property_Type", type: "Choice", optional: true },
+        { name: "Tenants", type: "ChoiceList", optional: true },
+        { name: "Secondary_Type", type: "ChoiceList", optional: true },
+        { name: "ImageURL", type: "Text", optional: true },
+        { name: "CoStar_URL", type: "Text", optional: true },
+        { name: "County_Hyper", type: "Text", optional: true },
+        { name: "GIS", type: "Text", optional: true },
+        { name: "Address", type: "Text", optional: true },
+        { name: "GeocodedAddress", type: "Text", optional: true },
+        { name: "Geocode", type: "Bool", optional: true }
+      ],
+      allowSelectBy: true,
+      onEditPermission: (hasEditPerm) => {
+        writeAccess = hasEditPerm;
+      }
+    }).then(() => {
+      gristInitialized = true;
+      console.log('Grist initialized');
+
+      // Set up message handler after initialization
+      grist.on('message', (e) => {
+        if (e.tableId) {
+          selectedTableId = e.tableId;
+          console.log('Table ID set:', selectedTableId);
+        }
+      });
+
+      // Set up record handlers
+      grist.onRecord((record, mappings) => {
+        try {
+          if (!record || !record.id) return;
+          selectedRowId = record.id;
+          if (mode === 'single') {
+            lastRecord = grist.mapColumnNames(record) || record;
+            selectOnMap(lastRecord);
+            if (selectedTableId) {
+              scanOnNeed(defaultMapping(record, mappings));
+            }
+          } else {
+            const marker = selectMaker(record.id);
+            if (marker) {
+              zoomToMarker(marker);
+            }
+          }
+        } catch (error) {
+          console.error('Error in onRecord handler:', error);
+        }
+      });
+
+      grist.onRecords((data, mappings) => {
+        try {
+          selectedRecords = data;
+          lastRecords = grist.mapColumnNames(data) || data;
+          if (mode !== 'single') {
+            updateMap(lastRecords);
+            if (lastRecord) {
+              selectOnMap(lastRecord);
+            }
+            if (selectedTableId) {
+              scanOnNeed(defaultMapping(data[0], mappings));
+            }
+          }
+        } catch (error) {
+          console.error('Error in onRecords handler:', error);
+        }
+      });
+    }).catch(error => {
+      console.error('Failed to initialize Grist:', error);
+      showProblem('Failed to initialize. Please refresh the page.');
+    });
+  } catch (error) {
+    console.error('Error during Grist initialization:', error);
+    showProblem('Failed to initialize. Please refresh the page.');
   }
 });
