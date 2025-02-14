@@ -1,0 +1,137 @@
+/* Map and controls */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#map {
+  width: 100vw; 
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Control buttons */
+.leaflet-control-zoom {
+  font-size: 24px;
+}
+
+.leaflet-control-zoom a {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.leaflet-control-layers {
+  font-size: 18px;
+}
+
+.leaflet-control-layers-toggle {
+  width: 40px;
+  height: 40px;
+  background-size: 30px 30px;
+}
+
+.leaflet-control-geocoder {
+  font-size: 18px;
+}
+
+.leaflet-control-geocoder input {
+  font-size: 18px;
+  padding: 12px;
+  width: calc(100% - 24px);
+}
+
+/* Popup styling */
+.custom-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 0;
+  width: 240px !important;
+}
+
+.custom-popup .leaflet-popup-close-button {
+  top: 8px;
+  right: 8px;
+  color: white;
+  z-index: 10;
+}
+
+.action-buttons {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card figure:hover .action-buttons {
+  opacity: .9;
+}
+
+.button-container {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.copyable {
+  cursor: pointer;
+  transition: background-color 0.3s;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.copyable:hover {
+  background-color: #f3f4f6;
+}
+
+.copy-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  animation: fadeInOut 1s ease;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
