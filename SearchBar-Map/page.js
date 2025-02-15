@@ -81,40 +81,34 @@ function updateMap(data) {
     });
 
     const popupContent = `
-      <div class="card w-full bg-white p-0 m-0">
-        <figure class="relative m-0">
+      <div class="card bg-base-100 shadow-xl">
+        <figure class="px-4 pt-4">
           ${record.ImageURL ? `
-            <div class="image-container relative">
-              <img src="${record.ImageURL}" alt="${record.Name}" class="w-full h-33 object-cover"/>
-            </div>
+            <img src="${record.ImageURL}" alt="${record.Name}" class="rounded-xl w-full h-40 object-cover" />
           ` : `
-            <div class="w-full h-33 bg-gray-100 flex items-center justify-center">
+            <div class="w-full h-40 bg-gray-100 flex items-center justify-center rounded-xl">
               <span class="text-gray-400">No Image Available</span>
             </div>
           `}
-          <div class="action-buttons">
-            <div class="button-container">
-              <a href="${record.County_Hyper || '#'}" class="action-btn" title="County Property Search" target="_blank">🔍</a>
-              <a href="${record.GIS || '#'}" class="action-btn" title="GIS" target="_blank">🌎</a>
-              <button class="action-btn" onclick="copyToClipboard(this)" data-copy="${record.Address}" title="Copy Address">📋</button>
-              <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${record.Latitude},${record.Longitude}" class="action-btn" title="Street View" target="_blank">🛣️</a>
-              <a href="${record.CoStar_URL || '#'}" class="action-btn" title="CoStar" target="_blank">🏢</a>
-            </div>
-          </div>
         </figure>
-        <div class="card-content p-2">
-          <h2 class="text-lg font-semibold cursor-pointer" onclick="toggleDetails(this)">${record.Name}</h2>
-          <div class="details hidden">
-            <p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard(this)">${record.Address}</span></p>
-            <p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard(this)">${record.id}</span></p>
+        <div class="card-body p-4">
+          <h2 class="card-title text-lg">${record.Name}</h2>
+          <div class="text-sm">
+            <p><strong>Address:</strong> ${record.Address}</p>
+            <p><strong>Property ID:</strong> ${record.id}</p>
+          </div>
+          <div class="card-actions justify-end mt-2">
+            <a href="${record.County_Hyper || '#'}" class="btn btn-sm btn-outline" target="_blank">County</a>
+            <a href="${record.GIS || '#'}" class="btn btn-sm btn-outline" target="_blank">GIS</a>
+            <a href="${record.CoStar_URL || '#'}" class="btn btn-sm btn-outline" target="_blank">CoStar</a>
           </div>
         </div>
       </div>
     `;
 
     marker.bindPopup(popupContent, {
-      maxWidth: 240,
-      minWidth: 240,
+      maxWidth: 300,
+      minWidth: 300,
       className: 'custom-popup'
     });
 
