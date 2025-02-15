@@ -45,15 +45,21 @@ function initializeMap() {
 
   const searchControl = L.esri.Geocoding.geosearch({
     providers: [L.esri.Geocoding.arcgisOnlineProvider()],
-    position: 'topleft'
+    position: 'topleft',
+    useMapBounds: false // Ensure search is not restricted to current map bounds
   }).addTo(amap);
 
   const searchResults = L.layerGroup().addTo(amap);
 
   searchControl.on('results', function (data) {
-    searchResults.clearLayers();
-    for (let i = data.results.length - 1; i >= 0; i--) {
-      searchResults.addLayer(L.marker(data.results[i].latlng, { icon: searchIcon }));
+    searchResults.clearLayers(); // Clear previous results
+    if (data.results.length > 0) {
+      for (let i = 0; i < data.results.length; i++) {
+        const result = data.results[i];
+        const marker = L.marker(result.latlng, { icon: searchIcon });
+        marker.bindPopup(`<b>${result.text}</b>`).openPopup();
+        searchResults.addLayer(marker);
+      }
     }
   });
 
