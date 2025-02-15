@@ -47,11 +47,12 @@ body {
   padding: 0;
   overflow: hidden;
   border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .custom-popup .leaflet-popup-content {
   margin: 0;
-  width: 240px !important;
+  width: 300px !important;
 }
 
 .custom-popup .leaflet-popup-close-button {
