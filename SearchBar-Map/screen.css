@@ -1,3 +1,5 @@
+/* screen.css */
+
 /* Map and controls */
 body {
   margin: 0;
@@ -5,7 +7,7 @@ body {
 }
 
 #map {
-  width: 100vw; 
+  width: 100vw;
   height: 100vh;
   margin: 0;
   padding: 0;
@@ -42,17 +44,16 @@ body {
   width: calc(100% - 24px);
 }
 
-/* Popup styling */
+/* Popup styling -  Copied and adapted from your second example */
 .custom-popup .leaflet-popup-content-wrapper {
   padding: 0;
   overflow: hidden;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .custom-popup .leaflet-popup-content {
   margin: 0;
-  width: 300px !important;
+  width: 240px !important; /* Important to override Leaflet's default */
 }
 
 .custom-popup .leaflet-popup-close-button {
@@ -135,4 +136,15 @@ body {
   20% { opacity: 1; }
   80% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+/* Add styles for the image container */
+.image-container {
+  position: relative; /* Make sure the container is positioned */
+  overflow: hidden;   /* Hide any overflowing parts of the image */
+
+}
+.h-33{
+  height: 8.25rem; /* or whatever height you desire */
+
 }
