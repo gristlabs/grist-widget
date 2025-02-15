@@ -1,11 +1,10 @@
-<!-- HTML file (index.html): The HTML file contains the tags for the Map and Settings, and may include your custom XYZ tile provider in the mapSource field. -->
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -15,22 +14,19 @@
     <link rel="stylesheet" href="screen.css" />
   </head>
   <body>
-    <div id="map"></div>
-    
-    <div id="minimap-container" class="collapsed">
-      <button id="toggleMinimap">
-        <span class="toggle-text">Expand Map</span>
-        <span class="toggle-icon">🔼</span>
-      </button>
-      <iframe id="googleMap" src="about:blank" data-src="https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ui=0" allowfullscreen></iframe>
-    </div>
+    <!-- Map Container -->
+    <div id="map" class="w-full h-screen"></div>
 
-    <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- ESRI Leaflet Geocoder JS -->
     <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0/esri-leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
+    <!-- Grist API -->
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <script src="page.js" defer></script>
+    <!-- Custom JS -->
+    <script src="page.js"></script>
   </body>
 </html>
