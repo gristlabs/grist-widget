@@ -200,8 +200,15 @@
 
   <body>
     <header>
-      <h1>sgfroerer's Grist Projects</h1>
-      <p>Explore my Grist widgets, maps, and dashboard creations.</p>
+        <h1>sgfroerer's Grist Projects</h1>
+        <nav>
+            <div>
+                <a href="https://docs.getgrist.com/nKvqCFVeW3Yt/Custom-Widgets" target="_blank" rel="noopener noreferrer">
+                    🥼 Custom Widgets 🥼
+                </a>
+            </div>
+        </nav>
+        <p>Explore my Grist widgets, maps, and dashboard creations.</p>
     </header>
 
     <div class="container">
@@ -486,6 +493,437 @@
           element.classList.add('working');
           element.textContent = 'Working';
         }
+      }
+    </script>
+  </body>
+</html><!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sgfroerer's Grist Projects</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f7f7f7;
+        margin: 0;
+        padding: 0;
+        color: #333;
+      }
+
+      header {
+        background-color: #3498db;
+        color: white;
+        text-align: center;
+        padding: 40px 0;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 2.5em;
+        font-weight: 600;
+      }
+
+      header p {
+        font-size: 1.2em;
+        color: #ecf0f1;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .section-header {
+        font-size: 2em;
+        font-weight: bold;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+        color: #2c3e50;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        text-align: left;
+        position: relative; /* For status badge positioning */
+      }
+
+      .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .card-header {
+        margin-bottom: 15px;
+      }
+
+      .card-header a {
+        text-decoration: none;
+        color: #3498db;
+        font-weight: 500;
+        font-size: 1.2em;
+        display: block; /* Make the link a block element */
+      }
+
+      .card-header a:hover {
+        text-decoration: underline;
+      }
+
+      .description {
+        margin: 10px 0;
+        font-size: 1rem;
+        color: #777;
+        line-height: 1.4;
+      }
+
+      .btn {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        font-size: 1rem;
+        display: inline-block;
+        margin-top: 15px;
+      }
+
+      .btn:hover {
+        background-color: #2980b9;
+      }
+
+      #preview {
+        margin-top: 50px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: none;
+      }
+
+      #preview iframe {
+        width: 100%;
+        height: 600px;
+        border: none;
+      }
+
+      /* Status Badge */
+      .status-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        color: white;
+        font-weight: bold;
+      }
+
+      .status-badge.working {
+        background-color: #2ecc71; /* Green */
+      }
+
+      .status-badge.not-working {
+        background-color: #e74c3c; /* Red */
+      }
+
+      /* GeoJSON List Styling */
+      .geojson-list {
+        list-style: none;
+        padding: 0;
+      }
+
+      .geojson-list li {
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .geojson-list li a {
+        text-decoration: none;
+        color: #3498db;
+        font-weight: 500;
+      }
+
+      .geojson-list li a:hover {
+        text-decoration: underline;
+      }
+      i.fa-solid.fa-file-code {
+        color: #3498db; /* or any color you prefer */
+        margin-right: 5px; /* to add a little spacing between icon and text */
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+        <h1>sgfroerer's Grist Projects</h1>
+        <nav>
+            <div>
+                <a href="https://github.com/sgfroerer/gmaps-grist-widgets/tree/master/url-viewer" target="_blank" rel="noopener noreferrer">
+                    url-viewer
+                </a>
+            </div>
+        </nav>
+        <p>Explore my Grist widgets, maps, and dashboard creations.</p>
+    </header>
+
+    <div class="container">
+
+      <section>
+        <h2 class="section-header">Grist Widgets</h2>
+        <div class="grid">
+          <!-- Grist Widgets -->
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/custom-widget-builder/" target="_blank">custom-widget-builder</a>
+            </div>
+            <p class="description">Custom Widget Builder</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/custom-widget-builder/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/clipboard/" target="_blank">clipboard</a>
+            </div>
+            <p class="description">Grist clipboard widget</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/clipboard/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/url-viewer/" target="_blank">url-viewer</a>
+            </div>
+            <p class="description">Grist Computed URL Viewer</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/url-viewer/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/webframe/" target="_blank">webframe</a>
+            </div>
+            <p class="description">A Grist widget that will load any URL into an iframe.</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/webframe/')">Preview</button>
+          </div>
+
+            <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/Image-Carousel/" target="_blank">Image-Carousel</a>
+            </div>
+            <p class="description">Current use image carousel, Only displays up to 3 images for a property (the first 3 image urls)</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Image-Carousel/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge not-working">Not Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/Custom-Button/" target="_blank">Custom-Button</a>
+            </div>
+            <p class="description">Santa's Dashboard</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Custom-Button/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge not-working">Not Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/invoices/" target="_blank">invoices</a>
+            </div>
+            <p class="description"></p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/invoices/')">Preview</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-header">Maps</h2>
+        <div class="grid">
+
+          <!-- Maps -->
+          <div class="card">
+            <span class="status-badge not-working">Not Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/ArcGIS-API/" target="_blank">ArcGIS-API</a>
+            </div>
+            <p class="description">Oregon Parcel Map</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/ArcGIS-API/')">Preview</button>
+          </div>
+
+           <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/County-SimpleMap/" target="_blank">County-SimpleMap</a>
+            </div>
+            <p class="description">SVG Map</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/County-SimpleMap/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/dropbox-embed/" target="_blank">dropbox-embed</a>
+            </div>
+            <p class="description">Current Working Grist Map Custom Widget. Source control under map, scrollable, No search, No base layer changer, Shows all 10,000+ properties correctly</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/dropbox-embed/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/Map-nomini/" target="_blank">Map-nomini</a>
+            </div>
+            <p class="description">Amazing Standalone map with great pop-ups. No mini-map.</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Map-nomini/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/googleSheet-map/" target="_blank">googleSheet-map</a>
+            </div>
+            <p class="description">MapBox map gets data from google sheet file</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/googleSheet-map/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge not-working">Not Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/SearchBar-Map/" target="_blank">SearchBar-Map</a>
+            </div>
+            <p class="description">Expandable button, map doesn't load</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/SearchBar-Map/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/Tenant-Logos-fixed/" target="_blank">Tenant-Logos-fixed</a>
+            </div>
+            <p class="description">Leaflet map with logos of tenants fixed on map</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Tenant-Logos-fixed/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/tree/" target="_blank">tree</a>
+            </div>
+            <p class="description">Map with tenant logos as custom markers, clustered</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/tree/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge working">Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/Standalone-Map/" target="_blank">Standalone-Map</a>
+            </div>
+            <p class="description">Everything but map doesn't collapse/expand</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Standalone-Map/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge not-working">Not Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/Grist-GIS/" target="_blank">Grist-GIS</a>
+            </div>
+            <p class="description">Second iteration of Grist Map but can't access all properties. Search/Change base Layer functionality/Google MyMaps mini-map synced to main Map/Only shows around 1,320 properties</p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Grist-GIS/')">Preview</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-header">Dashboards</h2>
+        <div class="grid">
+          <!-- Dashboards -->
+          <div class="card">
+            <span class="status-badge not-working">Not Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/Market-Dashboard/" target="_blank">Market-Dashboard</a>
+            </div>
+            <p class="description"></p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/Market-Dashboard/')">Preview</button>
+          </div>
+
+          <div class="card">
+            <span class="status-badge not-working">Not Working</span>
+            <div class="card-header">
+              <a href="https://sgfroerer.github.io/gmaps-grist-widgets/dashboard/" target="_blank">dashboard</a>
+            </div>
+            <p class="description"></p>
+            <button class="btn" onclick="previewProject('https://sgfroerer.github.io/gmaps-grist-widgets/dashboard/')">Preview</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-header">GeoJSON Files</h2>
+        <ul class="geojson-list">
+          <li>
+            <a href="https://sgfroerer.github.io/gmaps-grist-widgets/geojson/Properties.geojson" target="_blank"><i class="fa-solid fa-file-code"></i> Properties.geojson</a>
+            <button class="btn" onclick="previewGeoJSON('https://embed.github.com/view/geojson/sgfroerer/gmaps-grist-widgets/geojson/Properties.geojson?height=300&width=500')">Preview</button>
+          </li>
+          <li>
+            <a href="https://sgfroerer.github.io/gmaps-grist-widgets/geojson/Refined.geojson" target="_blank"><i class="fa-solid fa-file-code"></i> Refined.geojson</a>
+            <button class="btn" onclick="previewGeoJSON('https://embed.github.com/view/geojson/sgfroerer/gmaps-grist-widgets/geojson/Refined.geojson?height=300&width=500')">Preview</button>
+          </li>
+          <li>
+            <a href="https://sgfroerer.github.io/gmaps-grist-widgets/geojson/Tenant_Icons.geojson" target="_blank"><i class="fa-solid fa-file-code"></i> Tenant_Icons.geojson</a>
+            <button class="btn" onclick="previewGeoJSON('https://embed.github.com/view/geojson/sgfroerer/gmaps-grist-widgets/geojson/Tenant_Icons.geojson?height=300&width=500')">Preview</button>
+          </li>
+          <li>
+            <a href="https://sgfroerer.github.io/gmaps-grist-widgets/geojson/Wireless.geojson" target="_blank"><i class="fa-solid fa-file-code"></i> Wireless.geojson</a>
+            <button class="btn" onclick="previewGeoJSON('https://embed.github.com/view/geojson/sgfroerer/gmaps-grist-widgets/geojson/Wireless.geojson?height=300&width=500')">Preview</button>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Preview Window -->
+      <div id="preview">
+        <iframe id="preview-frame" src=""></iframe>
+      </div>
+
+    </div>
+
+    <script>
+      function previewProject(url) {
+        const preview = document.getElementById('preview');
+        const frame = document.getElementById('preview-frame');
+        frame.src = url;
+        preview.style.display = 'block';
+        preview.scrollIntoView({ behavior: 'smooth' });
+      }
+
+      function previewGeoJSON(embedUrl) {
+        const preview = document.getElementById('preview');
+        const frame = document.getElementById('preview-frame');
+        frame.src = embedUrl;
+        preview.style.display = 'block';
+        preview.scrollIntoView({ behavior: 'smooth' });
       }
     </script>
   </body>
