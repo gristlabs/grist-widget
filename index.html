@@ -18,20 +18,57 @@
         background-color: #3498db;
         color: white;
         text-align: center;
-        padding: 40px 0;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        padding: 25px 0;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       }
 
-      header h1 {
-        margin: 0;
-        font-size: 2.5em;
-        font-weight: 600;
+      .header-title {
+        font-size: 2.8em;
+        font-weight: 700;
+        margin-bottom: 10px;
       }
 
-      header p {
-        font-size: 1.2em;
-        color: #ecf0f1;
+      .glow-link {
+        font-size: 1.4em;
+        font-weight: bold;
+        color: white;
+        text-decoration: none;
+        padding: 10px 15px;
+        display: inline-block;
+        transition: text-shadow 0.3s ease-in-out;
+      }
+
+      .glow-link:hover {
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+      }
+
+      .nav-links {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      .codepen-link {
+          color: #ecf0f1;
+          text-decoration: none;
+          font-size: 1.1em;
+          padding: 8px 15px;
+          border-radius: 5px;
+          background-color: rgba(255, 255, 255, 0.1);
+          transition: background-color 0.2s ease, transform 0.2s ease;
+      }
+
+      .codepen-link:hover {
+          color: #fff;
+          background-color: rgba(255, 255, 255, 0.2);
+          transform: scale(1.05);
+      }
+
+      .codepen-logo {
+          width: 35px;
+          height: auto;
+          margin: 0 15px;
       }
 
       .container {
@@ -47,222 +84,21 @@
         border-bottom: 2px solid #3498db;
         padding-bottom: 10px;
         color: #2c3e50;
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
-      }
-
-      .card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        padding: 25px;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        text-align: left;
-        position: relative; /* For status badge positioning */
-      }
-
-      .card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-      }
-
-      .card-header {
-        margin-bottom: 15px;
-      }
-
-      .card-header a {
-        text-decoration: none;
-        color: #3498db;
-        font-weight: 500;
-        font-size: 1.2em;
-        display: block; /* Make the link a block element */
-      }
-
-      .card-header a:hover {
-        text-decoration: underline;
-      }
-
-      .description {
-        margin: 10px 0;
-        font-size: 1rem;
-        color: #777;
-        line-height: 1.4;
-      }
-
-      .btn {
-        background-color: #3498db;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        font-size: 1rem;
-        display: inline-block;
-        margin-top: 15px;
-      }
-
-      .btn:hover {
-        background-color: #2980b9;
-      }
-
-      #preview {
-        margin-top: 50px;
-        border: 1px solid #ddd;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        display: none;
-      }
-
-      #preview iframe {
-        width: 100%;
-        height: 600px;
-        border: none;
-      }
-
-      /* Status Badge */
-      .status-badge {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-size: 0.8rem;
-        color: white;
-        font-weight: bold;
-        cursor: pointer; /* Make it clickable */
-        user-select: none; /* Prevent text selection on click */
-      }
-
-      .status-badge.working {
-        background-color: #2ecc71; /* Green */
-      }
-
-      .status-badge.not-working {
-        background-color: #e74c3c; /* Red */
-      }
-
-      /* GeoJSON List Styling */
-      .geojson-list {
-        list-style: none;
-        padding: 0;
-      }
-
-      .geojson-list li {
-        margin-bottom: 10px;
-        padding: 10px;
-        background-color: #f0f0f0;
-        border-radius: 6px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .geojson-list li a {
-        text-decoration: none;
-        color: #3498db;
-        font-weight: 500;
-      }
-
-      .geojson-list li a:hover {
-        text-decoration: underline;
-      }
-
-      i.fa-solid.fa-file-code {
-        color: #3498db; /* or any color you prefer */
-        margin-right: 5px; /* to add a little spacing between icon and text */
-      }
-
-      /* Copy URL Button */
-      .copy-url {
-        background-color: #f0f0f0;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        padding: 5px 10px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        color: #555;
-        display: inline-block;
-        margin-top: 5px;
-        transition: background-color 0.2s ease;
-      }
-
-      .copy-url:hover {
-        background-color: #e0e0e0;
-      }
-
-      /* Add these styles to your existing <style> section */
-      .nav-links {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        max-width: 200px;
-        margin: 20px auto;
-        padding: 0 20px;
-      }
-
-      .codepen-link {
-          color: #ecf0f1;
-          text-decoration: none;
-          font-size: 1.1em;
-          transition: color 0.2s ease;
-          padding: 8px 15px;
-          border-radius: 5px;
-          background-color: rgba(255, 255, 255, 0.1);
-      }
-
-      .codepen-link:hover {
-          color: #fff;
-          background-color: rgba(255, 255, 255, 0.2);
-      }
-
-      .codepen-logo {
-          width: 35px; /* Reduced size */
-          height: auto; /* Maintain aspect ratio */
-          margin: 0 20px; /* Add some spacing on both sides */
-      }
-
-      .docs-link {
-          margin-top: 15px;
-          text-align: center;
-      }
-
-      .docs-link a {
-          color: #ecf0f1;
-          text-decoration: none;
-          font-size: 1.1em;
-      }
-
-      .docs-link a:hover {
-          text-decoration: underline;
+        text-align: center;
       }
     </style>
   </head>
 
   <body>
     <header>
-        <h1>gmaps-grist-widgets</h1>
-        <nav>
-            <div class="nav-links">
-                <a href="https://codepen.io/sgfroerer" target="_blank" rel="noopener noreferrer" class="codepen-link">
-                    sgfroerer
-                </a>
-                <img src="https://blog.codepen.io/wp-content/uploads/2023/09/logo-white.png" alt="CodePen Logo" class="codepen-logo">
-                <a href="https://codepen.io/kickz-dontstop" target="_blank" rel="noopener noreferrer" class="codepen-link">
-                    kickz
-                </a>
-            </div>
-            <div class="docs-link">
-                <a href="https://docs.getgrist.com/nKvqCFVeW3Yt/Custom-Widgets" target="_blank" rel="noopener noreferrer">
-                    🥼 Custom Widgets 🥼
-                </a>
-            </div>
-        </nav>
+      <a href="https://docs.getgrist.com/nKvqCFVeW3Yt/Custom-Widgets" target="_blank" rel="noopener noreferrer" class="glow-link">
+        🥼 Custom Widgets 🥼
+      </a>
+      <div class="nav-links">
+        <a href="https://codepen.io/sgfroerer" target="_blank" class="codepen-link">sgfroerer</a>
+        <img src="https://blog.codepen.io/wp-content/uploads/2023/09/logo-white.png" alt="CodePen Logo" class="codepen-logo">
+        <a href="https://codepen.io/kickz-dontstop" target="_blank" class="codepen-link">kickz</a>
+      </div>
     </header>
 
     <div class="container">
