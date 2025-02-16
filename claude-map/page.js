@@ -13,17 +13,17 @@ let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Stre
 let mapCopyright = 'Esri';
 
 // Required columns
-const Name = "Name";  // Reference to Owners_
+const Name = "Name";  // ReferenceList to Owners_
 const Longitude = "Longitude";
 const Latitude = "Latitude";
 const Property_Id = "Property_Id";
 const Property_Address = "Property_Address";
-const ImageURL = "ImageURLs";  // Updated to match your schema
+const ImageURL = "ImageURLs";
 const CoStar_URL = "CoStar_URL";
 const County_Hyper = "County_Hyper";
 const GIS = "GIS";
 const Geocode = "Geocode";
-const Address = "Property_Address";  // Using Property_Address instead
+const Address = "Property_Address";
 const GeocodedAddress = "GeocodedAddress";
 
 let lastRecord;
@@ -170,16 +170,17 @@ function toggleDetails(element) {
 }
 
 function createPopupContent(record) {
-  const address = record[Address] ? record[Address].toString() : '';
-  const propertyId = record[Property_Id] ? record[Property_Id].toString() : '';
-  const name = record[Name] ? record[Name].toString() : '';
+  const address = parseValue(record[Address]) || '';
+  const propertyId = parseValue(record[Property_Id]) || '';
+  const name = parseValue(record[Name]) || '';
+  const imageUrl = parseValue(record[ImageURL]) || '';
   
   return `
     <div class="card w-full bg-white p-0 m-0">
       <figure class="relative m-0">
-        ${record[ImageURL] ? `
+        ${imageUrl ? `
           <div class="image-container relative">
-            <img src="${record[ImageURL]}" alt="${name}" class="w-full h-33 object-cover"/>
+            <img src="${imageUrl}" alt="${name}" class="w-full h-33 object-cover"/>
           </div>
         ` : `
           <div class="w-full h-33 bg-gray-100 flex items-center justify-center">
@@ -277,9 +278,17 @@ function showProblem(txt) {
 }
 
 function parseValue(v) {
-  if (typeof(v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
-    const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
-    return payload.remote || payload.local || payload.parent || payload;
+  if (typeof v === 'object' && v !== null) {
+    if (Array.isArray(v)) {
+      // Handle ReferenceList values
+      return v.map(item => item.toString()).join(", ");
+    }
+    if (v.value && typeof v.value === 'string' && v.value.startsWith('V(')) {
+      const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
+      return payload.remote || payload.local || payload.parent || payload;
+    }
+    // Handle Reference values
+    return v.toString();
   }
   return v;
 }
@@ -421,7 +430,7 @@ function onEditOptions() {
 document.addEventListener("DOMContentLoaded", function () {
   grist.ready({
     columns: [
-      { name: "Name", type: ["Text", "Choice", "Reference", "ReferenceList"], title: 'Name' },
+      { name: "Name", type: "ReferenceList", title: 'Name' },  // Specifically ReferenceList
       { name: "Longitude", type: "Numeric" },
       { name: "Latitude", type: "Numeric" },
       { name: "Property_Id", type: "Text" },
