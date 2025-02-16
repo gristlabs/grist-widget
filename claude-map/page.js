@@ -163,9 +163,10 @@ function copyToClipboard(text) {
 }
 
 function toggleDetails(element) {
+  element.classList.toggle('expanded');
   const details = element.nextElementSibling;
   if (details) {
-    details.classList.toggle('hidden');
+    details.classList.toggle('expanded');
   }
 }
 
@@ -181,7 +182,7 @@ function createPopupContent(record) {
         ${imageUrl ? `
           <img src="${imageUrl}" alt="${name}" />
         ` : `
-          <div class="w-full h-[120px] bg-gray-100 flex items-center justify-center">
+          <div class="w-full h-[140px] bg-gray-100 flex items-center justify-center">
             <span class="text-gray-400">No Image</span>
           </div>
         `}
@@ -196,10 +197,10 @@ function createPopupContent(record) {
         </div>
       </figure>
       <div class="card-content">
-        <h2>${name}</h2>
+        <h2 onclick="toggleDetails(this)">${name}</h2>
         <div class="details">
-          ${address ? `<p><strong>Address:</strong> ${address}</p>` : ''}
-          ${propertyId ? `<p><strong>Property ID:</strong> ${propertyId}</p>` : ''}
+          ${address ? `<p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${address.replace(/'/g, "\\'")}')">${address}</span></p>` : ''}
+          ${propertyId ? `<p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${propertyId.replace(/'/g, "\\'")}')">${propertyId}</span></p>` : ''}
         </div>
       </div>
     </div>
