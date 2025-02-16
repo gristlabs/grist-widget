@@ -263,10 +263,12 @@ async function scan(tableId, records, mappings) {
 
 
 function scanOnNeed(mappings) {
+    if (!selectedTableId) return; // Defensive check: return if selectedTableId is null
     if (!scanning && selectedTableId && selectedRecords) {
         scanning = scan(selectedTableId, selectedRecords, mappings).then(() => scanning = null).catch(() => scanning = null);
     }
 }
+
 
 function showProblem(txt) {
     document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
@@ -274,7 +276,7 @@ function showProblem(txt) {
 
 function parseValue(v) {
     if (typeof (v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
-        const payload = JSON.parse(v.value.slice(2, v.value.length - 1);
+        const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
         return payload.remote || payload.local || payload.parent || payload;
     }
     return v;
@@ -307,6 +309,7 @@ function selectMaker(id) {
 
 
 grist.on('message', (e) => {
+    console.log('grist.on message e.tableId:', e.tableId); // Added console log
     if (e.tableId) { selectedTableId = e.tableId; }
 });
 
@@ -408,10 +411,10 @@ document.addEventListener("DOMContentLoaded", function () {
             { name: "CoStar_URL", type: 'Text' },
             { name: "County_Hyper", type: 'Text' },
             { name: "GIS", type: 'Text' },
-            { name: "Pop-up IMG", type: 'Text', optional: true, internalColumnName: Popup_IMG_COL }, // Renamed internalColumnName
-            { name: "Property Id", type: 'Text', optional: true, internalColumnName: Property_Id_COL }, // Renamed internalColumnName
-            { name: "Address Concatenate", type: 'Text', optional: true, internalColumnName: Address_Concatenate_COL }, // Renamed internalColumnName
-            { name: "County Prop Search", type: 'Text', optional: true, internalColumnName: County_Prop_Search_COL }, // Renamed internalColumnName
+            { name: "PopupIMG", type: 'Text', optional: true, internalColumnName: Popup_IMG_COL }, // Renamed displayed name to "PopupIMG"
+            { name: "Property Id", type: 'Text', optional: true, internalColumnName: Property_Id_COL },
+            { name: "Address Concatenate", type: 'Text', optional: true, internalColumnName: Address_Concatenate_COL },
+            { name: "County Prop Search", type: 'Text', optional: true, internalColumnName: County_Prop_Search_COL },
             { name: "Geocode", type: 'Bool', title: 'Geocode', optional: true },
             { name: "Address", type: 'Text', optional: true },
             { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional: true },
