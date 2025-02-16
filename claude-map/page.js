@@ -176,32 +176,30 @@ function createPopupContent(record) {
   const imageUrl = parseValue(record[ImageURL]) || '';
   
   return `
-    <div class="card w-full bg-white p-0 m-0">
-      <figure class="relative m-0">
+    <div class="card">
+      <figure>
         ${imageUrl ? `
-          <div class="image-container relative">
-            <img src="${imageUrl}" alt="${name}" class="w-full h-33 object-cover"/>
-          </div>
+          <img src="${imageUrl}" alt="${name}" />
         ` : `
-          <div class="w-full h-33 bg-gray-100 flex items-center justify-center">
-            <span class="text-gray-400">No Image Available</span>
+          <div class="w-full h-[120px] bg-gray-100 flex items-center justify-center">
+            <span class="text-gray-400">No Image</span>
           </div>
         `}
         <div class="action-buttons">
           <div class="button-container">
-            <a href="${record[County_Hyper] || '#'}" class="action-btn" title="County Property Search" target="_blank">🔍</a>
-            <a href="${record[GIS] || '#'}" class="action-btn" title="GIS" target="_blank">🌎</a>
-            <button type="button" class="action-btn" onclick="copyToClipboard('${address.replace(/'/g, "\\'")}')" title="Copy Address">📋</button>
+            ${record[County_Hyper] ? `<a href="${record[County_Hyper]}" class="action-btn" title="County Property Search" target="_blank">🔍</a>` : ''}
+            ${record[GIS] ? `<a href="${record[GIS]}" class="action-btn" title="GIS" target="_blank">🌎</a>` : ''}
+            ${address ? `<button type="button" class="action-btn" onclick="copyToClipboard('${address.replace(/'/g, "\\'")}')" title="Copy Address">📋</button>` : ''}
             <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${record[Latitude]},${record[Longitude]}" class="action-btn" title="Street View" target="_blank">🛣️</a>
-            <a href="${record[CoStar_URL] || '#'}" class="action-btn" title="CoStar" target="_blank">🏢</a>
+            ${record[CoStar_URL] ? `<a href="${record[CoStar_URL]}" class="action-btn" title="CoStar" target="_blank">🏢</a>` : ''}
           </div>
         </div>
       </figure>
-      <div class="card-content p-2">
-        <h2 class="text-lg font-semibold mb-2 cursor-pointer hover:text-blue-600 transition-colors" onclick="toggleDetails(this)">${name}</h2>
-        <div class="details hidden">
-          ${address ? `<p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${address.replace(/'/g, "\\'")}')">${address}</span></p>` : ''}
-          ${propertyId ? `<p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${propertyId.replace(/'/g, "\\'")}')">${propertyId}</span></p>` : ''}
+      <div class="card-content">
+        <h2>${name}</h2>
+        <div class="details">
+          ${address ? `<p><strong>Address:</strong> ${address}</p>` : ''}
+          ${propertyId ? `<p><strong>Property ID:</strong> ${propertyId}</p>` : ''}
         </div>
       </div>
     </div>
