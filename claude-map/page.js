@@ -444,7 +444,7 @@ function onEditOptions() {
 document.addEventListener("DOMContentLoaded", function () {
   grist.ready({
     columns: [
-      { name: "Name", type: ["Any", "Text", "Reference", "ReferenceList"], title: 'Owner' },  // Accept any type for Name
+      "Name",  // Accept any type for Name
       { name: "Longitude", type: "Numeric" },
       { name: "Latitude", type: "Numeric" },
       { name: "Property_Id", type: "Text" },
