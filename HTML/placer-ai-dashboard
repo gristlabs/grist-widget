@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placer.ai Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 24px;
+            color: #34495e;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        h3 {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        iframe {
+            width: 100%;
+            height: 700px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #f0f0f0;
+        }
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .toggle-container select {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .section-divider {
+            border-bottom: 2px solid #eee;
+            margin: 30px 0;
+            opacity: 0.3;
+        }
+        .custom-tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            white-space: nowrap;
+            z-index: 999;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            pointer-events: none !important;
+        }
+        .tooltip {
+            cursor: pointer;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Placer.ai Dashboard</h1>
+        
+        <div class="section">
+            <h2 class="tooltip" title="Track nationwide retail and dining visit trends over time.">Index Performance Overview</h2>
+            <iframe src="https://embedded-widget.placer.ai/widgets/v1/editorial/?type=datawrapper&id=YHcrw%2F7&tag=placer100-overall-performance&hidefooter=true"></iframe>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="section">
+            <h2 class="tooltip" title="Dive into performance trends of retail and dining brands.">Nationwide Performance</h2>
+            <div class="toggle-container">
+                <label for="nationwideToggle">View By:</label>
+                <select id="nationwideToggle" onchange="updateNationwideView()">
+                    <option value="State">State</option>
+                    <option value="CBSA">CBSA</option>
+                </select>
+            </div>
+            <div class="grid-2">
+                <div class="map-container">
+                    <h3 class="tooltip" title="Interactive map showing performance by state or CBSA">Performance Map</h3>
+                    <iframe id="nationwideMap" src="https://embedded-widget.placer.ai/widgets/v1/editorial/?type=datawrapper&id=D4Lis%2F2&tag=placer100-nationwide-monthly-state-map&hidefooter=true"></iframe>
+                </div>
+                <div class="list-container">
+                    <h3 class="tooltip" title="Top-performing states or CBSAs for the month">Top-Performing States/CBSAs</h3>
+                    <iframe id="nationwideList" src="https://embedded-widget.placer.ai/widgets/v1/editorial/?type=datawrapper&id=QTmMZ%2F5&tag=placer100-nationwide-monthly-state-top10&hidefooter=true"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="section">
+            <h2 class="tooltip" title="Explore top-performing brands for the previous month.">Top Index Performers</h2>
+            <div class="grid-2">
+                <div class="metric-container">
+                    <h3 class="tooltip" title="Top-performing brands based on average visits per location">Average Visit per Location Growth</h3>
+                    <iframe src="https://embedded-widget.placer.ai/widgets/v1/editorial/?type=datawrapper&id=qvNkH%2F5&tag=placer100-topperformers-monthly-avg-location-growth&hidefooter=true"></iframe>
+                </div>
+                <div class="metric-container">
+                    <h3 class="tooltip" title="Top-performing brands based on overall visit growth">Overall Visit Growth</h3>
+                    <iframe src="https://embedded-widget.placer.ai/widgets/v1/editorial/?type=datawrapper&id=hxhsC%2F6&tag=placer100-topperformers-monthly-overall-growth&hidefooter=true"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.tooltip').forEach(el => {
+            el.addEventListener('mouseover', function() {
+                // Remove any existing tooltips
+                document.querySelectorAll('.custom-tooltip').forEach(t => t.remove());
+                
+                // Create new tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'custom-tooltip';
+                tooltip.innerText = this.title;
+                document.body.appendChild(tooltip);
+                
+                // Position tooltip
+                const rect = this.getBoundingClientRect();
+                tooltip.style.left = `${rect.left + window.scrollX}px`;
+                tooltip.style.top = `${rect.top + window.scrollY - 35}px`;
+            });
+            
+            el.addEventListener('mouseout', function() {
+                // Remove tooltips when mouse leaves
+                document.querySelectorAll('.custom-tooltip').forEach(t => t.remove());
+            });
+        });
+
+        // Update Nationwide view when dropdown changes
+        function updateNationwideView() {
+            const viewBy = document.getElementById('nationwideToggle').value;
+            const mapView = viewBy === 'State' 
+                ? 'https://embedded-widget.placer.ai/widgets/v1/editorial/?type=datawrapper&id=D4Lis%2F2&tag=placer100-nationwide-monthly-state-map& hidefooter=true'
+                : 'https://embedded-widget.placer.ai/widgets/v1/editorial/?type=datawrapper&id=5lDR0%2F4&tag=placer100-nationwide-monthly-cbsa-map& hidefooter=true';
+                
+            const listView = viewBy === 'State' 
+                ? 'https://embedded-widget.placer.ai/widgets/v1/editorial/?type=datawrapper&id=QTmMZ%2F5&tag=placer100-nationwide-monthly-state-top10& hidefooter=true'
+                : 'https://embedded-widget.placer.ai/widgets/v1/editorial/?type=datawrapper&id=xi3OI%2F5&tag=placer100-nationwide-monthly-cbsa-top10 hidefooter=true';
+
+            document.getElementById('nationwideMap').src = mapView;
+            document.getElementById('nationwideList').src = listView;
+        }
+    </script>
+</body>
+</html>
