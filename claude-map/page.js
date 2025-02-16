@@ -2,6 +2,33 @@
 
     let amap;
     let markersLayer;
+    let selectedTableId = null; // Initialize selectedTableId
+    let selectedRecords; // Declare selectedRecords
+    let lastRecord;
+    let lastRecords;
+    let mode = 'multi'; // Default mode
+    let selectedRowId = null;
+
+    const defaultMappings = { // Define defaultMappings here, outside functions
+        Longitude: "Longitude",
+        Name: "Name",
+        Latitude: "Latitude",
+        Property_Type: "Property_Type",
+        Tenants: "Tenants",
+        Secondary_Type: "Secondary_Type",
+        ImageURL: "ImageURL",
+        CoStar_URL: "CoStar_URL",
+        County_Hyper: "County_Hyper",
+        GIS: "GIS",
+        "Pop-up IMG": "Pop-up IMG",
+        "Property Id": "Property Id",
+        "Address Concatenate": "Address Concatenate",
+        "County Prop Search": "County Prop Search",
+        Geocode: "Geocode",
+        Address: "Address",
+        GeocodedAddress: "GeocodedAddress"
+    };
+
 
     const selectedIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -67,11 +94,12 @@
 
     function copyToClipboard(text, element) {
       navigator.clipboard.writeText(text).then(() => {
-        const tooltip = document.createElement('div');
-        tooltip.className = 'copy-tooltip';
-        tooltip.textContent = 'Copied!';
-        element.appendChild(tooltip);
-        setTimeout(() => tooltip.remove(), 1000);
+        // const tooltip = document.createElement('div'); // Commented out Tippy.js tooltip
+        // tooltip.className = 'copy-tooltip';
+        // tooltip.textContent = 'Copied!';
+        // element.appendChild(tooltip);
+        // setTimeout(() => tooltip.remove(), 1000);
+        console.log("Copied to clipboard:", text); // Add a console log to verify copy works
       });
     }
 
@@ -173,24 +201,43 @@ let scanning = null;
 async function scan(tableId, records, mappings) {
   if (!writeAccess) { return; }
   for (const record of records) {
-    if (!(Geocode in record)) { break; }
-    if (!record[Geocode]) { continue; }
-    const address = record.Address;
-    if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
-      record[Longitude] = null;
-      record[Latitude] = null;
+    if (!(mappings.Geocode in record)) { return; } // Use mappings to access Geocode column
+    if (!record[mappings.Geocode]) { return; } // Use mappings to access Geocode column
+    const address = record[mappings.Address]; // Use mappings to access Address column
+    if (mappings.GeocodedAddress && record[mappings.GeocodedAddress] && record[mappings.GeocodedAddress] !== record[mappings.Address]) { // Use mappings
+      record[mappings.Longitude] = null; // Use mappings
+      record[mappings.Latitude] = null; // Use mappings
     }
-    if (address && !record[Longitude]) {
+    if (address && !record[mappings.Longitude]) { // Use mappings
       const result = await geocode(address);
       await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
-        [mappings[Longitude]]: result.lng,
-        [mappings[Latitude]]: result.lat,
-        ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
+        [mappings.Longitude]: result.lng, // Use mappings
+        [mappings.Latitude]: result.lat, // Use mappings
+        ...(mappings.GeocodedAddress ? {[mappings.GeocodedAddress]: address} : undefined) // Use mappings
       }] ]);
       await delay(1000);
     }
   }
 }
+
+
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+const geocode = async (address) => {
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=jsonv2`);
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    } else {
+      return { lat: null, lng: null }; // Or handle no results as needed
+    }
+  } catch (error) {
+    console.error("Geocoding error:", error);
+    return { lat: null, lng: null }; // Handle fetch errors
+  }
+};
+
 
 function scanOnNeed(mappings) {
   if (!scanning && selectedTableId && selectedRecords) {
@@ -210,104 +257,80 @@ function parseValue(v) {
   return v;
 }
 
-function getInfo(rec) {
-  const result = {
-    id: rec.id,
-    name: parseValue(rec[Name]),
-    lng: parseValue(rec[Longitude]),
-    lat: parseValue(rec[Latitude]),
-    propertyType: parseValue(rec['Property_Type']),
-    tenants: parseValue(rec['Tenants']),
-    secondaryType: parseValue(rec['Secondary_Type']),
-    imageUrl: parseValue(rec['ImageURL']),
-    costarLink: parseValue(rec['CoStar_URL']),
-    countyLink: parseValue(rec['County_Hyper']),
-    gisLink: parseValue(rec['GIS']),
-  };
-  return result;
-}
 
 let clearMakers = () => {};
-let markers = [];
+let markers = null; // Initialize markers to null
+let popups = {}; // Initialize popups object
+
 
 function selectMaker(id) {
+  if (!popups) return; // Check if popups is initialized
   const previouslyClicked = popups[selectedRowId];
   if (previouslyClicked) {
     previouslyClicked.setIcon(defaultIcon);
-    previouslyClicked.pane = 'otherMarkers';
+    previouslyClicked.setZIndexOffset(0); // Reset z-index
   }
   const marker = popups[id];
   if (!marker) { return null; }
   selectedRowId = id;
   marker.setIcon(selectedIcon);
-  previouslyClicked.pane = 'selectedMarker';
-  markers.refreshClusters();
+  marker.setZIndexOffset(1000); // Bring selected marker to front
+  if (markers && markers.hasLayer(marker)) { // Check if markers is initialized and hasLayer method exists
+    markers.zoomToShowLayer(marker);
+  }
+  marker.openPopup();
   grist.setCursorPos?.({rowId: id}).catch(() => {});
   return marker;
 }
+
 
 grist.on('message', (e) => {
   if (e.tableId) { selectedTableId = e.tableId; }
 });
 
-function hasCol(col, anything) {
-  return anything && typeof anything === 'object' && col in anything;
-}
 
-function defaultMapping(record, mappings) {
-  if (!mappings) {
-    return {
-      [Longitude]: Longitude,
-      [Name]: Name,
-      [Latitude]: Latitude,
-      [Property_Type]: Property_Type,
-      [Tenants]: Tenants,
-      [Secondary_Type]: Secondary_Type,
-      [ImageURL]: ImageURL,
-      [CoStar_URL]: CoStar_URL,
-      [County_Hyper]: County_Hyper,
-      [GIS]: GIS,
-      [Address]: hasCol(Address, record) ? Address : null,
-      [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
-      [Geocode]: hasCol(Geocode, record) ? Geocode : null,
-    };
-  }
-  return mappings;
-}
-
-function selectOnMap(rec) {
+function selectOnMap(rec, mappings) { // Add mappings parameter
   if (selectedRowId === rec.id) { return; }
   selectedRowId = rec.id;
   if (mode === 'single') {
-    updateMap([rec]);
+    updateMap([rec], mappings); // Pass mappings to updateMap
   } else {
-    updateMap();
+    updateMap(lastRecords, mappings); // Pass mappings to updateMap
   }
 }
 
+
 grist.onRecord((record, mappings) => {
+  const mappedRecord = grist.mapColumnNames(record) || record; // Apply column mapping here
+  lastRecord = mappedRecord;
   if (mode === 'single') {
-    lastRecord = grist.mapColumnNames(record) || record;
-    selectOnMap(lastRecord);
-    scanOnNeed(defaultMapping(record, mappings));
+    selectOnMap(lastRecord, mappings);
   } else {
     const marker = selectMaker(record.id);
     if (!marker) { return; }
-    markers.zoomToShowLayer(marker);
+    if (markers && markers.hasLayer(marker)) {
+      markers.zoomToShowLayer(marker);
+    }
     marker.openPopup();
+  }
+  scanOnNeed(mappings); // Pass mappings to scanOnNeed
+});
+
+
+grist.onRecords((data, mappings) => {
+  const mappedData = data.map(rec => grist.mapColumnNames(rec) || rec); // Apply column mapping to each record
+  lastRecords = mappedData;
+  if (mode !== 'single') {
+    updateMap(lastRecords, mappings); // Pass mappings to updateMap
+    if (lastRecord) {
+      selectOnMap(lastRecord, mappings);
+    }
+  }
+  if (data.length > 0) {
+      scanOnNeed(mappings); // Pass mappings to scanOnNeed, but only if data is available
   }
 });
 
-grist.onRecords((data, mappings) => {
-  lastRecords = grist.mapColumnNames(data) || data;
-  if (mode !== 'single') {
-    updateMap(lastRecords);
-    if (lastRecord) {
-      selectOnMap(lastRecord);
-    }
-    scanOnNeed(defaultMapping(data[0], mappings));
-  }
-});
 
 grist.onNewRecord(() => {
   clearMakers();
@@ -317,11 +340,14 @@ grist.onNewRecord(() => {
 function updateMode() {
   if (mode === 'single') {
     selectedRowId = lastRecord.id;
-    updateMap([lastRecord]);
+    updateMap([lastRecord], currentMappings); // Pass currentMappings
   } else {
-    updateMap(lastRecords);
+    updateMap(lastRecords, currentMappings); // Pass currentMappings
   }
 }
+
+
+let currentMappings = defaultMappings; // Initialize currentMappings with defaultMappings
 
 function onEditOptions() {
   const popup = document.getElementById("settings");
@@ -346,6 +372,7 @@ function onEditOptions() {
   })
 }
 
+
 const optional = true;
 document.addEventListener("DOMContentLoaded", function () {
   grist.ready({
@@ -360,15 +387,17 @@ document.addEventListener("DOMContentLoaded", function () {
       { name: "CoStar_URL", type: 'Text' },
       { name: "County_Hyper", type: 'Text' },
       { name: "GIS", type: 'Text' },
-      { name: "Pop-up IMG", type: 'Text', optional: true }, // Added "Pop-up IMG"
-      { name: "Property Id", type: 'Text', optional: true }, // Added "Property Id"
-      { name: "Address Concatenate", type: 'Text', optional: true }, // Added "Address Concatenate"
-      { name: "County Prop Search", type: 'Text', optional: true }, // Added "County Prop Search"
+      { name: "Pop-up IMG", type: 'Text', optional: true },
+      { name: "Property Id", type: 'Text', optional: true },
+      { name: "Address Concatenate", type: 'Text', optional: true },
+      { name: "County Prop Search", type: 'Text', optional: true },
       { name: "Geocode", type: 'Bool', title: 'Geocode', optional: true },
       { name: "Address", type: 'Text', optional: true },
       { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional: true },
     ],
+    columnMap: defaultMappings, // Apply default mappings here
     allowSelectBy: true,
     onEditOptions
   });
+  amap = initializeMap(); // Initialize map here, after grist.ready
 });
