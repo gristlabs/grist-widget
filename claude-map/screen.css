@@ -292,11 +292,49 @@ body {
 
 .card-content h2 {
   margin-bottom: 12px;
+  position: relative;
+  padding-right: 20px;
+  transition: color 0.2s;
+}
+
+.card-content h2:hover {
+  color: #2563eb;
+}
+
+.card-content h2::after {
+  content: '▼';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+.details {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.details.hidden {
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+}
+
+.details:not(.hidden) {
+  max-height: 500px;
+  opacity: 1;
 }
 
 .details p {
   margin-bottom: 8px;
   line-height: 1.4;
+  transition: transform 0.2s ease-out;
+}
+
+.details.hidden p {
+  transform: translateY(-10px);
 }
 
 .copy-tooltip {
