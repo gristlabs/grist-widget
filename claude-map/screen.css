@@ -236,7 +236,7 @@ body {
 
 .custom-popup .leaflet-popup-content {
   margin: 0;
-  width: 200px !important;  /* Reduced from 240px to match Map-nomini */
+  width: 220px !important;  /* Slightly increased for better readability */
 }
 
 .custom-popup .leaflet-popup-close-button {
@@ -254,13 +254,13 @@ body {
 
 .card figure img {
   width: 100%;
-  height: 120px;  /* Fixed height for consistency */
+  height: 140px;  /* Slightly increased height */
   object-fit: cover;
   display: block;
 }
 
 .card-content {
-  padding: 8px 12px;
+  padding: 12px;
   background: white;
 }
 
@@ -270,22 +270,68 @@ body {
   margin: 0;
   padding: 0;
   color: #333;
+  cursor: pointer;
+  padding-right: 20px;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.card-content h2:hover {
+  color: #2563eb;
+}
+
+.card-content h2::after {
+  content: '▼';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  opacity: 0.5;
+  transition: transform 0.2s;
+}
+
+.card-content h2.expanded::after {
+  transform: translateY(-50%) rotate(180deg);
 }
 
 .details {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: all 0.3s ease-out;
+}
+
+.details.expanded {
+  max-height: 200px;
+  opacity: 1;
   margin-top: 8px;
-  font-size: 14px;
-  line-height: 1.4;
 }
 
 .details p {
-  margin: 4px 0;
+  margin: 6px 0;
   color: #666;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .details strong {
   color: #333;
   font-weight: 500;
+  margin-right: 4px;
+}
+
+.copyable {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  color: #2563eb;
+}
+
+.copyable:hover {
+  background-color: #f3f4f6;
+  text-decoration: underline;
 }
 
 .action-buttons {
@@ -303,21 +349,21 @@ body {
 
 .button-container {
   display: flex;
-  gap: 4px;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.9);
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
   border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .action-btn {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
@@ -334,17 +380,6 @@ body {
   transform: scale(1.1);
 }
 
-.copyable {
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 3px;
-  transition: background-color 0.2s;
-}
-
-.copyable:hover {
-  background-color: #f3f4f6;
-}
-
 .copy-tooltip {
   position: fixed;
   top: 50%;
@@ -357,6 +392,14 @@ body {
   font-size: 12px;
   pointer-events: none;
   z-index: 9999;
+  animation: fadeInOut 1s ease;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Marker cluster styling */
