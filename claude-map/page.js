@@ -12,27 +12,17 @@ let mode = 'multi';
 let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
 let mapCopyright = 'Esri';
 
-// Required, Label value
+// Required columns
 const Name = "Name";
-// Required
 const Longitude = "Longitude";
-// Required
 const Latitude = "Latitude";
-// Optional - switch column to trigger geocoding
-// Columns used in page.js
-const Property_Type = 'Property_Type';
-const Tenants = 'Tenants';
-const Secondary_Type = 'Secondary_Type';
+const Property_Id = "Property_Id";
 const ImageURL = 'ImageURL';
 const CoStar_URL = 'CoStar_URL';
 const County_Hyper = 'County_Hyper';
 const GIS = 'GIS';
 const Geocode = 'Geocode';
-// Optional - but required for geocoding. Field with address to find (might be formula)
 const Address = 'Address';
-// Optional - but useful for geocoding. Blank field which map uses
-//            to store last geocoded Address. Enables map widget
-//            to automatically update the geocoding if Address is changed
 const GeocodedAddress = 'GeocodedAddress';
 
 let lastRecord;
@@ -151,40 +141,37 @@ function initializeMap() {
 }
 
 function copyToClipboard(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(text).then(() => {
-      // Show a temporary tooltip or notification
-      const tooltip = document.createElement('div');
-      tooltip.className = 'copy-tooltip';
-      tooltip.textContent = 'Copied!';
-      document.body.appendChild(tooltip);
-      setTimeout(() => tooltip.remove(), 1000);
-    });
-  } else {
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-      document.execCommand('copy');
-    } catch (err) {
-      console.error('Failed to copy text:', err);
-    }
-    document.body.removeChild(textArea);
-  }
+  // Create a temporary input element
+  const tempInput = document.createElement('input');
+  tempInput.style.position = 'absolute';
+  tempInput.style.left = '-9999px';
+  tempInput.value = text;
+  document.body.appendChild(tempInput);
+
+  // Select and copy the text
+  tempInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(tempInput);
+
+  // Show the tooltip
+  const tooltip = document.createElement('div');
+  tooltip.className = 'copy-tooltip';
+  tooltip.textContent = 'Copied!';
+  document.body.appendChild(tooltip);
+  setTimeout(() => tooltip.remove(), 1000);
 }
 
 function createPopupContent(record) {
-  const address = record[Address] || '';
-  const propertyId = record['Property_Id'] || '';
+  const address = record[Address] ? record[Address].toString() : '';
+  const propertyId = record[Property_Id] ? record[Property_Id].toString() : '';
+  const name = record[Name] ? record[Name].toString() : '';
   
   return `
     <div class="card w-full bg-white p-0 m-0">
       <figure class="relative m-0">
         ${record[ImageURL] ? `
           <div class="image-container relative">
-            <img src="${record[ImageURL]}" alt="${record[Name]}" class="w-full h-33 object-cover"/>
+            <img src="${record[ImageURL]}" alt="${name}" class="w-full h-33 object-cover"/>
           </div>
         ` : `
           <div class="w-full h-33 bg-gray-100 flex items-center justify-center">
@@ -195,17 +182,17 @@ function createPopupContent(record) {
           <div class="button-container">
             <a href="${record[County_Hyper] || '#'}" class="action-btn" title="County Property Search" target="_blank">🔍</a>
             <a href="${record[GIS] || '#'}" class="action-btn" title="GIS" target="_blank">🌎</a>
-            <button class="action-btn" onclick="copyToClipboard('${address}')" title="Copy Address">📋</button>
+            <button type="button" class="action-btn" onclick="copyToClipboard('${address.replace(/'/g, "\\'")}')" title="Copy Address">📋</button>
             <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${record[Latitude]},${record[Longitude]}" class="action-btn" title="Street View" target="_blank">🛣️</a>
             <a href="${record[CoStar_URL] || '#'}" class="action-btn" title="CoStar" target="_blank">🏢</a>
           </div>
         </div>
       </figure>
       <div class="card-content p-2">
-        <h2 class="text-lg font-semibold mb-2">${record[Name]}</h2>
+        <h2 class="text-lg font-semibold mb-2">${name}</h2>
         <div class="details">
-          <p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${address}')">${address}</span></p>
-          <p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${propertyId}')">${propertyId}</span></p>
+          ${address ? `<p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${address.replace(/'/g, "\\'")}')">${address}</span></p>` : ''}
+          ${propertyId ? `<p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${propertyId.replace(/'/g, "\\'")}')">${propertyId}</span></p>` : ''}
         </div>
       </div>
     </div>
@@ -339,16 +326,14 @@ function defaultMapping(record, mappings) {
       [Longitude]: Longitude,
       [Name]: Name,
       [Latitude]: Latitude,
-      [Property_Type]: Property_Type,
-      [Tenants]: Tenants,
-      [Secondary_Type]: Secondary_Type,
+      [Property_Id]: Property_Id,
       [ImageURL]: ImageURL,
       [CoStar_URL]: CoStar_URL,
       [County_Hyper]: County_Hyper,
       [GIS]: GIS,
+      [Geocode]: hasCol(Geocode, record) ? Geocode : null,
       [Address]: hasCol(Address, record) ? Address : null,
       [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
-      [Geocode]: hasCol(Geocode, record) ? Geocode : null,
     };
   }
   return mappings;
@@ -425,23 +410,20 @@ function onEditOptions() {
   })
 }
 
-const optional = true;
 document.addEventListener("DOMContentLoaded", function () {
   grist.ready({
     columns: [
-      { name: "Name", type: ['Text', 'Choice'], title: 'Name' },
-      { name: "Longitude", type: 'Numeric' },
-      { name: "Latitude", type: 'Numeric' },
-      { name: "Property_Type", type: 'Choice' },
-      { name: "Tenants", type: 'ChoiceList' },
-      { name: "Secondary_Type", type: 'ChoiceList' },
-      { name: "ImageURL", type: 'Text' },
-      { name: "CoStar_URL", type: 'Text' },
-      { name: "County_Hyper", type: 'Text' },
-      { name: "GIS", type: 'Text' },
-      { name: "Geocode", type: 'Bool', title: 'Geocode', optional: true },
-      { name: "Address", type: 'Text', optional: true },
-      { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional: true },
+      { name: "Name", type: "Text", title: 'Name' },
+      { name: "Longitude", type: "Numeric" },
+      { name: "Latitude", type: "Numeric" },
+      { name: "Property_Id", type: "Text" },
+      { name: "ImageURL", type: "Text", optional: true },
+      { name: "CoStar_URL", type: "Text", optional: true },
+      { name: "County_Hyper", type: "Text", optional: true },
+      { name: "GIS", type: "Text", optional: true },
+      { name: "Geocode", type: "Bool", title: "Geocode", optional: true },
+      { name: "Address", type: "Text", optional: true },
+      { name: "GeocodedAddress", type: "Text", title: "Geocoded Address", optional: true },
     ],
     allowSelectBy: true,
     onEditOptions
