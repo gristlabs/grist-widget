@@ -151,12 +151,34 @@ function initializeMap() {
 }
 
 function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    // Could add a toast notification here
-  });
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      // Show a temporary tooltip or notification
+      const tooltip = document.createElement('div');
+      tooltip.className = 'copy-tooltip';
+      tooltip.textContent = 'Copied!';
+      document.body.appendChild(tooltip);
+      setTimeout(() => tooltip.remove(), 1000);
+    });
+  } else {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+    document.body.removeChild(textArea);
+  }
 }
 
 function createPopupContent(record) {
+  const address = record[Address] || '';
+  const propertyId = record['Property_Id'] || '';
+  
   return `
     <div class="card w-full bg-white p-0 m-0">
       <figure class="relative m-0">
@@ -173,19 +195,17 @@ function createPopupContent(record) {
           <div class="button-container">
             <a href="${record[County_Hyper] || '#'}" class="action-btn" title="County Property Search" target="_blank">🔍</a>
             <a href="${record[GIS] || '#'}" class="action-btn" title="GIS" target="_blank">🌎</a>
-            <button class="action-btn" onclick="copyToClipboard('${record[Address]}')" title="Copy Address">📋</button>
+            <button class="action-btn" onclick="copyToClipboard('${address}')" title="Copy Address">📋</button>
             <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${record[Latitude]},${record[Longitude]}" class="action-btn" title="Street View" target="_blank">🛣️</a>
             <a href="${record[CoStar_URL] || '#'}" class="action-btn" title="CoStar" target="_blank">🏢</a>
           </div>
         </div>
       </figure>
       <div class="card-content p-2">
-        <h2 class="text-lg font-semibold">${record[Name]}</h2>
+        <h2 class="text-lg font-semibold mb-2">${record[Name]}</h2>
         <div class="details">
-          <p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${record[Address]}')">${record[Address]}</span></p>
-          <p><strong>Property Type:</strong> ${record[Property_Type]}</p>
-          <p><strong>Secondary Type:</strong> ${record[Secondary_Type]}</p>
-          <p><strong>Tenants:</strong> ${record[Tenants]}</p>
+          <p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${address}')">${address}</span></p>
+          <p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${propertyId}')">${propertyId}</span></p>
         </div>
       </div>
     </div>
@@ -409,7 +429,7 @@ const optional = true;
 document.addEventListener("DOMContentLoaded", function () {
   grist.ready({
     columns: [
-      "Name",
+      { name: "Name", type: ['Text', 'Choice'], title: 'Name' },
       { name: "Longitude", type: 'Numeric' },
       { name: "Latitude", type: 'Numeric' },
       { name: "Property_Type", type: 'Choice' },
