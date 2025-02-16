@@ -153,13 +153,6 @@ function copyToClipboard(text) {
   tempInput.select();
   document.execCommand('copy');
   document.body.removeChild(tempInput);
-
-  // Show the tooltip
-  const tooltip = document.createElement('div');
-  tooltip.className = 'copy-tooltip';
-  tooltip.textContent = 'Copied!';
-  document.body.appendChild(tooltip);
-  setTimeout(() => tooltip.remove(), 1000);
 }
 
 function toggleDetails(element) {
