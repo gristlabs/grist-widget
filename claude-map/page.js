@@ -2,7 +2,7 @@
 
     let amap;
     let markersLayer;
-    
+
     const selectedIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
       shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -81,16 +81,16 @@
     }
 
 function createPopupContent(record) {
-      const typeClass = 'bg-blue-100 text-blue-800';
+      const typeClass = 'bg-blue-100 text-blue-800'; // You can remove these if not using Tailwind classes directly in JS
       const secondaryClass = 'bg-green-100 text-green-800';
       const tenantClass = 'bg-yellow-100 text-yellow-800';
 
       return `
         <div class="popup-card">
           <div class="popup-image-container">
-            ${record["Pop-up IMG"] ? 
+            ${record["Pop-up IMG"] ?
               `<img src="${record["Pop-up IMG"]}" alt="${record.Name}" class="popup-image"/>` :
-              `<div class="flex items-center justify-center h-full">
+              `<div class="popup-image-placeholder">
                 <span class="text-gray-400">No Image Available</span>
                </div>`
             }
@@ -105,28 +105,29 @@ function createPopupContent(record) {
             </div>
           </div>
           <div class="property-info">
-            <div class="mb-2">
-              ${record.Type ? `<span class="type-tag ${typeClass}">${record.Type}</span>` : ''}
-              ${record.Secondary ? `<span class="type-tag ${secondaryClass}">${record.Secondary}</span>` : ''}
-              ${record.Tenants ? `<span class="type-tag ${tenantClass}">${record.Tenants}</span>` : ''}
-            </div>
             <div class="property-name" onclick="toggleDetails(this)">
               ${record.Name}
             </div>
             <div class="property-details">
-              <div class="detail-item" onclick="copyToClipboard('${record["Address Concatenate"]}', this)">
+              <div class="detail-item copyable" onclick="copyToClipboard('${record["Address Concatenate"]}', this)">
                 <strong>Address:</strong>
                 <span>${record["Address Concatenate"]}</span>
               </div>
-              <div class="detail-item" onclick="copyToClipboard('${record["Property Id"]}', this)">
+              <div class="detail-item copyable" onclick="copyToClipboard('${record["Property Id"]}', this)">
                 <strong>Property ID:</strong>
                 <span>${record["Property Id"]}</span>
+              </div>
+              <div class="mb-2">
+                  ${record.Type ? `<span class="type-tag">${record.Type}</span>` : ''}
+                  ${record.Secondary ? `<span class="type-tag">${record.Secondary}</span>` : ''}
+                  ${record.Tenants ? `<span class="type-tag">${record.Tenants}</span>` : ''}
               </div>
             </div>
           </div>
         </div>
       `;
     }
+
 
 function updateMap(records) {
       if (!amap) {
@@ -143,7 +144,7 @@ function updateMap(records) {
       records.forEach(record => {
         const lat = record.Latitude || record.latitude;
         const lng = record.Longitude || record.longitude;
-        
+
         if (!lat || !lng) {
           console.warn(`Missing coordinates for record: ${record.Name || 'Unknown'}`);
           return;
@@ -159,7 +160,7 @@ function updateMap(records) {
           minWidth: 300,
           className: 'custom-popup'
         });
-        
+
         markersLayer.addLayer(marker);
       });
     }
@@ -359,6 +360,10 @@ document.addEventListener("DOMContentLoaded", function () {
       { name: "CoStar_URL", type: 'Text' },
       { name: "County_Hyper", type: 'Text' },
       { name: "GIS", type: 'Text' },
+      { name: "Pop-up IMG", type: 'Text', optional: true }, // Added "Pop-up IMG"
+      { name: "Property Id", type: 'Text', optional: true }, // Added "Property Id"
+      { name: "Address Concatenate", type: 'Text', optional: true }, // Added "Address Concatenate"
+      { name: "County Prop Search", type: 'Text', optional: true }, // Added "County Prop Search"
       { name: "Geocode", type: 'Bool', title: 'Geocode', optional: true },
       { name: "Address", type: 'Text', optional: true },
       { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional: true },
