@@ -278,19 +278,33 @@ function showProblem(txt) {
 }
 
 function parseValue(v) {
-  if (typeof v === 'object' && v !== null) {
-    if (Array.isArray(v)) {
-      // Handle ReferenceList values
-      return v.map(item => item.toString()).join(", ");
-    }
+  if (!v) return '';
+  
+  // Handle arrays (like ReferenceList)
+  if (Array.isArray(v)) {
+    return v.map(item => {
+      if (item && typeof item === 'object' && item.Name) {
+        return item.Name;
+      }
+      return item;
+    }).join(", ");
+  }
+  
+  // Handle objects (like Reference)
+  if (typeof v === 'object') {
+    if (v.Name) return v.Name;
     if (v.value && typeof v.value === 'string' && v.value.startsWith('V(')) {
-      const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
-      return payload.remote || payload.local || payload.parent || payload;
+      try {
+        const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
+        return payload.remote || payload.local || payload.parent || payload;
+      } catch (e) {
+        return v.value;
+      }
     }
-    // Handle Reference values
     return v.toString();
   }
-  return v;
+  
+  return v.toString();
 }
 
 function getInfo(rec) {
@@ -430,7 +444,7 @@ function onEditOptions() {
 document.addEventListener("DOMContentLoaded", function () {
   grist.ready({
     columns: [
-      { name: "Name", type: "ReferenceList", title: 'Name' },  // Specifically ReferenceList
+      { name: "Name", type: ["Any", "Text", "Reference", "ReferenceList"], title: 'Owner' },  // Accept any type for Name
       { name: "Longitude", type: "Numeric" },
       { name: "Latitude", type: "Numeric" },
       { name: "Property_Id", type: "Text" },
