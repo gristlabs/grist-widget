@@ -1,228 +1,354 @@
+/* Updated styles for map and controls */
+
 body {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 #map {
-    width: 100vw;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
+  width: 100vw; 
+  height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
-.leaflet-control-zoom {
-    font-size: 24px;
+#minimap-container {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  height: 250px; /* Increased height to hide the top bar */
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden; /* Hide overflow */
+  z-index: 1000;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  transition: height 0.3s ease; /* Smooth transition for height change */
 }
 
-.leaflet-control-zoom a {
-    width: 40px;
-    height: 40px;
-    line-height: 40px;
+#minimap-container.collapsed {
+  height: 0; /* Collapsed state */
+  border: none; /* Remove border when collapsed */
+  padding: 0; /* Remove padding when collapsed */
 }
 
-.leaflet-control-layers {
-    font-size: 18px;
+#googleMap {
+  width: 100%;
+  height: 140%; /* Increase height further to hide the top bar */
+  border: none;
+  margin-top: -60px; /* Adjust this value to fully hide the top bar */
 }
 
-.leaflet-control-layers-toggle {
-    width: 40px;
-    height: 40px;
-    background-size: 30px 30px;
+#toggleMinimap {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  background: #007acc;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 1001;
 }
 
+#toggleMinimap:hover {
+  background: #005f99;
+}
+
+/* Geocoder control styling */
 .leaflet-control-geocoder {
-    font-size: 18px;
+  background: white;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+  border-radius: 4px;
+  max-width: 300px;
 }
 
 .leaflet-control-geocoder input {
-    font-size: 18px;
-    padding: 12px;
-    width: calc(100% - 24px);
+  font-size: 14px;
+  padding: 8px;
+  width: calc(100% - 16px);
+  border: none;
+  outline: none;
+  border-radius: 4px;
 }
 
+.leaflet-control-geocoder-expanded {
+  width: 300px;
+  padding: 5px;
+}
+
+/* Marker cluster styling */
+.marker-cluster {
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  text-align: center;
+  line-height: 40px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+}
+
+.marker-cluster-small {
+  width: 40px;
+  height: 40px;
+}
+
+.marker-cluster-medium {
+  width: 50px;
+  height: 50px;
+}
+
+.marker-cluster-large {
+  width: 60px;
+  height: 60px;
+}
+
+#settings {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  padding: 10px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  display: none; /* Initially hidden */
+  z-index: 1000; /* Ensure it sits above the map */
+}
+
+#btnClose {
+  cursor: pointer;
+  color: red;
+}
+
+#btnClose:hover {
+  text-decoration: underline;
+}
+
+#lblText {
+  min-width: 100px;
+  display: inline-block;
+}
+
+/* JV: Needed to highlight selected cluster */
+.marker-cluster-selected {
+  border: 3px solid #16b378;
+}
+
+/* Image Styling */
+.leaflet-popup-content img {
+  width: 100%;
+  height: auto;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+/* Popup Buttons */
+.popup-buttons {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.popup-button {
+  display: inline-block;
+  padding: 8px 12px;
+  background-color: #DBEFDC;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.popup-button:hover {
+  background-color: #A5D7A7;
+}
+
+/* Popup Header and Text */
+.leaflet-popup-content h3 {
+  font-size: 18px;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.leaflet-popup-content h4 {
+  font-size: 14px;
+  margin: 5px 0;
+  color: #555;
+}
+
+.leaflet-popup-content b {
+  font-weight: bold;
+}
+
+/* Map and controls */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#map {
+  width: 100vw; 
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Control buttons */
+.leaflet-control-zoom {
+  font-size: 24px;
+}
+
+.leaflet-control-zoom a {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.leaflet-control-layers {
+  font-size: 18px;
+}
+
+.leaflet-control-layers-toggle {
+  width: 40px;
+  height: 40px;
+  background-size: 30px 30px;
+}
+
+.leaflet-control-geocoder {
+  font-size: 18px;
+}
+
+.leaflet-control-geocoder input {
+  font-size: 18px;
+  padding: 12px;
+  width: calc(100% - 24px);
+}
+
+/* Popup styling */
 .custom-popup .leaflet-popup-content-wrapper {
-    padding: 0;
-    overflow: hidden;
-    border-radius: 0.5rem;
-    background-color: #fff; /* Added background color for the popup */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Added a subtle shadow */
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
 }
 
 .custom-popup .leaflet-popup-content {
-    margin: 0;
-    width: 300px !important; /* Increased width for better readability */
-    padding: 0; /* Reset default padding */
+  margin: 0;
+  width: 240px !important;
 }
 
 .custom-popup .leaflet-popup-close-button {
-    top: 10px;
-    right: 10px;
-    color: #6b7280; /* Gray color for close button */
-    z-index: 10;
-    font-size: 1.5em; /* Increased close button size */
+  top: 8px;
+  right: 8px;
+  color: white;
+  z-index: 10;
 }
-
-.popup-card {
-    display: flex;
-    flex-direction: column;
-    font-family: sans-serif; /* Set a default font-family */
-    color: #374151; /* Darker text color */
-}
-
-.popup-image-container {
-    position: relative;
-    overflow: hidden; /* Clip image corners if needed */
-    border-radius: 0.5rem 0.5rem 0 0; /* Rounded top corners */
-}
-
-.popup-image {
-    display: block;
-    width: 100%;
-    height: auto; /* Maintain aspect ratio */
-    max-height: 200px; /* Limit image height */
-    object-fit: cover; /* Ensure image covers container */
-}
-
-.popup-image-placeholder {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 150px; /* Fixed height for placeholder */
-    background-color: #f9fafb; /* Light gray background */
-    color: #9ca3af; /* Lighter text color for placeholder */
-    border-radius: 0.5rem 0.5rem 0 0;
-}
-
 
 .action-buttons {
-    position: absolute;
-    bottom: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.popup-image-container:hover .action-buttons { /* Hover on image container */
-    opacity: 0.9;
+.card figure:hover .action-buttons {
+  opacity: .9;
 }
 
 .button-container {
-    display: flex;
-    gap: 8px;
-    padding: 6px;
-    background: rgba(255, 255, 255, 0.3); /* Slightly more opaque white background */
-    backdrop-filter: blur(10px); /* Stronger blur effect */
-    border-radius: 12px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on button container */
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
 }
 
 .action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: transparent;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-    font-size: 16px;
-    color: #374151; /* Icon color */
-    border: 1px solid rgba(0, 0, 0, 0.05); /* Subtle border */
-    background-color: rgba(255, 255, 255, 0.8); /* Button background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  font-size: 16px;
 }
 
 .action-btn:hover {
-    transform: scale(1.1);
-    background: rgba(255, 255, 255, 0.9); /* Slightly brighter hover background */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* Slightly stronger hover shadow */
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.property-info {
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.property-name {
-    font-size: 1.25rem; /* Larger property name */
-    font-weight: 600; /* Semi-bold font weight */
-    margin-bottom: 0.5rem;
-    cursor: pointer;
-    color: #1f2937; /* Darker property name color */
-    transition: color 0.2s;
-}
-
-.property-name:hover {
-    color: #4b5563; /* Slightly lighter on hover */
-}
-
-
-.property-details {
-    overflow: hidden; /* To allow for smooth transition */
-    max-height: 0;
-    transition: max-height 0.3s ease-in-out;
-}
-
-.property-details.active {
-    max-height: 500px; /* Adjust as needed, or use 'auto' if content is variable and potentially long */
-    margin-bottom: 0.5rem; /* Add some margin when details are visible */
-}
-
-
-.detail-item {
-    padding: 0.5rem 0;
-    font-size: 0.9rem;
-    color: #4b5563; /* Detail item text color */
-}
-
-.detail-item strong {
-    font-weight: 500;
-    margin-right: 0.25rem;
-    color: #374151; /* Strong text color */
+.card-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .copyable {
-    cursor: pointer;
-    transition: background-color 0.2s;
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.25rem;
-    margin: -0.2rem -0.4rem; /* Adjust margin to visually align hover area */
+  cursor: pointer;
+  transition: background-color 0.3s;
+  padding: 4px;
+  border-radius: 4px;
 }
 
 .copyable:hover {
-    background-color: #f2f2f2; /* Light gray hover background */
+  background-color: #f3f4f6;
 }
 
 .copy-tooltip {
-    position: absolute;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    pointer-events: none;
-    animation: fadeInOut 1s ease;
-    z-index: 100; /* Ensure tooltip is on top */
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  animation: fadeInOut 1s ease;
 }
 
 @keyframes fadeInOut {
-    0% { opacity: 0; transform: translateY(-5px); }
-    20% { opacity: 1; transform: translateY(0); }
-    80% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-5px); }
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
-.type-tag {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.375rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    line-height: 1;
-    margin-right: 0.25rem;
-    background-color: #e5e7eb; /* Light gray background for tags */
-    color: #4b5563; /* Tag text color */
+/* Marker cluster styling */
+.marker-cluster {
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  text-align: center;
+  line-height: 40px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+}
+
+.marker-cluster-selected {
+  border: 3px solid #FFD700;
+}
+
+/* Settings panel */
+#settings {
+  background: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#settings input[type="text"],
+#settings input[type="checkbox"] {
+  margin: 0.5rem 0;
+}
+
+#settings label {
+  display: inline-block;
+  margin-right: 0.5rem;
 }
