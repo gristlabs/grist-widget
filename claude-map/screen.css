@@ -287,37 +287,43 @@ body {
 }
 
 .card-content {
-  display: flex;
-  flex-direction: column;
+  padding: 16px;
+}
+
+.card-content h2 {
+  margin-bottom: 12px;
+}
+
+.details p {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.copy-tooltip {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 9999;
+  animation: fadeInOut 1s ease;
 }
 
 .copyable {
   cursor: pointer;
-  transition: background-color 0.3s;
-  padding: 4px;
+  transition: background-color 0.2s;
+  padding: 4px 8px;
   border-radius: 4px;
+  display: inline-block;
 }
 
 .copyable:hover {
   background-color: #f3f4f6;
-}
-
-.copy-tooltip {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  pointer-events: none;
-  animation: fadeInOut 1s ease;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; }
-  20% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { opacity: 0; }
 }
 
 /* Marker cluster styling */
