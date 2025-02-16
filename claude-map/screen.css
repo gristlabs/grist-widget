@@ -1,187 +1,134 @@
-/* Updated styles for map and controls */
-
 body {
-  margin: 0;
-  padding: 0;
-}
+      margin: 0;
+      padding: 0;
+    }
 
-#map {
-  width: 100vw; 
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-}
+    #map {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
 
-#minimap-container {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 300px;
-  height: 250px; /* Increased height to hide the top bar */
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  overflow: hidden; /* Hide overflow */
-  z-index: 1000;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  transition: height 0.3s ease; /* Smooth transition for height change */
-}
+    .leaflet-control-zoom {
+      font-size: 24px;
+    }
 
-#minimap-container.collapsed {
-  height: 0; /* Collapsed state */
-  border: none; /* Remove border when collapsed */
-  padding: 0; /* Remove padding when collapsed */
-}
+    .leaflet-control-zoom a {
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+    }
 
-#googleMap {
-  width: 100%;
-  height: 140%; /* Increase height further to hide the top bar */
-  border: none;
-  margin-top: -60px; /* Adjust this value to fully hide the top bar */
-}
+    .leaflet-control-layers {
+      font-size: 18px;
+    }
 
-#toggleMinimap {
-  position: absolute;
-  top: -30px;
-  right: 0;
-  background: #007acc;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  z-index: 1001;
-}
+    .leaflet-control-layers-toggle {
+      width: 40px;
+      height: 40px;
+      background-size: 30px 30px;
+    }
 
-#toggleMinimap:hover {
-  background: #005f99;
-}
+    .leaflet-control-geocoder {
+      font-size: 18px;
+    }
 
-/* Geocoder control styling */
-.leaflet-control-geocoder {
-  background: white;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-  border-radius: 4px;
-  max-width: 300px;
-}
+    .leaflet-control-geocoder input {
+      font-size: 18px;
+      padding: 12px;
+      width: calc(100% - 24px);
+    }
 
-.leaflet-control-geocoder input {
-  font-size: 14px;
-  padding: 8px;
-  width: calc(100% - 16px);
-  border: none;
-  outline: none;
-  border-radius: 4px;
-}
+    .custom-popup .leaflet-popup-content-wrapper {
+      padding: 0;
+      overflow: hidden;
+      border-radius: 0.5rem;
+    }
 
-.leaflet-control-geocoder-expanded {
-  width: 300px;
-  padding: 5px;
-}
+    .custom-popup .leaflet-popup-content {
+      margin: 0;
+      width: 240px !important;
+    }
 
-/* Marker cluster styling */
-.marker-cluster {
-  background-color: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  text-align: center;
-  line-height: 40px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #000;
-}
+    .custom-popup .leaflet-popup-close-button {
+      top: 8px;
+      right: 8px;
+      color: white;
+      z-index: 10;
+    }
 
-.marker-cluster-small {
-  width: 40px;
-  height: 40px;
-}
+    .action-buttons {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
 
-.marker-cluster-medium {
-  width: 50px;
-  height: 50px;
-}
+    .card figure:hover .action-buttons {
+      opacity: .9;
+    }
 
-.marker-cluster-large {
-  width: 60px;
-  height: 60px;
-}
+    .button-container {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+    }
 
-#settings {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: white;
-  padding: 10px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-  border-radius: 5px;
-  display: none; /* Initially hidden */
-  z-index: 1000; /* Ensure it sits above the map */
-}
+    .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      font-size: 16px;
+    }
 
-#btnClose {
-  cursor: pointer;
-  color: red;
-}
+    .action-btn:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.1);
+    }
 
-#btnClose:hover {
-  text-decoration: underline;
-}
+    .card-content {
+      display: flex;
+      flex-direction: column;
+    }
 
-#lblText {
-  min-width: 100px;
-  display: inline-block;
-}
+    .copyable {
+      cursor: pointer;
+      transition: background-color 0.3s;
+      padding: 4px;
+      border-radius: 4px;
+    }
 
-/* JV: Needed to highlight selected cluster */
-.marker-cluster-selected {
-  border: 3px solid #16b378;
-}
+    .copyable:hover {
+      background-color: #f3f4f6;
+    }
 
-/* Image Styling */
-.leaflet-popup-content img {
-  width: 100%;
-  height: auto;
-  margin-bottom: 10px;
-  border-radius: 5px;
-}
+    .copy-tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+      animation: fadeInOut 1s ease;
+    }
 
-/* Popup Buttons */
-.popup-buttons {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-}
-
-.popup-button {
-  display: inline-block;
-  padding: 8px 12px;
-  background-color: #DBEFDC;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  font-size: 14px;
-  text-align: center;
-}
-
-.popup-button:hover {
-  background-color: #A5D7A7;
-}
-
-/* Popup Header and Text */
-.leaflet-popup-content h3 {
-  font-size: 18px;
-  margin-bottom: 5px;
-  color: #333;
-}
-
-.marker-cluster-selected {
-  border: 3px solid #FFD700; /* Highlight selected cluster with a gold border */
-}
-
-.leaflet-popup-content h4 {
-  font-size: 14px;
-  margin: 5px 0;
-  color: #555;
-}
-
-.leaflet-popup-content b {
-  font-weight: bold;
-}
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { opacity: 0; }
+    }
