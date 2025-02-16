@@ -326,12 +326,11 @@ body {
   padding: 2px 4px;
   border-radius: 3px;
   transition: background-color 0.2s;
-  color: #2563eb;
+  color: inherit;  /* Use the parent text color instead of blue */
 }
 
 .copyable:hover {
-  background-color: #f3f4f6;
-  text-decoration: underline;
+  background-color: rgba(0, 0, 0, 0.05);  /* Subtle background on hover */
 }
 
 .action-buttons {
@@ -351,10 +350,8 @@ body {
   display: flex;
   gap: 6px;
   padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(4px);
+  background: transparent;  /* Remove the white background */
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .action-btn {
@@ -367,39 +364,22 @@ body {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  color: #666;
+  color: white;  /* Make icons white for better visibility on image */
   text-decoration: none;
   background: transparent;
   border: none;
   padding: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);  /* Add shadow to make icons visible on any background */
 }
 
 .action-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #333;
+  background: rgba(255, 255, 255, 0.2);  /* Subtle white background on hover */
   transform: scale(1.1);
 }
 
+/* Remove the copy tooltip styles since we don't need them anymore */
 .copy-tooltip {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  pointer-events: none;
-  z-index: 9999;
-  animation: fadeInOut 1s ease;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; }
-  20% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { opacity: 0; }
+  display: none;
 }
 
 /* Marker cluster styling */
