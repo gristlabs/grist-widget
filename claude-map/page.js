@@ -13,17 +13,18 @@ let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Stre
 let mapCopyright = 'Esri';
 
 // Required columns
-const Name = "Name";
+const Name = "Name";  // Reference to Owners_
 const Longitude = "Longitude";
 const Latitude = "Latitude";
 const Property_Id = "Property_Id";
-const ImageURL = 'ImageURL';
-const CoStar_URL = 'CoStar_URL';
-const County_Hyper = 'County_Hyper';
-const GIS = 'GIS';
-const Geocode = 'Geocode';
-const Address = 'Address';
-const GeocodedAddress = 'GeocodedAddress';
+const Property_Address = "Property_Address";
+const ImageURL = "ImageURLs";  // Updated to match your schema
+const CoStar_URL = "CoStar_URL";
+const County_Hyper = "County_Hyper";
+const GIS = "GIS";
+const Geocode = "Geocode";
+const Address = "Property_Address";  // Using Property_Address instead
+const GeocodedAddress = "GeocodedAddress";
 
 let lastRecord;
 let lastRecords;
@@ -161,6 +162,13 @@ function copyToClipboard(text) {
   setTimeout(() => tooltip.remove(), 1000);
 }
 
+function toggleDetails(element) {
+  const details = element.nextElementSibling;
+  if (details) {
+    details.classList.toggle('hidden');
+  }
+}
+
 function createPopupContent(record) {
   const address = record[Address] ? record[Address].toString() : '';
   const propertyId = record[Property_Id] ? record[Property_Id].toString() : '';
@@ -189,8 +197,8 @@ function createPopupContent(record) {
         </div>
       </figure>
       <div class="card-content p-2">
-        <h2 class="text-lg font-semibold mb-2">${name}</h2>
-        <div class="details">
+        <h2 class="text-lg font-semibold mb-2 cursor-pointer hover:text-blue-600 transition-colors" onclick="toggleDetails(this)">${name}</h2>
+        <div class="details hidden">
           ${address ? `<p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${address.replace(/'/g, "\\'")}')">${address}</span></p>` : ''}
           ${propertyId ? `<p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${propertyId.replace(/'/g, "\\'")}')">${propertyId}</span></p>` : ''}
         </div>
@@ -413,16 +421,16 @@ function onEditOptions() {
 document.addEventListener("DOMContentLoaded", function () {
   grist.ready({
     columns: [
-      { name: "Name", type: "Text", title: 'Name' },
+      { name: "Name", type: ["Text", "Choice", "Reference", "ReferenceList"], title: 'Name' },
       { name: "Longitude", type: "Numeric" },
       { name: "Latitude", type: "Numeric" },
       { name: "Property_Id", type: "Text" },
-      { name: "ImageURL", type: "Text", optional: true },
+      { name: "Property_Address", type: "Text" },
+      { name: "ImageURLs", type: "Text", optional: true },
       { name: "CoStar_URL", type: "Text", optional: true },
       { name: "County_Hyper", type: "Text", optional: true },
       { name: "GIS", type: "Text", optional: true },
       { name: "Geocode", type: "Bool", title: "Geocode", optional: true },
-      { name: "Address", type: "Text", optional: true },
       { name: "GeocodedAddress", type: "Text", title: "Geocoded Address", optional: true },
     ],
     allowSelectBy: true,
