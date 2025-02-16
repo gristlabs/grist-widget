@@ -47,9 +47,17 @@ function initializeMap() {
 
   // Geosearch
   const searchControl = L.esri.Geocoding.geosearch({
-    providers: [L.esri.Geocoding.arcgisOnlineProvider()],
     position: 'topleft',
-    useMapBounds: false
+    useMapBounds: false,
+    placeholder: 'Search for places or addresses',
+    title: 'Location Search',
+    expanded: false,
+    collapseAfterResult: true,
+    providers: [
+      L.esri.Geocoding.arcgisOnlineProvider({
+        apikey: null // Using the free tier
+      })
+    ]
   }).addTo(amap);
 
   const searchResults = L.layerGroup().addTo(amap);
@@ -155,6 +163,9 @@ function handleRecords(records) {
 }
 
 // Grist Integration
+window.handleRecord = handleRecord;
+window.handleRecords = handleRecords;
+
 grist.ready({
   columns: [
     { name: "Name", type: 'Text' },
@@ -168,6 +179,6 @@ grist.ready({
     { name: "id", type: 'Text' },
   ],
   allowSelectBy: true,
-  onRecord: handleRecord,
-  onRecords: handleRecords,
+  onRecord: 'handleRecord',
+  onRecords: 'handleRecords',
 });
