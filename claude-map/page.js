@@ -41,6 +41,54 @@ const selectedIcon = new L.Icon({
 
 const defaultIcon = new L.Icon.Default();
 
+// Add Grist record subscription
+function subscribeToRecords() {
+  grist.onRecords(records => {
+    lastRecords = records;
+    updateMap(records);
+  });
+  
+  // Listen for cursor moves (record selection)
+  grist.onRecord(record => {
+    if (record) {
+      selectedRowId = record.id;
+      onRecordSelection(record);
+    } else {
+      selectedRowId = null;
+    }
+  });
+}
+
+// Add this function to handle record selection
+function onRecordSelection(record) {
+  if (!record || !amap) return;
+  
+  const lat = record[Latitude];
+  const lng = record[Longitude];
+  
+  if (lat && lng) {
+    const latlng = L.latLng(lat, lng);
+    amap.setView(latlng, 16);  // Zoom to the selected marker
+    
+    // Update marker appearance
+    if (markersLayer) {
+      markersLayer.eachLayer((layer) => {
+        if (layer.getLatLng().equals(latlng)) {
+          layer.setIcon(selectedIcon);
+          if (layer.getPopup()) {
+            layer.openPopup();
+          }
+        } else {
+          layer.setIcon(defaultIcon);
+        }
+      });
+    }
+    
+    // Track the last selected record
+    lastRecord = record;
+  }
+}
+
 const baseLayers = {
   "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
     attribution: 'Google Hybrid'
@@ -58,6 +106,7 @@ const baseLayers = {
 
 const overlayLayers = {};
 
+// Modify your existing initialization code to include subscription
 function initializeMap() {
   amap = L.map('map', {
     layers: [baseLayers["Google Hybrid"]],
@@ -139,6 +188,18 @@ function initializeMap() {
   }
 
   return amap;
+
+  // Add this at the end of initialization
+  subscribeToRecords();
+  
+  // Attach marker click handler
+  amap.on('popupopen', function(e) {
+    const marker = e.popup._source;
+    const record = marker.record;
+    if (record) {
+      grist.selectRecord(record.id);
+    }
+  });
 }
 
 function copyToClipboard(text) {
@@ -199,6 +260,18 @@ function createPopupContent(record) {
     </div>
   `;
 }
+
+// Update your marker creation to include record data
+function createMarker(record) {
+  const lat = record[Latitude];
+  const lng = record[Longitude];
+  
+  if (lat && lng) {
+    const marker = L.marker([lat, lng], {
+      icon: (record.id === selectedRowId) ? selectedIcon : defaultIcon
+    });
+    
+    marker.record = record;  // Store record data with the marker
 
 function updateMap(data) {
   if (!amap) {
