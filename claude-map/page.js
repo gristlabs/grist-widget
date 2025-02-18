@@ -1,4 +1,12 @@
 "use strict";
+// Add at the beginning of your file after "use strict"
+if (typeof grist !== 'undefined' && grist.locale) {
+  grist.locale.register({
+    'menus.Compact': 'Compact',
+    'menus.🌎Claude-Map': 'Claude Map',
+    'menus.🏬': 'Properties'
+  });
+}
 
 /* global grist, window */
 
@@ -196,7 +204,9 @@ function onRecordSelection(record) {
       markersLayer.eachLayer((layer) => {
         if (layer.getLatLng().equals(latlng)) {
           layer.setIcon(selectedIcon);
-          layer.openPopup();
+          if (layer.getPopup()) {
+            layer.openPopup();
+          }
         } else {
           layer.setIcon(defaultIcon);
         }
@@ -205,44 +215,6 @@ function onRecordSelection(record) {
     
     lastRecord = record;
   }
-}
-
-function updateMap(data) {
-  if (!amap) {
-    amap = initializeMap();
-  }
-
-  if (!markersLayer) {
-    markersLayer = L.markerClusterGroup();
-    amap.addLayer(markersLayer);
-  } else {
-    markersLayer.clearLayers();
-  }
-
-  (data || []).forEach(record => {
-    const marker = createMarker(record);
-    if (marker) {
-      popups[record.id] = marker;
-      markersLayer.addLayer(marker);
-    }
-  });
-}
-
-// Grist integration functions
-function subscribeToRecords() {
-  grist.onRecords(records => {
-    lastRecords = records;
-    updateMap(records);
-  });
-  
-  grist.onRecord(record => {
-    if (record) {
-      selectedRowId = record.id;
-      onRecordSelection(record);
-    } else {
-      selectedRowId = null;
-    }
-  });
 }
 
 function initializeMap() {
@@ -279,52 +251,45 @@ function initializeMap() {
 
   overlayLayers["Search Results"] = searchResults;
 
+  // Updated popup handler to use setCursorPos instead of selectRecord
   amap.on('popupopen', function(e) {
     const marker = e.popup._source;
     if (marker && marker.record) {
-      grist.selectRecord(marker.record.id);
+      grist.setCursorPos({
+        rowId: marker.record.id
+      }).catch(err => console.error('Error setting cursor position:', err));
     }
   });
 
   return amap;
 }
 
-// Settings and options handling
-function onEditOptions() {
-  const popup = document.getElementById("settings");
-  popup.style.display = 'block';
-  
-  document.getElementById("btnClose").onclick = () => popup.style.display = 'none';
-  
-  const checkbox = document.getElementById('cbxMode');
-  checkbox.checked = mode === 'multi';
-  checkbox.onchange = async (e) => {
-    const newMode = e.target.checked ? 'multi' : 'single';
-    if (newMode !== mode) {
-      mode = newMode;
-      await grist.setOption('mode', mode);
-      updateMode();
+// Update the Grist integration functions
+function subscribeToRecords() {
+  grist.onRecords(records => {
+    lastRecords = records;
+    if (records && records.length > 0) {
+      updateMap(records);
     }
-  };
-
-  ["mapSource", "mapCopyright"].forEach((opt) => {
-    const input = document.getElementById(opt);
-    input.onchange = async (e) => {
-      await grist.setOption(opt, e.target.value);
-    };
   });
-}
-
-function updateMode() {
-  if (mode === 'single' && lastRecord) {
-    selectedRowId = lastRecord.id;
-    updateMap([lastRecord]);
-  } else if (lastRecords) {
-    updateMap(lastRecords);
+  
+  grist.onRecord((record, mappings) => {
+  if (mode === 'single') {
+    lastRecord = grist.mapColumnNames(record) || record;
+    onRecordSelection(lastRecord);
+    scanOnNeed(defaultMapping(record, mappings));
+  } else {
+    const marker = popups[record.id];
+    if (marker) {
+      markersLayer.zoomToShowLayer(marker, () => {
+        marker.openPopup();
+      });
+    }
   }
+});
 }
 
-// Initialize widget
+// Initialize widget with required permissions
 document.addEventListener("DOMContentLoaded", function() {
   grist.ready({
     columns: [
@@ -340,12 +305,61 @@ document.addEventListener("DOMContentLoaded", function() {
       { name: "Geocode", type: "Bool", title: "Geocode", optional: true },
       { name: "GeocodedAddress", type: "Text", title: "Geocoded Address", optional: true },
     ],
+    requiredPermissions: ['read', 'update'],
     allowSelectBy: true,
     onEditOptions
   });
-
-  initializeMap();
 });
+
+// Add error handling for map updates
+function updateMap(data) {
+  if (!amap) {
+    try {
+      amap = initializeMap();
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      return;
+    }
+  }
+
+  if (!markersLayer) {
+    markersLayer = L.markerClusterGroup();
+    amap.addLayer(markersLayer);
+  } else {
+    markersLayer.clearLayers();
+  }
+
+  try {
+    (data || []).forEach(record => {
+      if (record && record[Latitude] && record[Longitude]) {
+        const marker = createMarker(record);
+        if (marker) {
+          popups[record.id] = marker;
+          markersLayer.addLayer(marker);
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Error updating markers:', err);
+  }
+}
+
+// Add cleanup function
+function cleanup() {
+  if (markersLayer) {
+    markersLayer.clearLayers();
+  }
+  if (amap) {
+    amap.remove();
+  }
+  popups = {};
+  selectedRowId = null;
+  lastRecord = null;
+  lastRecords = null;
+}
+
+// Add cleanup on widget disposal
+window.addEventListener('unload', cleanup);
 
 // Options handling
 grist.onOptions((options, interaction) => {
@@ -371,4 +385,124 @@ grist.onOptions((options, interaction) => {
       element.value = mapCopyright;
     }
   }
+});
+
+// Add these functions to your file
+
+function updateMode() {
+  if (mode === 'single' && lastRecord) {
+    selectedRowId = lastRecord.id;
+    updateMap([lastRecord]);
+  } else if (lastRecords) {
+    updateMap(lastRecords);
+  }
+}
+
+// Geocoding functionality
+async function geocode(address) {
+  // Add your geocoding implementation here if needed
+  return new Promise((resolve, reject) => {
+    if (!address) reject(new Error('No address provided'));
+    
+    const geocoder = L.esri.Geocoding.geocodeService();
+    geocoder.geocode()
+      .text(address)
+      .run((err, results) => {
+        if (err) {
+          reject(err);
+        } else if (results && results.results && results.results.length > 0) {
+          const location = results.results[0].latlng;
+          resolve({ lat: location.lat, lng: location.lng });
+        } else {
+          reject(new Error('No results found'));
+        }
+      });
+  });
+}
+
+async function scan(tableId, records, mappings) {
+  if (!writeAccess) { return; }
+  for (const record of records) {
+    if (!(Geocode in record)) { break; }
+    if (!record[Geocode]) { continue; }
+    const address = record[Address];
+    if (record[GeocodedAddress] && record[GeocodedAddress] !== record[Address]) {
+      record[Longitude] = null;
+      record[Latitude] = null;
+    }
+    if (address && !record[Longitude]) {
+      try {
+        const result = await geocode(address);
+        await grist.docApi.applyUserActions([['UpdateRecord', tableId, record.id, {
+          [mappings[Longitude]]: result.lng,
+          [mappings[Latitude]]: result.lat,
+          ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
+        }]]);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Delay between geocoding requests
+      } catch (err) {
+        console.error('Error geocoding address:', err);
+      }
+    }
+  }
+}
+
+function scanOnNeed(mappings) {
+  if (!scanning && selectedTableId && selectedRecords) {
+    scanning = scan(selectedTableId, selectedRecords, mappings)
+      .then(() => scanning = null)
+      .catch(() => scanning = null);
+  }
+}
+
+function hasCol(col, anything) {
+  return anything && typeof anything === 'object' && col in anything;
+}
+
+function defaultMapping(record, mappings) {
+  if (!mappings) {
+    return {
+      [Longitude]: Longitude,
+      [Name]: Name,
+      [Latitude]: Latitude,
+      [Property_Id]: Property_Id,
+      [ImageURL]: ImageURL,
+      [CoStar_URL]: CoStar_URL,
+      [County_Hyper]: County_Hyper,
+      [GIS]: GIS,
+      [Geocode]: hasCol(Geocode, record) ? Geocode : null,
+      [Address]: hasCol(Address, record) ? Address : null,
+      [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
+    };
+  }
+  return mappings;
+}
+
+// Settings panel HTML template - add this to your initialization
+function createSettingsPanel() {
+  const settingsHtml = `
+    <div id="settings" style="display:none">
+      <span id="btnClose">×</span>
+      <div>
+        <label>
+          <input type="checkbox" id="cbxMode"> Multiple markers
+        </label>
+      </div>
+      <div>
+        <label for="mapSource">Map Source:</label>
+        <input type="text" id="mapSource">
+      </div>
+      <div>
+        <label for="mapCopyright">Copyright:</label>
+        <input type="text" id="mapCopyright">
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', settingsHtml);
+}
+
+// Add this to your DOMContentLoaded event listener
+document.addEventListener("DOMContentLoaded", function() {
+  createSettingsPanel();
+  // ... rest of your existing DOMContentLoaded code ...
 });
