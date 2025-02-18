@@ -2,17 +2,24 @@
 
 /* global grist, window */
 
+// State management
 let amap;
 let markersLayer;
 let popups = {};
 let selectedTableId = null;
 let selectedRowId = null;
 let selectedRecords = null;
+let lastRecord;
+let lastRecords;
 let mode = 'multi';
+let writeAccess = true;
+let scanning = null;
+
+// Map configuration
 let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
 let mapCopyright = 'Esri';
 
-// Required columns
+// Required column definitions
 const Name = "Name";  // ReferenceList to Owners_
 const Longitude = "Longitude";
 const Latitude = "Latitude";
@@ -26,9 +33,7 @@ const Geocode = "Geocode";
 const Address = "Property_Address";
 const GeocodedAddress = "GeocodedAddress";
 
-let lastRecord;
-let lastRecords;
-
+// Map icons
 const selectedIcon = new L.Icon({
   iconUrl: 'marker-icon-green.png',
   iconRetinaUrl: 'marker-icon-green-2x.png',
@@ -41,54 +46,16 @@ const selectedIcon = new L.Icon({
 
 const defaultIcon = new L.Icon.Default();
 
-// Add Grist record subscription
-function subscribeToRecords() {
-  grist.onRecords(records => {
-    lastRecords = records;
-    updateMap(records);
-  });
-  
-  // Listen for cursor moves (record selection)
-  grist.onRecord(record => {
-    if (record) {
-      selectedRowId = record.id;
-      onRecordSelection(record);
-    } else {
-      selectedRowId = null;
-    }
-  });
-}
+const searchIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+  shadowUrl: 'marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
-// Add this function to handle record selection
-function onRecordSelection(record) {
-  if (!record || !amap) return;
-  
-  const lat = record[Latitude];
-  const lng = record[Longitude];
-  
-  if (lat && lng) {
-    const latlng = L.latLng(lat, lng);
-    amap.setView(latlng, 16);  // Zoom to the selected marker
-    
-    // Update marker appearance
-    if (markersLayer) {
-      markersLayer.eachLayer((layer) => {
-        if (layer.getLatLng().equals(latlng)) {
-          layer.setIcon(selectedIcon);
-          if (layer.getPopup()) {
-            layer.openPopup();
-          }
-        } else {
-          layer.setIcon(defaultIcon);
-        }
-      });
-    }
-    
-    // Track the last selected record
-    lastRecord = record;
-  }
-}
-
+// Base map layers
 const baseLayers = {
   "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
     attribution: 'Google Hybrid'
@@ -106,111 +73,41 @@ const baseLayers = {
 
 const overlayLayers = {};
 
-// Modify your existing initialization code to include subscription
-function initializeMap() {
-  amap = L.map('map', {
-    layers: [baseLayers["Google Hybrid"]],
-    center: [45.5283, -122.8081], // Default center (USA)
-    zoom: 4, // Default zoom level
-    wheelPxPerZoomLevel: 90,
-  });
-
-  // Attach the load event listener after the map is initialized
-  amap.on('load', function () {
-    console.log("Map is fully loaded and ready for interaction");
-  });
-
-  // Add layer control
-  L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: true }).addTo(amap);
-
-  // Add Esri Geocoder search control
-  const searchControl = L.esri.Geocoding.geosearch({
-    providers: [L.esri.Geocoding.arcgisOnlineProvider()],
-    position: 'topleft',
-    attribution: false // Disable attribution for the geocoder
-  }).addTo(amap);
-
-  const searchResults = L.layerGroup().addTo(amap);
-
-  searchControl.on('results', function (data) {
-    searchResults.clearLayers();
-    for (let i = data.results.length - 1; i >= 0; i--) {
-      const marker = L.marker(data.results[i].latlng, {
-        icon: new L.Icon({
-          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
-          shadowUrl: 'marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
-        })
-      });
-      searchResults.addLayer(marker);
-    }
-  });
-
-  overlayLayers["Search Results"] = searchResults;
-
-  // Synchronize with Google Map
-  const googleMapIframe = document.getElementById('googleMap');
-
-  if (googleMapIframe) {
-    // Function to sync Leaflet map with Google MyMap
-    function syncMaps() {
-      // Sync the Leaflet map with the iframe's view
-      amap.on('moveend', function () {
-        const center = amap.getCenter();
-        const zoom = amap.getZoom();
-        const ll = `${center.lat},${center.lng}`;
-        googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}`;
-      });
-
-      // Trigger sync on initial load
-      const initialCenter = amap.getCenter();
-      const initialZoom = amap.getZoom();
-      const initialLL = `${initialCenter.lat},${initialCenter.lng}`;
-      googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${initialLL}&z=${initialZoom}`;
-    }
-
-    syncMaps();
-  } else {
-    console.error("Google MyMap iframe not found!");
-  }
-
-  // Collapsible minimap logic
-  const minimapContainer = document.getElementById('minimap-container');
-  const toggleButton = document.getElementById('toggleMinimap');
-
-  if (toggleButton && minimapContainer) {
-    toggleButton.addEventListener('click', function () {
-      minimapContainer.classList.toggle('collapsed');
-    });
-  }
-
-  return amap;
-
-  // Add this at the end of initialization
-  subscribeToRecords();
+// Helper functions
+function parseValue(v) {
+  if (!v) return '';
   
-  // Attach marker click handler
-  amap.on('popupopen', function(e) {
-    const marker = e.popup._source;
-    const record = marker.record;
-    if (record) {
-      grist.selectRecord(record.id);
+  if (Array.isArray(v)) {
+    return v.map(item => {
+      if (item && typeof item === 'object' && item.Name) {
+        return item.Name;
+      }
+      return item;
+    }).join(", ");
+  }
+  
+  if (typeof v === 'object') {
+    if (v.Name) return v.Name;
+    if (v.value && typeof v.value === 'string' && v.value.startsWith('V(')) {
+      try {
+        const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
+        return payload.remote || payload.local || payload.parent || payload;
+      } catch (e) {
+        return v.value;
+      }
     }
-  });
+    return v.toString();
+  }
+  
+  return v.toString();
 }
 
 function copyToClipboard(text) {
-  // Create a temporary input element
   const tempInput = document.createElement('input');
   tempInput.style.position = 'absolute';
   tempInput.style.left = '-9999px';
   tempInput.value = text;
   document.body.appendChild(tempInput);
-
-  // Select and copy the text
   tempInput.select();
   document.execCommand('copy');
   document.body.removeChild(tempInput);
@@ -224,6 +121,7 @@ function toggleDetails(element) {
   }
 }
 
+// Map interaction functions
 function createPopupContent(record) {
   const address = parseValue(record[Address]) || '';
   const propertyId = parseValue(record[Property_Id]) || '';
@@ -261,7 +159,6 @@ function createPopupContent(record) {
   `;
 }
 
-// Update your marker creation to include record data
 function createMarker(record) {
   const lat = record[Latitude];
   const lng = record[Longitude];
@@ -271,7 +168,44 @@ function createMarker(record) {
       icon: (record.id === selectedRowId) ? selectedIcon : defaultIcon
     });
     
-    marker.record = record;  // Store record data with the marker
+    marker.record = record;
+    const popupContent = createPopupContent(record);
+    
+    marker.bindPopup(popupContent, {
+      maxWidth: 240,
+      minWidth: 240,
+      className: 'custom-popup'
+    });
+    
+    return marker;
+  }
+  return null;
+}
+
+function onRecordSelection(record) {
+  if (!record || !amap) return;
+  
+  const lat = record[Latitude];
+  const lng = record[Longitude];
+  
+  if (lat && lng) {
+    const latlng = L.latLng(lat, lng);
+    amap.setView(latlng, 16);
+    
+    if (markersLayer) {
+      markersLayer.eachLayer((layer) => {
+        if (layer.getLatLng().equals(latlng)) {
+          layer.setIcon(selectedIcon);
+          layer.openPopup();
+        } else {
+          layer.setIcon(defaultIcon);
+        }
+      });
+    }
+    
+    lastRecord = record;
+  }
+}
 
 function updateMap(data) {
   if (!amap) {
@@ -285,231 +219,116 @@ function updateMap(data) {
     markersLayer.clearLayers();
   }
 
-  data.forEach(record => {
-    const marker = L.marker([record[Latitude], record[Longitude]], {
-      title: record[Name],
-      icon: record.id === selectedRowId ? selectedIcon : defaultIcon
-    });
-
-    const popupContent = createPopupContent(record);
-    
-    marker.bindPopup(popupContent, {
-      maxWidth: 240,
-      minWidth: 240,
-      className: 'custom-popup'
-    });
-    
-    popups[record.id] = marker;
-    markersLayer.addLayer(marker);
+  (data || []).forEach(record => {
+    const marker = createMarker(record);
+    if (marker) {
+      popups[record.id] = marker;
+      markersLayer.addLayer(marker);
+    }
   });
 }
 
-// If widget has write access
-let writeAccess = true;
-
-// A ongoing scanning promise, to check if we are in progress.
-let scanning = null;
-
-async function scan(tableId, records, mappings) {
-  if (!writeAccess) { return; }
-  for (const record of records) {
-    if (!(Geocode in record)) { break; }
-    if (!record[Geocode]) { continue; }
-    const address = record.Address;
-    if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
-      record[Longitude] = null;
-      record[Latitude] = null;
-    }
-    if (address && !record[Longitude]) {
-      const result = await geocode(address);
-      await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
-        [mappings[Longitude]]: result.lng,
-        [mappings[Latitude]]: result.lat,
-        ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
-      }] ]);
-      await delay(1000);
-    }
-  }
-}
-
-function scanOnNeed(mappings) {
-  if (!scanning && selectedTableId && selectedRecords) {
-    scanning = scan(selectedTableId, selectedRecords, mappings).then(() => scanning = null).catch(() => scanning = null);
-  }
-}
-
-function showProblem(txt) {
-  document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
-}
-
-function parseValue(v) {
-  if (!v) return '';
+// Grist integration functions
+function subscribeToRecords() {
+  grist.onRecords(records => {
+    lastRecords = records;
+    updateMap(records);
+  });
   
-  // Handle arrays (like ReferenceList)
-  if (Array.isArray(v)) {
-    return v.map(item => {
-      if (item && typeof item === 'object' && item.Name) {
-        return item.Name;
-      }
-      return item;
-    }).join(", ");
-  }
-  
-  // Handle objects (like Reference)
-  if (typeof v === 'object') {
-    if (v.Name) return v.Name;
-    if (v.value && typeof v.value === 'string' && v.value.startsWith('V(')) {
-      try {
-        const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
-        return payload.remote || payload.local || payload.parent || payload;
-      } catch (e) {
-        return v.value;
-      }
+  grist.onRecord(record => {
+    if (record) {
+      selectedRowId = record.id;
+      onRecordSelection(record);
+    } else {
+      selectedRowId = null;
     }
-    return v.toString();
-  }
-  
-  return v.toString();
+  });
 }
 
-function getInfo(rec) {
-  const result = {
-    id: rec.id,
-    name: parseValue(rec[Name]),
-    lng: parseValue(rec[Longitude]),
-    lat: parseValue(rec[Latitude]),
-    propertyType: parseValue(rec['Property_Type']),
-    tenants: parseValue(rec['Tenants']),
-    secondaryType: parseValue(rec['Secondary_Type']),
-    imageUrl: parseValue(rec['ImageURL']),
-    costarLink: parseValue(rec['CoStar_URL']),
-    countyLink: parseValue(rec['County_Hyper']),
-    gisLink: parseValue(rec['GIS']),
-  };
-  return result;
-}
+function initializeMap() {
+  amap = L.map('map', {
+    layers: [baseLayers["Google Hybrid"]],
+    center: [45.5283, -122.8081],
+    zoom: 4,
+    wheelPxPerZoomLevel: 90
+  });
 
-let clearMakers = () => {};
-let markers = [];
+  // Subscribe to records before setting up other features
+  subscribeToRecords();
 
-function selectMaker(id) {
-  const previouslyClicked = popups[selectedRowId];
-  if (previouslyClicked) {
-    previouslyClicked.setIcon(defaultIcon);
-    previouslyClicked.pane = 'otherMarkers';
-  }
-  const marker = popups[id];
-  if (!marker) { return null; }
-  selectedRowId = id;
-  marker.setIcon(selectedIcon);
-  previouslyClicked.pane = 'selectedMarker';
-  markers.refreshClusters();
-  grist.setCursorPos?.({rowId: id}).catch(() => {});
-  return marker;
-}
+  L.control.layers(baseLayers, overlayLayers, { 
+    position: 'topright', 
+    collapsed: true 
+  }).addTo(amap);
 
-grist.on('message', (e) => {
-  if (e.tableId) { selectedTableId = e.tableId; }
-});
+  const searchControl = L.esri.Geocoding.geosearch({
+    providers: [L.esri.Geocoding.arcgisOnlineProvider()],
+    position: 'topleft',
+    attribution: false
+  }).addTo(amap);
 
-function hasCol(col, anything) {
-  return anything && typeof anything === 'object' && col in anything;
-}
+  const searchResults = L.layerGroup().addTo(amap);
 
-function defaultMapping(record, mappings) {
-  if (!mappings) {
-    return {
-      [Longitude]: Longitude,
-      [Name]: Name,
-      [Latitude]: Latitude,
-      [Property_Id]: Property_Id,
-      [ImageURL]: ImageURL,
-      [CoStar_URL]: CoStar_URL,
-      [County_Hyper]: County_Hyper,
-      [GIS]: GIS,
-      [Geocode]: hasCol(Geocode, record) ? Geocode : null,
-      [Address]: hasCol(Address, record) ? Address : null,
-      [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
-    };
-  }
-  return mappings;
-}
+  searchControl.on('results', function(data) {
+    searchResults.clearLayers();
+    data.results.forEach(result => {
+      const marker = L.marker(result.latlng, { icon: searchIcon });
+      searchResults.addLayer(marker);
+    });
+  });
 
-function selectOnMap(rec) {
-  if (selectedRowId === rec.id) { return; }
-  selectedRowId = rec.id;
-  if (mode === 'single') {
-    updateMap([rec]);
-  } else {
-    updateMap();
-  }
-}
+  overlayLayers["Search Results"] = searchResults;
 
-grist.onRecord((record, mappings) => {
-  if (mode === 'single') {
-    lastRecord = grist.mapColumnNames(record) || record;
-    selectOnMap(lastRecord);
-    scanOnNeed(defaultMapping(record, mappings));
-  } else {
-    const marker = selectMaker(record.id);
-    if (!marker) { return; }
-    markers.zoomToShowLayer(marker);
-    marker.openPopup();
-  }
-});
-
-grist.onRecords((data, mappings) => {
-  lastRecords = grist.mapColumnNames(data) || data;
-  if (mode !== 'single') {
-    updateMap(lastRecords);
-    if (lastRecord) {
-      selectOnMap(lastRecord);
+  amap.on('popupopen', function(e) {
+    const marker = e.popup._source;
+    if (marker && marker.record) {
+      grist.selectRecord(marker.record.id);
     }
-    scanOnNeed(defaultMapping(data[0], mappings));
-  }
-});
+  });
 
-grist.onNewRecord(() => {
-  clearMakers();
-  clearMakers = () => {};
-})
-
-function updateMode() {
-  if (mode === 'single') {
-    selectedRowId = lastRecord.id;
-    updateMap([lastRecord]);
-  } else {
-    updateMap(lastRecords);
-  }
+  return amap;
 }
 
+// Settings and options handling
 function onEditOptions() {
   const popup = document.getElementById("settings");
   popup.style.display = 'block';
-  const btnClose = document.getElementById("btnClose");
-  btnClose.onclick = () => popup.style.display = 'none';
+  
+  document.getElementById("btnClose").onclick = () => popup.style.display = 'none';
+  
   const checkbox = document.getElementById('cbxMode');
-  checkbox.checked = mode === 'multi' ? true : false;
+  checkbox.checked = mode === 'multi';
   checkbox.onchange = async (e) => {
     const newMode = e.target.checked ? 'multi' : 'single';
-    if (newMode != mode) {
+    if (newMode !== mode) {
       mode = newMode;
       await grist.setOption('mode', mode);
       updateMode();
     }
-  }
-  [ "mapSource", "mapCopyright" ].forEach((opt) => {
-    const ipt = document.getElementById(opt)
-    ipt.onchange = async (e) => {
+  };
+
+  ["mapSource", "mapCopyright"].forEach((opt) => {
+    const input = document.getElementById(opt);
+    input.onchange = async (e) => {
       await grist.setOption(opt, e.target.value);
-    }
-  })
+    };
+  });
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+function updateMode() {
+  if (mode === 'single' && lastRecord) {
+    selectedRowId = lastRecord.id;
+    updateMap([lastRecord]);
+  } else if (lastRecords) {
+    updateMap(lastRecords);
+  }
+}
+
+// Initialize widget
+document.addEventListener("DOMContentLoaded", function() {
   grist.ready({
     columns: [
-      "Name",  // Accept any type for Name
+      "Name",
       { name: "Longitude", type: "Numeric" },
       { name: "Latitude", type: "Numeric" },
       { name: "Property_Id", type: "Text" },
@@ -524,36 +343,32 @@ document.addEventListener("DOMContentLoaded", function () {
     allowSelectBy: true,
     onEditOptions
   });
+
+  initializeMap();
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-  const minimapContainer = document.getElementById('minimap-container');
-  const toggleButton = document.getElementById('toggleMinimap');
-
-  // Toggle minimap visibility
-  toggleButton.addEventListener('click', function () {
-    minimapContainer.classList.toggle('collapsed');
-  });
-});
-
+// Options handling
 grist.onOptions((options, interaction) => {
   writeAccess = interaction.accessLevel === 'full';
-  const newMode = options?.mode ?? mode;
-  mode = newMode;
-  if (newMode != mode && lastRecords) {
+  
+  if (options?.mode !== undefined && options.mode !== mode) {
+    mode = options.mode;
     updateMode();
   }
 
-  const newSource = options?.mapSource ?? mapSource;
-  mapSource = newSource;
-  const mapSourceElement = document.getElementById("mapSource");
-  if (mapSourceElement) {
-    mapSourceElement.value = mapSource;
+  if (options?.mapSource !== undefined) {
+    mapSource = options.mapSource;
+    const element = document.getElementById("mapSource");
+    if (element) {
+      element.value = mapSource;
+    }
   }
-  const newCopyright = options?.mapCopyright ?? mapCopyright;
-  mapCopyright = newCopyright;
-  const mapCopyrightElement = document.getElementById("mapCopyright");
-  if (mapCopyrightElement) {
-    mapCopyrightElement.value = mapCopyright;
+
+  if (options?.mapCopyright !== undefined) {
+    mapCopyright = options.mapCopyright;
+    const element = document.getElementById("mapCopyright");
+    if (element) {
+      element.value = mapCopyright;
+    }
   }
 });
