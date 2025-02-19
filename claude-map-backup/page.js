@@ -94,32 +94,6 @@ function initializeMap() {
 
   overlayLayers["Search Results"] = searchResults;
 
-  // Synchronize with Google Map
-  const googleMapIframe = document.getElementById('googleMap');
-
-  if (googleMapIframe) {
-    // Function to sync Leaflet map with Google MyMap
-    function syncMaps() {
-      // Sync the Leaflet map with the iframe's view
-      amap.on('moveend', function () {
-        const center = amap.getCenter();
-        const zoom = amap.getZoom();
-        const ll = `${center.lat},${center.lng}`;
-        googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}`;
-      });
-
-      // Trigger sync on initial load
-      const initialCenter = amap.getCenter();
-      const initialZoom = amap.getZoom();
-      const initialLL = `${initialCenter.lat},${initialCenter.lng}`;
-      googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${initialLL}&z=${initialZoom}`;
-    }
-
-    syncMaps();
-  } else {
-    console.error("Google MyMap iframe not found!");
-  }
-
   // Collapsible minimap logic
   const minimapContainer = document.getElementById('minimap-container');
   const toggleButton = document.getElementById('toggleMinimap');
@@ -154,28 +128,45 @@ function toggleDetails(element) {
 }
 
 function createPopupContent(record) {
-  const address = record[Address] || '';
+  const address = record[Property_Address] || '';
   const propertyId = record[Property_Id] || '';
   const name = record[Name] || '';
   const imageUrl = record[ImageURL] || '';
   
+  // Sanitize strings to prevent XSS and quote issues
+  const sanitize = (str) => str.replace(/['"<>]/g, '');
+  
   return `
     <div class="card">
       <figure>
-        ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : 
-          `<div class="no-image">No Image</div>`}
+        ${imageUrl ? 
+          `<img src="${sanitize(imageUrl)}" alt="${sanitize(name)}" onerror="this.onerror=null; this.src='placeholder.jpg';">` : 
+          `<div class="no-image">No Image Available</div>`
+        }
         <div class="action-buttons">
-          ${record[County_Hyper] ? `<a href="${record[County_Hyper]}" class="action-btn" title="County Property Search" target="_blank">🔍</a>` : ''}
-          ${record[GIS] ? `<a href="${record[GIS]}" class="action-btn" title="GIS" target="_blank">🌎</a>` : ''}
-          ${address ? `<button class="action-btn" onclick="copyToClipboard('${address}')" title="Copy Address">📋</button>` : ''}
-          ${record[CoStar_URL] ? `<a href="${record[CoStar_URL]}" class="action-btn" title="CoStar" target="_blank">🏢</a>` : ''}
+          ${record[County_Hyper] ? 
+            `<a href="${sanitize(record[County_Hyper])}" class="action-btn" title="County Property Search" target="_blank">🔍</a>` : ''
+          }
+          ${record[GIS] ? 
+            `<a href="${sanitize(record[GIS])}" class="action-btn" title="GIS" target="_blank">🌎</a>` : ''
+          }
+          ${address ? 
+            `<button class="action-btn" onclick="copyToClipboard('${sanitize(address)}')" title="Copy Address">📋</button>` : ''
+          }
+          ${record[CoStar_URL] ? 
+            `<a href="${sanitize(record[CoStar_URL])}" class="action-btn" title="CoStar" target="_blank">🏢</a>` : ''
+          }
         </div>
       </figure>
       <div class="card-content">
-        <h2>${name}</h2>
+        <h2>${sanitize(name)}</h2>
         <div class="details">
-          ${address ? `<p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${address}')">${address}</span></p>` : ''}
-          ${propertyId ? `<p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${propertyId}')">${propertyId}</span></p>` : ''}
+          ${address ? 
+            `<p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${sanitize(address)}')">${sanitize(address)}</span></p>` : ''
+          }
+          ${propertyId ? 
+            `<p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${sanitize(propertyId)}')">${sanitize(propertyId)}</span></p>` : ''
+          }
         </div>
       </div>
     </div>
@@ -191,7 +182,13 @@ function createMarker(record) {
   marker.record = record;
   
   const popupContent = createPopupContent(record);
-  marker.bindPopup(popupContent);
+  marker.bindPopup(popupContent, {
+    maxWidth: 300,
+    minWidth: 300,
+    className: 'custom-popup',
+    closeButton: true,
+    autoPan: true
+  });
   
   popups[record.id] = marker;
   markersLayer.addLayer(marker);
@@ -451,16 +448,15 @@ document.addEventListener("DOMContentLoaded", function () {
     allowSelectBy: true,
     onEditOptions
   });
-});
 
-document.addEventListener("DOMContentLoaded", function () {
+  // Only try to set up minimap if elements exist
   const minimapContainer = document.getElementById('minimap-container');
   const toggleButton = document.getElementById('toggleMinimap');
-
-  // Toggle minimap visibility
-  toggleButton.addEventListener('click', function () {
-    minimapContainer.classList.toggle('collapsed');
-  });
+  if (minimapContainer && toggleButton) {
+    toggleButton.addEventListener('click', function () {
+      minimapContainer.classList.toggle('collapsed');
+    });
+  }
 });
 
 grist.onOptions((options, interaction) => {
