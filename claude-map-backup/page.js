@@ -42,7 +42,7 @@ const selectedIcon = new L.Icon({
 const defaultIcon = new L.Icon.Default();
 
 const baseLayers = {
-  "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+  "Google Hybrid": L.tileLayer('https://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
     attribution: 'Google Hybrid'
   }),
   "MapTiler Satellite": L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=TbsQ5qLxJHC20Jv4Th7E', {
@@ -51,8 +51,8 @@ const baseLayers = {
   "ArcGIS": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
     attribution: ''
   }),
-  "openstreetmap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: ''
+  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
   })
 };
 
@@ -78,25 +78,17 @@ function initializeMap() {
   const searchControl = L.esri.Geocoding.geosearch({
     providers: [L.esri.Geocoding.arcgisOnlineProvider()],
     position: 'topleft',
-    attribution: false // Disable attribution for the geocoder
+    useMapBounds: false
   }).addTo(amap);
 
   const searchResults = L.layerGroup().addTo(amap);
 
   searchControl.on('results', function (data) {
     searchResults.clearLayers();
-    for (let i = data.results.length - 1; i >= 0; i--) {
-      const marker = L.marker(data.results[i].latlng, {
-        icon: new L.Icon({
-          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
-          shadowUrl: 'marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
-        })
-      });
+    if (data.results && data.results.length > 0) {
+      const marker = L.marker(data.results[0].latlng);
       searchResults.addLayer(marker);
+      amap.setView(data.results[0].latlng, 16);
     }
   });
 
@@ -138,21 +130,19 @@ function initializeMap() {
     });
   }
 
+  // Add after map initialization but before the ready event
+  amap.on('popupopen', function(e) {
+    const feature = e.popup._source;
+    if (feature && feature.record) {
+      grist.selectedRecord = feature.record;
+    }
+  });
+
   return amap;
 }
 
 function copyToClipboard(text) {
-  // Create a temporary input element
-  const tempInput = document.createElement('input');
-  tempInput.style.position = 'absolute';
-  tempInput.style.left = '-9999px';
-  tempInput.value = text;
-  document.body.appendChild(tempInput);
-
-  // Select and copy the text
-  tempInput.select();
-  document.execCommand('copy');
-  document.body.removeChild(tempInput);
+  navigator.clipboard.writeText(text).catch(err => console.error('Failed to copy:', err));
 }
 
 function toggleDetails(element) {
@@ -164,40 +154,49 @@ function toggleDetails(element) {
 }
 
 function createPopupContent(record) {
-  const address = parseValue(record[Address]) || '';
-  const propertyId = parseValue(record[Property_Id]) || '';
-  const name = parseValue(record[Name]) || '';
-  const imageUrl = parseValue(record[ImageURL]) || '';
+  const address = record[Address] || '';
+  const propertyId = record[Property_Id] || '';
+  const name = record[Name] || '';
+  const imageUrl = record[ImageURL] || '';
   
   return `
     <div class="card">
       <figure>
-        ${imageUrl ? `
-          <img src="${imageUrl}" alt="${name}" />
-        ` : `
-          <div class="w-full h-[140px] bg-gray-100 flex items-center justify-center">
-            <span class="text-gray-400">No Image</span>
-          </div>
-        `}
+        ${imageUrl ? `<img src="${imageUrl}" alt="${name}" />` : 
+          `<div class="no-image">No Image</div>`}
         <div class="action-buttons">
-          <div class="button-container">
-            ${record[County_Hyper] ? `<a href="${record[County_Hyper]}" class="action-btn" title="County Property Search" target="_blank">🔍</a>` : ''}
-            ${record[GIS] ? `<a href="${record[GIS]}" class="action-btn" title="GIS" target="_blank">🌎</a>` : ''}
-            ${address ? `<button type="button" class="action-btn" onclick="copyToClipboard('${address.replace(/'/g, "\\'")}')" title="Copy Address">📋</button>` : ''}
-            <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${record[Latitude]},${record[Longitude]}" class="action-btn" title="Street View" target="_blank">🛣️</a>
-            ${record[CoStar_URL] ? `<a href="${record[CoStar_URL]}" class="action-btn" title="CoStar" target="_blank">🏢</a>` : ''}
-          </div>
+          ${record[County_Hyper] ? `<a href="${record[County_Hyper]}" class="action-btn" title="County Property Search" target="_blank">🔍</a>` : ''}
+          ${record[GIS] ? `<a href="${record[GIS]}" class="action-btn" title="GIS" target="_blank">🌎</a>` : ''}
+          ${address ? `<button class="action-btn" onclick="copyToClipboard('${address}')" title="Copy Address">📋</button>` : ''}
+          ${record[CoStar_URL] ? `<a href="${record[CoStar_URL]}" class="action-btn" title="CoStar" target="_blank">🏢</a>` : ''}
         </div>
       </figure>
       <div class="card-content">
-        <h2 onclick="toggleDetails(this)">${name}</h2>
+        <h2>${name}</h2>
         <div class="details">
-          ${address ? `<p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${address.replace(/'/g, "\\'")}')">${address}</span></p>` : ''}
-          ${propertyId ? `<p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${propertyId.replace(/'/g, "\\'")}')">${propertyId}</span></p>` : ''}
+          ${address ? `<p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard('${address}')">${address}</span></p>` : ''}
+          ${propertyId ? `<p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard('${propertyId}')">${propertyId}</span></p>` : ''}
         </div>
       </div>
     </div>
   `;
+}
+
+function createMarker(record) {
+  const marker = L.marker([record[Latitude], record[Longitude]], {
+    title: record[Name],
+    icon: record.id === selectedRowId ? selectedIcon : defaultIcon
+  });
+
+  marker.record = record;
+  
+  const popupContent = createPopupContent(record);
+  marker.bindPopup(popupContent);
+  
+  popups[record.id] = marker;
+  markersLayer.addLayer(marker);
+  
+  return marker;
 }
 
 function updateMap(data) {
@@ -206,29 +205,29 @@ function updateMap(data) {
   }
 
   if (!markersLayer) {
-    markersLayer = L.markerClusterGroup();
+    markersLayer = L.markerClusterGroup({
+      disableClusteringAtZoom: 18,
+      maxClusterRadius: 30,
+      showCoverageOnHover: true
+    });
     amap.addLayer(markersLayer);
   } else {
     markersLayer.clearLayers();
   }
 
-  data.forEach(record => {
-    const marker = L.marker([record[Latitude], record[Longitude]], {
-      title: record[Name],
-      icon: record.id === selectedRowId ? selectedIcon : defaultIcon
-    });
+  if (!data || data.length === 0) return;
 
-    const popupContent = createPopupContent(record);
-    
-    marker.bindPopup(popupContent, {
-      maxWidth: 240,
-      minWidth: 240,
-      className: 'custom-popup'
-    });
-    
-    popups[record.id] = marker;
-    markersLayer.addLayer(marker);
+  data.forEach(record => {
+    if (record[Latitude] && record[Longitude]) {
+      createMarker(record);
+    }
   });
+
+  // Fit bounds to markers
+  const bounds = markersLayer.getBounds();
+  if (bounds.isValid()) {
+    amap.fitBounds(bounds, { maxZoom: 15, padding: [50, 50] });
+  }
 }
 
 // If widget has write access
@@ -319,19 +318,20 @@ function getInfo(rec) {
 let clearMakers = () => {};
 let markers = [];
 
-function selectMaker(id) {
-  const previouslyClicked = popups[selectedRowId];
-  if (previouslyClicked) {
-    previouslyClicked.setIcon(defaultIcon);
-    previouslyClicked.pane = 'otherMarkers';
+function selectMarker(id) {
+  const previousMarker = popups[selectedRowId];
+  if (previousMarker) {
+    previousMarker.setIcon(defaultIcon);
   }
+
   const marker = popups[id];
-  if (!marker) { return null; }
+  if (!marker) return null;
+
   selectedRowId = id;
   marker.setIcon(selectedIcon);
-  previouslyClicked.pane = 'selectedMarker';
-  markers.refreshClusters();
-  grist.setCursorPos?.({rowId: id}).catch(() => {});
+  marker.openPopup();
+  amap.setView(marker.getLatLng(), 16);
+
   return marker;
 }
 
@@ -378,7 +378,7 @@ grist.onRecord((record, mappings) => {
     selectOnMap(lastRecord);
     scanOnNeed(defaultMapping(record, mappings));
   } else {
-    const marker = selectMaker(record.id);
+    const marker = selectMarker(record.id);
     if (!marker) { return; }
     markers.zoomToShowLayer(marker);
     marker.openPopup();
@@ -482,5 +482,16 @@ grist.onOptions((options, interaction) => {
   const mapCopyrightElement = document.getElementById("mapCopyright");
   if (mapCopyrightElement) {
     mapCopyrightElement.value = mapCopyright;
+  }
+});
+
+grist.on('selection', (records) => {
+  if (records.length === 1) {
+    const record = records[0];
+    const marker = popups[record.id];
+    if (marker) {
+      marker.openPopup();
+      amap.setView(marker.getLatLng(), 16);
+    }
   }
 });
