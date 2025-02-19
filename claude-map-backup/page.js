@@ -127,16 +127,45 @@ function toggleDetails(element) {
   }
 }
 
-function sanitize(str) {
-  if (!str) return '';
-  return String(str).replace(/['"<>]/g, '');
+function sanitize(value) {
+  // Handle null/undefined
+  if (value == null) return '';
+  
+  // Handle arrays (like ReferenceList)
+  if (Array.isArray(value)) {
+    return value.map(item => {
+      if (item && typeof item === 'object' && item.Name) {
+        return String(item.Name).replace(/['"<>]/g, '');
+      }
+      return String(item).replace(/['"<>]/g, '');
+    }).join(", ");
+  }
+  
+  // Handle objects (like Reference)
+  if (typeof value === 'object') {
+    if (value.Name) return String(value.Name).replace(/['"<>]/g, '');
+    if (value.value && typeof value.value === 'string' && value.value.startsWith('V(')) {
+      try {
+        const payload = JSON.parse(value.value.slice(2, value.value.length - 1));
+        const result = payload.remote || payload.local || payload.parent || payload;
+        return String(result).replace(/['"<>]/g, '');
+      } catch (e) {
+        return String(value.value).replace(/['"<>]/g, '');
+      }
+    }
+    return String(value).replace(/['"<>]/g, '');
+  }
+  
+  // Handle everything else by converting to string
+  return String(value).replace(/['"<>]/g, '');
 }
 
 function createPopupContent(record) {
-  const address = record[Property_Address] ?? '';
-  const propertyId = record[Property_Id] ?? '';
-  const name = record[Name] ?? '';
-  const imageUrl = record[ImageURL] ?? '';
+  // Use parseValue first to handle complex data types
+  const address = parseValue(record[Property_Address]);
+  const propertyId = parseValue(record[Property_Id]);
+  const name = parseValue(record[Name]);
+  const imageUrl = parseValue(record[ImageURL]);
   
   return `
     <div class="card">
@@ -147,16 +176,16 @@ function createPopupContent(record) {
         }
         <div class="action-buttons">
           ${record[County_Hyper] ? 
-            `<a href="${sanitize(record[County_Hyper])}" class="action-btn" title="County Property Search" target="_blank">🔍</a>` : ''
+            `<a href="${sanitize(parseValue(record[County_Hyper]))}" class="action-btn" title="County Property Search" target="_blank">🔍</a>` : ''
           }
           ${record[GIS] ? 
-            `<a href="${sanitize(record[GIS])}" class="action-btn" title="GIS" target="_blank">🌎</a>` : ''
+            `<a href="${sanitize(parseValue(record[GIS]))}" class="action-btn" title="GIS" target="_blank">🌎</a>` : ''
           }
           ${address ? 
             `<button class="action-btn" onclick="copyToClipboard('${sanitize(address)}')" title="Copy Address">📋</button>` : ''
           }
           ${record[CoStar_URL] ? 
-            `<a href="${sanitize(record[CoStar_URL])}" class="action-btn" title="CoStar" target="_blank">🏢</a>` : ''
+            `<a href="${sanitize(parseValue(record[CoStar_URL]))}" class="action-btn" title="CoStar" target="_blank">🏢</a>` : ''
           }
         </div>
       </figure>
