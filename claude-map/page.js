@@ -261,7 +261,7 @@ function initializeMap() {
     }
   });
 
-  // Call subscribeToRecords at the end
+  // Removed return statement and added proper subscribe call
   subscribeToRecords();
 }
 
@@ -313,3 +313,217 @@ document.addEventListener("DOMContentLoaded", function() {
   });
   initializeMap();
 });
+
+// Consolidated DOMContentLoaded listener
+document.addEventListener("DOMContentLoaded", function() {
+  grist.ready({
+    columns: [
+      "Name",
+      { name: "Longitude", type: "Numeric" },
+      { name: "Latitude", type: "Numeric" },
+      { name: "Property_Id", type: "Text" },
+      { name: "Property_Address", type: "Text" },
+      { name: "ImageURLs", type: "Text", optional: true },
+      { name: "CoStar_URL", type: "Text", optional: true },
+      { name: "County_Hyper", type: "Text", optional: true },
+      { name: "GIS", type: "Text", optional: true },
+      { name: "Geocode", type: "Bool", title: "Geocode", optional: true },
+      { name: "GeocodedAddress", type: "Text", title: "Geocoded Address", optional: true },
+    ],
+    requiredPermissions: ['read', 'update'],
+    allowSelectBy: true,
+    onEditOptions
+  });
+  
+  initializeMap();
+});
+
+// Add error handling for map updates
+function updateMap(data) {
+  if (!amap) {
+    try {
+      amap = initializeMap();
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      return;
+    }
+  }
+
+  if (!markersLayer) {
+    markersLayer = L.markerClusterGroup();
+    amap.addLayer(markersLayer);
+  } else {
+    markersLayer.clearLayers();
+  }
+
+  try {
+    (data || []).forEach(record => {
+      if (record && record[Latitude] && record[Longitude]) {
+        const marker = createMarker(record);
+        if (marker) {
+          popups[record.id] = marker;
+          markersLayer.addLayer(marker);
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Error updating markers:', err);
+  }
+}
+
+// Add cleanup function
+function cleanup() {
+  if (markersLayer) {
+    markersLayer.clearLayers();
+  }
+  if (amap) {
+    amap.remove();
+  }
+  popups = {};
+  selectedRowId = null;
+  lastRecord = null;
+  lastRecords = null;
+}
+
+// Add cleanup on widget disposal
+window.addEventListener('unload', cleanup);
+
+// Options handling
+grist.onOptions((options, interaction) => {
+  writeAccess = interaction.accessLevel === 'full';
+  
+  if (options?.mode !== undefined && options.mode !== mode) {
+    mode = options.mode;
+    updateMode();
+  }
+
+  if (options?.mapSource !== undefined) {
+    mapSource = options.mapSource;
+    const element = document.getElementById("mapSource");
+    if (element) {
+      element.value = mapSource;
+    }
+  }
+
+  if (options?.mapCopyright !== undefined) {
+    mapCopyright = options.mapCopyright;
+    const element = document.getElementById("mapCopyright");
+    if (element) {
+      element.value = mapCopyright;
+    }
+  }
+});
+
+// Add these functions to your file
+
+function updateMode() {
+  if (mode === 'single' && lastRecord) {
+    selectedRowId = lastRecord.id;
+    updateMap([lastRecord]);
+  } else if (lastRecords) {
+    updateMap(lastRecords);
+  }
+}
+
+// Geocoding functionality
+async function geocode(address) {
+  // Add your geocoding implementation here if needed
+  return new Promise((resolve, reject) => {
+    if (!address) reject(new Error('No address provided'));
+    
+    const geocoder = L.esri.Geocoding.geocodeService();
+    geocoder.geocode()
+      .text(address)
+      .run((err, results) => {
+        if (err) {
+          reject(err);
+        } else if (results && results.results && results.results.length > 0) {
+          const location = results.results[0].latlng;
+          resolve({ lat: location.lat, lng: location.lng });
+        } else {
+          reject(new Error('No results found'));
+        }
+      });
+  });
+}
+
+async function scan(tableId, records, mappings) {
+  if (!writeAccess) { return; }
+  for (const record of records) {
+    if (!(Geocode in record)) { break; }
+    if (!record[Geocode]) { continue; }
+    const address = record[Address];
+    if (record[GeocodedAddress] && record[GeocodedAddress] !== record[Address]) {
+      record[Longitude] = null;
+      record[Latitude] = null;
+    }
+    if (address && !record[Longitude]) {
+      try {
+        const result = await geocode(address);
+        await grist.docApi.applyUserActions([['UpdateRecord', tableId, record.id, {
+          [mappings[Longitude]]: result.lng,
+          [mappings[Latitude]]: result.lat,
+          ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
+        }]]);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Delay between geocoding requests
+      } catch (err) {
+        console.error('Error geocoding address:', err);
+      }
+    }
+  }
+}
+
+function scanOnNeed(mappings) {
+  if (!scanning && selectedTableId && selectedRecords) {
+    scanning = scan(selectedTableId, selectedRecords, mappings)
+      .then(() => scanning = null)
+      .catch(() => scanning = null);
+  }
+}
+
+function hasCol(col, anything) {
+  return anything && typeof anything === 'object' && col in anything;
+}
+
+function defaultMapping(record, mappings) {
+  if (!mappings) {
+    return {
+      [Longitude]: Longitude,
+      [Name]: Name,
+      [Latitude]: Latitude,
+      [Property_Id]: Property_Id,
+      [ImageURL]: ImageURL,
+      [CoStar_URL]: CoStar_URL,
+      [County_Hyper]: County_Hyper,
+      [GIS]: GIS,
+      [Geocode]: hasCol(Geocode, record) ? Geocode : null,
+      [Address]: hasCol(Address, record) ? Address : null,
+      [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
+    };
+  }
+  return mappings;
+}
+
+// Settings panel HTML template - add this to your initialization
+function createSettingsPanel() {
+  const settingsHtml = `
+    <div id="settings" style="display:none">
+      <span id="btnClose">×</span>
+      <div>
+        <label>
+          <input type="checkbox" id="cbxMode"> Multiple markers
+        </label>
+      </div>
+      <div>
+        <label for="mapSource">Map Source:</label>
+        <input type="text" id="mapSource">
+      </div>
+      <div>
+        <label for="mapCopyright">Copyright:</label>
+        <input type="text" id="mapCopyright">
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', settingsHtml);
+}
