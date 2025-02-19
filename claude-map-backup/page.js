@@ -127,14 +127,16 @@ function toggleDetails(element) {
   }
 }
 
+function sanitize(str) {
+  if (!str) return '';
+  return String(str).replace(/['"<>]/g, '');
+}
+
 function createPopupContent(record) {
-  const address = record[Property_Address] || '';
-  const propertyId = record[Property_Id] || '';
-  const name = record[Name] || '';
-  const imageUrl = record[ImageURL] || '';
-  
-  // Sanitize strings to prevent XSS and quote issues
-  const sanitize = (str) => str.replace(/['"<>]/g, '');
+  const address = record[Property_Address] ?? '';
+  const propertyId = record[Property_Id] ?? '';
+  const name = record[Name] ?? '';
+  const imageUrl = record[ImageURL] ?? '';
   
   return `
     <div class="card">
@@ -215,8 +217,13 @@ function updateMap(data) {
   if (!data || data.length === 0) return;
 
   data.forEach(record => {
-    if (record[Latitude] && record[Longitude]) {
+    const lat = parseFloat(record[Latitude]);
+    const lng = parseFloat(record[Longitude]);
+    
+    if (!isNaN(lat) && !isNaN(lng)) {
       createMarker(record);
+    } else {
+      console.warn('Invalid coordinates for record:', record);
     }
   });
 
