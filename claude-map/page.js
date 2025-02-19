@@ -1,4 +1,8 @@
 "use strict";
+
+// Prevent tippy.js errors
+window.tippy = { createSingleton: () => {} };
+
 // Add at the beginning of your file after "use strict"
 if (typeof grist !== 'undefined' && grist.locale) {
   grist.locale.register({
@@ -513,9 +517,3 @@ function createSettingsPanel() {
   
   document.body.insertAdjacentHTML('beforeend', settingsHtml);
 }
-
-// Add this to your DOMContentLoaded event listener
-document.addEventListener("DOMContentLoaded", function() {
-  createSettingsPanel();
-  // ... rest of your existing DOMContentLoaded code ...
-});
