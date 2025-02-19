@@ -225,9 +225,6 @@ function initializeMap() {
     wheelPxPerZoomLevel: 90
   });
 
-  // Subscribe to records before setting up other features
-  subscribeToRecords();
-
   L.control.layers(baseLayers, overlayLayers, { 
     position: 'topright', 
     collapsed: true 
@@ -248,6 +245,20 @@ function initializeMap() {
       searchResults.addLayer(marker);
     });
   });
+
+  overlayLayers["Search Results"] = searchResults;
+
+  amap.on('popupopen', function(e) {
+    const marker = e.popup._source;
+    if (marker && marker.record) {
+      grist.setCursorPos({
+        rowId: marker.record.id
+      }).catch(err => console.error('Error setting cursor position:', err));
+    }
+  });
+
+  subscribeToRecords();
+}
 
   overlayLayers["Search Results"] = searchResults;
 
@@ -291,6 +302,7 @@ function subscribeToRecords() {
 
 // Initialize widget with required permissions
 document.addEventListener("DOMContentLoaded", function() {
+  createSettingsPanel();
   grist.ready({
     columns: [
       "Name",
@@ -309,6 +321,7 @@ document.addEventListener("DOMContentLoaded", function() {
     allowSelectBy: true,
     onEditOptions
   });
+  initializeMap();
 });
 
 // Add error handling for map updates
