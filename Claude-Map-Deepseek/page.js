@@ -66,11 +66,6 @@ function initializeMap() {
         wheelPxPerZoomLevel: 90,
     });
 
-    // Attach the load event listener after the map is initialized
-    amap.on('load', function () {
-        console.log("Map is fully loaded and ready for interaction");
-    });
-
     // Add layer control
     L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: true }).addTo(amap);
 
@@ -101,42 +96,6 @@ function initializeMap() {
     });
 
     overlayLayers["Search Results"] = searchResults;
-
-    // Synchronize with Google Map
-    const googleMapIframe = document.getElementById('googleMap');
-
-    if (googleMapIframe) {
-        // Function to sync Leaflet map with Google MyMap
-        function syncMaps() {
-            // Sync the Leaflet map with the iframe's view
-            amap.on('moveend', function () {
-                const center = amap.getCenter();
-                const zoom = amap.getZoom();
-                const ll = `${center.lat},${center.lng}`;
-                googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${ll}&z=${zoom}`;
-            });
-
-            // Trigger sync on initial load
-            const initialCenter = amap.getCenter();
-            const initialZoom = amap.getZoom();
-            const initialLL = `${initialCenter.lat},${initialCenter.lng}`;
-            googleMapIframe.src = `https://www.google.com/maps/d/embed?mid=1XYqZpHKr3L0OGpTWlkUah7Bf4v0tbhA&ll=${initialLL}&z=${initialZoom}`;
-        }
-
-        syncMaps();
-    } else {
-        console.error("Google MyMap iframe not found!");
-    }
-
-    // Collapsible minimap logic
-    const minimapContainer = document.getElementById('minimap-container');
-    const toggleButton = document.getElementById('toggleMinimap');
-
-    if (toggleButton && minimapContainer) {
-        toggleButton.addEventListener('click', function () {
-            minimapContainer.classList.toggle('collapsed');
-        });
-    }
 
     // Add after map initialization but before the ready event
     amap.on('popupopen', function(e) {
@@ -333,9 +292,6 @@ function getInfo(rec) {
     return result;
 }
 
-let clearMakers = () => {};
-let markers = [];
-
 function selectMaker(id) {
     const previouslyClicked = popups[selectedRowId];
     if (previouslyClicked) {
@@ -346,8 +302,8 @@ function selectMaker(id) {
     if (!marker) { return null; }
     selectedRowId = id;
     marker.setIcon(selectedIcon);
-    previouslyClicked.pane = 'selectedMarker';
-    markers.refreshClusters();
+    marker.pane = 'selectedMarker';
+    markersLayer.refreshClusters();
     grist.setCursorPos?.({rowId: id}).catch(() => {});
     return marker;
 }
@@ -397,7 +353,7 @@ grist.onRecord((record, mappings) => {
     } else {
         const marker = selectMaker(record.id);
         if (!marker) { return; }
-        markers.zoomToShowLayer(marker);
+        markersLayer.zoomToShowLayer(marker);
         marker.openPopup();
     }
 });
@@ -414,8 +370,7 @@ grist.onRecords((data, mappings) => {
 });
 
 grist.onNewRecord(() => {
-    clearMakers();
-    clearMakers = () => {};
+    markersLayer.clearLayers();
 })
 
 function updateMode() {
@@ -467,16 +422,6 @@ document.addEventListener("DOMContentLoaded", function () {
         ],
         allowSelectBy: true,
         onEditOptions
-    });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-    const minimapContainer = document.getElementById('minimap-container');
-    const toggleButton = document.getElementById('toggleMinimap');
-
-    // Toggle minimap visibility
-    toggleButton.addEventListener('click', function () {
-        minimapContainer.classList.toggle('collapsed');
     });
 });
 
