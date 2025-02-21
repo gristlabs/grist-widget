@@ -11,6 +11,12 @@ let selectedRecords = null;
 let mode = 'multi';
 let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
 let mapCopyright = 'Esri';
+// Add these at the top of your file
+const ZOOM_LEVEL = {
+    DEFAULT: 4,
+    SEARCH: 16,
+    MARKER: 14
+};
 
 // Required columns
 const Name = "Name";  // ReferenceList to Owners_
@@ -68,20 +74,35 @@ function initializeMap() {
 
     // Add layer control
     L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: true }).addTo(amap);
+    
+    // Create a separate layer group for search results
+    const searchResults = L.layerGroup().addTo(amap);
+    let currentSearchMarker = null; // Track current search marker
 
-    // Add Esri Geocoder search control
+    // Improved search control implementation
     const searchControl = L.esri.Geocoding.geosearch({
-        providers: [L.esri.Geocoding.arcgisOnlineProvider()],
+        providers: [L.esri.Geocoding.arcgisOnlineProvider({
+            apikey: 'YOUR_ARCGIS_API_KEY' // Optional: Add your ArcGIS API key
+        })],
         position: 'topleft',
-        attribution: false // Disable attribution for the geocoder
+        useMapBounds: false,
+        placeholder: 'Search for address...',
+        expanded: false,
+        collapseAfterResult: true,
+        zoomToResult: true
     }).addTo(amap);
 
-    const searchResults = L.layerGroup().addTo(amap);
-
-    searchControl.on('results', function (data) {
+    searchControl.on('results', function(data) {
+        // Clear previous search results
         searchResults.clearLayers();
-        for (let i = data.results.length - 1; i >= 0; i--) {
-            const marker = L.marker(data.results[i].latlng, {
+        if (currentSearchMarker) {
+            searchResults.removeLayer(currentSearchMarker);
+            currentSearchMarker = null;
+        }
+
+        if (data.results && data.results.length > 0) {
+            const result = data.results[0];
+            currentSearchMarker = L.marker(result.latlng, {
                 icon: new L.Icon({
                     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
                     shadowUrl: 'marker-shadow.png',
@@ -90,18 +111,17 @@ function initializeMap() {
                     popupAnchor: [1, -34],
                     shadowSize: [41, 41]
                 })
-            });
-            searchResults.addLayer(marker);
+            }).bindPopup(result.text);
+            
+            searchResults.addLayer(currentSearchMarker);
+            amap.setView(result.latlng, 16);
         }
     });
 
-    overlayLayers["Search Results"] = searchResults;
-
-    // Add after map initialization but before the ready event
-    amap.on('popupopen', function(e) {
-        const feature = e.popup._source;
-        if (feature && feature.record) {
-            grist.setCursorPos({rowId: feature.record.id}).catch(() => {});
+    // Add cleanup method
+    amap.on('movestart', function() {
+        if (searchControl.isExpanded) {
+            searchControl.collapse();
         }
     });
 
@@ -167,44 +187,65 @@ function createPopupContent(record) {
     `;
 }
 
-function createMarker(record) {
-    const marker = L.marker([record[Latitude], record[Longitude]], {
-        title: record[Name],
-        icon: record.id === selectedRowId ? selectedIcon : defaultIcon
-    });
-
-    // Update to store the record with the marker
-    marker.record = record;
-
-    // Create popup with record data
-    const popupContent = createPopupContent(record);
-    marker.bindPopup(popupContent, {
-        maxWidth: 240,
-        minWidth: 240,
-        className: 'custom-popup'
-    });
-
-    popups[record.id] = marker;
-    markersLayer.addLayer(marker);
-
-    return marker;
-}
-
+// Modify the updateMap function
 function updateMap(data) {
     if (!amap) {
         amap = initializeMap();
     }
 
+    // Only create markerClusterGroup if it doesn't exist
     if (!markersLayer) {
-        markersLayer = L.markerClusterGroup();
+        markersLayer = L.markerClusterGroup({
+            chunkedLoading: true,
+            spiderfyOnMaxZoom: true,
+            disableClusteringAtZoom: 16, // Uncluster at high zoom levels
+            zoomToBoundsOnClick: true
+        });
         amap.addLayer(markersLayer);
-    } else {
-        markersLayer.clearLayers();
     }
 
+    // Clear existing markers before adding new ones
+    markersLayer.clearLayers();
+    popups = {}; // Clear the popups cache
+
     data.forEach(record => {
-        const marker = createMarker(record);
+        createMarker(record);
     });
+    
+    // Force cluster refresh
+    markersLayer.refreshClusters();
+}
+
+// Modify createMarker function
+// Add error handling for marker creation
+function createMarker(record) {
+    try {
+        if (!record[Latitude] || !record[Longitude]) {
+            console.warn('Invalid coordinates for record:', record.id);
+            return null;
+        }
+    const marker = L.marker([record[Latitude], record[Longitude]], {
+        title: record[Name],
+        icon: record.id === selectedRowId ? selectedIcon : defaultIcon,
+        riseOnHover: true // Makes marker rise above others on hover
+    });
+
+    marker.record = record;
+    const popupContent = createPopupContent(record);
+    marker.bindPopup(popupContent, {
+        maxWidth: 240,
+        minWidth: 240,
+        className: 'custom-popup',
+        closeButton: true
+    });
+
+    popups[record.id] = marker;
+    markersLayer.addLayer(marker);
+    return marker;
+    } catch (error) {
+        console.error('Error creating marker:', error);
+        return null;
+    }
 }
 
 // If widget has write access
@@ -292,20 +333,32 @@ function getInfo(rec) {
     return result;
 }
 
+// Improve marker selection
 function selectMaker(id) {
-    const previouslyClicked = popups[selectedRowId];
-    if (previouslyClicked) {
-        previouslyClicked.setIcon(defaultIcon);
-        previouslyClicked.pane = 'otherMarkers';
+    try {
+        const previouslyClicked = popups[selectedRowId];
+        if (previouslyClicked) {
+            previouslyClicked.setIcon(defaultIcon);
+        }
+
+        const marker = popups[id];
+        if (!marker) return null;
+
+        selectedRowId = id;
+        marker.setIcon(selectedIcon);
+        markersLayer.refreshClusters();
+
+        // Ensure marker is visible
+        const bounds = markersLayer.getBounds();
+        if (bounds && !bounds.contains(marker.getLatLng())) {
+            amap.setView(marker.getLatLng(), ZOOM_LEVEL.MARKER);
+        }
+
+        return marker;
+    } catch (error) {
+        console.error('Error selecting marker:', error);
+        return null;
     }
-    const marker = popups[id];
-    if (!marker) { return null; }
-    selectedRowId = id;
-    marker.setIcon(selectedIcon);
-    marker.pane = 'selectedMarker';
-    markersLayer.refreshClusters();
-    grist.setCursorPos?.({rowId: id}).catch(() => {});
-    return marker;
 }
 
 grist.on('message', (e) => {
