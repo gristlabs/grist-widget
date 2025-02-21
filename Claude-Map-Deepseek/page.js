@@ -123,7 +123,8 @@ function initializeMap() {
         if (searchControl.isExpanded) {
             searchControl.collapse();
         }
-        
+    });
+    
     // Add this back - it's crucial for marker-to-record interaction
     amap.on('popupopen', function(e) {
         const feature = e.popup._source;
