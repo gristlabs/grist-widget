@@ -123,6 +123,13 @@ function initializeMap() {
         if (searchControl.isExpanded) {
             searchControl.collapse();
         }
+        
+    // Add this back - it's crucial for marker-to-record interaction
+    amap.on('popupopen', function(e) {
+        const feature = e.popup._source;
+        if (feature && feature.record) {
+            grist.setCursorPos({rowId: feature.record.id}).catch(() => {});
+        }
     });
 
     return amap;
@@ -224,24 +231,31 @@ function createMarker(record) {
             console.warn('Invalid coordinates for record:', record.id);
             return null;
         }
-    const marker = L.marker([record[Latitude], record[Longitude]], {
-        title: record[Name],
-        icon: record.id === selectedRowId ? selectedIcon : defaultIcon,
-        riseOnHover: true // Makes marker rise above others on hover
-    });
+        
+        // Use exact coordinates
+        const lat = parseFloat(record[Latitude]);
+        const lng = parseFloat(record[Longitude]);
+        
+        const marker = L.marker([lat, lng], {
+            title: record[Name],
+            icon: record.id === selectedRowId ? selectedIcon : defaultIcon,
+            riseOnHover: true
+        });
 
-    marker.record = record;
-    const popupContent = createPopupContent(record);
-    marker.bindPopup(popupContent, {
-        maxWidth: 240,
-        minWidth: 240,
-        className: 'custom-popup',
-        closeButton: true
-    });
+        // Important: Attach the record to the marker for Grist interaction
+        marker.record = record;
+        
+        const popupContent = createPopupContent(record);
+        marker.bindPopup(popupContent, {
+            maxWidth: 240,
+            minWidth: 240,
+            className: 'custom-popup',
+            closeButton: true
+        });
 
-    popups[record.id] = marker;
-    markersLayer.addLayer(marker);
-    return marker;
+        popups[record.id] = marker;
+        markersLayer.addLayer(marker);
+        return marker;
     } catch (error) {
         console.error('Error creating marker:', error);
         return null;
@@ -347,6 +361,9 @@ function selectMaker(id) {
         selectedRowId = id;
         marker.setIcon(selectedIcon);
         markersLayer.refreshClusters();
+
+        // Keep this line for Grist interaction
+        grist.setCursorPos?.({rowId: id}).catch(() => {});
 
         // Ensure marker is visible
         const bounds = markersLayer.getBounds();
