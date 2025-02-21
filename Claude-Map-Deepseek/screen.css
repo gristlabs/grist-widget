@@ -12,6 +12,26 @@ body {
     padding: 0;
 }
 
+.leaflet-marker-icon {
+    transition: transform 0.2s;
+}
+
+.leaflet-marker-icon:hover {
+    transform: scale(1.2);
+    z-index: 1000 !important;
+}
+
+.leaflet-control-geocoder-form input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.leaflet-control-geocoder.leaflet-control {
+    margin-right: 10px;
+}
+
 #minimap-container {
     position: absolute;
     bottom: 20px;
