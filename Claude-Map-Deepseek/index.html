@@ -50,8 +50,18 @@
         <!-- ESRI Leaflet Geocoder JS -->
         <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0/esri-leaflet.js"></script>
         <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
-        <!-- Tippy.js JS -->
-        <script src="https://unpkg.com/tippy.js@6.3.7/dist/tippy.umd.min.js"></script>
+        <!-- Popper.js and Tippy.js -->
+        <script src="https://unpkg.com/@popperjs/core@2"></script>
+        <script src="https://unpkg.com/tippy.js@6"></script>
+        <script>
+          // Initialize tippy only when needed
+          document.addEventListener('DOMContentLoaded', function() {
+            // Only initialize tippy if elements with data-tippy-content exist
+            if (document.querySelector('[data-tippy-content]')) {
+              tippy('[data-tippy-content]');
+            }
+          });
+        </script>
         <!-- Custom JS -->
         <script src="page.js"></script>
     </body>
