@@ -46,33 +46,135 @@ const overlayLayers = {};
 function initializeMap() {
   amap = L.map('map', {
     layers: [baseLayers["Google Hybrid"]],
-    center: [45.5283, -122.8081], // Default center (USA)
-    zoom: 4, // Default zoom level
+    center: [45.5283, -122.8081],
+    zoom: 4,
     wheelPxPerZoomLevel: 90
   });
 
-  // Attach the load event listener after the map is initialized
   amap.on('load', function () {
     console.log("Map is fully loaded and ready for interaction");
   });
 
   L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: true }).addTo(amap);
 
-  const searchControl = L.esri.Geocoding.geosearch({
-    providers: [L.esri.Geocoding.arcgisOnlineProvider()],
-    position: 'topleft'
-  }).addTo(amap);
-
-  const searchResults = L.layerGroup().addTo(amap);
-
-  searchControl.on('results', function (data) {
-    searchResults.clearLayers();
-    for (let i = data.results.length - 1; i >= 0; i--) {
-      searchResults.addLayer(L.marker(data.results[i].latlng, { icon: searchIcon }));
+  // Create a search results layer group
+  const searchResultsLayer = L.layerGroup().addTo(amap);
+  
+  // Create a collapsible search control
+  const searchDiv = L.DomUtil.create('div', 'custom-search-control leaflet-control');
+  searchDiv.style.backgroundColor = 'white';
+  searchDiv.style.padding = '5px';
+  searchDiv.style.borderRadius = '4px';
+  searchDiv.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)';
+  
+  // Create the search container (initially hidden)
+  const searchContainer = L.DomUtil.create('div', 'search-container', searchDiv);
+  searchContainer.style.display = 'none';
+  
+  const searchInput = L.DomUtil.create('input', 'search-input', searchContainer);
+  searchInput.type = 'text';
+  searchInput.placeholder = 'Search address...';
+  searchInput.style.width = '200px';
+  searchInput.style.padding = '5px';
+  searchInput.style.border = '1px solid #ccc';
+  searchInput.style.borderRadius = '4px';
+  
+  const searchButton = L.DomUtil.create('button', 'search-button', searchContainer);
+  searchButton.innerHTML = '🔍';
+  searchButton.style.marginLeft = '5px';
+  searchButton.style.padding = '5px 10px';
+  searchButton.style.cursor = 'pointer';
+  
+  // Create toggle button
+  const toggleButton = L.DomUtil.create('button', 'toggle-search-button', searchDiv);
+  toggleButton.innerHTML = '🔍';
+  toggleButton.style.padding = '5px 10px';
+  toggleButton.style.cursor = 'pointer';
+  toggleButton.title = 'Search';
+  
+  // Toggle search container visibility
+  L.DomEvent.on(toggleButton, 'click', function() {
+    if (searchContainer.style.display === 'none') {
+      searchContainer.style.display = 'flex';
+      toggleButton.style.display = 'none';
+      searchInput.focus();
     }
   });
-
-  overlayLayers["Search Results"] = searchResults;
+  
+  // Add close button
+  const closeButton = L.DomUtil.create('button', 'close-search-button', searchContainer);
+  closeButton.innerHTML = '✖';
+  closeButton.style.marginLeft = '5px';
+  closeButton.style.padding = '5px';
+  closeButton.style.cursor = 'pointer';
+  
+  L.DomEvent.on(closeButton, 'click', function() {
+    searchContainer.style.display = 'none';
+    toggleButton.style.display = 'block';
+  });
+  
+  // Prevent map clicks from propagating through the control
+  L.DomEvent.disableClickPropagation(searchDiv);
+  
+  // Handle search
+  L.DomEvent.on(searchButton, 'click', function() {
+    const query = searchInput.value;
+    if (query.trim() === '') return;
+    
+    // Clear previous results
+    searchResultsLayer.clearLayers();
+    
+    // Use fetch to get results from Nominatim
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.length > 0) {
+          const result = data[0];
+          const lat = parseFloat(result.lat);
+          const lon = parseFloat(result.lon);
+          
+          // Add marker for the result
+          const marker = L.marker([lat, lon], {
+            icon: searchIcon
+          }).addTo(searchResultsLayer);
+          
+          // Extract just the address and city from the display name
+          let displayParts = result.display_name.split(',');
+          let simplifiedAddress = displayParts.slice(0, 2).join(', ');
+          
+          // Add popup with simplified address info
+          marker.bindPopup(`<b>${simplifiedAddress}</b>`).openPopup();
+          
+          // Pan to the result
+          amap.setView([lat, lon], 16);
+          
+          // Close the search container after successful search
+          searchContainer.style.display = 'none';
+          toggleButton.style.display = 'block';
+        } else {
+          alert('No results found');
+        }
+      })
+      .catch(error => {
+        console.error('Search error:', error);
+        alert('Error performing search');
+      });
+  });
+  
+  // Also search on Enter key
+  L.DomEvent.on(searchInput, 'keypress', function(e) {
+    if (e.keyCode === 13) {
+      L.DomEvent.stop(e);
+      searchButton.click();
+    }
+  });
+  
+  // Add the custom control to the map
+  const searchControl = L.control({ position: 'topleft' });
+  searchControl.onAdd = function() {
+    return searchDiv;
+  };
+  searchControl.addTo(amap);
 
   return amap;
 }
