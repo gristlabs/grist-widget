@@ -32,14 +32,58 @@ body {
   background-size: 30px 30px;
 }
 
-.leaflet-control-geocoder {
-  font-size: 18px;
+.geosearch {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
 }
 
-.leaflet-control-geocoder input {
-  font-size: 18px;
-  padding: 12px;
-  width: calc(100% - 24px);
+.geosearch form.leaflet-control {
+  background: white;
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+}
+
+.geosearch input {
+  font-size: 16px;
+  padding: 12px 16px;
+  width: 100%;
+  border: none;
+  border-radius: 4px;
+  background: #f5f5f5;
+  transition: all 0.3s ease;
+}
+
+.geosearch input:focus {
+  outline: none;
+  background: white;
+  box-shadow: 0 0 0 2px #4a90e2;
+}
+
+.results.active {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
+}
+
+.results > * {
+  padding: 10px 16px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.results > *:hover {
+  background-color: #f5f5f5;
+}
+
+.results > *:last-child {
+  border-bottom: none;
 }
 
 /* Popup styling */
