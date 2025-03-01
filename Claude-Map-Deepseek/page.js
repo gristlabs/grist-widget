@@ -425,7 +425,28 @@ function updateMap(data) {
             },
             spiderfyDistanceMultiplier: 1.5,
             showCoverageOnHover: false,
-            zoomAnimation: false
+            zoomAnimation: false,
+            // Add this custom icon creation function to fix the counting
+            iconCreateFunction: function(cluster) {
+                // Get the actual number of child markers
+                const childCount = cluster.getChildCount();
+                
+                // Choose different classes based on the number of markers
+                let c = ' marker-cluster-';
+                if (childCount < 10) {
+                    c += 'small';
+                } else if (childCount < 100) {
+                    c += 'medium';
+                } else {
+                    c += 'large';
+                }
+            
+                return new L.DivIcon({
+                    html: '<div><span>' + childCount + '</span></div>',
+                    className: 'marker-cluster' + c,
+                    iconSize: new L.Point(40, 40)
+                });
+            }
         });
         amap.addLayer(markersLayer);
     }
