@@ -18,6 +18,10 @@ const ZOOM_LEVEL = {
     MARKER: 14
 };
 
+// Add missing variables
+let writeAccess = true;
+let scanning = null;
+
 // Required columns
 const Name = "Name";  // ReferenceList to Owners_
 const Longitude = "Longitude";
@@ -34,6 +38,131 @@ const GeocodedAddress = "GeocodedAddress";
 
 let lastRecord;
 let lastRecords;
+
+// Add missing functions
+function parseValue(v) {
+    if (v === undefined || v === null) return '';
+    
+    // Handle arrays
+    if (Array.isArray(v)) {
+        return v.map(item => parseValue(item)).join(", ");
+    }
+    
+    // Handle objects
+    if (typeof v === 'object') {
+        if (v.Name) return v.Name;
+        return String(v);
+    }
+    
+    return String(v);
+}
+
+function hasCol(col, obj) {
+    return obj && typeof obj === 'object' && col in obj;
+}
+
+function defaultMapping(record, mappings) {
+    if (!mappings) {
+        return {
+            [Longitude]: Longitude,
+            [Latitude]: Latitude,
+            [Name]: Name,
+            [Property_Id]: Property_Id,
+            [Address]: Address,
+            [ImageURL]: ImageURL,
+            [CoStar_URL]: CoStar_URL,
+            [County_Hyper]: County_Hyper,
+            [GIS]: GIS,
+            [Geocode]: hasCol(Geocode, record) ? Geocode : null,
+            [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null
+        };
+    }
+    return mappings;
+}
+
+function selectOnMap(rec) {
+    if (!rec || !rec.id || selectedRowId === rec.id) return;
+    
+    selectedRowId = rec.id;
+    if (mode === 'single') {
+        updateMap([rec]);
+    } else {
+        const marker = popups[rec.id];
+        if (marker) {
+            selectMaker(rec.id);
+        }
+    }
+}
+
+async function geocode(address) {
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+        const data = await response.json();
+        if (data && data.length > 0) {
+            return {
+                lat: parseFloat(data[0].lat),
+                lng: parseFloat(data[0].lon)
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        return null;
+    }
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function scan(tableId, records, mappings) {
+    if (!writeAccess) return;
+    
+    for (const record of records) {
+        if (!(Geocode in record)) break;
+        if (!record[Geocode]) continue;
+        
+        const address = record[Address];
+        if (record[GeocodedAddress] && record[GeocodedAddress] !== address) {
+            record[Longitude] = null;
+            record[Latitude] = null;
+        }
+        
+        if (address && !record[Longitude]) {
+            const result = await geocode(address);
+            if (result && result.lat && result.lng) {
+                try {
+                    const updateData = {
+                        [mappings[Longitude]]: result.lng,
+                        [mappings[Latitude]]: result.lat
+                    };
+                    
+                    if (GeocodedAddress in mappings) {
+                        updateData[mappings[GeocodedAddress]] = address;
+                    }
+                    
+                    await grist.docApi.applyUserActions([
+                        ['UpdateRecord', tableId, record.id, updateData]
+                    ]);
+                } catch (error) {
+                    console.error('Error updating record:', error);
+                }
+            }
+            await delay(1000);
+        }
+    }
+}
+
+function scanOnNeed(mappings) {
+    if (!scanning && selectedTableId && selectedRecords) {
+        scanning = scan(selectedTableId, selectedRecords, mappings)
+            .then(() => { scanning = null; })
+            .catch(error => {
+                console.error('Scan error:', error);
+                scanning = null;
+            });
+    }
+}
 
 const selectedIcon = new L.Icon({
     iconUrl: 'marker-icon-green.png',
@@ -292,34 +421,42 @@ function updateMap(data) {
     markersLayer.clearLayers();
     popups = {}; // Clear the popups cache
 
-    data.forEach(record => {
-        createMarker(record);
-    });
-    
-    // Force cluster refresh
-    markersLayer.refreshClusters();
+    // Check if data exists before trying to iterate
+    if (Array.isArray(data)) {
+        data.forEach(record => {
+            createMarker(record);
+        });
+        
+        // Force cluster refresh only if we have data
+        if (data.length > 0) {
+            markersLayer.refreshClusters();
+        }
+    }
 }
 
 // Modify createMarker function
 // Add error handling for marker creation
 function createMarker(record) {
     try {
-        if (!record[Latitude] || !record[Longitude]) {
+        if (!record) {
+            console.warn('Invalid record provided to createMarker');
+            return null;
+        }
+
+        const lat = parseFloat(record[Latitude]);
+        const lng = parseFloat(record[Longitude]);
+        
+        if (isNaN(lat) || isNaN(lng) || !lat || !lng) {
             console.warn('Invalid coordinates for record:', record.id);
             return null;
         }
         
-        // Use exact coordinates
-        const lat = parseFloat(record[Latitude]);
-        const lng = parseFloat(record[Longitude]);
-        
         const marker = L.marker([lat, lng], {
-            title: record[Name],
+            title: parseValue(record[Name]),
             icon: record.id === selectedRowId ? selectedIcon : defaultIcon,
             riseOnHover: true
         });
 
-        // Important: Attach the record to the marker for Grist interaction
         marker.record = record;
         
         const popupContent = createPopupContent(record);
@@ -339,112 +476,45 @@ function createMarker(record) {
     }
 }
 
-// If widget has write access
-let writeAccess = true;
-
-// A ongoing scanning promise, to check if we are in progress.
-let scanning = null;
-
-async function scan(tableId, records, mappings) {
-    if (!writeAccess) { return; }
-    for (const record of records) {
-        if (!(Geocode in record)) { break; }
-        if (!record[Geocode]) { continue; }
-        const address = record.Address;
-        if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
-            record[Longitude] = null;
-            record[Latitude] = null;
-        }
-        if (address && !record[Longitude]) {
-            const result = await geocode(address);
-            await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
-                [mappings[Longitude]]: result.lng,
-                [mappings[Latitude]]: result.lat,
-                ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
-            }] ]);
-            await delay(1000);
-        }
-    }
-}
-
-function scanOnNeed(mappings) {
-    if (!scanning && selectedTableId && selectedRecords) {
-        scanning = scan(selectedTableId, selectedRecords, mappings).then(() => scanning = null).catch(() => scanning = null);
-    }
-}
-
-function showProblem(txt) {
-    document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
-}
-
-function parseValue(v) {
-    if (!v) return '';
-
-    // Handle arrays (like ReferenceList)
-    if (Array.isArray(v)) {
-        return v.map(item => {
-            if (item && typeof item === 'object' && item.Name) {
-                return item.Name;
-            }
-            return item;
-        }).join(", ");
-    }
-
-    // Handle objects (like Reference)
-    if (typeof v === 'object') {
-        if (v.Name) return v.Name;
-        if (v.value && typeof v.value === 'string' && v.value.startsWith('V(')) {
-            try {
-                const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
-                return payload.remote || payload.local || payload.parent || payload;
-            } catch (e) {
-                return v.value;
-            }
-        }
-        return v.toString();
-    }
-
-    return v.toString();
-}
-
-function getInfo(rec) {
-    const result = {
-        id: rec.id,
-        name: parseValue(rec[Name]),
-        lng: parseValue(rec[Longitude]),
-        lat: parseValue(rec[Latitude]),
-        propertyType: parseValue(rec['Property_Type']),
-        tenants: parseValue(rec['Tenants']),
-        secondaryType: parseValue(rec['Secondary_Type']),
-        imageUrl: parseValue(rec['ImageURL']),
-        costarLink: parseValue(rec['CoStar_URL']),
-        countyLink: parseValue(rec['County_Hyper']),
-        gisLink: parseValue(rec['GIS']),
-    };
-    return result;
-}
-
 // Improve marker selection
 function selectMaker(id) {
     try {
+        // Check if id is valid
+        if (!id) {
+            console.warn('Invalid ID provided to selectMaker');
+            return null;
+        }
+        
         const previouslyClicked = popups[selectedRowId];
         if (previouslyClicked) {
             previouslyClicked.setIcon(defaultIcon);
         }
 
         const marker = popups[id];
-        if (!marker) return null;
+        if (!marker) {
+            console.warn('No marker found for ID:', id);
+            return null;
+        }
 
         selectedRowId = id;
         marker.setIcon(selectedIcon);
-        markersLayer.refreshClusters();
+        
+        // Only refresh clusters if markersLayer exists
+        if (markersLayer) {
+            markersLayer.refreshClusters();
+        }
 
         // Keep this line for Grist interaction
         grist.setCursorPos?.({rowId: id}).catch(() => {});
 
         // Ensure marker is visible
-        const bounds = markersLayer.getBounds();
-        if (bounds && !bounds.contains(marker.getLatLng())) {
+        if (markersLayer && markersLayer.getBounds) {
+            const bounds = markersLayer.getBounds();
+            if (bounds && !bounds.contains(marker.getLatLng())) {
+                amap.setView(marker.getLatLng(), ZOOM_LEVEL.MARKER);
+            }
+        } else {
+            // Fallback if bounds check fails
             amap.setView(marker.getLatLng(), ZOOM_LEVEL.MARKER);
         }
 
@@ -455,77 +525,36 @@ function selectMaker(id) {
     }
 }
 
-grist.on('message', (e) => {
-    if (e.tableId) { selectedTableId = e.tableId; }
-});
-
-function hasCol(col, anything) {
-    return anything && typeof anything === 'object' && col in anything;
-}
-
-function defaultMapping(record, mappings) {
-    if (!mappings) {
-        return {
-            [Longitude]: Longitude,
-            [Name]: Name,
-            [Latitude]: Latitude,
-            [Property_Id]: Property_Id,
-            [ImageURL]: ImageURL,
-            [CoStar_URL]: CoStar_URL,
-            [County_Hyper]: County_Hyper,
-            [GIS]: GIS,
-            [Geocode]: hasCol(Geocode, record) ? Geocode : null,
-            [Address]: hasCol(Address, record) ? Address : null,
-            [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
-        };
-    }
-    return mappings;
-}
-
-function selectOnMap(rec) {
-    if (selectedRowId === rec.id) { return; }
-    selectedRowId = rec.id;
-    if (mode === 'single') {
-        updateMap([rec]);
-    } else {
-        updateMap();
-    }
-}
-
-grist.onRecord((record, mappings) => {
-    if (mode === 'single') {
-        lastRecord = grist.mapColumnNames(record) || record;
-        selectOnMap(lastRecord);
-        scanOnNeed(defaultMapping(record, mappings));
-    } else {
-        const marker = selectMaker(record.id);
-        if (!marker) { return; }
-        markersLayer.zoomToShowLayer(marker);
-        marker.openPopup();
-    }
-});
-
+// Fix the onRecords handler to properly handle empty data
 grist.onRecords((data, mappings) => {
-    lastRecords = grist.mapColumnNames(data) || data;
+    // Ensure data is an array
+    lastRecords = Array.isArray(data) ? (grist.mapColumnNames(data) || data) : [];
+    
     if (mode !== 'single') {
         updateMap(lastRecords);
-        if (lastRecord) {
+        if (lastRecord && lastRecord.id) {
             selectOnMap(lastRecord);
         }
-        scanOnNeed(defaultMapping(data[0], mappings));
+        
+        // Only call scanOnNeed if we have data
+        if (lastRecords.length > 0) {
+            scanOnNeed(defaultMapping(lastRecords[0], mappings));
+        }
     }
 });
 
-grist.onNewRecord(() => {
-    markersLayer.clearLayers();
-})
-
+// Fix the updateMode function to handle potential undefined lastRecord
 function updateMode() {
     if (mode === 'single') {
-        selectedRowId = lastRecord.id;
-        updateMap([lastRecord]);
+        if (lastRecord && lastRecord.id) {
+            selectedRowId = lastRecord.id;
+            updateMap([lastRecord]);
+        } else {
+            // Handle case where lastRecord is undefined
+            updateMap([]);
+        }
     } else {
-        updateMap(lastRecords);
+        updateMap(lastRecords || []);
     }
 }
 
