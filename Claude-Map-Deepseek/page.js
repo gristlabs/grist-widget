@@ -11,9 +11,10 @@ let selectedRecords = null;
 let mode = 'multi';
 let mapSource = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
 let mapCopyright = 'Esri';
-// Add these at the top of your file
+
+// Define ZOOM_LEVEL constant
 const ZOOM_LEVEL = {
-    DEFAULT: 4,
+    DEFAULT: 8,  // Zoomed in for Portland
     SEARCH: 16,
     MARKER: 14
 };
@@ -196,8 +197,8 @@ const overlayLayers = {};
 function initializeMap() {
     amap = L.map('map', {
         layers: [baseLayers["Google Hybrid"]],
-        center: [45.5283, -122.8081], // Default center (USA)
-        zoom: 4, // Default zoom level
+        center: [45.5283, -122.6795], // Updated to Portland's coordinates
+        zoom: ZOOM_LEVEL.DEFAULT, // Using the updated default zoom level
         wheelPxPerZoomLevel: 90,
     });
 
@@ -400,42 +401,76 @@ function createPopupContent(record) {
     `;
 }
 
-// Modify the updateMap function
+// Modify the updateMap function to improve cluster performance
 function updateMap(data) {
     if (!amap) {
         amap = initializeMap();
     }
 
-    // Only create markerClusterGroup if it doesn't exist
     if (!markersLayer) {
         markersLayer = L.markerClusterGroup({
             chunkedLoading: true,
             spiderfyOnMaxZoom: true,
-            disableClusteringAtZoom: 16, // Uncluster at high zoom levels
-            zoomToBoundsOnClick: true
+            disableClusteringAtZoom: 17,
+            maxClusterRadius: 80,
+            animate: false,
+            zoomToBoundsOnClick: true,
+            removeOutsideVisibleBounds: true,
+            chunkInterval: 50,
+            chunkDelay: 10,
+            maxZoom: 18,
+            zoomToBoundsOptions: {
+                padding: [20, 20],
+                maxZoom: 17
+            },
+            spiderfyDistanceMultiplier: 1.5,
+            showCoverageOnHover: false,
+            zoomAnimation: false
         });
         amap.addLayer(markersLayer);
     }
 
-    // Clear existing markers before adding new ones
     markersLayer.clearLayers();
-    popups = {}; // Clear the popups cache
+    popups = {};
 
-    // Check if data exists before trying to iterate
     if (Array.isArray(data)) {
-        data.forEach(record => {
-            createMarker(record);
-        });
+        // Remove the maxMarkers limit to show all markers
+        const dataToProcess = data;
         
-        // Force cluster refresh only if we have data
-        if (data.length > 0) {
-            markersLayer.refreshClusters();
+        let i = 0;
+        const batchSize = 200;
+        
+        function addBatch() {
+            if (i >= dataToProcess.length) {
+                markersLayer.refreshClusters();
+                if (selectedRowId && popups[selectedRowId]) {
+                    selectMaker(selectedRowId);
+                }
+                console.log(`Loaded ${Object.keys(popups).length} markers out of ${data.length} records`);
+                return;
+            }
+
+            const end = Math.min(i + batchSize, dataToProcess.length);
+            const tempMarkers = [];
+            
+            while (i < end) {
+                const marker = createMarker(dataToProcess[i]);
+                if (marker) tempMarkers.push(marker);
+                i++;
+            }
+            
+            if (tempMarkers.length > 0) {
+                markersLayer.addLayers(tempMarkers);
+            }
+            
+            setTimeout(addBatch, 1);
         }
+        
+        addBatch();
     }
 }
 
-// Modify createMarker function
-// Add error handling for marker creation
+// Modify createMarker function to work with the new batch approach
 function createMarker(record) {
     try {
         if (!record) {
@@ -464,12 +499,12 @@ function createMarker(record) {
             maxWidth: 240,
             minWidth: 240,
             className: 'custom-popup',
-            closeButton: true
+            closeButton: true,
+            autoPanPadding: [50, 50]
         });
 
         popups[record.id] = marker;
-        markersLayer.addLayer(marker);
-        return marker;
+        return marker; // Return the marker instead of adding it directly
     } catch (error) {
         console.error('Error creating marker:', error);
         return null;
