@@ -1,0 +1,22 @@
+{
+  "name": "@gristlabs/widget-clipboard",
+  "description": "Simple widget that copies text to clipboard.",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Copy to clipboard",
+    "url": "https://gristlabs.github.io/grist-widget/clipboard/index.html",
+    "widgetId": "@gristlabs/widget-clipboard",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true,
+    "description": "Copy column values from records to your clipboard with a click of a button.",
+    "authors": [
+      {
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
+      }
+    ],
+    "isGristLabsMaintained": true
+  }
+}
