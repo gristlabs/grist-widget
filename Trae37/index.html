@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Leaflet CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <!-- MarkerCluster CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+        <!-- Geocoder CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.css" />
+        <!-- Tippy.js CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/tippy.js@6.3.7/dist/tippy.css" />
+        <!-- Tailwind CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="screen.css" />
+        <!-- Grist API -->
+        <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    </head>
+    <body class="bg-[#B9DFF8] min-h-screen">
+        <!-- Map Container -->
+        <div id="map" class="w-full h-screen"></div>
+
+        <!-- Settings Panel -->
+        <div id="settings" class="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg z-[1000] hidden">
+            <div id="btnClose" class="cursor-pointer text-red-500 mb-2">Close</div>
+            <label id="lblToggle" for="cbxMode" class="flex items-center gap-2 mb-4">
+                <input type="checkbox" id="cbxMode" class="toggle toggle-primary">
+                <span id="lblText" class="min-w-[100px]">All locations</span>
+            </label>
+            <table class="w-full">
+                <tr>
+                    <td><label id="lblSource" for="mapSource">Source</label></td>
+                    <td><input id="mapSource" class="input input-bordered w-full"></td>
+                </tr>
+                <tr>
+                    <td><label id="lblCopyright" for="mapCopyright">Copyright</label></td>
+                    <td><input id="mapCopyright" class="input input-bordered w-full"></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Leaflet JS -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <!-- MarkerCluster JS -->
+        <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+        <!-- ESRI Leaflet Geocoder JS -->
+        <script src="https://cdn.jsdelivr.net/leaflet.esri/2.0.0/esri-leaflet.js"></script>
+        <script src="https://cdn.jsdelivr.net/leaflet.esri.geocoder/2.1.0/esri-leaflet-geocoder.js"></script>
+        <!-- Popper.js and Tippy.js -->
+        <script src="https://unpkg.com/@popperjs/core@2"></script>
+        <script src="https://unpkg.com/tippy.js@6"></script>
+        <script>
+          // Initialize tippy only when needed
+          document.addEventListener('DOMContentLoaded', function() {
+            // Only initialize tippy if elements with data-tippy-content exist
+            if (document.querySelector('[data-tippy-content]')) {
+              tippy('[data-tippy-content]');
+            }
+          });
+        </script>
+        <!-- Custom JS -->
+        <script src="page.js"></script>
+    </body>
+</html>
