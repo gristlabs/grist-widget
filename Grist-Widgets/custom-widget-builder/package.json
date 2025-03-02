@@ -1,0 +1,24 @@
+{
+  "name": "@berhalak/custom-widget-builder",
+  "description": "Editor for building widgets with HTML and JS inside Grist.",
+  "homePage": "https://github.com/gristlabs/grist-widget/tree/master/custom-widget-builder",
+  "version": "0.0.1",
+  "grist": [
+    {
+      "name": "Custom widget builder",
+      "url": "https://gristlabs.github.io/grist-widget/custom-widget-builder/index.html",
+      "widgetId": "@berhalak/custom-widget-builder",
+      "published": true,
+      "accessLevel": "none",
+      "renderAfterReady": true,
+      "description": "Build custom widgets with HTML and JavaScript, right inside Grist.",
+      "isGristLabsMaintained": false,
+      "authors": [
+        {
+          "name": "berhalak",
+          "url": "https://github.com/berhalak"
+        }
+      ]
+    }
+  ]
+}
