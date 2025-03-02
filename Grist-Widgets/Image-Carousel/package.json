@@ -1,0 +1,22 @@
+{
+  "name": "@gristlabs/widget-viewer",
+  "description": "Simple image viewer for external images stored as links.",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Image viewer",
+    "url": "https://gristlabs.github.io/grist-widget/viewer/index.html",
+    "widgetId": "@gristlabs/widget-viewer",
+    "published": true,
+    "accessLevel": "read table",
+    "renderAfterReady": true,
+    "description": "View images loaded from a URL.",
+    "authors": [
+      {
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
+      }
+    ],
+    "isGristLabsMaintained": true
+  }
+}
