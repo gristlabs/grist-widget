@@ -1,0 +1,446 @@
+/* Map and controls */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+#map {
+  width: 100vw; 
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Filter controls styling */
+.filter-control {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.filter-control label {
+  font-size: 14px;
+  color: #333;
+}
+
+.filter-control input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+.filter-control input[type="checkbox"]:checked {
+  accent-color: #4a90e2;
+}
+
+#clearFilters {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-top: 8px;
+}
+
+#clearFilters:hover {
+  background-color: #e0e0e0;
+  border-color: #ccc;
+}
+
+#propertyTypes, #secondaryTypes {
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+#propertyTypes label, #secondaryTypes label {
+  padding: 6px 8px;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+#propertyTypes label:hover, #secondaryTypes label:hover {
+  background-color: #f0f0f0;
+}
+
+/* Control buttons */
+.leaflet-control-zoom {
+  font-size: 24px;
+}
+
+.leaflet-control-zoom a {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.leaflet-control-layers {
+  font-size: 18px;
+}
+
+.leaflet-control-layers-toggle {
+  width: 40px;
+  height: 40px;
+  background-size: 30px 30px;
+}
+
+/* Popup styling */
+.custom-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 0;
+  width: 320px !important;
+}
+
+.custom-popup .leaflet-popup-close-button {
+  top: 8px;
+  right: 8px;
+  color: white;
+  z-index: 10;
+}
+
+.card {
+  width: 100%;
+  overflow: hidden;
+  background: white;
+}
+
+.card figure {
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.card figure img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.action-buttons {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  padding: 8px;
+  width: 90%;
+}
+
+.card figure:hover .action-buttons {
+  opacity: 1;
+}
+
+.button-container {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.card-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-content h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  cursor: pointer;
+  color: #1a1a1a;
+}
+
+.details {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.details.hidden {
+  display: none;
+}
+
+.details p {
+  margin: 8px 0;
+  display: flex;
+  align-items: baseline;
+}
+
+.details p strong {
+  min-width: 100px;
+  color: #2d3748;
+}
+
+.copyable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 4px 8px;
+  border-radius: 4px;
+  position: relative;
+  color: #4a5568;
+}
+
+.copyable:hover {
+  background-color: #f7fafc;
+  color: #2b6cb0;
+}
+
+.copy-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: fadeInOut 1s ease;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.geosearch {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.geosearch form.leaflet-control {
+  background: white;
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+}
+
+.geosearch input {
+  font-size: 16px;
+  padding: 12px 16px;
+  width: 100%;
+  border: none;
+  border-radius: 4px;
+  background: #f5f5f5;
+  transition: all 0.3s ease;
+}
+
+.geosearch input:focus {
+  outline: none;
+  background: white;
+  box-shadow: 0 0 0 2px #4a90e2;
+}
+
+.results.active {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
+}
+
+.results > * {
+  padding: 10px 16px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.results > *:hover {
+  background-color: #f5f5f5;
+}
+
+.results > *:last-child {
+  border-bottom: none;
+}
+
+/* Popup styling */
+.custom-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 0;
+  width: 320px !important;
+}
+
+.custom-popup .leaflet-popup-close-button {
+  top: 8px;
+  right: 8px;
+  color: white;
+  z-index: 10;
+}
+
+.card {
+  width: 100%;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.card figure {
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.card figure img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.action-buttons {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  padding: 8px;
+}
+
+.card figure:hover .action-buttons {
+  opacity: 0.9;
+}
+
+.button-container {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  justify-content: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.card-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-content h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  cursor: pointer;
+}
+
+.details {
+  margin-top: 8px;
+}
+
+.details.hidden {
+  display: none;
+}
+
+.details p {
+  margin: 4px 0;
+}
+
+.copyable {
+  cursor: pointer;
+  transition: background-color 0.3s;
+  padding: 4px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.copyable:hover {
+  background-color: #f3f4f6;
+  color: #4a90e2;
+}
+
+.copy-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: fadeInOut 1s ease;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
