@@ -12,85 +12,135 @@ body {
   padding: 0;
 }
 
-/* Filter controls styling */
-.filter-control {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.filter-control label {
-  font-size: 14px;
-  color: #333;
-}
-
-.filter-control input[type="checkbox"] {
-  cursor: pointer;
-  width: 16px;
-  height: 16px;
-  vertical-align: middle;
-}
-
-.filter-control input[type="checkbox"]:checked {
-  accent-color: #4a90e2;
-}
-
-#clearFilters {
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-  margin-top: 8px;
-}
-
-#clearFilters:hover {
-  background-color: #e0e0e0;
-  border-color: #ccc;
-}
-
-#propertyTypes, #secondaryTypes {
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  max-height: 200px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-#propertyTypes label, #secondaryTypes label {
-  padding: 6px 8px;
-  transition: background-color 0.2s;
-  border-radius: 4px;
-}
-
-#propertyTypes label:hover, #secondaryTypes label:hover {
-  background-color: #f0f0f0;
-}
-
-/* Control buttons */
-.leaflet-control-zoom {
-  font-size: 24px;
-}
-
+/* Improved map controls */
 .leaflet-control-zoom a {
   width: 40px;
   height: 40px;
   line-height: 40px;
-}
-
-.leaflet-control-layers {
   font-size: 18px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  background-color: white;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
 }
 
-.leaflet-control-layers-toggle {
-  width: 40px;
-  height: 40px;
-  background-size: 30px 30px;
+.leaflet-control-zoom a:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Search controls */
+.toggle-search-button {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 10px !important;
+  font-size: 18px !important;
+  border-radius: 8px !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #333 !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.search-button, .close-search-button {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 10px !important;
+  font-size: 18px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #64748b !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.custom-search-control {
+  margin: 10px !important;
+}
+
+.search-container {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  align-items: center;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 10px;
+  backdrop-filter: blur(8px);
+  transform-origin: left center;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+.search-input {
+  width: 250px !important;
+  padding: 12px !important;
+  font-size: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  background-color: #f8fafc !important;
+  transition: all 0.2s ease;
+  background-image: none !important;
+}
+
+.search-input:focus {
+  border-color: #4a90e2 !important;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2) !important;
+  outline: none !important;
+}
+
+.search-button, .close-search-button {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 10px !important;
+  font-size: 18px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  color: #64748b !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.close-search-button {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+}
+
+.search-button:hover, .close-search-button:hover, .toggle-search-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Popup styling */
@@ -113,10 +163,12 @@ body {
   z-index: 10;
 }
 
+/* Card and action buttons */
 .card {
   width: 100%;
   overflow: hidden;
   background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .card figure {
@@ -129,6 +181,7 @@ body {
   width: 100%;
   height: 180px;
   object-fit: cover;
+  display: block;
 }
 
 .action-buttons {
@@ -148,35 +201,39 @@ body {
 
 .button-container {
   display: flex;
-  gap: 12px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  border-radius: 12px;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  border-radius: 6px;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .action-btn {
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.5);
-  border: none;
-  border-radius: 8px;
+  font-size: 16px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
+  color: white;
   text-decoration: none;
-  font-size: 18px;
+  background: rgba(74, 144, 226, 0.9);
+  border: none;
+  padding: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .action-btn:hover {
+  background: rgba(74, 144, 226, 1);
   transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.9);
 }
 
+/* Card content */
 .card-content {
   padding: 16px;
   display: flex;
@@ -211,8 +268,28 @@ body {
 .details p strong {
   min-width: 100px;
   color: #2d3748;
+  font-weight: 600;
 }
 
+.details .ownership-info {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.details .ownership-info p {
+  color: #4a5568;
+  font-size: 13px;
+  margin: 6px 0;
+}
+
+.details .ownership-info strong {
+  color: #2d3748;
+  font-weight: 600;
+  min-width: 120px;
+}
+
+/* Copyable text */
 .copyable {
   cursor: pointer;
   transition: background-color 0.2s;
@@ -249,6 +326,7 @@ body {
   100% { opacity: 0; }
 }
 
+/* Geosearch */
 .geosearch {
   position: absolute;
   top: 20px;
@@ -345,23 +423,16 @@ body {
   bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-  padding: 8px;
-}
-
-.card figure:hover .action-buttons {
-  opacity: 0.9;
+  opacity: 1;
+  width: auto;
+  z-index: 10;
 }
 
 .button-container {
   display: flex;
-  gap: 8px;
-  padding: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  border-radius: 12px;
+  gap: 6px;
+  padding: 4px 8px;
+  background: transparent;
   justify-content: center;
 }
 
@@ -369,20 +440,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
+  width: 40px;
+  height: 40px;
+  background: #4a90e2;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 18px;
+  color: white;
 }
 
 .action-btn:hover {
-  transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+  background: #3a80d2;
 }
 
 .card-content {
