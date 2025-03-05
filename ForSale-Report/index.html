@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>On-Markets Report</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      max-width: none;
+      margin: 0;
+      background-color: white;
+      padding: 20px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    h1 {
+      color: #333;
+      margin: 0 0 20px 0;
+    }
+    .property-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      margin: 0;
+    }
+    .property-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      background-color: #fff;
+      transition: background-color 0.2s;
+    }
+    .property-item:last-child {
+      margin-bottom: 0;
+    }
+    .property-checkbox {
+      margin-right: 15px;
+    }
+    .property-image {
+      width: 80px;
+      height: 60px;
+      margin-right: 15px;
+      border-radius: 4px;
+      object-fit: cover;
+      background-color: #f0f0f0;
+    }
+    .property-info {
+      flex-grow: 1;
+    }
+    .property-name {
+      font-weight: 500;
+      color: #2c3e50;
+      margin-bottom: 4px;
+    }
+    .property-address {
+      font-size: 0.9em;
+      color: #666;
+    }
+    .select-all {
+      margin-bottom: 15px;
+      padding: 12px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+    }
+    .select-all input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    .select-all label {
+      font-weight: 500;
+      color: #2c3e50;
+    }
+    .button-container {
+      padding: 20px 0 0 0;
+      margin: 0;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      background-color: white;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    button.preview {
+      background-color: #28a745;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button.preview:hover {
+      background-color: #218838;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 6px;
+      display: none;
+    }
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+      display: block;
+    }
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+    #preview-frame {
+      display: none;
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>On-Markets Report Generator</h1>
+    <div class="select-all">
+      <input type="checkbox" id="select-all">
+      <label for="select-all">Select All Properties</label>
+    </div>
+    <div id="property-list" class="property-list">
+      <!-- Properties will be populated here -->
+    </div>
+    <div class="button-container">
+      <button id="preview-report" class="preview" disabled>Preview Report</button>
+      <button id="generate-report" disabled>Download PDF</button>
+    </div>
+    <div id="status" class="status"></div>
+    <iframe id="preview-frame"></iframe>
+  </div>
+
+  <script>
+    let properties = [];
+    const propertyList = document.getElementById('property-list');
+    const generateButton = document.getElementById('generate-report');
+    const previewButton = document.getElementById('preview-report');
+    const selectAllCheckbox = document.getElementById('select-all');
+    const statusDiv = document.getElementById('status');
+    const previewFrame = document.getElementById('preview-frame');
+
+    // Initialize Grist plugin
+    grist.ready({
+      requiredAccess: 'full',
+      columns: [
+        'Property_Name',
+        'Address',
+        'Date_Listed',
+        'Property_Type',
+        'Price',
+        'Cap_Rate',
+        'Lease_Term',
+        'RBA',
+        'Notes',
+        'photo_url',
+        'CoStar',
+        'Crexi',
+        'OM'
+      ]
+    });
+
+    // Load properties from Grist
+    async function loadProperties() {
+      try {
+        // Fetch all records from the Properties table
+        const records = await grist.docApi.fetchTable('Properties');
+        console.log('Received data from Grist:', records);
+
+        // Map the records to our properties array
+        // In Grist's API, records are returned as arrays of column values
+        const columnNames = Object.keys(records);
+        const numRecords = records[columnNames[0]].length;
+
+        properties = [];
+        for (let i = 0; i < numRecords; i++) {
+          properties.push({
+            id: i + 1,
+            name: records.Property_Name?.[i] || 'Unnamed Property',
+            address: records.Address?.[i] || 'No address',
+            date_listed: records.Date_Listed?.[i],
+            property_type: records.Property_Type?.[i],
+            price: records.Price?.[i],
+            cap_rate: records.Cap_Rate?.[i],
+            lease_term: records.Lease_Term?.[i],
+            rba: records.RBA?.[i],
+            notes: records.Notes?.[i],
+            photo_url: records.photo_url?.[i],
+            costar: records.CoStar?.[i],
+            crexi: records.Crexi?.[i],
+            om: records.OM?.[i]
+          });
+        }
+
+        console.log('Processed properties:', properties);
+        renderProperties();
+      } catch (error) {
+        showStatus('Error loading properties: ' + error.message, 'error');
+        console.error('Detailed error:', error);
+        console.error('Error stack:', error.stack);
+      }
+    }
+
+    // Listen for table updates
+    grist.on('message', (e) => {
+      if (e.tableId === 'Properties') {
+        loadProperties();
+      }
+    });
+
+    // Initial load
+    loadProperties();
+
+    // Render property checkboxes
+    function renderProperties() {
+      if (!properties || properties.length === 0) {
+        propertyList.innerHTML = '<div class="property-item">No properties found</div>';
+        return;
+      }
+
+      propertyList.innerHTML = properties.map(prop => `
+        <div class="property-item">
+          <input type="checkbox" class="property-checkbox" id="prop-${prop.id}" data-id="${prop.id}">
+          <img src="${prop.photo_url || 'https://via.placeholder.com/80x60?text=No+Image'}" 
+               alt="${prop.name}" 
+               class="property-image"
+               onerror="this.src='https://via.placeholder.com/80x60?text=No+Image'">
+          <div class="property-info">
+            <div class="property-name">${prop.name || 'Unnamed Property'}</div>
+            <div class="property-address">${prop.address || 'No address'}</div>
+          </div>
+        </div>
+      `).join('');
+
+      // Add event listeners to checkboxes
+      document.querySelectorAll('.property-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateButtons);
+      });
+
+      updateButtons();
+    }
+
+    // Handle select all checkbox
+    selectAllCheckbox.addEventListener('change', (e) => {
+      const checkboxes = document.querySelectorAll('.property-checkbox');
+      checkboxes.forEach(checkbox => checkbox.checked = e.target.checked);
+      updateButtons();
+    });
+
+    // Update button states
+    function updateButtons() {
+      const selectedCount = document.querySelectorAll('.property-checkbox:checked').length;
+      generateButton.disabled = selectedCount === 0;
+      previewButton.disabled = selectedCount === 0;
+    }
+
+    // Show status message
+    function showStatus(message, type) {
+      statusDiv.textContent = message;
+      statusDiv.className = `status ${type}`;
+    }
+
+    // Get selected properties data
+    function getSelectedProperties() {
+      const selectedIds = Array.from(
+        document.querySelectorAll('.property-checkbox:checked')
+      ).map(checkbox => parseInt(checkbox.dataset.id));
+
+      return properties.filter(prop => selectedIds.includes(prop.id));
+    }
+
+    // Handle preview button click
+    previewButton.addEventListener('click', async () => {
+      try {
+        const selectedProperties = getSelectedProperties();
+        
+        if (selectedProperties.length === 0) {
+          showStatus('Please select at least one property.', 'error');
+          return;
+        }
+
+        showStatus('Generating preview...', 'success');
+        previewButton.disabled = true;
+        
+        // Send request to our local server
+        const response = await fetch('http://localhost:8085/preview', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            properties: selectedProperties.map(prop => ({
+              property_name: prop.name,
+              address: prop.address,
+              date_listed: prop.date_listed,
+              property_type: prop.property_type,
+              price: prop.price,
+              cap_rate: prop.cap_rate,
+              lease_term: prop.lease_term,
+              building_size: prop.rba,
+              notes: prop.notes,
+              photo_url: prop.photo_url
+            }))
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          // Open preview in a new tab instead of iframe
+          window.open(result.previewUrl, '_blank');
+          showStatus('Preview opened in new tab!', 'success');
+        } else {
+          throw new Error(result.error || 'Unknown error occurred');
+        }
+      } catch (error) {
+        showStatus('Error generating preview: ' + error.message, 'error');
+        console.error('Preview error:', error);
+      } finally {
+        previewButton.disabled = false;
+      }
+    });
+
+    // Handle generate report button click
+    generateButton.addEventListener('click', async () => {
+      try {
+        const selectedProperties = getSelectedProperties();
+        
+        if (selectedProperties.length === 0) {
+          showStatus('Please select at least one property.', 'error');
+          return;
+        }
+
+        generateButton.disabled = true;
+        showStatus('Generating PDF...', 'success');
+
+        // Send request to our local server
+        const response = await fetch('http://localhost:8085/generate-pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ properties: selectedProperties })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          // Create a temporary link to download the PDF
+          const link = document.createElement('a');
+          link.href = result.pdfUrl;
+          link.download = result.filename || 'property_report.pdf';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          showStatus('PDF generated successfully!', 'success');
+        } else {
+          showStatus('Failed to generate PDF: ' + result.error, 'error');
+        }
+      } catch (error) {
+        showStatus('Error generating PDF: ' + error.message, 'error');
+        console.error('PDF generation error:', error);
+      } finally {
+        generateButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

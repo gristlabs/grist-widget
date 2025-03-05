@@ -1,0 +1,56 @@
+{
+  "name": "Property Listing Widget",
+  "version": "1.0.0",
+  "description": "Generate property listings from Grist data",
+  "main": "grist_property_listing_widget.py",
+  "author": "Grist User",
+  "dependencies": {
+    "grist": "^0.1.0"
+  },
+  "widgetConfig": {
+    "name": "Property Listing Widget",
+    "description": "Generate property listings from Grist data",
+    "functions": [
+      {
+        "name": "configure_widget",
+        "description": "Configure the widget with API credentials",
+        "parameters": [
+          {
+            "name": "api_key",
+            "description": "Grist API key",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "doc_id",
+            "description": "Grist document ID",
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "table_name",
+            "description": "Grist table name",
+            "type": "string",
+            "default": "Properties"
+          }
+        ]
+      },
+      {
+        "name": "preview_listing",
+        "description": "Preview the property listing in browser"
+      },
+      {
+        "name": "generate_pdf",
+        "description": "Generate a PDF of the property listing",
+        "parameters": [
+          {
+            "name": "filename",
+            "description": "Output PDF filename",
+            "type": "string",
+            "default": "properties_listing.pdf"
+          }
+        ]
+      }
+    ]
+  }
+}

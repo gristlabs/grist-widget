@@ -1,0 +1,8 @@
+{
+  "name": "Property Report Generator",
+  "url": "index.html",
+  "widgetId": "property-report-generator",
+  "version": "1.0.0",
+  "mode": "page",
+  "sandboxPrivileges": ["trusted"]
+} 
