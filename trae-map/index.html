@@ -22,12 +22,30 @@
     <!-- Map Container -->
     <div id="map" class="w-full h-screen"></div>
 
+    <!-- County Info Card -->
+    <div id="county-info" class="county-info-card hidden">
+      <h3 id="county-name"></h3>
+      <div class="button-container">
+        <a id="tax-button" href="#" class="info-button" target="_blank">🔍</a>
+        <a id="gis-button" href="#" class="info-button gis-button" target="_blank">🌎</a>
+      </div>
+    </div>
+
+    <!-- Layer Controls -->
+    <div class="layer-controls">
+      <button id="street-layer" class="layer-button active">Street</button>
+      <button id="satellite-layer" class="layer-button">Satellite</button>
+      <button id="hybrid-layer" class="layer-button">Hybrid</button>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Geosearch JS -->
     <script src="https://unpkg.com/leaflet-geosearch@3.0.0/dist/geosearch.umd.js"></script>
     <!-- MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- County Data -->
+    <script src="county-data.js"></script>
     <!-- Custom JS -->
     <script src="standalone-map.js"></script>
   </body>
