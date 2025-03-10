@@ -5,6 +5,163 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
+/* Hide attribution control */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* County info card */
+.county-info-card {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.75);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+  z-index: 1000;
+  width: auto;
+  min-width: 120px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  backdrop-filter: blur(10px);
+}
+
+.county-info-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.button-container {
+  display: flex;
+  gap: 6px;
+}
+
+.info-button {
+  padding: 6px 10px;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: normal;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+}
+
+.info-button:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 5px rgba(0,0,0,0.15);
+}
+
+.gis-button {
+  background-color: #64748b;
+}
+
+.gis-button:hover {
+  background-color: #475569;
+}
+
+/* Search controls spacing fix */
+.search-container {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  align-items: center;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 8px;
+  backdrop-filter: blur(8px);
+  transform-origin: left center;
+}
+
+.search-button, .close-search-button {
+  margin: 0 2px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Map Legend */
+.legend {
+  position: absolute !important;
+  top: calc(20px + 120px) !important; /* Position below county info card */
+  right: 20px !important; /* Align with county info card */
+  left: auto !important;
+  bottom: auto !important;
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+  max-width: 280px !important;
+  max-height: calc(100vh - 180px) !important;
+  overflow-y: auto !important;
+  display: block !important;
+  z-index: 999 !important; /* Lower z-index than county info card */
+}
+
+.legend h4 {
+  color: #1e40af;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* Layer controls */
+.layer-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.layer-button {
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.layer-button:last-child {
+  border-bottom: none;
+}
+
+.layer-button.active {
+  background-color: #ebf5ff;
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.layer-button:hover:not(.active) {
+  background-color: #f7fafc;
+}
+
 #map {
   width: 100vw; 
   height: 100vh;
@@ -379,6 +536,220 @@ body {
 
 .results > *:last-child {
   border-bottom: none;
+}
+
+/* Popup styling */
+.custom-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 0;
+  width: 320px !important;
+}
+
+.custom-popup .leaflet-popup-close-button {
+  top: 8px;
+  right: 8px;
+  color: white;
+  z-index: 10;
+}
+
+.card {
+  width: 100%;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.card figure {
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.card figure img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.action-buttons {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 1;
+  width: auto;
+  z-index: 10;
+}
+
+.button-container {
+  display: flex;
+  gap: 6px;
+  padding: 4px 8px;
+  background: transparent;
+  justify-content: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #4a90e2;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  font-size: 18px;
+  color: white;
+}
+
+.action-btn:hover {
+  transform: scale(1.05);
+  background: #3a80d2;
+}
+
+.card-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-content h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  cursor: pointer;
+}
+
+.details {
+  margin-top: 8px;
+}
+
+.details.hidden {
+  display: none;
+}
+
+.details p {
+  margin: 4px 0;
+}
+
+.copyable {
+  cursor: pointer;
+  transition: background-color 0.3s;
+  padding: 4px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.copyable:hover {
+  background-color: #f3f4f6;
+  color: #4a90e2;
+}
+
+.copy-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: fadeInOut 1s ease;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.custom-search-control {
+  margin: 5px !important;
+}
+
+/* Adjust property search control spacing */
+.property-search-control {
+  margin-top: 5px !important;
+}
+
+.search-container {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  align-items: center;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 8px;
+  backdrop-filter: blur(8px);
+  transform-origin: left center;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+.search-input {
+  width: 250px !important;
+  padding: 12px !important;
+  font-size: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  background-color: #f8fafc !important;
+  transition: all 0.2s ease;
+  background-image: none !important;
+}
+
+.search-input:focus {
+  border-color: #4a90e2 !important;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2) !important;
+  outline: none !important;
+}
+
+.search-button, .close-search-button {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 10px !important;
+  font-size: 18px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  color: #64748b !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.close-search-button {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+}
+
+.search-button:hover, .close-search-button:hover, .toggle-search-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Popup styling */
