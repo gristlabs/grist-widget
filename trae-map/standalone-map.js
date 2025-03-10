@@ -109,38 +109,43 @@ const overlayLayers = {};
 
 function initializeMap() {
   // Define base layers with appropriate maxZoom values
-  const baseLayers = {
-    "Google Hybrid": L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '&copy; Google Maps'
-    }),
-    "Google Streets": L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '&copy; Google Maps'
-    }),
-    "Google Terrain": L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '&copy; Google Maps'
-    }),
-    "Google Satellite": L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '&copy; Google Maps'
-    }),
-    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    })
-  };
+  const streetLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: ''
+  });
+  
+  const satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: ''
+  });
+  
+  const hybridLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: ''
+  });
+  
+  // DOM elements for layer controls
+  const streetLayerButton = document.getElementById('street-layer');
+  const satelliteLayerButton = document.getElementById('satellite-layer');
+  const hybridLayerButton = document.getElementById('hybrid-layer');
+  
+  // DOM elements for county info
+  const countyInfo = document.getElementById('county-info');
+  const countyNameElement = document.getElementById('county-name');
+  const taxButton = document.getElementById('tax-button');
+  const gisButton = document.getElementById('gis-button');
+  
+  let activeCounty = null;
+  let countyLayer = null;
 
   // Define overlay layers
   const overlayLayers = {};
 
   amap = L.map('map', {
-    layers: [baseLayers["Google Hybrid"]],
+    layers: [hybridLayer],
     center: [44.0, -120.5],  // Center of Oregon
     zoom: 7,  // More zoomed in over Oregon
     wheelPxPerZoomLevel: 90,
@@ -148,6 +153,72 @@ function initializeMap() {
     zoomSnap: 0.5,  // Allow smoother zooming
     zoomDelta: 0.5  // Smaller zoom increments
   });
+  
+  // Fetch county boundaries
+  fetch('https://services1.arcgis.com/KbxwQRRfWyEYLgp4/arcgis/rest/services/BLM_OR_County_Boundaries_Polygon_Hub/FeatureServer/1/query?outFields=*&where=1%3D1&f=geojson')
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to fetch GeoJSON data');
+      return response.json();
+    })
+    .then(data => {
+      countyLayer = L.geoJSON(data, {
+        style: {
+          fillColor: 'transparent',
+          weight: 1.5,
+          opacity: 0.8,
+          color: '#1e40af',
+          fillOpacity: 0
+        },
+        onEachFeature: (feature, layer) => {
+          if (feature.properties && feature.properties.COUNTY_NAME) {
+            const countyName = feature.properties.COUNTY_NAME;
+            
+            layer.on({
+              mouseover: () => {
+                showCountyInfo(countyName);
+              },
+              click: () => {
+                showCountyInfo(countyName);
+              }
+            });
+          }
+        }
+      }).addTo(amap);
+    })
+    .catch(error => {
+      console.error('Error fetching county data:', error);
+      alert('Failed to load county data. Please try again later.');
+    });
+    
+  // Show county info
+  function showCountyInfo(countyName) {
+    activeCounty = countyName;
+    countyNameElement.textContent = countyName + ' County';
+    
+    const urls = countyUrls[countyName] || { taxUrl: '', gisUrl: '' };
+    
+    if (urls.taxUrl) {
+      taxButton.href = urls.taxUrl;
+      taxButton.style.opacity = '1';
+      taxButton.style.pointerEvents = 'auto';
+    } else {
+      taxButton.href = '#';
+      taxButton.style.opacity = '0.5';
+      taxButton.style.pointerEvents = 'none';
+    }
+    
+    if (urls.gisUrl) {
+      gisButton.href = urls.gisUrl;
+      gisButton.style.opacity = '1';
+      gisButton.style.pointerEvents = 'auto';
+    } else {
+      gisButton.href = '#';
+      gisButton.style.opacity = '0.5';
+      gisButton.style.pointerEvents = 'none';
+    }
+    
+    countyInfo.classList.remove('hidden');
+  }
 
   // Add zoom warning event
   amap.on('zoomend', function() {
@@ -163,10 +234,49 @@ function initializeMap() {
     console.log("Map is fully loaded and ready for interaction");
   });
 
-  L.control.layers(baseLayers, overlayLayers, { position: 'topright', collapsed: true }).addTo(amap);
+  // Layer control event listeners
+  streetLayerButton.addEventListener('click', () => {
+    setActiveLayer('street');
+  });
+
+  satelliteLayerButton.addEventListener('click', () => {
+    setActiveLayer('satellite');
+  });
+
+  hybridLayerButton.addEventListener('click', () => {
+    setActiveLayer('hybrid');
+  });
+
+  function setActiveLayer(layerName) {
+    // Remove all layers
+    amap.removeLayer(streetLayer);
+    amap.removeLayer(satelliteLayer);
+    amap.removeLayer(hybridLayer);
+    
+    // Reset active class
+    streetLayerButton.classList.remove('active');
+    satelliteLayerButton.classList.remove('active');
+    hybridLayerButton.classList.remove('active');
+    
+    // Add selected layer
+    switch (layerName) {
+      case 'satellite':
+        satelliteLayer.addTo(amap);
+        satelliteLayerButton.classList.add('active');
+        break;
+      case 'hybrid':
+        hybridLayer.addTo(amap);
+        hybridLayerButton.classList.add('active');
+        break;
+      default:
+        streetLayer.addTo(amap);
+        streetLayerButton.classList.add('active');
+        break;
+    }
+  }
 
   // Add legend control
-  const legend = L.control({ position: 'bottomleft' });
+  const legend = L.control({ position: 'topright' });
   legend.onAdd = function() {
     const div = L.DomUtil.create('div', 'legend');
     div.style.display = 'block';
@@ -348,8 +458,11 @@ function initializeMap() {
           // Add popup with simplified address info
           marker.bindPopup(`<b>${simplifiedAddress}</b>`).openPopup();
           
-          // Pan to the result
-          amap.setView([lat, lon], 16);
+          // Use flyTo for smooth animation instead of setView
+          amap.flyTo([lat, lon], 16, {
+            duration: 1.5, // Animation duration in seconds
+            easeLinearity: 0.25
+          });
           
           // Close the search container after successful search
           searchContainer.style.display = 'none';
@@ -374,6 +487,9 @@ function initializeMap() {
       searchButton.click();
     }
   });
+  
+  // Initialize with hybrid layer active
+  hybridLayerButton.classList.add('active');
   
   // Add the custom control to the map
   const searchControl = L.control({ position: 'topleft' });
@@ -821,7 +937,8 @@ function hideActionButtons(figure) {
 
 // Add this function after fetchGeoJSON function
 function addPropertySearchControl(map) {
-  const propertySearchControl = L.control({ position: 'topright' });
+  // Position the property search control below the standard search
+  const propertySearchControl = L.control({ position: 'topleft' });
   
   propertySearchControl.onAdd = function() {
     const container = L.DomUtil.create('div', 'property-search-control');
@@ -841,20 +958,22 @@ function addPropertySearchControl(map) {
     toggleButton.style.display = 'flex';
     toggleButton.style.alignItems = 'center';
     toggleButton.style.justifyContent = 'center';
-    toggleButton.title = 'Search Properties';
+    toggleButton.title = 'Search Properties by ID';
     
     // Create the search container (initially hidden)
     const searchContainer = L.DomUtil.create('div', 'property-search-container', container);
     searchContainer.style.display = 'none';
-    searchContainer.style.backgroundColor = 'white';
-    searchContainer.style.padding = '8px';
+    searchContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
+    searchContainer.style.padding = '12px';
     searchContainer.style.borderRadius = '4px';
-    searchContainer.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)';
+    searchContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
     searchContainer.style.marginTop = '10px';
     searchContainer.style.width = '280px';
+    searchContainer.style.backdropFilter = 'blur(8px)';
+    searchContainer.style.border = '1px solid rgba(226, 232, 240, 0.8)';
     
     searchContainer.innerHTML = `
-      <div style="margin-bottom: 8px; font-weight: bold; font-size: 14px;">Search Properties</div>
+      <div style="margin-bottom: 10px; font-weight: 600; font-size: 16px; color: #1e40af;">Search Properties</div>
       <div style="display: flex; margin-bottom: 8px;">
         <input type="text" id="property-search-input" placeholder="Search by ID or Address..." 
                style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
@@ -1009,18 +1128,19 @@ function fetchGeoJSON(url, callback) {
 }
 // Add this function after fetchGeoJSON function
 function addPropertySearchControl(map) {
-  const propertySearchControl = L.control({ position: 'topright' });
+  // Position the property search control below the standard search
+  const propertySearchControl = L.control({ position: 'topleft' });
   
   propertySearchControl.onAdd = function() {
     const container = L.DomUtil.create('div', 'property-search-control');
-    container.style.margin = '10px';
+    container.style.marginTop = '10px'; // Reduced margin to create tighter spacing
     
     // Create toggle button - this is the only button visible initially
     const toggleButton = L.DomUtil.create('button', 'toggle-property-search-button', container);
     toggleButton.innerHTML = '🏢';
     toggleButton.style.padding = '10px';
     toggleButton.style.cursor = 'pointer';
-    toggleButton.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+    toggleButton.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
     toggleButton.style.border = 'none';
     toggleButton.style.borderRadius = '8px';
     toggleButton.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
@@ -1030,7 +1150,7 @@ function addPropertySearchControl(map) {
     toggleButton.style.display = 'flex';
     toggleButton.style.alignItems = 'center';
     toggleButton.style.justifyContent = 'center';
-    toggleButton.title = 'Search Properties';
+    toggleButton.title = 'Search Properties by ID';
     
     // Create the search container (initially hidden)
     const searchContainer = L.DomUtil.create('div', 'property-search-container', container);
@@ -1038,7 +1158,7 @@ function addPropertySearchControl(map) {
     searchContainer.style.alignItems = 'center';
     searchContainer.style.padding = '4px';
     searchContainer.style.borderRadius = '8px';
-    searchContainer.style.backgroundColor = 'white';
+    searchContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
     searchContainer.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.2)';
     searchContainer.style.minWidth = '300px';
     
