@@ -167,6 +167,18 @@ div.instructions, .newlined, p.note {
   white-space: pre-line;
 }
 
+div.paid {
+  position: relative;
+  left: 40%;
+  color: red;
+  rotate: 15deg;
+  font-size: 80px;
+  top: 20px;
+  border: 5px solid red;
+  float: left;
+  font-weight: bolder;
+}
+
 .app {
   position: relative;
 }
