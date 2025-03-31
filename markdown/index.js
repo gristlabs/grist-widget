@@ -7,6 +7,7 @@ var txt = null;  // EasyMDE instance
 var editable = null;
 var isEditMode = Observable.create(null, false);
 let isNewRecord = Observable.create(null, true);
+let tokenInfo = null;
 
 window.addEventListener('keypress', (ev) => {
   // If user pressed Enter or Space
@@ -165,12 +166,40 @@ ready(() => {
     const newEditable = (settings.accessLevel !== 'read table');
     if (newEditable !== editable) {
       editable = newEditable;
+
+      // Create a custom renderer
+      const customRenderer = new marked.Renderer();
+
+      // Override the image rendering method
+      customRenderer.image = function ({href, title, text}) {
+        const attrs = [];
+        // Support "@WxH title..." syntax for title, to specify width and height, both optional.
+        if (title && title.startsWith("@")) {
+          const prefix = title.split(/\s/)[0].slice(1);
+          title = title.slice(prefix.length).trimStart();
+          const [width, height] = prefix.split("x");
+          if (width) { attrs.push(` width="${width}"`); }
+          if (height) { attrs.push(` height="${height}"`); }
+        }
+        // Support {att=N} for attachments. N is the numeric ID of attachment, as you get when you
+        // copy-paste one into a text cell.
+        let match;
+        if (href && (match = href.match(/{att=(\d+)}/))) {
+          const attId = match[1];
+          href = `${tokenInfo.baseUrl}/attachments/${attId}/download?auth=${tokenInfo.token}`;
+        }
+        // Return the image HTML
+        return `<img src="${href}" alt="${text}" title="${title || ''}" ${attrs.join(' ')}>`;
+      };
+
       txt = new EasyMDE({
         spellChecker: false,
         status: false,
         minHeight: '0px',
         toolbar: editable ? toolbar : false,
+        previewRender: (text) => marked.marked(text, {renderer: customRenderer}),
       });
+      console.warn("TXT", txt);
       if (editable) {
         dom.update(document.querySelector(".edit-action"), dom.hide(isEditMode));
         dom.update(document.querySelector(".save-action"), dom.show(isEditMode));
@@ -180,7 +209,11 @@ ready(() => {
     }
   });
 
-  grist.onRecord(function(record, mappings) {
+  grist.onRecord(async function(record, mappings) {
+    if (!tokenInfo) {
+      tokenInfo = await grist.docApi.getAccessToken({readOnly: true});
+    }
+
     isNewRecord.set(false);
     save();
     var nextRowId = record.id;
