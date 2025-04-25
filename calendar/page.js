@@ -743,6 +743,7 @@ function buildCalendarEventObject(record, colTypes, colOptions) {
       fontStyle,
       fontWeight,
       textDecoration,
+      textWrap : 'auto',
     }
   };
 }
