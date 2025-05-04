@@ -8,7 +8,7 @@ let currentFilters = {
   secondaryTypes: [],
   markerColors: []
 };
-const geoJSONUrl = "https://raw.githubusercontent.com/sgfroerer/gmaps-grist-widgets/master/geojson/March.geojson";
+const geoJSONUrl = "https://raw.githubusercontent.com/cleanslatekickz/geojson/master/geojson/May-2025.geojson";
 
 const selectedIcon = new L.Icon({
   iconUrl: 'marker-icon-green.png',
