@@ -6,3 +6,6 @@
 	path = jupyterlite
 	url = https://github.com/gristlabs/jupyterlite-widget
 	branch = gh-pages
+[submodule "pug_py"]
+	path = pug_py
+	url = https://github.com/jperon/Grist-pug-py-widget
