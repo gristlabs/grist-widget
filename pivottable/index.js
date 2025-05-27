@@ -28,7 +28,9 @@ const aggregators = {
 };
 
 grist.onRecords(async rec => {
-  const { rows, cols, vals, aggregatorName, rendererName } = await grist.getOption('settings') ?? {};
+  const {
+    rows, cols, vals, aggregatorName, rendererName, inclusions, exclusions
+  } = await grist.getOption('settings') ?? {};
   let initialRender = true;
   $('#table').pivotUI(
     rec,
@@ -41,11 +43,17 @@ grist.onRecords(async rec => {
           initialRender = false;
           return;
         }
-        const { rows, cols, vals, aggregatorName, rendererName } = config;
-        grist.setOption('settings', { rows, cols, vals, aggregatorName, rendererName });
+        const {
+          rows, cols, vals, aggregatorName, rendererName, inclusions, exclusions
+        } = config;
+        grist.setOption('settings', {
+          rows, cols, vals, aggregatorName, rendererName, inclusions, exclusions
+        });
       },
       aggregatorName,
       rendererName,
+      inclusions,
+      exclusions,
       aggregators: $.extend($.pivotUtilities.aggregators, aggregators),
       renderers: $.extend(
         $.pivotUtilities.renderers,
