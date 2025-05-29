@@ -4,6 +4,7 @@
   "description": "A repository of grist custom widgets that have no back-end requirements.",
   "scripts": {
     "build": "tsc --build && node ./buildtools/publish.js manifest.json",
+    "publish": "node ./buildtools/publish.js manifest.json",
     "serve": "http-server -c-1 --port=8585 -s",
     "build:dev": "node ./buildtools/publish.js manifest.json http://localhost:8585",
     "serve:dev": "live-server --port=8585 --no-browser -q --middleware=$(pwd)/buildtools/rewriteUrl.js",
@@ -36,7 +37,8 @@
     "typescript": "^5.1.3"
   },
   "dependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "jsonc": "^2.0.0"
   },
   "mocha": {
     "require": [
