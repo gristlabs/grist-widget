@@ -4,4 +4,9 @@
     "*",
     "**/*",
   ],
+  "compilerOptions": {
+    "paths": {
+      "app/*": ["test/app/*"]
+    }
+  }
 }
