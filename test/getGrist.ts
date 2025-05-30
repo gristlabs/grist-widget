@@ -4,10 +4,8 @@ import fs from 'fs';
 import { driver, enableDebugCapture } from 'mocha-webdriver';
 import fetch from 'node-fetch';
 
-import {GristWebDriverUtils} from 'test/gristWebDriverUtils';
-
-
-
+import {Key} from 'mocha-webdriver';
+import {GristWebDriverUtils} from "test/gristWebDriverUtils";
 
 /**
  * Set up mocha hooks for starting and stopping Grist. Return
@@ -284,5 +282,39 @@ export class GristUtils extends GristWebDriverUtils {
     return this.inCustomWidget(() => {
       return driver.executeScript(script, ...args);
     })
+  }
+
+  public async login() {
+    //just click log in to get example account.
+    const menu = await this.driver.findWait('.test-dm-account', 1000);
+    await menu.click();
+    if (await this.isAlertShown()) {
+      await this.acceptAlert();
+    }
+    await this.waitForServer();
+  }
+
+  public async addColumn(table: string, name: string) {
+    // focus on table
+    await this.selectSectionByTitle(table);
+    // add new column using a shortcut
+    await this.driver.actions().keyDown(Key.ALT).sendKeys('=').keyUp(Key.ALT).perform();
+    // wait for rename panel to show up
+    await this.driver.findWait('.test-column-title-popup', 1000);
+    // rename and accept
+    await this.driver.sendKeys(name);
+    await this.driver.sendKeys(Key.ENTER);
+    await this.waitForServer();
+  }
+
+  public async focusOnCell(columnName: string, row: number) {
+    const cell = await this.getCell({ col: columnName, rowNum: row });
+    await cell.click();
+  }
+
+  public async fillCell(columnName: string, row: number, value: string) {
+    await this.focusOnCell(columnName, row);
+    await this.driver.sendKeys(value)
+    await this.driver.sendKeys(Key.ENTER);
   }
 }
