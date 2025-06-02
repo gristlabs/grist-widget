@@ -32,7 +32,7 @@ describe('viewer', function () {
     }
     before(async function () {
       //add set of images to the table
-      await grist.sendActionsAndWaitForServer(
+      await grist.sendActions(
         [
           ['AddRecord', 'Data', RowData.NONE, { Image: "" }],
           ['AddRecord', 'Data', RowData.NONE_NEXT, { Image: "" }],
@@ -117,7 +117,7 @@ describe('viewer', function () {
 
     after(async function () {
       //remove row added in before block
-      await grist.sendActionsAndWaitForServer([
+      await grist.sendActions([
         ['RemoveRecord', 'Data', 6],
         ['RemoveRecord', 'Data', 5],
         ['RemoveRecord', 'Data', 4],
@@ -171,7 +171,7 @@ describe('viewer', function () {
 
     after(async function () {
       //remove setted cell
-      await grist.sendActionsAndWaitForServer([
+      await grist.sendActions([
         ['RemoveRecord', 'Data', 1],
       ], 1000);
     });
@@ -179,7 +179,7 @@ describe('viewer', function () {
   describe('navigation', function () {
     before(async function () {
       //remove all cells from image table 
-      await grist.sendActionsAndWaitForServer([['RemoveRecord', 'Data', 1]], 1000);
+      await grist.sendActions([['RemoveRecord', 'Data', 1]], 1000);
     });
     describe('no image', function () {
       it('should have navigation buttons hidden', async function () {
