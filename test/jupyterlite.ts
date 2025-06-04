@@ -13,8 +13,9 @@ describe('jupyterlite', function () {
 
     // Add a custom notebook widget
     await grist.toggleSidePanel('right', 'open');
+    await grist.forceDismissTips();
     await grist.addNewSection(/Custom/, /Table1/, {dismissTips: true});
-    await grist.clickWidgetPane();
+    await grist.clickWidgetGallery();
     await grist.selectCustomWidget('JupyterLite Notebook');
     await grist.setCustomWidgetAccess('read table');  // required
 
@@ -26,7 +27,9 @@ describe('jupyterlite', function () {
 
     await grist.inCustomWidget(async () => {
       // Put a callback in a code cell
-      await driver.find('.CodeMirror-line').click();
+      await grist.waitToPass(async () => {
+        await driver.findWait('.CodeMirror-line', 100).click();
+      });
       await driver.sendKeys(`
 @grist.on_records
 def foo(r):

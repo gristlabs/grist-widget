@@ -70,7 +70,7 @@ describe('calendar', function () {
       await grist.openDoc(docId);
       await grist.toggleSidePanel('right', 'open');
       await grist.addNewSection(/Custom/, /Table1/);
-      await grist.clickWidgetPane();
+      await grist.clickWidgetGallery();
       await grist.selectCustomWidget(/Calendar/);
       await grist.setCustomWidgetAccess('full');
       await grist.setCustomWidgetMapping('startDate', /From/);
@@ -357,13 +357,10 @@ describe('calendar', function () {
         assert.equal(buttontext, text)
       });
     }
-    try {
-      await switchLanguage('Polski');
-      await assertTodayButtonText('dzisiaj');
-    } finally {
-      await switchLanguage('English');
-      await assertTodayButtonText('today');
-    }
+    await switchLanguage('Polski');
+    await assertTodayButtonText('dzisiaj');
+    await switchLanguage('English');
+    await assertTodayButtonText('today');
   });
 
   // TODO: test adding new events and moving existing one on the calendar.
