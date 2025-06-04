@@ -1,0 +1,14 @@
+{
+  // Grist Labs maintained widget
+  "jupyterlite": {},
+  // Grist Labs maintained widget
+  "chart": {},
+  "varamil/simplefilter": {
+    // Url is changed to point to the grist-widget repository.
+    "url": "https://gristlabs.github.io/grist-widget/varamil/simplefilter/index.html",
+    // Name is updated to not conflict with the gristlabs widgets.
+    "widgetId": "@varamil/widget-simplefilter",
+    // Flag is enforced to false to indicate that this is not a Grist Labs maintained widget.
+    "isGristLabsMaintained": false
+  }
+}

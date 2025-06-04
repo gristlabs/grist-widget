@@ -6,3 +6,6 @@
 	path = jupyterlite
 	url = https://github.com/gristlabs/jupyterlite-widget
 	branch = gh-pages
+[submodule "varamil"]
+	path = varamil
+	url = https://github.com/Varamil/grist-widget
