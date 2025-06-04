@@ -10,7 +10,7 @@ describe('flashcards', function() {
     await grist.openDoc(docId);
     await grist.toggleSidePanel('right', 'open');
     await grist.addNewSection(/Custom/, /School/, {dismissTips: true});
-    await grist.clickWidgetPane();
+    await grist.clickWidgetGallery();
     await grist.selectCustomWidget(/Flash/);
     await grist.setCustomWidgetAccess('full');
     await grist.setCustomWidgetMapping('Question', /School Head/);
