@@ -28,7 +28,7 @@ function isWidgetDir(dir) {
 
 const ALLOWED = jsonc.parse(fs.readFileSync(path.join(rootDir, 'external.jsonc'), 'utf-8').trim());
 
-// Be default remove submodules from the list of folders.
+// By default remove submodules from the list of folders.
 folders = folders.filter(folder => {
   if (listSubmodules(rootDir).includes(folder)) { return false; }
   return true;
@@ -114,16 +114,9 @@ function listSubmodules(repoRoot) {
   if (!fs.existsSync(gitmodulesPath)) {
     return []; // No submodules
   }
-
-  const content = fs.readFileSync(gitmodulesPath, 'utf-8');
-  const submodulePaths = [];
-
-  // Parse lines like: path = some/path
-  const pathRegex = /^\s*path\s*=\s*(.+)$/gm;
-  let match;
-  while ((match = pathRegex.exec(content)) !== null) {
-    submodulePaths.push(match[1]);
-  }
-
-  return submodulePaths;
+  const stdout = execSync(
+    'git config --file .gitmodules --get-regexp path',
+    { cwd: repoRoot, encoding: 'utf-8' }
+  );
+  return stdout.split('\n').map(line => line.split(' ')[1]);
 }
