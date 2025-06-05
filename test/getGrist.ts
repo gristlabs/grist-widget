@@ -78,6 +78,12 @@ export class GristTestServer {
       );
     }
     const pwd = process.cwd();
+
+    // Make sure rewriteUrl.js is available in the buildtools directory.
+    if (!fs.existsSync(`${pwd}/buildtools/rewriteUrl.js`)) {
+      throw new Error(`Expected buildtools/rewriteUrl.js to exist at ${pwd}/buildtools/rewriteUrl.js`);
+    }
+
     this._assetServer = spawn('live-server', [
       `--port=${contentPort}`, '--no-browser', '-q',
       `--middleware=${pwd}/buildtools/rewriteUrl.js`
@@ -198,11 +204,22 @@ export class GristUtils extends GristWebDriverUtils {
     await this.waitForServer();
   }
 
-  public async clickWidgetPane() {
+  // This method doesn't work in single user mode, need to fix upstream.
+  // For now it is  just overridden with a simpler version.
+  public override async openAccountMenu() {
+    await this.driver.findWait('.test-dm-account', 2000).click();
+    await this.driver.sleep(250); 
+  }
+
+  public async clickWidgetGallery() {
     const elem = this.driver.find('.test-custom-widget-gallery-container');
     if (await elem.isPresent()) {
       await elem.click();
     }
+  }
+
+  public async clickWidgetSection() {
+    await driver.findWait('.custom_view_container', 100).click();
   }
 
   public async selectCustomWidget(text: string | RegExp) {
@@ -217,12 +234,26 @@ export class GristUtils extends GristWebDriverUtils {
     await this.waitForServer();
   }
 
+  public async forceDismissTips() {
+    try {
+      await this.driver.findWait('.test-dp-add-new', 2000).doClick();
+      await this.driver.findWait('.test-dp-add-widget-to-page', 500).doClick();
+      await this.driver.sendKeys(Key.ESCAPE);
+      await this.driver.findWait('.test-behavioral-prompt-dont-show-tips', 500).click();
+      await this.driver.find('.test-behavioral-prompt-dismiss').click();
+      await this.waitForServer();
+    } catch (e) {
+      // If the tips are not shown, this will fail. Ignore.
+      console.warn("Behavioral prompt not shown, ignoring.");
+    }
+  }
+
   public async addCustomSection(name: string, type: string, dataSource: string|RegExp= /Table1/) {
-    await this.toggleSidePanel('right', 'open');
-    await this.addNewSection(/Custom/, dataSource);
-    await this.clickWidgetPane();
+    await this.addNewSection(/Custom/, dataSource, {dismissTips: true});
+    await this.clickWidgetGallery();
     await this.selectCustomWidget(type);
     await this.waitForServer();
+    await this.toggleSidePanel('right', 'open');
   }
 
   public async setCustomWidgetAccess(option: "none" | "read table" | "full") {
@@ -232,7 +263,7 @@ export class GristUtils extends GristWebDriverUtils {
       "full": "Full document access"
     };
     await this.driver.find(`.test-config-widget-access .test-select-open`).click();
-    await this.driver.findContent(`.test-select-menu li`, text[option]).click();
+    await this.driver.findContentWait(`.test-select-menu li`, text[option], 100).click();
   }
 
   public async waitForFrame() {
@@ -316,5 +347,6 @@ export class GristUtils extends GristWebDriverUtils {
     await this.focusOnCell(columnName, row);
     await this.driver.sendKeys(value)
     await this.driver.sendKeys(Key.ENTER);
+    await this.waitForServer();
   }
 }
