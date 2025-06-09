@@ -154,9 +154,9 @@ async function scan(tableId, records, mappings) {
       const result = await geocode(address);
       // Update them, and update cache (if the field was mapped)
       await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
-        [mappings[Longitude]]: result?.lng,
-        [mappings[Latitude]]: result?.lat,
-        ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
+        [mappings[Longitude]]: result?.lng ?? null,
+        [mappings[Latitude]]: result?.lat ?? null,
+        ...(GeocodedAddress in mappings && mappings[GeocodedAddress]) ? {[mappings[GeocodedAddress]]: address} : undefined
       }] ]);
       await delay(1000);
     }
