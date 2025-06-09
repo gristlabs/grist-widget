@@ -15,6 +15,9 @@ jobs:
         fetch-depth: 0
         submodules: true
 
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile
+
     - name: Build manifest
       run: ./buildtools/publish.js manifest.json
       # Create new release tagged as latest, and overwrite last one.
