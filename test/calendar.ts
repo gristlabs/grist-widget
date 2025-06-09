@@ -77,11 +77,14 @@ describe('calendar', function () {
       await grist.setCustomWidgetMapping('endDate', /To/);
       await grist.setCustomWidgetMapping('title', /Label/);
       await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
-      //sign in to grist
-      await grist.login();
   });
 
   it('should create new event when new row is added', async function () {
+    //sign in to grist
+    await grist.login();
+
+    await grist.waitForFrame();
+
     await executeAndWaitForCalendar(async () => {
       await grist.sendActions([['AddRecord', 'Table1', -1, {
         From: new Date('2023-08-03 13:00'),
@@ -358,8 +361,10 @@ describe('calendar', function () {
       });
     }
     await switchLanguage('Polski');
+    await grist.waitForFrame();
     await assertTodayButtonText('dzisiaj');
     await switchLanguage('English');
+    await grist.waitForFrame();
     await assertTodayButtonText('today');
   });
 

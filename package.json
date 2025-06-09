@@ -12,7 +12,7 @@
     "dev": "echo 'Starting local server and watching for changes.\nStart Grist with an environmental variable GRIST_WIDGET_LIST_URL=http://localhost:8585/manifest.json' && npm run watch 1> /dev/null & npm run serve:dev 1> /dev/null && fg",
     "test": "docker image inspect gristlabs/grist --format 'gristlabs/grist image present' && NODE_PATH=_build SELENIUM_BROWSER=chrome node ./node_modules/mocha/bin/_mocha -g \"${GREP_TESTS}\" _build/test/*.js",
     "test:ci": "MOCHA_WEBDRIVER_HEADLESS=1 npm run test",
-    "test:debug": "node ./buildtools/publish.js manifest.json http://localhost:9998 && tsc --build && docker image inspect gristlabs/grist --format 'gristlabs/grist image present' && DEBUG=1 NODE_PATH=_build SELENIUM_BROWSER=chrome node ./node_modules/mocha/bin/_mocha -b -g \"${GREP_TESTS}\" _build/test/*.js",
+    "test:debug": "node ./buildtools/publish.js manifest.json http://localhost:9998 && tsc --build && docker image inspect gristlabs/grist --format 'gristlabs/grist image present' && NODE_PATH=_build  NO_CLEANUP=1 DEBUG=1 SELENIUM_BROWSER=chrome node ./node_modules/mocha/bin/_mocha -b --no-exit -g \"${GREP_TESTS}\" _build/test/*.js",
     "pretest": "docker pull gristlabs/grist && tsc --build && node ./buildtools/publish.js manifest.json http://localhost:9998",
     "prepack": "node ./buildtools/bundle.js --name grist-bundled --unlisted",
     "grist": "docker run --add-host host.docker.internal:host-gateway --rm --env PORT=8484 --env GRIST_WIDGET_LIST_URL=http://host.docker.internal:8585/manifest.json -p 8484:8484 -v $PWD/_build/persist:/persist -it gristlabs/grist",
