@@ -137,11 +137,16 @@ async function scan(tableId, records, mappings) {
     // so after next round - we will check if the address is indeed changed.
     // But this field is optional, if it is not in the record (not mapped)
     // we will find the location each time (if coordinates are empty).
-    if (record[GeocodedAddress] && record[GeocodedAddress] !== record.Address) {
-      // We have caching field, and last address is diffrent.
-      // So clear coordinates (as if the record wasn't scanned before)
-      record[Longitude] = null;
-      record[Latitude] = null;
+    if (record[GeocodedAddress]) {
+      if (record[GeocodedAddress] == record.Address) {
+        // We have already (successfully or not) attempted to geocode this address, skip it
+        continue;
+      } else {
+        // We have caching field, and last address is diffrent.
+        // So clear coordinates (as if the record wasn't scanned before)
+        record[Longitude] = null;
+        record[Latitude] = null;
+      }
     }
     // If address is not empty, and coordinates are empty (or were cleared by cache)
     if (address && !record[Longitude]) {
@@ -149,9 +154,9 @@ async function scan(tableId, records, mappings) {
       const result = await geocode(address);
       // Update them, and update cache (if the field was mapped)
       await grist.docApi.applyUserActions([ ['UpdateRecord', tableId, record.id, {
-        [mappings[Longitude]]: result.lng,
-        [mappings[Latitude]]: result.lat,
-        ...(GeocodedAddress in mappings) ? {[mappings[GeocodedAddress]]: address} : undefined
+        [mappings[Longitude]]: result?.lng ?? null,
+        [mappings[Latitude]]: result?.lat ?? null,
+        ...(GeocodedAddress in mappings && mappings[GeocodedAddress]) ? {[mappings[GeocodedAddress]]: address} : undefined
       }] ]);
       await delay(1000);
     }
