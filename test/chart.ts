@@ -14,7 +14,7 @@ describe('chart', function () {
     // Add a custom chart widget
     await grist.toggleSidePanel('right', 'open');
     await grist.addNewSection(/Custom/, /Table1/, {dismissTips: true});
-    await grist.clickWidgetPane();
+    await grist.clickWidgetGallery();
     await grist.selectCustomWidget('Advanced Charts');
     await grist.setCustomWidgetAccess('full');  // required
 

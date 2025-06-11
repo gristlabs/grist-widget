@@ -8,16 +8,27 @@ const TEST_IMAGE3 = 'http://localhost:9998/test/fixtures/images/image3.jpg'
 
 describe('viewer', function () {
   this.timeout(30000);
-  const grist = getGrist();
+  const gu = getGrist();
   before(async function () {
-    const docId = await grist.upload('test/fixtures/docs/Images.grist');
-    await grist.openDoc(docId);
-    await grist.toggleSidePanel('right', 'open');
-    await grist.clickWidgetPane();
+    const docId = await gu.upload('test/fixtures/docs/Images.grist');
+    await gu.openDoc(docId);
+    await gu.toggleSidePanel('right', 'open');
+
+    // Disable behavioral prompts for this session.
+    await driver.executeScript(() => {
+      window.localStorage.setItem(
+        'userPrefs:u=1',
+        '{"behavioralPrompts":{"dontShowTips":true,"dismissedTips":["pageWidgetPicker"]}}'
+      );      
+    });
+
+    await driver.find('.custom_view_container').click();
+    await gu.setCustomWidgetMapping('ImageUrl', /Image/);
+
   });
 
   async function testIfErrorIsDisplayed() {
-    assert.equal(await grist.inCustomWidget(() => driver.find('#error').isPresent()), true);
+    assert.equal(await gu.inCustomWidget(() => driver.find('#error').isPresent()), true);
   }
 
   describe('row transition', function () {
@@ -32,7 +43,7 @@ describe('viewer', function () {
     }
     before(async function () {
       //add set of images to the table
-      await grist.sendActions(
+      await gu.sendActions(
         [
           ['AddRecord', 'Data', RowData.NONE, { Image: "" }],
           ['AddRecord', 'Data', RowData.NONE_NEXT, { Image: "" }],
@@ -117,7 +128,7 @@ describe('viewer', function () {
 
     after(async function () {
       //remove row added in before block
-      await grist.sendActions([
+      await gu.sendActions([
         ['RemoveRecord', 'Data', 6],
         ['RemoveRecord', 'Data', 5],
         ['RemoveRecord', 'Data', 4],
@@ -130,7 +141,9 @@ describe('viewer', function () {
 
   describe('loading images', function () {
     it('single column, should load image from that column without mapping', async function () {
-      await grist.fillCell('Image', 1, TEST_IMAGE);
+      await gu.sendActions([
+        ['AddRecord', 'Data', 1, { Image: TEST_IMAGE }],
+      ])
       await assertIfImageIsDisplayed(TEST_IMAGE);
     });
 
@@ -138,40 +151,42 @@ describe('viewer', function () {
     // that means - if there were more that one column in the momnet of creation, error will be displayed. In other case, widget will still use first column
     it('multiple columns - column added after widget, no mapping, should work based on first column', async function () {
       //add new column
-      await grist.addColumn('DATA', 'description');
+      await gu.addColumn('DATA', 'description');
       //because widget was displayed, no error should be shown, and data from first column should be displayed
       await assertIfImageIsDisplayed(TEST_IMAGE)
 
-      await grist.undo(2);
+      await gu.undo(2);
 
     });
 
     it('multiple columns - column added before, no mapping, should show error', async function () {
       // remove custom widget
-      await grist.removeWidget(/Image/);
+      await gu.removeWidget(/Image/);
       //add new column
-      await grist.addColumn('DATA', 'description');
+      await gu.addColumn('DATA', 'description');
       //add widget again
-      await grist.addCustomSection("Image", 'Image viewer', /Data/);
-      await grist.setCustomWidgetAccess('full');
+      await gu.forceDismissTips();
+      await gu.addCustomSection("Image", 'Image viewer', /Data/);
+      await gu.setCustomWidgetAccess('full');
+      await gu.setCustomWidgetMapping('ImageUrl', /Image/);
       //test if error is displayed
+      await gu.waitForFrame();
       await testIfErrorIsDisplayed()
-      //undo create column 
     });
 
 
     it('multiple columns, with mapping, should load image from mapped column', async function () {
       //select image widget
-      await grist.clickWidgetPane();
+      await gu.clickWidgetSection();
       //add mappiing 
-      await grist.setCustomWidgetMapping('ImageUrl', /Image/);
+      await gu.setCustomWidgetMapping('ImageUrl', /Image/);
       // check if image is showed 
       await assertIfImageIsDisplayed(TEST_IMAGE);
     });
 
     after(async function () {
       //remove setted cell
-      await grist.sendActions([
+      await gu.sendActions([
         ['RemoveRecord', 'Data', 1],
       ], 1000);
     });
@@ -179,7 +194,7 @@ describe('viewer', function () {
   describe('navigation', function () {
     before(async function () {
       //remove all cells from image table 
-      await grist.sendActions([['RemoveRecord', 'Data', 1]], 1000);
+      await gu.sendActions([['RemoveRecord', 'Data', 1]], 1000);
     });
     describe('no image', function () {
       it('should have navigation buttons hidden', async function () {
@@ -192,29 +207,36 @@ describe('viewer', function () {
     describe('single image', function () {
       before(async function () {
         //go to data table 
-        await grist.selectSectionByTitle(/^DATA$/);
-        await grist.fillCell('Image', 1, TEST_IMAGE);
+        await gu.selectSectionByTitle(/^DATA$/);
+        await gu.sendActions([
+          ['AddRecord', 'Data', 1, { Image: TEST_IMAGE }],
+        ]);
       });
       it('should have navigation buttons hidden', async function () {
         await assertNavigationButtonsVisible(false);
       });
       it('should have image', async function () {
-        await assertImageElementVisible(true);
+        await gu.waitToPass(async () => {
+          await assertImageElementVisible(true);
+        });
       });
       after(async function () {
         //remove setted cell
-        await grist.undo();
+        await gu.undo();
       });
     })
     describe('multiple images', function () {
       const nextButtonId = '#calendar-button-next';
       const previousButtonId = '#calendar-button-previous';
       before(async function () {
-        await grist.selectSectionByTitle(/^DATA$/);
+        await gu.selectSectionByTitle(/^DATA$/);
         //input 3 images in the same cell, separated by space
-        await grist.fillCell('Image', 1, `${TEST_IMAGE} this is some garbage content ` +
+        const longContent = `${TEST_IMAGE} this is some garbage content ` +
           `${TEST_IMAGE2} and event more garbage ` +
-          `${TEST_IMAGE3}`);
+          `${TEST_IMAGE3}`;
+        await gu.sendActions([
+          ['AddRecord', 'Data', 1, { Image: longContent }],
+        ]);
       });
 
       it('should have navigation buttons visible', async function () {
@@ -226,15 +248,15 @@ describe('viewer', function () {
       });
 
       it('should navigate to next image by button', async function () {
-        await grist.inCustomWidget(async () => await driver.find(nextButtonId).click());
+        await gu.inCustomWidget(async () => await driver.find(nextButtonId).click());
         await assertIfImageIsDisplayed(TEST_IMAGE2);
-        await grist.inCustomWidget(async () => await driver.find(nextButtonId).click());
+        await gu.inCustomWidget(async () => await driver.find(nextButtonId).click());
         await assertIfImageIsDisplayed(TEST_IMAGE3);
       });
       it('should navigate to previous image by button', async function () {
-        await grist.inCustomWidget(async () => await driver.find(previousButtonId).click());
+        await gu.inCustomWidget(async () => await driver.find(previousButtonId).click());
         await assertIfImageIsDisplayed(TEST_IMAGE2);
-        await grist.inCustomWidget(async () => await driver.find(previousButtonId).click());
+        await gu.inCustomWidget(async () => await driver.find(previousButtonId).click());
         await assertIfImageIsDisplayed(TEST_IMAGE);
       });
 
@@ -242,7 +264,7 @@ describe('viewer', function () {
         // verify if first image is displayed
         await assertIfImageIsDisplayed(TEST_IMAGE);
         // click previous button one time 
-        await grist.inCustomWidget(async () => await driver.find(previousButtonId).click());
+        await gu.inCustomWidget(async () => await driver.find(previousButtonId).click());
         // verify if first image is displayed
         await assertIfImageIsDisplayed(TEST_IMAGE3);
       });
@@ -251,7 +273,7 @@ describe('viewer', function () {
         // verify if last image is displayed
         await assertIfImageIsDisplayed(TEST_IMAGE3);
         // click next button one more time 
-        await grist.inCustomWidget(async () => await driver.find(nextButtonId).click());
+        await gu.inCustomWidget(async () => await driver.find(nextButtonId).click());
         // verify if first image is displayed
         await assertIfImageIsDisplayed(TEST_IMAGE);
       });
@@ -272,17 +294,17 @@ describe('viewer', function () {
 
       after(async function () {
         //remove setted cell
-        await grist.undo();
+        await gu.undo();
       });
     })
   });
 
   async function swipeLeft(element: string | RegExp) {
-    grist.executeScriptInCustomWidget(swipeScript, element, 'left')
+    gu.executeScriptInCustomWidget(swipeScript, element, 'left')
   }
 
   async function swipeRight(element: string | RegExp) {
-    grist.executeScriptInCustomWidget(swipeScript, element, 'right')
+    gu.executeScriptInCustomWidget(swipeScript, element, 'right')
   }
 
   function swipeScript(elementTag: string, direction: 'left' | 'right') {
@@ -332,22 +354,22 @@ describe('viewer', function () {
   }
 
   async function assertIfImageIsDisplayed(url: string) {
-    await grist.waitToPass(async () => {
-      const img = await grist.getCustomWidgetElementParameter('img', 'src');
+    await gu.waitToPass(async () => {
+      const img = await gu.getCustomWidgetElementParameter('img', 'src');
       assert.equal(img, url);
     });
   }
 
   async function areNavigationButtonsVisible() {
-    return await grist.inCustomWidget(async () => await driver.find('#navigation-buttons').isDisplayed());
+    return await gu.inCustomWidget(async () => await driver.find('#navigation-buttons').isDisplayed());
   }
 
   async function isImageElementVisible() {
-    return await grist.inCustomWidget(async () => await driver.find('#viewer').isDisplayed());
+    return await gu.inCustomWidget(async () => await driver.find('#viewer').isDisplayed());
   }
 
   async function selectDataRow(row: number) {
-    await grist.selectSectionByTitle(/^DATA$/);
-    await grist.focusOnCell('Image', row);
+    await gu.selectSectionByTitle(/^DATA$/);
+    await gu.focusOnCell('Image', row);
   }
 });
