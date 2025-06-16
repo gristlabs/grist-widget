@@ -15,7 +15,7 @@ describe('chart', function () {
     await grist.toggleSidePanel('right', 'open');
     await grist.addNewSection(/Custom/, /Table1/, {dismissTips: true});
     await grist.clickWidgetGallery();
-    await grist.selectCustomWidget('Advanced Charts');
+    await grist.selectCustomWidget('Advanced charts');
     await grist.setCustomWidgetAccess('full');  // required
 
     // Wait for the widget to load
