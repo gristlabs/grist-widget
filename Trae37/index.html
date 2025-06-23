@@ -24,6 +24,36 @@
         <!-- Map Container -->
         <div id="map" class="w-full h-screen"></div>
 
+        <!-- County Info Card -->
+        <div id="county-info" class="county-info-card hidden">
+            <h3 id="county-name"></h3>
+            <div class="county-button-container">
+                <a id="tax-button" href="#" class="info-button" target="_blank">🔍</a>
+                <a id="gis-button" href="#" class="info-button gis-button" target="_blank">🌎</a>
+            </div>
+        </div>
+
+        <!-- Sidebar Container -->
+        <div id="sidebar" class="property-sidebar">
+            <div class="sidebar-header">
+                <h3>Properties</h3>
+                <span id="property-count" class="property-count">0 properties</span>
+                <button id="close-sidebar" class="close-sidebar-button" title="Close Sidebar">✖️</button>
+            </div>
+            <div class="sidebar-controls">
+                <div class="search-filter">
+                    <input type="text" id="sidebar-search" class="search-input" placeholder="Search properties..." />
+                    <button id="clear-search" class="clear-search-button" title="Clear search">✖️</button>
+                </div>
+            </div>
+            <div id="property-list" class="property-list">
+                <!-- Property items will be dynamically added here -->
+            </div>
+            <div id="property-details" class="property-details hidden">
+                <!-- Property details will be dynamically added here -->
+            </div>
+        </div>
+
         <!-- Settings Panel -->
         <div id="settings" class="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg z-[1000] hidden">
             <div id="btnClose" class="cursor-pointer text-red-500 mb-2">Close</div>
