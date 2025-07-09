@@ -1,1 +1,20 @@
-{}
+{
+    "calendar": "календар",
+    "week": "тиждень",
+    "month": "місяць",
+    "day": "день",
+    "today": "сьогодні",
+    "previous": "попередній",
+    "next": "наступний",
+    "newEvent": "Нова подія",
+    "Title": "Заголовок",
+    "Start Date": "Дата початку",
+    "End Date": "Дата завершення",
+    "Is All Day": "Цілий день?",
+    "All Day": "Цілий день",
+    "starting point of event": "Точка відліку події",
+    "ending point of event": "Точка завершення події",
+    "title of event": "Заголовок події",
+    "is event all day long": "Подія триває цілий день?",
+    "Sun": "сонце"
+}
