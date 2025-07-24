@@ -1,8 +1,8 @@
 "use strict";
 
 let amap;
-let markersLayer; // Global variable to store markers
-let originalData; // Store the original GeoJSON data
+let markersLayer;
+let originalData;
 let currentFilters = {
   propertyTypes: [],
   secondaryTypes: [],
@@ -10,29 +10,6 @@ let currentFilters = {
 };
 const geoJSONUrl = "https://raw.githubusercontent.com/cleanslatekickz/geojson/master/geojson/May-2025.geojson";
 
-const selectedIcon = new L.Icon({
-  iconUrl: 'marker-icon-green.png',
-  iconRetinaUrl: 'marker-icon-green-2x.png',
-  shadowUrl: 'marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const defaultIcon = new L.Icon.Default();
-
-// Create a custom gold icon for search results
-const searchIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-// Define color-coded icons for different classifications
 const classifyIcons = {
   "Not Interested/DNC": new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -100,15 +77,42 @@ const classifyIcons = {
   })
 };
 
-// Helper function to get the appropriate icon based on classification
+const defaultIcon = new L.Icon.Default();
+const searchIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
 function getMarkerIcon(classification) {
   return classifyIcons[classification] || defaultIcon;
 }
 
-const overlayLayers = {};
+function showCountyInfo(countyName) {
+  const countyNameElement = document.getElementById('county-name');
+  const taxButton = document.getElementById('tax-button');
+  const gisButton = document.getElementById('gis-button');
+  const countyInfo = document.getElementById('county-info');
+  
+  countyNameElement.textContent = `${countyName} County`;
+  
+  const urls = countyUrls[countyName] || { taxUrl: '', gisUrl: '' };
+  
+  taxButton.href = urls.taxUrl || '#';
+  taxButton.style.opacity = urls.taxUrl ? '1' : '0.5';
+  taxButton.style.pointerEvents = urls.taxUrl ? 'auto' : 'none';
+  
+  gisButton.href = urls.gisUrl || '#';
+  gisButton.style.opacity = urls.gisUrl ? '1' : '0.5';
+  gisButton.style.pointerEvents = urls.gisUrl ? 'auto' : 'none';
+  
+  countyInfo.classList.remove('hidden');
+}
 
 function initializeMap() {
-  // Define base layers with appropriate maxZoom values
   const streetLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     maxZoom: 20,
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -127,41 +131,27 @@ function initializeMap() {
     attribution: ''
   });
   
-  // DOM elements for layer controls
-  const streetLayerButton = document.getElementById('street-layer');
-  const satelliteLayerButton = document.getElementById('satellite-layer');
-  const hybridLayerButton = document.getElementById('hybrid-layer');
+  const layerButtons = {
+    'street-layer': streetLayer,
+    'satellite-layer': satelliteLayer,
+    'hybrid-layer': hybridLayer
+  };
   
-  // DOM elements for county info
-  const countyInfo = document.getElementById('county-info');
-  const countyNameElement = document.getElementById('county-name');
-  const taxButton = document.getElementById('tax-button');
-  const gisButton = document.getElementById('gis-button');
-  
-  let activeCounty = null;
-  let countyLayer = null;
-
-  // Define overlay layers
-  const overlayLayers = {};
-
   amap = L.map('map', {
     layers: [hybridLayer],
-    center: [44.0, -120.5],  // Center of Oregon
-    zoom: 7,  // More zoomed in over Oregon
+    center: [44.0, -120.5],
+    zoom: 7,
     wheelPxPerZoomLevel: 90,
-    maxZoom: 20,  // Limit maximum zoom to what the base layers support
-    zoomSnap: 0.5,  // Allow smoother zooming
-    zoomDelta: 0.5  // Smaller zoom increments
+    maxZoom: 20,
+    zoomSnap: 0.5,
+    zoomDelta: 0.5
   });
   
-  // Fetch county boundaries
+  // Add county boundaries
   fetch('https://services1.arcgis.com/KbxwQRRfWyEYLgp4/arcgis/rest/services/BLM_OR_County_Boundaries_Polygon_Hub/FeatureServer/1/query?outFields=*&where=1%3D1&f=geojson')
-    .then(response => {
-      if (!response.ok) throw new Error('Failed to fetch GeoJSON data');
-      return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-      countyLayer = L.geoJSON(data, {
+      L.geoJSON(data, {
         style: {
           fillColor: 'transparent',
           weight: 1.5,
@@ -170,1627 +160,396 @@ function initializeMap() {
           fillOpacity: 0
         },
         onEachFeature: (feature, layer) => {
-          if (feature.properties && feature.properties.COUNTY_NAME) {
-            const countyName = feature.properties.COUNTY_NAME;
-            
+          if (feature.properties?.COUNTY_NAME) {
             layer.on({
-              mouseover: () => {
-                showCountyInfo(countyName);
-              },
-              click: () => {
-                showCountyInfo(countyName);
-              }
+              mouseover: () => showCountyInfo(feature.properties.COUNTY_NAME),
+              click: () => showCountyInfo(feature.properties.COUNTY_NAME)
             });
           }
         }
       }).addTo(amap);
     })
-    .catch(error => {
-      console.error('Error fetching county data:', error);
-      alert('Failed to load county data. Please try again later.');
+    .catch(console.error);
+  
+  // Layer control
+  Object.entries(layerButtons).forEach(([id, layer]) => {
+    document.getElementById(id).addEventListener('click', () => {
+      amap.eachLayer(l => amap.removeLayer(l));
+      layer.addTo(amap);
+      document.querySelectorAll('.layer-button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
     });
-    
-  // Show county info
-  function showCountyInfo(countyName) {
-    activeCounty = countyName;
-    countyNameElement.textContent = countyName + ' County';
-    
-    const urls = countyUrls[countyName] || { taxUrl: '', gisUrl: '' };
-    
-    if (urls.taxUrl) {
-      taxButton.href = urls.taxUrl;
-      taxButton.style.opacity = '1';
-      taxButton.style.pointerEvents = 'auto';
-    } else {
-      taxButton.href = '#';
-      taxButton.style.opacity = '0.5';
-      taxButton.style.pointerEvents = 'none';
-    }
-    
-    if (urls.gisUrl) {
-      gisButton.href = urls.gisUrl;
-      gisButton.style.opacity = '1';
-      gisButton.style.pointerEvents = 'auto';
-    } else {
-      gisButton.href = '#';
-      gisButton.style.opacity = '0.5';
-      gisButton.style.pointerEvents = 'none';
-    }
-    
-    countyInfo.classList.remove('hidden');
-  }
-
-  // Add zoom warning event
-  amap.on('zoomend', function() {
-    const currentZoom = amap.getZoom();
-    const maxSupportedZoom = 20;
-    
-    if (currentZoom > maxSupportedZoom) {
-      console.warn(`Current zoom level (${currentZoom}) exceeds maximum supported level (${maxSupportedZoom})`);
-    }
   });
-
-  amap.on('load', function () {
-    console.log("Map is fully loaded and ready for interaction");
-  });
-
-  // Layer control event listeners
-  streetLayerButton.addEventListener('click', () => {
-    setActiveLayer('street');
-  });
-
-  satelliteLayerButton.addEventListener('click', () => {
-    setActiveLayer('satellite');
-  });
-
-  hybridLayerButton.addEventListener('click', () => {
-    setActiveLayer('hybrid');
-  });
-
-  function setActiveLayer(layerName) {
-    // Remove all layers
-    amap.removeLayer(streetLayer);
-    amap.removeLayer(satelliteLayer);
-    amap.removeLayer(hybridLayer);
-    
-    // Reset active class
-    streetLayerButton.classList.remove('active');
-    satelliteLayerButton.classList.remove('active');
-    hybridLayerButton.classList.remove('active');
-    
-    // Add selected layer
-    switch (layerName) {
-      case 'satellite':
-        satelliteLayer.addTo(amap);
-        satelliteLayerButton.classList.add('active');
-        break;
-      case 'hybrid':
-        hybridLayer.addTo(amap);
-        hybridLayerButton.classList.add('active');
-        break;
-      default:
-        streetLayer.addTo(amap);
-        streetLayerButton.classList.add('active');
-        break;
-    }
-  }
-
-  // Add legend control
+  
+  // Add legend
   const legend = L.control({ position: 'topright' });
-  legend.onAdd = function() {
+  legend.onAdd = () => {
     const div = L.DomUtil.create('div', 'legend');
-    div.style.display = 'block';
-    div.style.backgroundColor = 'white';
-    div.style.padding = '16px';
-    div.style.borderRadius = '8px';
-    div.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    div.style.maxWidth = '280px';
-    div.style.maxHeight = '400px';
-    div.style.overflowY = 'auto';
-
-    const legendContent = `
-      <h4 style="margin: 0 0 8px 0;">Map Legend</h4>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 20px; height: 20px; background-color: red; border-radius: 50%;"></div>
-          <span>Not Interested/DNC</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 20px; height: 20px; background-color: violet; border-radius: 50%;"></div>
-          <span>IPA</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 20px; height: 20px; background-color: orange; border-radius: 50%;"></div>
-          <span>Eric</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 20px; height: 20px; background-color: grey; border-radius: 50%;"></div>
-          <span>Broker/Eh</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 20px; height: 20px; background-color: blue; border-radius: 50%;"></div>
-          <span>Never</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 20px; height: 20px; background-color: yellow; border-radius: 50%;"></div>
-          <span>Call Relationship</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 20px; height: 20px; background-color: green; border-radius: 50%;"></div>
-          <span>Contact/Call Again</span>
+    div.innerHTML = `
+      <h4>Map Legend</h4>
+      <div class="legend-items">
+        ${Object.entries({
+          'red': 'Not Interested/DNC',
+          'violet': 'IPA',
+          'orange': 'Eric',
+          'grey': 'Broker/Eh',
+          'blue': 'Never',
+          'yellow': 'Call Relationship',
+          'green': 'Contact/Call Again'
+        }).map(([color, label]) => `
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: ${color}"></div>
+            <span>${label}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    return div;
+  };
+  legend.addTo(amap);
+  
+  // Search control
+  const searchControl = L.control({ position: 'topleft' });
+  searchControl.onAdd = () => {
+    const searchDiv = L.DomUtil.create('div', 'custom-search-control');
+    searchDiv.innerHTML = `
+      <button class="toggle-search-button">🔍</button>
+      <div class="search-container hidden">
+        <input type="text" class="search-input" placeholder="Search address...">
+        <div class="button-container">
+          <button class="search-button">🔍</button>
+          <button class="close-search-button">✖</button>
         </div>
       </div>
     `;
-    
-    div.innerHTML = legendContent;
-    return div;
-  };
-  
-  legend.addTo(amap);
-
-  // Create a search results layer group
-  const searchResultsLayer = L.layerGroup().addTo(amap);
-  
-  // Create a collapsible search control
-  const searchDiv = L.DomUtil.create('div', 'custom-search-control leaflet-control');
-  searchDiv.style.margin = '10px';
-  
-  // Create toggle button - this is the only button visible initially
-  const toggleButton = L.DomUtil.create('button', 'toggle-search-button', searchDiv);
-  toggleButton.innerHTML = '🔍';
-  toggleButton.style.padding = '10px';
-  toggleButton.style.cursor = 'pointer';
-  toggleButton.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-  toggleButton.style.border = 'none';
-  toggleButton.style.borderRadius = '8px';
-  toggleButton.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-  toggleButton.style.fontSize = '18px';
-  toggleButton.style.width = '36px';
-  toggleButton.style.height = '36px';
-  toggleButton.style.display = 'flex';
-  toggleButton.style.alignItems = 'center';
-  toggleButton.style.justifyContent = 'center';
-  toggleButton.title = 'Search';
-  
-  // Create the search container (initially hidden)
-  const searchContainer = L.DomUtil.create('div', 'search-container', searchDiv);
-  searchContainer.style.display = 'none';
-  searchContainer.style.alignItems = 'center';
-  searchContainer.style.padding = '4px';
-  searchContainer.style.borderRadius = '8px';
-  searchContainer.style.backgroundColor = 'white';
-  searchContainer.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.2)';
-  searchContainer.style.minWidth = '300px';
-
-  // Create and style search input
-  const searchInput = L.DomUtil.create('input', 'search-input', searchContainer);
-  searchInput.type = 'text';
-  searchInput.placeholder = 'Search address...';
-  searchInput.style.fontSize = '16px';
-  searchInput.style.padding = '12px 16px';
-  searchInput.style.width = '100%';
-  searchInput.style.border = 'none';
-  searchInput.style.borderRadius = '4px';
-  searchInput.style.backgroundColor = '#f5f5f5';
-  searchInput.style.transition = 'all 0.3s ease';
-
-  // Create button container for search and close buttons
-  const buttonContainer = L.DomUtil.create('div', 'button-container', searchContainer);
-  buttonContainer.style.display = 'flex';
-  buttonContainer.style.marginLeft = '4px';
-
-  // Create search button
-  const searchButton = L.DomUtil.create('button', 'search-button', buttonContainer);
-  searchButton.innerHTML = '🔍';
-  searchButton.style.width = '36px';
-  searchButton.style.height = '36px';
-  searchButton.style.padding = '8px';
-  searchButton.style.fontSize = '16px';
-  searchButton.style.borderRadius = '4px';
-  searchButton.style.backgroundColor = 'transparent';
-  searchButton.style.color = '#64748b';
-  searchButton.style.border = 'none';
-  searchButton.style.cursor = 'pointer';
-  searchButton.style.display = 'flex';
-  searchButton.style.alignItems = 'center';
-  searchButton.style.justifyContent = 'center';
-  
-  // Add close button
-  const closeButton = L.DomUtil.create('button', 'close-search-button', buttonContainer);
-  closeButton.innerHTML = '✖';
-  closeButton.style.width = '36px';
-  closeButton.style.height = '36px';
-  closeButton.style.padding = '8px';
-  closeButton.style.fontSize = '16px';
-  closeButton.style.borderRadius = '4px';
-  closeButton.style.backgroundColor = 'transparent';
-  closeButton.style.color = '#64748b';
-  closeButton.style.border = 'none';
-  closeButton.style.cursor = 'pointer';
-  closeButton.style.display = 'flex';
-  closeButton.style.alignItems = 'center';
-  closeButton.style.justifyContent = 'center';
-  
-  // Toggle search container visibility
-  L.DomEvent.on(toggleButton, 'click', function() {
-    if (searchContainer.style.display === 'none') {
-      searchContainer.style.display = 'flex';
-      searchContainer.style.opacity = '0';
-      setTimeout(() => {
-        searchContainer.style.opacity = '1';
-      }, 50);
-      toggleButton.style.display = 'none';
-      searchInput.focus();
-    }
-  });
-  
-  L.DomEvent.on(closeButton, 'click', function() {
-    searchContainer.style.display = 'none';
-    toggleButton.style.display = 'block';
-  });
-  
-  // Handle search
-  L.DomEvent.on(searchButton, 'click', function() {
-    const query = searchInput.value;
-    if (query.trim() === '') return;
-    
-    // Clear previous results
-    searchResultsLayer.clearLayers();
-    
-    // Use fetch to get results from Nominatim
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
-      .then(response => response.json())
-      .then(data => {
-        if (data && data.length > 0) {
-          const result = data[0];
-          const lat = parseFloat(result.lat);
-          const lon = parseFloat(result.lon);
-          
-          // Add marker for the result
-          const marker = L.marker([lat, lon], {
-            icon: searchIcon
-          }).addTo(searchResultsLayer);
-          
-          // Extract just the address and city from the display name
-          let displayParts = result.display_name.split(',');
-          let simplifiedAddress = displayParts.slice(0, 2).join(', ');
-          
-          // Add popup with simplified address info
-          marker.bindPopup(`<b>${simplifiedAddress}</b>`).openPopup();
-          
-          // Use flyTo for smooth animation instead of setView
-          amap.flyTo([lat, lon], 16, {
-            duration: 1.5, // Animation duration in seconds
-            easeLinearity: 0.25
-          });
-          
-          // Close the search container after successful search
-          searchContainer.style.display = 'none';
-          toggleButton.style.display = 'block';
-        } else {
-          alert('No results found');
-        }
-      })
-      .catch(error => {
-        console.error('Search error:', error);
-        alert('Error performing search');
-      });
-  });
-  
-  // Prevent map clicks from propagating through the control
-  L.DomEvent.disableClickPropagation(searchDiv);
-  
-  // Also search on Enter key
-  L.DomEvent.on(searchInput, 'keypress', function(e) {
-    if (e.keyCode === 13) {
-      L.DomEvent.stop(e);
-      searchButton.click();
-    }
-  });
-  
-  // Initialize with hybrid layer active
-  hybridLayerButton.classList.add('active');
-  
-  // Add the custom control to the map
-  const searchControl = L.control({ position: 'topleft' });
-  searchControl.onAdd = function() {
     return searchDiv;
   };
   searchControl.addTo(amap);
-
+  
+  // Search functionality
+  document.querySelector('.toggle-search-button').addEventListener('click', () => {
+    const container = document.querySelector('.search-container');
+    container.classList.remove('hidden');
+    document.querySelector('.search-input').focus();
+  });
+  
+  document.querySelector('.close-search-button').addEventListener('click', () => {
+    document.querySelector('.search-container').classList.add('hidden');
+  });
+  
+  document.querySelector('.search-button').addEventListener('click', performSearch);
+  document.querySelector('.search-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') performSearch();
+  });
+  
   return amap;
 }
 
-function fetchGeoJSON(url, callback) {
-  fetch(url)
+function performSearch() {
+  const query = document.querySelector('.search-input').value.trim();
+  if (!query) return;
+  
+  const searchResultsLayer = L.layerGroup().addTo(amap);
+  
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
     .then(response => response.json())
-    .then(data => callback(data))
-    .catch(error => console.error("Error fetching GeoJSON:", error));
+    .then(data => {
+      if (data?.length) {
+        const result = data[0];
+        const lat = parseFloat(result.lat);
+        const lon = parseFloat(result.lon);
+        
+        L.marker([lat, lon], { icon: searchIcon })
+          .addTo(searchResultsLayer)
+          .bindPopup(result.display_name.split(',').slice(0, 2).join(', '))
+          .openPopup();
+          
+        amap.flyTo([lat, lon], 16, { duration: 1.5 });
+        document.querySelector('.search-container').classList.add('hidden');
+      } else {
+        alert('No results found');
+      }
+    })
+    .catch(err => {
+      console.error('Search error:', err);
+      alert('Error performing search');
+    });
 }
 
-// Update the popup content generation in updateMap function
 function createFilterControl() {
-  // Create Property Types filter container
-  const propertyTypesControl = L.control({ position: 'bottomleft' });
-  propertyTypesControl.onAdd = function() {
-    const div = L.DomUtil.create('div', 'filter-container');
-    div.style.display = 'none';
-    div.style.backgroundColor = 'white';
-    div.style.padding = '16px';
-    div.style.borderRadius = '8px';
-    div.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    div.style.maxWidth = '280px';
-    div.style.maxHeight = '400px';
-    div.style.overflowY = 'auto';
-    div.style.marginBottom = '12px';
-    div.style.zIndex = '1000';
-    
+  const createContainer = (id, title) => {
+    const div = L.DomUtil.create('div', 'filter-container hidden');
+    div.id = id;
     div.innerHTML = `
-      <h4 style="margin: 0 0 8px 0;">Property Types</h4>
-      <div id="propertyTypes" style="display: flex; flex-direction: column; gap: 4px;">
-      </div>
-      <hr style="margin: 10px 0;">
-      <button id="clearPropertyFilters" style="width: 100%; padding: 12px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s;">
-        Clear Property Filters
-      </button>
+      <h4>${title}</h4>
+      <div class="filter-options" id="${id}-options"></div>
+      <hr>
+      <button class="clear-filter">Clear Filters</button>
     `;
-    
-    div.id = 'propertyTypesContainer';
-    L.DomEvent.disableClickPropagation(div);
     return div;
   };
-  
-  // Create Secondary Types filter container
-  const secondaryTypesControl = L.control({ position: 'bottomleft' });
-  secondaryTypesControl.onAdd = function() {
-    const div = L.DomUtil.create('div', 'filter-container');
-    div.style.display = 'none';
-    div.style.backgroundColor = 'white';
-    div.style.padding = '16px';
-    div.style.borderRadius = '8px';
-    div.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    div.style.maxWidth = '280px';
-    div.style.maxHeight = '400px';
-    div.style.overflowY = 'auto';
-    div.style.marginBottom = '12px';
-    div.style.zIndex = '1000';
-    
-    div.innerHTML = `
-      <h4 style="margin: 0 0 8px 0;">Secondary Types</h4>
-      <div id="secondaryTypes" style="display: flex; flex-direction: column; gap: 4px;">
-      </div>
-      <hr style="margin: 10px 0;">
-      <button id="clearSecondaryFilters" style="width: 100%; padding: 12px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s;">
-        Clear Secondary Filters
-      </button>
-    `;
-    
-    div.id = 'secondaryTypesContainer';
-    L.DomEvent.disableClickPropagation(div);
-    return div;
-  };
-  
-  // Create Property Types toggle button
-  const propertyToggle = L.control({ position: 'bottomleft' });
-  propertyToggle.onAdd = function() {
+
+  const createToggle = (icon, targetId) => {
     const button = L.DomUtil.create('button', 'filter-toggle');
-    button.innerHTML = '🏢';
-    button.style.padding = '12px';
-    button.style.cursor = 'pointer';
-    button.style.backgroundColor = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '8px';
-    button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    button.style.fontSize = '24px';
-    button.style.marginBottom = '10px';
-    button.style.width = '48px';
-    button.style.height = '48px';
-    button.style.display = 'flex';
-    button.style.alignItems = 'center';
-    button.style.justifyContent = 'center';
-    button.title = 'Toggle Property Types Filter';
-
-    button.onclick = function() {
-      const filterDiv = document.getElementById('propertyTypesContainer');
-      if (filterDiv) {
-        filterDiv.style.display = filterDiv.style.display === 'none' ? 'block' : 'none';
-        // Hide the other filter if this one is shown
-        if (filterDiv.style.display === 'block') {
-          const otherFilterDiv = document.getElementById('secondaryTypesContainer');
-          if (otherFilterDiv) {
-            otherFilterDiv.style.display = 'none';
-          }
-        }
-      }
+    button.innerHTML = icon;
+    button.onclick = () => {
+      const filterDiv = document.getElementById(targetId);
+      filterDiv.classList.toggle('hidden');
+      document.querySelectorAll('.filter-container').forEach(el => {
+        if (el.id !== targetId) el.classList.add('hidden');
+      });
     };
-
     return button;
   };
-  
-  // Create Secondary Types toggle button
-  const secondaryToggle = L.control({ position: 'bottomleft' });
-  secondaryToggle.onAdd = function() {
-    const button = L.DomUtil.create('button', 'filter-toggle');
-    button.innerHTML = '🏗️';
-    button.style.padding = '12px';
-    button.style.cursor = 'pointer';
-    button.style.backgroundColor = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '8px';
-    button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    button.style.fontSize = '24px';
-    button.style.marginBottom = '10px';
-    button.style.width = '48px';
-    button.style.height = '48px';
-    button.style.display = 'flex';
-    button.style.alignItems = 'center';
-    button.style.justifyContent = 'center';
-    button.title = 'Toggle Secondary Types Filter';
 
-    button.onclick = function() {
-      const filterDiv = document.getElementById('secondaryTypesContainer');
-      if (filterDiv) {
-        filterDiv.style.display = filterDiv.style.display === 'none' ? 'block' : 'none';
-        // Hide the other filter if this one is shown
-        if (filterDiv.style.display === 'block') {
-          const otherFilterDiv = document.getElementById('propertyTypesContainer');
-          if (otherFilterDiv) {
-            otherFilterDiv.style.display = 'none';
-          }
-        }
-      }
-    };
-
-    return button;
-  };
-  
-  // Return all controls as an object
   return {
-    propertyTypesControl,
-    secondaryTypesControl,
-    propertyToggle,
-    secondaryToggle
+    propertyTypes: {
+      control: createContainer('propertyTypesContainer', 'Property Types'),
+      toggle: createToggle('🏢', 'propertyTypesContainer')
+    },
+    secondaryTypes: {
+      control: createContainer('secondaryTypesContainer', 'Secondary Types'),
+      toggle: createToggle('🏗️', 'secondaryTypesContainer')
+    }
   };
 }
 
 function updateFilters() {
-  const propertyTypes = new Set();
-  const secondaryTypes = new Set();
-
-  originalData.features.forEach(feature => {
-    if (feature.properties["Property Type"]) {
-      propertyTypes.add(feature.properties["Property Type"]);
-    }
-    if (feature.properties["Secondary Type"]) {
-      secondaryTypes.add(feature.properties["Secondary Type"]);
-    }
-  });
-
-  const propertyTypesContainer = document.getElementById('propertyTypes');
-  const secondaryTypesContainer = document.getElementById('secondaryTypes');
-  const clearPropertyFiltersBtn = document.getElementById('clearPropertyFilters');
-  const clearSecondaryFiltersBtn = document.getElementById('clearSecondaryFilters');
-
-  propertyTypesContainer.innerHTML = '';
-  secondaryTypesContainer.innerHTML = '';
-
-  propertyTypes.forEach(type => {
-    const label = document.createElement('label');
-    label.style.display = 'block';
-    label.style.marginBottom = '8px';
-    label.style.cursor = 'pointer';
-    label.style.padding = '10px';
-    label.style.margin = '4px 0';
-    label.style.borderRadius = '6px';
-    label.style.transition = 'background-color 0.2s';
-    label.style.fontSize = '14px';
-    
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.value = type;
-    checkbox.style.marginRight = '10px';
-    checkbox.style.width = '18px';
-    checkbox.style.height = '18px';
-    checkbox.style.cursor = 'pointer';
-    
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(type));
-    propertyTypesContainer.appendChild(label);
-
-    label.addEventListener('mouseover', () => {
-      label.style.backgroundColor = '#f0f9ff';
-    });
-    
-    label.addEventListener('mouseout', () => {
-      label.style.backgroundColor = 'transparent';
-    });
-
-    checkbox.addEventListener('change', function() {
-      if (this.checked) {
-        currentFilters.propertyTypes.push(this.value);
-      } else {
-        currentFilters.propertyTypes = currentFilters.propertyTypes.filter(t => t !== this.value);
-      }
-      updateMap(originalData);
-    });
-  });
-
-  secondaryTypes.forEach(type => {
-    const label = document.createElement('label');
-    label.style.display = 'block';
-    label.style.marginBottom = '8px';
-    label.style.cursor = 'pointer';
-    label.style.padding = '10px';
-    label.style.margin = '4px 0';
-    label.style.borderRadius = '6px';
-    label.style.transition = 'background-color 0.2s';
-    label.style.fontSize = '14px';
-    
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.value = type;
-    checkbox.style.marginRight = '10px';
-    checkbox.style.width = '18px';
-    checkbox.style.height = '18px';
-    checkbox.style.cursor = 'pointer';
-    
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(type));
-    secondaryTypesContainer.appendChild(label);
-
-    label.addEventListener('mouseover', () => {
-      label.style.backgroundColor = '#f0f9ff';
-    });
-    
-    label.addEventListener('mouseout', () => {
-      label.style.backgroundColor = 'transparent';
-    });
-
-    checkbox.addEventListener('change', function() {
-      if (this.checked) {
-        currentFilters.secondaryTypes.push(this.value);
-      } else {
-        currentFilters.secondaryTypes = currentFilters.secondaryTypes.filter(t => t !== this.value);
-      }
-      updateMap(originalData);
-    });
-  });
-
-  // Add event listeners to clear filter buttons
-  clearPropertyFiltersBtn.addEventListener('click', function() {
-    currentFilters.propertyTypes = [];
-    propertyTypesContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    updateMap(originalData);
-  });
+  const propertyTypes = [...new Set(originalData.features
+    .map(f => f.properties["Property Type"])
+    .filter(Boolean))];
   
-  clearSecondaryFiltersBtn.addEventListener('click', function() {
-    currentFilters.secondaryTypes = [];
-    secondaryTypesContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    updateMap(originalData);
-  });
+  const secondaryTypes = [...new Set(originalData.features
+    .map(f => f.properties["Secondary Type"])
+    .filter(Boolean))];
+  
+  const renderOptions = (containerId, options) => {
+    const container = document.getElementById(`${containerId}-options`);
+    container.innerHTML = '';
+    
+    options.forEach(type => {
+      const label = document.createElement('label');
+      label.innerHTML = `
+        <input type="checkbox" value="${type}">
+        ${type}
+      `;
+      label.querySelector('input').addEventListener('change', e => {
+        if (e.target.checked) {
+          currentFilters[containerId === 'propertyTypesContainer' ? 'propertyTypes' : 'secondaryTypes'].push(type);
+        } else {
+          const filterType = containerId === 'propertyTypesContainer' ? 'propertyTypes' : 'secondaryTypes';
+          currentFilters[filterType] = currentFilters[filterType].filter(t => t !== type);
+        }
+        updateMap(originalData);
+      });
+      container.appendChild(label);
+    });
+    
+    document.querySelector(`#${containerId} .clear-filter`).onclick = () => {
+      currentFilters[containerId === 'propertyTypesContainer' ? 'propertyTypes' : 'secondaryTypes'] = [];
+      container.querySelectorAll('input').forEach(cb => cb.checked = false);
+      updateMap(originalData);
+    };
+  };
+  
+  renderOptions('propertyTypesContainer', propertyTypes);
+  renderOptions('secondaryTypesContainer', secondaryTypes);
 }
 
 function updateMap(data) {
-  if (!originalData) {
-    originalData = data;
-  }
-
-  if (!amap) {
-    amap = initializeMap();
-  }
-
-  // Initialize markers layer if not exists
+  if (!originalData) originalData = data;
+  if (!amap) amap = initializeMap();
+  
   if (!markersLayer) {
-    // Configure marker cluster group with more granular settings
     markersLayer = L.markerClusterGroup({
-      disableClusteringAtZoom: 18, // Disable clustering at high zoom levels
-      maxClusterRadius: 40,        // Reduce cluster radius (default is 80)
-      spiderfyOnMaxZoom: true,     // Allow markers to spread out when clicked
-      zoomToBoundsOnClick: true    // Zoom to bounds when cluster clicked
-    });
-    amap.addLayer(markersLayer);
+      disableClusteringAtZoom: 18,
+      maxClusterRadius: 40,
+      spiderfyOnMaxZoom: true,
+      zoomToBoundsOnClick: true
+    }).addTo(amap);
     
-    // Add the filter controls
-    const filterControls = createFilterControl();
-    filterControls.propertyTypesControl.addTo(amap);
-    filterControls.secondaryTypesControl.addTo(amap);
-    filterControls.propertyToggle.addTo(amap);
-    filterControls.secondaryToggle.addTo(amap);
-    
-    updateFilters();
-  }
-
-  // Clear existing markers if markersLayer exists
-  if (markersLayer) {
-    markersLayer.clearLayers();
-  } else {
-    // Initialize markersLayer if it doesn't exist
-    markersLayer = L.markerClusterGroup();
-    amap.addLayer(markersLayer);
-  }
-
-  const filteredFeatures = data.features.filter(feature => {
-    const matchPropertyType = currentFilters.propertyTypes.length === 0 || 
-      currentFilters.propertyTypes.includes(feature.properties["Property Type"]);
-    const matchSecondaryType = currentFilters.secondaryTypes.length === 0 || 
-      currentFilters.secondaryTypes.includes(feature.properties["Secondary Type"]);
-    const matchMarkerColor = currentFilters.markerColors.length === 0 ||
-      currentFilters.markerColors.includes(feature.properties["Classify Color"]);
-    return matchPropertyType && matchSecondaryType && matchMarkerColor;
-  });
-
-  filteredFeatures.forEach(feature => {
-    const record = feature.properties;
-    const coordinates = feature.geometry.coordinates;
-
-    const marker = L.marker([coordinates[1], coordinates[0]], {
-      title: record.Name,
-      icon: getMarkerIcon(record["Classify Color"])
-    });
-
-    const popupContent = `
-      <div class="card w-full bg-white p-0 m-0">
-        <figure class="relative m-0" onmouseover="showActionButtons(this)" onmouseout="hideActionButtons(this)">
-          ${record["Pop-up IMG"] ? `
-            <img src="${record["Pop-up IMG"]}" alt="${record.Name}" class="w-full h-33 object-cover"/>
-          ` : `
-            <div class="w-full h-33 bg-gray-100 flex items-center justify-center">
-              <span class="text-gray-400">No Image Available</span>
-            </div>
-          `}
-          <div class="action-buttons" style="position: absolute; bottom: 0; right: 10px; display: none;">
-            <div class="button-container" style="display: flex; gap: 8px;">
-              <a href="${record["County Prop Search"] || '#'}" class="action-btn" title="County Property Search" target="_blank" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; transition: all 0.2s;">🔍</a>
-              <a href="${record.GIS || '#'}" class="action-btn" title="GIS" target="_blank" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; transition: all 0.2s;">🌎</a>
-              <button class="action-btn" onclick="copyToClipboard(this)" data-copy="${record["Address Concatenate"]}" title="Copy Address" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer; padding: 0; transition: all 0.2s;">📋</button>
-              <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${coordinates[1]},${coordinates[0]}" class="action-btn" title="Street View" target="_blank" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; transition: all 0.2s;">🛣️</a>
-              <a href="${record["CoStar URL"] || '#'}" class="action-btn" title="CoStar" target="_blank" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; transition: all 0.2s;">🏢</a>
-            </div>
-          </div>
-        </figure>
-        <div class="card-content">
-          <h2 onclick="toggleDetails(this)">${record.Name}</h2>
-          <div class="details hidden">
-            <p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard(this)">${record["Address Concatenate"]}</span></p>
-            <p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard(this)">${record["Property Id"]}</span></p>
-            <div class="ownership-info">
-              ${record["Segment"] ? `<p><strong>Segment:</strong> ${record["Segment"]}</p>` : ''}
-              ${record["Date"] ? `<p><strong>Date:</strong> ${record["Date"]}</p>` : ''}
-              ${record["Last Call Segment"] ? `<p><strong>Last Call Segment:</strong> ${record["Last Call Segment"]}</p>` : ''}
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    marker.bindPopup(popupContent, {
-      maxWidth: 350,
-      minWidth: 350,
-      className: 'custom-popup'
+    const filters = createFilterControl();
+    Object.values(filters).forEach(({ control, toggle }) => {
+      amap.addControl(control);
+      amap.addControl(toggle);
     });
     
-    markersLayer.addLayer(marker);
-  });
-}
-
-function toggleDetails(header) {
-  const details = header.nextElementSibling;
-  if (details) {
-    details.classList.toggle('hidden');
-  }
-}
-
-function copyToClipboard(element) {
-  const textToCopy = element.dataset.copy || element.innerText;
-  navigator.clipboard.writeText(textToCopy).then(() => {
-    const tooltip = document.createElement('div');
-    tooltip.className = 'copy-tooltip';
-    tooltip.textContent = 'Copied!';
-    tooltip.style.position = 'absolute';
-    tooltip.style.backgroundColor = '#4a90e2';
-    tooltip.style.color = 'white';
-    tooltip.style.padding = '5px 10px';
-    tooltip.style.borderRadius = '4px';
-    tooltip.style.fontSize = '14px';
-    tooltip.style.zIndex = '1000';
-    tooltip.style.top = '-30px';
-    tooltip.style.left = '50%';
-    tooltip.style.transform = 'translateX(-50%)';
-    tooltip.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-    
-    // Make sure the element has position relative for absolute positioning of tooltip
-    if (window.getComputedStyle(element).position === 'static') {
-      element.style.position = 'relative';
-    }
-    
-    element.appendChild(tooltip);
-    
-    // Add a subtle highlight effect to the copied element
-    const originalBackground = element.style.backgroundColor;
-    const originalTransition = element.style.transition;
-    element.style.transition = 'background-color 0.3s ease';
-    element.style.backgroundColor = '#e6f7ff';
-    
-    setTimeout(() => { 
-      tooltip.remove();
-      element.style.backgroundColor = originalBackground;
-      element.style.transition = originalTransition;
-    }, 1500);
-  });
-}
-
-// Function to show action buttons on hover
-function showActionButtons(figure) {
-  const actionButtons = figure.querySelector('.action-buttons');
-  if (actionButtons) {
-    actionButtons.style.display = 'block';
-  }
-}
-
-// Function to hide action buttons when not hovering
-function hideActionButtons(figure) {
-  const actionButtons = figure.querySelector('.action-buttons');
-  if (actionButtons) {
-    actionButtons.style.display = 'none';
-  }
-}
-
-// Add this function after fetchGeoJSON function
-function addPropertySearchControl(map) {
-  // Position the property search control below the standard search
-  const propertySearchControl = L.control({ position: 'topleft' });
-  
-  propertySearchControl.onAdd = function() {
-    const container = L.DomUtil.create('div', 'property-search-control');
-    
-    // Create toggle button - this is the only button visible initially
-    const toggleButton = L.DomUtil.create('button', 'toggle-property-search-button', container);
-    toggleButton.innerHTML = '🏢';
-    toggleButton.style.padding = '10px';
-    toggleButton.style.cursor = 'pointer';
-    toggleButton.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-    toggleButton.style.border = 'none';
-    toggleButton.style.borderRadius = '8px';
-    toggleButton.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-    toggleButton.style.fontSize = '18px';
-    toggleButton.style.width = '36px';
-    toggleButton.style.height = '36px';
-    toggleButton.style.display = 'flex';
-    toggleButton.style.alignItems = 'center';
-    toggleButton.style.justifyContent = 'center';
-    toggleButton.title = 'Search Properties by ID';
-    
-    // Create the search container (initially hidden)
-    const searchContainer = L.DomUtil.create('div', 'property-search-container', container);
-    searchContainer.style.display = 'none';
-    searchContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
-    searchContainer.style.padding = '12px';
-    searchContainer.style.borderRadius = '4px';
-    searchContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-    searchContainer.style.marginTop = '10px';
-    searchContainer.style.width = '280px';
-    searchContainer.style.backdropFilter = 'blur(8px)';
-    searchContainer.style.border = '1px solid rgba(226, 232, 240, 0.8)';
-    
-    searchContainer.innerHTML = `
-      <div style="margin-bottom: 10px; font-weight: 600; font-size: 16px; color: #1e40af;">Search Properties</div>
-      <div style="display: flex; margin-bottom: 8px;">
-        <input type="text" id="property-search-input" placeholder="Search by ID or Address..." 
-               style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
-        <button id="property-search-button" 
-                style="margin-left: 4px; padding: 8px; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer;">
-          🔍
-        </button>
-      </div>
-      <div id="property-search-results" style="max-height: 200px; overflow-y: auto; display: none;">
-      </div>
-      <button id="close-property-search" 
-              style="margin-top: 8px; padding: 6px; background: #f0f0f0; color: #666; border: none; border-radius: 4px; cursor: pointer; width: 100%;">
-        Close
-      </button>
-    `;
-    
-    L.DomEvent.disableClickPropagation(container);
-    L.DomEvent.disableScrollPropagation(container);
-    
-    return container;
-  };
-  
-  propertySearchControl.addTo(map);
-  
-  // Add event listeners after the control is added to the map
-  setTimeout(() => {
-    const toggleButton = document.querySelector('.toggle-property-search-button');
-    const searchContainer = document.querySelector('.property-search-container');
-    const searchInput = document.getElementById('property-search-input');
-    const searchButton = document.getElementById('property-search-button');
-    const closeButton = document.getElementById('close-property-search');
-    const resultsContainer = document.getElementById('property-search-results');
-    
-    // Toggle search container visibility
-    toggleButton.addEventListener('click', function() {
-      if (searchContainer.style.display === 'none') {
-        searchContainer.style.display = 'block';
-        searchInput.focus();
-      } else {
-        searchContainer.style.display = 'none';
-      }
-    });
-    
-    // Close button functionality
-    closeButton.addEventListener('click', function() {
-      searchContainer.style.display = 'none';
-    });
-    
-    // Search function
-    const searchProperties = () => {
-      const query = searchInput.value.toLowerCase().trim();
-      if (!query || !originalData) return;
-      
-      const results = originalData.features.filter(feature => {
-        const props = feature.properties;
-        // Search in Property ID and Address
-        return (props["Property Id"] && props["Property Id"].toString().toLowerCase().includes(query)) ||
-               (props["Address Concatenate"] && props["Address Concatenate"].toLowerCase().includes(query)) ||
-               (props["Name"] && props["Name"].toLowerCase().includes(query));
-      });
-      
-      displaySearchResults(results, resultsContainer);
-    };
-    
-    // Display search results
-    const displaySearchResults = (results, container) => {
-      // Rest of the function remains the same
-      if (results.length === 0) {
-        container.innerHTML = '<div style="padding: 8px; color: #666;">No properties found</div>';
-        container.style.display = 'block';
-        return;
-      }
-      
-      let html = '';
-      results.forEach(feature => {
-        const props = feature.properties;
-        const coords = feature.geometry.coordinates;
-        
-        html += `
-          <div class="property-result" data-lat="${coords[1]}" data-lng="${coords[0]}" 
-               style="padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s;">
-            <div style="font-weight: bold;">${props.Name || 'Unnamed Property'}</div>
-            <div style="font-size: 12px; color: #666;">ID: ${props["Property Id"] || 'N/A'}</div>
-            <div style="font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              ${props["Address Concatenate"] || 'No address'}
-            </div>
-          </div>
-        `;
-      });
-      
-      container.innerHTML = html;
-      container.style.display = 'block';
-      
-      // Add click event to results
-      const resultElements = container.querySelectorAll('.property-result');
-      resultElements.forEach(el => {
-        // Hover effect
-        el.addEventListener('mouseover', () => {
-          el.style.backgroundColor = '#f0f9ff';
-        });
-        el.addEventListener('mouseout', () => {
-          el.style.backgroundColor = 'transparent';
-        });
-        
-        // Click to zoom to location
-        el.addEventListener('click', function() {
-          const lat = parseFloat(this.dataset.lat);
-          const lng = parseFloat(this.dataset.lng);
-          
-          // Zoom to the location
-          map.setView([lat, lng], 18);
-          
-          // Find and open the marker's popup
-          markersLayer.eachLayer(function(layer) {
-            const markerLatLng = layer.getLatLng();
-            if (markerLatLng.lat === lat && markerLatLng.lng === lng) {
-              layer.openPopup();
-            }
-          });
-          
-          // Hide results after selection
-          container.style.display = 'none';
-          searchContainer.style.display = 'none';
-          searchInput.value = '';
-        });
-      });
-    };
-    
-    // Add event listeners
-    searchButton.addEventListener('click', searchProperties);
-    searchInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        searchProperties();
-      }
-    });
-    
-    // Close results when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!searchContainer.contains(e.target) && !toggleButton.contains(e.target)) {
-        resultsContainer.style.display = 'none';
-      }
-    });
-    
-  }, 100); // Short delay to ensure DOM elements are available
-}
-
-function fetchGeoJSON(url, callback) {
-  fetch(url)
-    .then(response => response.json())
-    .then(data => callback(data))
-    .catch(error => console.error("Error fetching GeoJSON:", error));
-}
-// Add this function after fetchGeoJSON function
-function addPropertySearchControl(map) {
-  // Position the property search control below the standard search
-  const propertySearchControl = L.control({ position: 'topleft' });
-  
-  propertySearchControl.onAdd = function() {
-    const container = L.DomUtil.create('div', 'property-search-control');
-    container.style.marginTop = '10px'; // Reduced margin to create tighter spacing
-    
-    // Create toggle button - this is the only button visible initially
-    const toggleButton = L.DomUtil.create('button', 'toggle-property-search-button', container);
-    toggleButton.innerHTML = '🏢';
-    toggleButton.style.padding = '10px';
-    toggleButton.style.cursor = 'pointer';
-    toggleButton.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-    toggleButton.style.border = 'none';
-    toggleButton.style.borderRadius = '8px';
-    toggleButton.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    toggleButton.style.fontSize = '18px';
-    toggleButton.style.width = '36px';
-    toggleButton.style.height = '36px';
-    toggleButton.style.display = 'flex';
-    toggleButton.style.alignItems = 'center';
-    toggleButton.style.justifyContent = 'center';
-    toggleButton.title = 'Search Properties by ID';
-    
-    // Create the search container (initially hidden)
-    const searchContainer = L.DomUtil.create('div', 'property-search-container', container);
-    searchContainer.style.display = 'none';
-    searchContainer.style.alignItems = 'center';
-    searchContainer.style.padding = '4px';
-    searchContainer.style.borderRadius = '8px';
-    searchContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
-    searchContainer.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.2)';
-    searchContainer.style.minWidth = '300px';
-    
-    // Create and style search input
-    const searchInput = L.DomUtil.create('input', 'property-search-input', searchContainer);
-    searchInput.type = 'text';
-    searchInput.placeholder = 'Search properties...';
-    searchInput.style.fontSize = '16px';
-    searchInput.style.padding = '12px 16px';
-    searchInput.style.width = '100%';
-    searchInput.style.border = 'none';
-    searchInput.style.borderRadius = '4px';
-    searchInput.style.backgroundColor = '#f5f5f5';
-    searchInput.style.transition = 'all 0.3s ease';
-    searchInput.id = 'property-search-input';
-    
-    // Create button container for search and close buttons
-    const buttonContainer = L.DomUtil.create('div', 'button-container', searchContainer);
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.marginLeft = '4px';
-    
-    // Create search button
-    const searchButton = L.DomUtil.create('button', 'property-search-button', buttonContainer);
-    searchButton.innerHTML = '🔍';
-    searchButton.style.width = '36px';
-    searchButton.style.height = '36px';
-    searchButton.style.padding = '8px';
-    searchButton.style.fontSize = '16px';
-    searchButton.style.borderRadius = '4px';
-    searchButton.style.border = 'none';
-    searchButton.style.backgroundColor = '#4a90e2';
-    searchButton.style.color = 'white';
-    searchButton.style.cursor = 'pointer';
-    searchButton.style.transition = 'all 0.3s ease';
-    searchButton.id = 'property-search-button';
-    
-    // Create close button
-    const closeButton = L.DomUtil.create('button', 'close-property-search', buttonContainer);
-    closeButton.innerHTML = '✕';
-    closeButton.style.width = '36px';
-    closeButton.style.height = '36px';
-    closeButton.style.padding = '8px';
-    closeButton.style.fontSize = '16px';
-    closeButton.style.borderRadius = '4px';
-    closeButton.style.border = 'none';
-    closeButton.style.backgroundColor = '#f0f0f0';
-    closeButton.style.color = '#666';
-    closeButton.style.cursor = 'pointer';
-    closeButton.style.marginLeft = '4px';
-    closeButton.style.transition = 'all 0.3s ease';
-    
-    // Create results container
-    const resultsContainer = L.DomUtil.create('div', 'property-search-results', container);
-    resultsContainer.style.display = 'none';
-    resultsContainer.style.position = 'absolute';
-    resultsContainer.style.top = '100%';
-    resultsContainer.style.left = '0';
-    resultsContainer.style.right = '0';
-    resultsContainer.style.backgroundColor = 'white';
-    resultsContainer.style.borderRadius = '4px';
-    resultsContainer.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.2)';
-    resultsContainer.style.maxHeight = '200px';
-    resultsContainer.style.overflowY = 'auto';
-    resultsContainer.style.zIndex = '1000';
-    resultsContainer.style.marginTop = '4px';
-    resultsContainer.id = 'property-search-results';
-    
-    L.DomEvent.disableClickPropagation(container);
-    L.DomEvent.disableScrollPropagation(container);
-    
-    return container;
-  };
-  
-  propertySearchControl.addTo(map);
-  
-  // Add event listeners after the control is added to the map
-  setTimeout(() => {
-    const toggleButton = document.querySelector('.toggle-property-search-button');
-    const searchContainer = document.querySelector('.property-search-container');
-    const searchInput = document.getElementById('property-search-input');
-    const searchButton = document.getElementById('property-search-button');
-    const closeButton = document.querySelector('.close-property-search');
-    const resultsContainer = document.getElementById('property-search-results');
-    
-    // Toggle search container visibility
-    toggleButton.addEventListener('click', function() {
-      if (searchContainer.style.display === 'none') {
-        searchContainer.style.display = 'flex';
-        searchInput.focus();
-        toggleButton.style.display = 'none';
-      }
-    });
-    
-    // Close button functionality
-    closeButton.addEventListener('click', function() {
-      searchContainer.style.display = 'none';
-      resultsContainer.style.display = 'none';
-      toggleButton.style.display = 'flex';
-      searchInput.value = '';
-    });
-    
-    // Search function
-    const searchProperties = () => {
-      const query = searchInput.value.toLowerCase().trim();
-      if (!query || !originalData) return;
-      
-      const results = originalData.features.filter(feature => {
-        const props = feature.properties;
-        // Search in Property ID and Address
-        return (props["Property Id"] && props["Property Id"].toString().toLowerCase().includes(query)) ||
-               (props["Address Concatenate"] && props["Address Concatenate"].toLowerCase().includes(query)) ||
-               (props["Name"] && props["Name"].toLowerCase().includes(query));
-      });
-      
-      displaySearchResults(results, resultsContainer);
-    };
-    
-    // Display search results
-    const displaySearchResults = (results, container) => {
-      if (results.length === 0) {
-        container.innerHTML = '<div style="padding: 8px; color: #666;">No properties found</div>';
-        container.style.display = 'block';
-        return;
-      }
-      
-      let html = '';
-      results.forEach(feature => {
-        const props = feature.properties;
-        const coords = feature.geometry.coordinates;
-        
-        html += `
-          <div class="property-result" data-lat="${coords[1]}" data-lng="${coords[0]}" 
-               style="padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s;">
-            <div style="font-weight: bold;">${props.Name || 'Unnamed Property'}</div>
-            <div style="font-size: 12px; color: #666;">ID: ${props["Property Id"] || 'N/A'}</div>
-            <div style="font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              ${props["Address Concatenate"] || 'No address'}
-            </div>
-          </div>
-        `;
-      });
-      
-      container.innerHTML = html;
-      container.style.display = 'block';
-      
-      // Add click event to results
-      const resultElements = container.querySelectorAll('.property-result');
-      resultElements.forEach(el => {
-        // Hover effect
-        el.addEventListener('mouseover', () => {
-          el.style.backgroundColor = '#f0f9ff';
-        });
-        el.addEventListener('mouseout', () => {
-          el.style.backgroundColor = 'transparent';
-        });
-        
-        // Click to zoom to location
-        el.addEventListener('click', function() {
-          const lat = parseFloat(this.dataset.lat);
-          const lng = parseFloat(this.dataset.lng);
-          
-          // Zoom to the location
-          map.setView([lat, lng], 18);
-          
-          // Find and open the marker's popup
-          markersLayer.eachLayer(function(layer) {
-            const markerLatLng = layer.getLatLng();
-            if (markerLatLng.lat === lat && markerLatLng.lng === lng) {
-              layer.openPopup();
-            }
-          });
-          
-          // Hide results after selection
-          container.style.display = 'none';
-          searchContainer.style.display = 'none';
-          toggleButton.style.display = 'flex';
-          searchInput.value = '';
-        });
-      });
-    };
-    
-    // Add event listeners
-    searchButton.addEventListener('click', searchProperties);
-    searchInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        searchProperties();
-      }
-    });
-    
-    // Close results when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!searchContainer.contains(e.target) && !toggleButton.contains(e.target)) {
-        resultsContainer.style.display = 'none';
-      }
-    });
-    
-  }, 100); // Short delay to ensure DOM elements are available
-}
-
-// Update the popup content generation in updateMap function
-function createFilterControl() {
-  // Create Property Types filter container
-  const propertyTypesControl = L.control({ position: 'bottomleft' });
-  propertyTypesControl.onAdd = function() {
-    const div = L.DomUtil.create('div', 'filter-container');
-    div.style.display = 'none';
-    div.style.backgroundColor = 'white';
-    div.style.padding = '16px';
-    div.style.borderRadius = '8px';
-    div.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    div.style.maxWidth = '280px';
-    div.style.maxHeight = '400px';
-    div.style.overflowY = 'auto';
-    div.style.marginBottom = '12px';
-    div.style.zIndex = '1000';
-    
-    div.innerHTML = `
-      <h4 style="margin: 0 0 8px 0;">Property Types</h4>
-      <div id="propertyTypes" style="display: flex; flex-direction: column; gap: 4px;">
-      </div>
-      <hr style="margin: 10px 0;">
-      <button id="clearPropertyFilters" style="width: 100%; padding: 12px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s;">
-        Clear Property Filters
-      </button>
-    `;
-    
-    div.id = 'propertyTypesContainer';
-    L.DomEvent.disableClickPropagation(div);
-    return div;
-  };
-  
-  // Create Secondary Types filter container
-  const secondaryTypesControl = L.control({ position: 'bottomleft' });
-  secondaryTypesControl.onAdd = function() {
-    const div = L.DomUtil.create('div', 'filter-container');
-    div.style.display = 'none';
-    div.style.backgroundColor = 'white';
-    div.style.padding = '16px';
-    div.style.borderRadius = '8px';
-    div.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    div.style.maxWidth = '280px';
-    div.style.maxHeight = '400px';
-    div.style.overflowY = 'auto';
-    div.style.marginBottom = '12px';
-    div.style.zIndex = '1000';
-    
-    div.innerHTML = `
-      <h4 style="margin: 0 0 8px 0;">Secondary Types</h4>
-      <div id="secondaryTypes" style="display: flex; flex-direction: column; gap: 4px;">
-      </div>
-      <hr style="margin: 10px 0;">
-      <button id="clearSecondaryFilters" style="width: 100%; padding: 12px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s;">
-        Clear Secondary Filters
-      </button>
-    `;
-    
-    div.id = 'secondaryTypesContainer';
-    L.DomEvent.disableClickPropagation(div);
-    return div;
-  };
-  
-  // Create Property Types toggle button
-  const propertyToggle = L.control({ position: 'bottomleft' });
-  propertyToggle.onAdd = function() {
-    const button = L.DomUtil.create('button', 'filter-toggle');
-    button.innerHTML = '🏢';
-    button.style.padding = '12px';
-    button.style.cursor = 'pointer';
-    button.style.backgroundColor = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '8px';
-    button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    button.style.fontSize = '24px';
-    button.style.marginBottom = '10px';
-    button.style.width = '48px';
-    button.style.height = '48px';
-    button.style.display = 'flex';
-    button.style.alignItems = 'center';
-    button.style.justifyContent = 'center';
-    button.title = 'Toggle Property Types Filter';
-
-    button.onclick = function() {
-      const filterDiv = document.getElementById('propertyTypesContainer');
-      if (filterDiv) {
-        filterDiv.style.display = filterDiv.style.display === 'none' ? 'block' : 'none';
-        // Hide the other filter if this one is shown
-        if (filterDiv.style.display === 'block') {
-          const otherFilterDiv = document.getElementById('secondaryTypesContainer');
-          if (otherFilterDiv) {
-            otherFilterDiv.style.display = 'none';
-          }
-        }
-      }
-    };
-
-    return button;
-  };
-  
-  // Create Secondary Types toggle button
-  const secondaryToggle = L.control({ position: 'bottomleft' });
-  secondaryToggle.onAdd = function() {
-    const button = L.DomUtil.create('button', 'filter-toggle');
-    button.innerHTML = '🏗️';
-    button.style.padding = '12px';
-    button.style.cursor = 'pointer';
-    button.style.backgroundColor = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '8px';
-    button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    button.style.fontSize = '24px';
-    button.style.marginBottom = '10px';
-    button.style.width = '48px';
-    button.style.height = '48px';
-    button.style.display = 'flex';
-    button.style.alignItems = 'center';
-    button.style.justifyContent = 'center';
-    button.title = 'Toggle Secondary Types Filter';
-
-    button.onclick = function() {
-      const filterDiv = document.getElementById('secondaryTypesContainer');
-      if (filterDiv) {
-        filterDiv.style.display = filterDiv.style.display === 'none' ? 'block' : 'none';
-        // Hide the other filter if this one is shown
-        if (filterDiv.style.display === 'block') {
-          const otherFilterDiv = document.getElementById('propertyTypesContainer');
-          if (otherFilterDiv) {
-            otherFilterDiv.style.display = 'none';
-          }
-        }
-      }
-    };
-
-    return button;
-  };
-  
-  // Return all controls as an object
-  return {
-    propertyTypesControl,
-    secondaryTypesControl,
-    propertyToggle,
-    secondaryToggle
-  };
-}
-
-function updateFilters() {
-  const propertyTypes = new Set();
-  const secondaryTypes = new Set();
-
-  originalData.features.forEach(feature => {
-    if (feature.properties["Property Type"]) {
-      propertyTypes.add(feature.properties["Property Type"]);
-    }
-    if (feature.properties["Secondary Type"]) {
-      secondaryTypes.add(feature.properties["Secondary Type"]);
-    }
-  });
-
-  const propertyTypesContainer = document.getElementById('propertyTypes');
-  const secondaryTypesContainer = document.getElementById('secondaryTypes');
-  const clearPropertyFiltersBtn = document.getElementById('clearPropertyFilters');
-  const clearSecondaryFiltersBtn = document.getElementById('clearSecondaryFilters');
-
-  propertyTypesContainer.innerHTML = '';
-  secondaryTypesContainer.innerHTML = '';
-
-  propertyTypes.forEach(type => {
-    const label = document.createElement('label');
-    label.style.display = 'block';
-    label.style.marginBottom = '8px';
-    label.style.cursor = 'pointer';
-    label.style.padding = '10px';
-    label.style.margin = '4px 0';
-    label.style.borderRadius = '6px';
-    label.style.transition = 'background-color 0.2s';
-    label.style.fontSize = '14px';
-    
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.value = type;
-    checkbox.style.marginRight = '10px';
-    checkbox.style.width = '18px';
-    checkbox.style.height = '18px';
-    checkbox.style.cursor = 'pointer';
-    
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(type));
-    propertyTypesContainer.appendChild(label);
-
-    label.addEventListener('mouseover', () => {
-      label.style.backgroundColor = '#f0f9ff';
-    });
-    
-    label.addEventListener('mouseout', () => {
-      label.style.backgroundColor = 'transparent';
-    });
-
-    checkbox.addEventListener('change', function() {
-      if (this.checked) {
-        currentFilters.propertyTypes.push(this.value);
-      } else {
-        currentFilters.propertyTypes = currentFilters.propertyTypes.filter(t => t !== this.value);
-      }
-      updateMap(originalData);
-    });
-  });
-
-  secondaryTypes.forEach(type => {
-    const label = document.createElement('label');
-    label.style.display = 'block';
-    label.style.marginBottom = '8px';
-    label.style.cursor = 'pointer';
-    label.style.padding = '10px';
-    label.style.margin = '4px 0';
-    label.style.borderRadius = '6px';
-    label.style.transition = 'background-color 0.2s';
-    label.style.fontSize = '14px';
-    
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.value = type;
-    checkbox.style.marginRight = '10px';
-    checkbox.style.width = '18px';
-    checkbox.style.height = '18px';
-    checkbox.style.cursor = 'pointer';
-    
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(type));
-    secondaryTypesContainer.appendChild(label);
-
-    label.addEventListener('mouseover', () => {
-      label.style.backgroundColor = '#f0f9ff';
-    });
-    
-    label.addEventListener('mouseout', () => {
-      label.style.backgroundColor = 'transparent';
-    });
-
-    checkbox.addEventListener('change', function() {
-      if (this.checked) {
-        currentFilters.secondaryTypes.push(this.value);
-      } else {
-        currentFilters.secondaryTypes = currentFilters.secondaryTypes.filter(t => t !== this.value);
-      }
-      updateMap(originalData);
-    });
-  });
-
-  // Add event listeners to clear filter buttons
-  clearPropertyFiltersBtn.addEventListener('click', function() {
-    currentFilters.propertyTypes = [];
-    propertyTypesContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    updateMap(originalData);
-  });
-  
-  clearSecondaryFiltersBtn.addEventListener('click', function() {
-    currentFilters.secondaryTypes = [];
-    secondaryTypesContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    updateMap(originalData);
-  });
-}
-
-function updateMap(data) {
-  if (!originalData) {
-    originalData = data;
-  }
-
-  if (!amap) {
-    amap = initializeMap();
-  }
-
-  // Initialize markers layer if not exists
-  if (!markersLayer) {
-    // Configure marker cluster group with more granular settings
-    markersLayer = L.markerClusterGroup({
-      disableClusteringAtZoom: 18, // Disable clustering at high zoom levels
-      maxClusterRadius: 40,        // Reduce cluster radius (default is 80)
-      spiderfyOnMaxZoom: true,     // Allow markers to spread out when clicked
-      zoomToBoundsOnClick: true    // Zoom to bounds when cluster clicked
-    });
-    amap.addLayer(markersLayer);
-    
-    // Add the filter controls
-    const filterControls = createFilterControl();
-    filterControls.propertyTypesControl.addTo(amap);
-    filterControls.secondaryTypesControl.addTo(amap);
-    filterControls.propertyToggle.addTo(amap);
-    filterControls.secondaryToggle.addTo(amap);
-    
-    // Add property search control after data is loaded
     addPropertySearchControl(amap);
-    
     updateFilters();
   }
-
-  // Clear existing markers if markersLayer exists
-  if (markersLayer) {
-    markersLayer.clearLayers();
-  } else {
-    // Initialize markersLayer if it doesn't exist
-    markersLayer = L.markerClusterGroup();
-    amap.addLayer(markersLayer);
-  }
-
-  const filteredFeatures = data.features.filter(feature => {
-    const matchPropertyType = currentFilters.propertyTypes.length === 0 || 
-      currentFilters.propertyTypes.includes(feature.properties["Property Type"]);
-    const matchSecondaryType = currentFilters.secondaryTypes.length === 0 || 
-      currentFilters.secondaryTypes.includes(feature.properties["Secondary Type"]);
-    const matchMarkerColor = currentFilters.markerColors.length === 0 ||
-      currentFilters.markerColors.includes(feature.properties["Classify Color"]);
-    return matchPropertyType && matchSecondaryType && matchMarkerColor;
+  
+  markersLayer.clearLayers();
+  
+  const filteredFeatures = originalData.features.filter(feature => {
+    const props = feature.properties;
+    return (
+      (currentFilters.propertyTypes.length === 0 || currentFilters.propertyTypes.includes(props["Property Type"])) &&
+      (currentFilters.secondaryTypes.length === 0 || currentFilters.secondaryTypes.includes(props["Secondary Type"])) &&
+      (currentFilters.markerColors.length === 0 || currentFilters.markerColors.includes(props["Classify Color"]))
+    );
   });
-
+  
   filteredFeatures.forEach(feature => {
-    const record = feature.properties;
-    const coordinates = feature.geometry.coordinates;
-
-    const marker = L.marker([coordinates[1], coordinates[0]], {
-      title: record.Name,
-      icon: getMarkerIcon(record["Classify Color"])
-    });
-
-    const popupContent = `
-      <div class="card w-full bg-white p-0 m-0">
-        <figure class="relative m-0" onmouseover="showActionButtons(this)" onmouseout="hideActionButtons(this)">
-          ${record["Pop-up IMG"] ? `
-            <img src="${record["Pop-up IMG"]}" alt="${record.Name}" class="w-full h-33 object-cover"/>
-          ` : `
-            <div class="w-full h-33 bg-gray-100 flex items-center justify-center">
-              <span class="text-gray-400">No Image Available</span>
-            </div>
-          `}
-          <div class="action-buttons" style="position: absolute; bottom: 0; right: 10px; display: none;">
-            <div class="button-container" style="display: flex; gap: 8px;">
-              <a href="${record["County Prop Search"] || '#'}" class="action-btn" title="County Property Search" target="_blank" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; transition: all 0.2s;">🔍</a>
-              <a href="${record.GIS || '#'}" class="action-btn" title="GIS" target="_blank" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; transition: all 0.2s;">🌎</a>
-              <button class="action-btn" onclick="copyToClipboard(this)" data-copy="${record["Address Concatenate"]}" title="Copy Address" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer; padding: 0; transition: all 0.2s;">📋</button>
-              <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${coordinates[1]},${coordinates[0]}" class="action-btn" title="Street View" target="_blank" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; transition: all 0.2s;">🛣️</a>
-              <a href="${record["CoStar URL"] || '#'}" class="action-btn" title="CoStar" target="_blank" style="background: none; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; text-decoration: none; transition: all 0.2s;">🏢</a>
-            </div>
-          </div>
-        </figure>
-        <div class="card-content">
-          <h2 onclick="toggleDetails(this)">${record.Name}</h2>
-          <div class="details hidden">
-            <p><strong>Address:</strong> <span class="copyable" onclick="copyToClipboard(this)">${record["Address Concatenate"]}</span></p>
-            <p><strong>Property ID:</strong> <span class="copyable" onclick="copyToClipboard(this)">${record["Property Id"]}</span></p>
-            <div class="ownership-info">
-              ${record["Segment"] ? `<p><strong>Segment:</strong> ${record["Segment"]}</p>` : ''}
-              ${record["Date"] ? `<p><strong>Date:</strong> ${record["Date"]}</p>` : ''}
-              ${record["Last Call Segment"] ? `<p><strong>Last Call Segment:</strong> ${record["Last Call Segment"]}</p>` : ''}
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    marker.bindPopup(popupContent, {
-      maxWidth: 350,
-      minWidth: 350,
-      className: 'custom-popup'
+    const { geometry, properties } = feature;
+    const [lng, lat] = geometry.coordinates;
+    const marker = L.marker([lat, lng], {
+      title: properties.Name,
+      icon: getMarkerIcon(properties["Classify Color"])
     });
     
+    marker.bindPopup(createPopupContent(properties, [lat, lng]));
     markersLayer.addLayer(marker);
   });
 }
 
-function toggleDetails(header) {
-  const details = header.nextElementSibling;
-  if (details) {
-    details.classList.toggle('hidden');
+function createPopupContent(record, coords) {
+  return `
+    <div class="popup-card">
+      <figure onmouseover="showActionButtons(this)" onmouseout="hideActionButtons(this)">
+        ${record["Pop-up IMG"] ? 
+          `<img src="${record["Pop-up IMG"]}" alt="${record.Name}">` : 
+          `<div class="no-image">No Image Available</div>`}
+        <div class="action-buttons">
+          <a href="${record["County Prop Search"] || '#'}" title="County Property Search" target="_blank">🔍</a>
+          <a href="${record.GIS || '#'}" title="GIS" target="_blank">🌎</a>
+          <button onclick="copyToClipboard(this)" data-copy="${record["Address Concatenate"]}" title="Copy Address">📋</button>
+          <a href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${coords[0]},${coords[1]}" title="Street View" target="_blank">🛣️</a>
+          <a href="${record["CoStar URL"] || '#'}" title="CoStar" target="_blank">🏢</a>
+        </div>
+      </figure>
+      <div class="popup-content">
+        <h2 onclick="toggleDetails(this)">${record.Name}</h2>
+        <div class="details hidden">
+          <p><strong>Address:</strong> <span onclick="copyToClipboard(this)">${record["Address Concatenate"]}</span></p>
+          <p><strong>Property ID:</strong> <span onclick="copyToClipboard(this)">${record["Property Id"]}</span></p>
+          ${record.Segment ? `<p><strong>Segment:</strong> ${record.Segment}</p>` : ''}
+          ${record.Date ? `<p><strong>Date:</strong> ${record.Date}</p>` : ''}
+          ${record["Last Call Segment"] ? `<p><strong>Last Call Segment:</strong> ${record["Last Call Segment"]}</p>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addPropertySearchControl(map) {
+  const control = L.control({ position: 'topleft' });
+  control.onAdd = () => {
+    const container = L.DomUtil.create('div', 'property-search-control');
+    container.innerHTML = `
+      <button class="toggle-property-search-button">🏢</button>
+      <div class="property-search-container hidden">
+        <input type="text" class="property-search-input" placeholder="Search properties...">
+        <div class="button-container">
+          <button class="property-search-button">🔍</button>
+          <button class="close-property-search">✕</button>
+        </div>
+        <div class="property-search-results hidden"></div>
+      </div>
+    `;
+    return container;
+  };
+  control.addTo(map);
+  
+  // Attach event listeners
+  document.querySelector('.toggle-property-search-button').addEventListener('click', () => {
+    document.querySelector('.property-search-container').classList.remove('hidden');
+    document.querySelector('.property-search-input').focus();
+  });
+  
+  document.querySelector('.close-property-search').addEventListener('click', () => {
+    document.querySelector('.property-search-container').classList.add('hidden');
+    document.querySelector('.property-search-results').classList.add('hidden');
+  });
+  
+  document.querySelector('.property-search-button').addEventListener('click', searchProperties);
+  document.querySelector('.property-search-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') searchProperties();
+  });
+  
+  function searchProperties() {
+    const query = document.querySelector('.property-search-input').value.toLowerCase().trim();
+    if (!query || !originalData) return;
+    
+    const results = originalData.features.filter(feature => {
+      const props = feature.properties;
+      return (
+        (props["Property Id"] && props["Property Id"].toString().toLowerCase().includes(query)) ||
+        (props["Address Concatenate"] && props["Address Concatenate"].toLowerCase().includes(query)) ||
+        (props.Name && props.Name.toLowerCase().includes(query))
+      );
+    });
+    
+    displaySearchResults(results);
   }
+  
+  function displaySearchResults(results) {
+    const container = document.querySelector('.property-search-results');
+    if (!results.length) {
+      container.innerHTML = '<div>No properties found</div>';
+      container.classList.remove('hidden');
+      return;
+    }
+    
+    container.innerHTML = results.map(feature => {
+      const props = feature.properties;
+      const [lng, lat] = feature.geometry.coordinates;
+      return `
+        <div class="property-result" data-lat="${lat}" data-lng="${lng}">
+          <div>${props.Name || 'Unnamed Property'}</div>
+          <small>ID: ${props["Property Id"] || 'N/A'}</small>
+          <small>${props["Address Concatenate"] || 'No address'}</small>
+        </div>
+      `;
+    }).join('');
+    
+    container.classList.remove('hidden');
+    
+    container.querySelectorAll('.property-result').forEach(el => {
+      el.addEventListener('click', function() {
+        const lat = parseFloat(this.dataset.lat);
+        const lng = parseFloat(this.dataset.lng);
+        map.setView([lat, lng], 18);
+        
+        markersLayer.eachLayer(layer => {
+          const pos = layer.getLatLng();
+          if (pos.lat === lat && pos.lng === lng) layer.openPopup();
+        });
+        
+        document.querySelector('.property-search-container').classList.add('hidden');
+        container.classList.add('hidden');
+      });
+    });
+  }
+}
+
+// Helper functions
+function toggleDetails(header) {
+  header.nextElementSibling?.classList.toggle('hidden');
 }
 
 function copyToClipboard(element) {
-  const textToCopy = element.dataset.copy || element.innerText;
-  navigator.clipboard.writeText(textToCopy).then(() => {
+  const text = element.dataset.copy || element.innerText;
+  navigator.clipboard.writeText(text).then(() => {
     const tooltip = document.createElement('div');
     tooltip.className = 'copy-tooltip';
     tooltip.textContent = 'Copied!';
-    tooltip.style.position = 'absolute';
-    tooltip.style.backgroundColor = '#4a90e2';
-    tooltip.style.color = 'white';
-    tooltip.style.padding = '5px 10px';
-    tooltip.style.borderRadius = '4px';
-    tooltip.style.fontSize = '14px';
-    tooltip.style.zIndex = '1000';
-    tooltip.style.top = '-30px';
-    tooltip.style.left = '50%';
-    tooltip.style.transform = 'translateX(-50%)';
-    tooltip.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-    
-    // Make sure the element has position relative for absolute positioning of tooltip
-    if (window.getComputedStyle(element).position === 'static') {
-      element.style.position = 'relative';
-    }
-    
     element.appendChild(tooltip);
-    
-    // Add a subtle highlight effect to the copied element
-    const originalBackground = element.style.backgroundColor;
-    const originalTransition = element.style.transition;
-    element.style.transition = 'background-color 0.3s ease';
-    element.style.backgroundColor = '#e6f7ff';
-    
-    setTimeout(() => { 
-      tooltip.remove();
-      element.style.backgroundColor = originalBackground;
-      element.style.transition = originalTransition;
-    }, 1500);
+    setTimeout(() => tooltip.remove(), 1500);
   });
 }
 
-// Function to show action buttons on hover
 function showActionButtons(figure) {
-  const actionButtons = figure.querySelector('.action-buttons');
-  if (actionButtons) {
-    actionButtons.style.display = 'block';
-  }
+  figure.querySelector('.action-buttons')?.classList.add('visible');
 }
 
-// Function to hide action buttons when not hovering
 function hideActionButtons(figure) {
-  const actionButtons = figure.querySelector('.action-buttons');
-  if (actionButtons) {
-    actionButtons.style.display = 'none';
-  }
+  figure.querySelector('.action-buttons')?.classList.remove('visible');
 }
 
-// Initialize map when DOM is loaded
-document.addEventListener("DOMContentLoaded", function () {
-  fetchGeoJSON(geoJSONUrl, function (data) {
-    updateMap(data);
-  });
+// Initialize application
+document.addEventListener("DOMContentLoaded", () => {
+  fetch(geoJSONUrl)
+    .then(response => response.json())
+    .then(data => updateMap(data))
+    .catch(console.error);
 });
