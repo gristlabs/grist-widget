@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate Cap Rate Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(to right, #2c3e50, #1a2a6c);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 30px;
+            gap: 30px;
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container {
+            flex: 2;
+            min-width: 400px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h2 {
+            color: #1a2a6c;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .noi-input {
+            position: relative;
+        }
+
+        .noi-input i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #1a2a6c;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #1a2a6c;
+            box-shadow: 0 0 0 3px rgba(26, 42, 108, 0.1);
+        }
+
+        .range-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider-value {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #1a2a6c;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            -webkit-appearance: none;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 25px;
+            background: #1a2a6c;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #2c3e50;
+        }
+
+        .step-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .step-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: #e9ecef;
+            color: #495057;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .step-btn.active {
+            background: #1a2a6c;
+            color: white;
+            box-shadow: 0 4px 10px rgba(26, 42, 108, 0.3);
+        }
+
+        .step-btn:hover:not(.active) {
+            background: #d0d5dd;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(to right, #1a2a6c, #2c3e50);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(26, 42, 108, 0.4);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-header h2 {
+            color: #1a2a6c;
+            font-size: 1.5rem;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .results-table th {
+            background: #1a2a6c;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .results-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .value-cell {
+            font-weight: 600;
+            color: #1a2a6c;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .controls, .chart-container {
+                min-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .summary {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+
+        .summary-box {
+            flex: 1;
+            min-width: 200px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .summary-box h3 {
+            color: #1a2a6c;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.2);
+            font-size: 0.9rem;
+        }
+
+        .highlight {
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-calculator"></i> Real Estate Cap Rate Calculator</h1>
+            <p class="subtitle">Calculate property values across different capitalization rates. Enter NOI, adjust cap rate range, and visualize valuation scenarios.</p>
+        </header>
+        
+        <div class="content">
+            <div class="controls">
+                <div class="control-group">
+                    <h2><i class="fas fa-money-bill-wave"></i> Property Details</h2>
+                    <div class="input-group">
+                        <label for="noi">Net Operating Income (NOI)</label>
+                        <div class="noi-input">
+                            <i class="fas fa-dollar-sign"></i>
+                            <input type="text" id="noi" placeholder="Enter NOI (e.g. $245,000)" value="$245,000">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h2><i class="fas fa-sliders-h"></i> Cap Rate Range</h2>
+                    <div class="range-group">
+                        <div class="slider-container">
+                            <div class="slider-value">
+                                <span>Min Cap Rate:</span>
+                                <span id="min-value">5.0%</span>
+                            </div>
+                            <input type="range" id="min-cap" min="1" max="20" step="0.1" value="5">
+                        </div>
+                        
+                        <div class="slider-container">
+                            <div class="slider-value">
+                                <span>Max Cap Rate:</span>
+                                <span id="max-value">10.0%</span>
+                            </div>
+                            <input type="range" id="max-cap" min="1" max="20" step="0.1" value="10">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h2><i class="fas fa-tachometer-alt"></i> Calculation Interval</h2>
+                    <div class="step-controls">
+                        <button class="step-btn active" data-step="0.25">
+                            <i class="fas fa-chart-bar"></i> 0.25% Intervals
+                        </button>
+                        <button class="step-btn" data-step="0.15">
+                            <i class="fas fa-chart-line"></i> 0.15% Intervals
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="calculate-btn" class="calculate-btn">
+                    <i class="fas fa-calculator"></i> Calculate Property Values
+                </button>
+                
+                <div class="summary">
+                    <div class="summary-box">
+                        <h3>Value at Min Cap Rate</h3>
+                        <div id="min-value-display" class="summary-value">$0</div>
+                    </div>
+                    <div class="summary-box">
+                        <h3>Value at Max Cap Rate</h3>
+                        <div id="max-value-display" class="summary-value">$0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2><i class="fas fa-chart-area"></i> Property Value by Cap Rate</h2>
+                </div>
+                <canvas id="valuation-chart"></canvas>
+                
+                <h3 style="margin-top: 30px; color: #1a2a6c;"><i class="fas fa-table"></i> Valuation Summary</h3>
+                <div class="results-table-container">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Cap Rate</th>
+                                <th>Property Value</th>
+                                <th>Value per Cap Point</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body">
+                            <!-- Results will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Cap Rate = NOI / Property Value | Made with <span class="highlight">real estate analytics</span> in mind</p>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const noiInput = document.getElementById('noi');
+        const minCapSlider = document.getElementById('min-cap');
+        const maxCapSlider = document.getElementById('max-cap');
+        const minValueDisplay = document.getElementById('min-value');
+        const maxValueDisplay = document.getElementById('max-value');
+        const minValueResult = document.getElementById('min-value-display');
+        const maxValueResult = document.getElementById('max-value-display');
+        const stepButtons = document.querySelectorAll('.step-btn');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const resultsBody = document.getElementById('results-body');
+        
+        // Chart initialization
+        const ctx = document.getElementById('valuation-chart').getContext('2d');
+        let valuationChart;
+        
+        // Initialize with default values
+        let currentStep = 0.25;
+        
+        // Event Listeners
+        minCapSlider.addEventListener('input', updateSliderValues);
+        maxCapSlider.addEventListener('input', updateSliderValues);
+        
+        stepButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                stepButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                currentStep = parseFloat(button.dataset.step);
+                calculateValues();
+            });
+        });
+        
+        calculateBtn.addEventListener('click', calculateValues);
+        
+        // Initialize slider values
+        updateSliderValues();
+        
+        // Format currency
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+        
+        // Update slider value displays
+        function updateSliderValues() {
+            minValueDisplay.textContent = minCapSlider.value + '%';
+            maxValueDisplay.textContent = maxCapSlider.value + '%';
+        }
+        
+        // Parse NOI input
+        function parseNOI() {
+            const value = noiInput.value.replace(/[^0-9.]/g, '');
+            return parseFloat(value) || 245000; // Default to example value
+        }
+        
+        // Calculate property values
+        function calculateValues() {
+            const noi = parseNOI();
+            const minCap = parseFloat(minCapSlider.value);
+            const maxCap = parseFloat(maxCapSlider.value);
+            
+            // Swap values if min > max
+            if (minCap > maxCap) {
+                minCapSlider.value = maxCap;
+                maxCapSlider.value = minCap;
+                updateSliderValues();
+                return;
+            }
+            
+            // Calculate min and max values
+            const minValue = noi / (minCap / 100);
+            const maxValue = noi / (maxCap / 100);
+            
+            minValueResult.textContent = formatCurrency(minValue);
+            maxValueResult.textContent = formatCurrency(maxValue);
+            
+            // Generate cap rate range
+            const capRates = [];
+            for (let rate = minCap; rate <= maxCap; rate += currentStep) {
+                capRates.push(parseFloat(rate.toFixed(2)));
+            }
+            
+            // Calculate property values for each cap rate
+            const propertyValues = capRates.map(rate => noi / (rate / 100));
+            
+            // Update chart
+            updateChart(capRates, propertyValues);
+            
+            // Update results table
+            updateResultsTable(capRates, propertyValues);
+        }
+        
+        // Update the chart
+        function updateChart(capRates, propertyValues) {
+            if (valuationChart) {
+                valuationChart.destroy();
+            }
+            
+            valuationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: capRates.map(rate => rate + '%'),
+                    datasets: [{
+                        label: 'Property Value',
+                        data: propertyValues,
+                        borderColor: '#1a2a6c',
+                        backgroundColor: 'rgba(26, 42, 108, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ff6b6b',
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        fill: true,
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Value: ${formatCurrency(context.parsed.y)}`;
+                                },
+                                title: function(context) {
+                                    return `Cap Rate: ${context[0].label}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Property Value',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return '$' + (value / 1000000).toFixed(1) + 'M';
+                                    }
+                                    if (value >= 1000) {
+                                        return '$' + (value / 1000).toFixed(0) + 'K';
+                                    }
+                                    return '$' + value;
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Cap Rate (%)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update results table
+        function updateResultsTable(capRates, propertyValues) {
+            resultsBody.innerHTML = '';
+            
+            capRates.forEach((rate, index) => {
+                const value = propertyValues[index];
+                const valuePerCapPoint = (propertyValues[0] - value) / (rate - capRates[0]);
+                
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${rate}%</td>
+                    <td class="value-cell">${formatCurrency(value)}</td>
+                    <td class="value-cell">${formatCurrency(valuePerCapPoint)}</td>
+                `;
+                
+                resultsBody.appendChild(row);
+            });
+        }
+        
+        // Initialize the calculator on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateValues();
+        });
+    </script>
+</body>
+</html>
