@@ -3,632 +3,482 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real Estate Cap Rate Calculator</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Docker Compose Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --success: #27ae60;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         body {
             background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
-            color: #333;
+            color: var(--light);
             min-height: 100vh;
             padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
-
+        
         .container {
-            width: 100%;
             max-width: 1200px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        header {
-            background: linear-gradient(to right, #2c3e50, #1a2a6c);
-            color: white;
-            padding: 25px 30px;
-            text-align: center;
-            position: relative;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            max-width: 700px;
             margin: 0 auto;
         }
-
-        .content {
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            color: #ddd;
+        }
+        
+        .main-content {
             display: flex;
             flex-wrap: wrap;
-            padding: 30px;
             gap: 30px;
+            margin-bottom: 40px;
         }
-
-        .controls {
+        
+        .input-section, .preview-section {
+            background: rgba(44, 62, 80, 0.9);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             flex: 1;
             min-width: 300px;
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-
-        .chart-container {
-            flex: 2;
-            min-width: 400px;
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            position: relative;
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary);
+            color: var(--light);
         }
-
-        .control-group {
-            margin-bottom: 25px;
-        }
-
-        .control-group h2 {
-            color: #1a2a6c;
-            margin-bottom: 15px;
-            font-size: 1.4rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        
         .input-group {
             margin-bottom: 20px;
         }
-
+        
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #2c3e50;
         }
-
-        .noi-input {
-            position: relative;
-        }
-
-        .noi-input i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #1a2a6c;
-        }
-
-        input[type="text"],
-        input[type="number"] {
+        
+        input {
             width: 100%;
-            padding: 15px 15px 15px 45px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #1a2a6c;
-            box-shadow: 0 0 0 3px rgba(26, 42, 108, 0.1);
-        }
-
-        .range-group {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-
-        .slider-container {
-            margin: 20px 0;
-        }
-
-        .slider-value {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #1a2a6c;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            height: 10px;
-            -webkit-appearance: none;
-            background: #e0e0e0;
+            padding: 12px 15px;
             border-radius: 5px;
+            border: 2px solid #555;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            border-color: var(--secondary);
             outline: none;
+            background: rgba(255,255,255,0.15);
         }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 25px;
-            height: 25px;
-            background: #1a2a6c;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            background: #2c3e50;
-        }
-
-        .step-controls {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .step-btn {
-            flex: 1;
-            padding: 15px;
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: var(--secondary);
+            color: white;
             border: none;
-            border-radius: 10px;
-            background: #e9ecef;
-            color: #495057;
+            border-radius: 5px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .step-btn.active {
-            background: #1a2a6c;
-            color: white;
-            box-shadow: 0 4px 10px rgba(26, 42, 108, 0.3);
-        }
-
-        .step-btn:hover:not(.active) {
-            background: #d0d5dd;
-        }
-
-        .calculate-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(to right, #1a2a6c, #2c3e50);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
             margin-top: 10px;
         }
-
-        .calculate-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 7px 15px rgba(26, 42, 108, 0.4);
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-
-        .calculate-btn:active {
+        
+        .btn:active {
             transform: translateY(0);
         }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .chart-header h2 {
-            color: #1a2a6c;
-            font-size: 1.5rem;
-        }
-
-        .results-table {
+        
+        .btn-download {
+            background: var(--success);
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .results-table th {
-            background: #1a2a6c;
-            color: white;
             padding: 15px;
-            text-align: left;
+            font-size: 1.1rem;
         }
-
-        .results-table tr:nth-child(even) {
-            background: #f8f9fa;
+        
+        .btn-download:hover {
+            background: #219653;
         }
-
-        .results-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
+        
+        .preview-container {
+            background: rgba(30, 40, 56, 0.8);
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
         }
-
-        .results-table tr:last-child td {
-            border-bottom: none;
+        
+        pre {
+            white-space: pre-wrap;
+            color: #f8f8f2;
+            line-height: 1.4;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
         }
-
-        .value-cell {
+        
+        .validation {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        
+        .valid {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+        
+        .invalid {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        
+        .info-box {
+            background: rgba(41, 128, 185, 0.2);
+            border-left: 4px solid var(--secondary);
+            padding: 15px;
+            border-radius: 0 5px 5px 0;
+            margin: 20px 0;
+        }
+        
+        .info-box h3 {
+            margin-bottom: 10px;
+            color: var(--secondary);
+        }
+        
+        .info-box ul {
+            padding-left: 20px;
+        }
+        
+        .info-box li {
+            margin-bottom: 8px;
+        }
+        
+        .port-info {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            gap: 10px;
+        }
+        
+        .port-info span {
             font-weight: 600;
-            color: #1a2a6c;
+            color: var(--secondary);
         }
-
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+        
         @media (max-width: 768px) {
-            .content {
+            .main-content {
                 flex-direction: column;
             }
             
-            .controls, .chart-container {
-                min-width: 100%;
-            }
-            
-            h1 {
+            header h1 {
                 font-size: 2rem;
             }
         }
-
-        .summary {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 25px;
+        
+        /* Scrollbar styling */
+        .preview-container::-webkit-scrollbar {
+            width: 8px;
         }
-
-        .summary-box {
-            flex: 1;
-            min-width: 200px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
+        
+        .preview-container::-webkit-scrollbar-track {
+            background: rgba(30, 40, 56, 0.5);
+            border-radius: 4px;
         }
-
-        .summary-box h3 {
-            color: #1a2a6c;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
+        
+        .preview-container::-webkit-scrollbar-thumb {
+            background: var(--secondary);
+            border-radius: 4px;
         }
-
-        .summary-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: white;
-            background: rgba(0, 0, 0, 0.2);
-            font-size: 0.9rem;
-        }
-
-        .highlight {
-            background: linear-gradient(to right, #ff9966, #ff5e62);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-weight: 700;
+        
+        .preview-container::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-calculator"></i> Real Estate Cap Rate Calculator</h1>
-            <p class="subtitle">Calculate property values across different capitalization rates. Enter NOI, adjust cap rate range, and visualize valuation scenarios.</p>
+            <h1>📦 Docker Compose Generator</h1>
+            <p>Generate Docker Compose and configuration files for your static web server with one click</p>
         </header>
         
-        <div class="content">
-            <div class="controls">
-                <div class="control-group">
-                    <h2><i class="fas fa-money-bill-wave"></i> Property Details</h2>
-                    <div class="input-group">
-                        <label for="noi">Net Operating Income (NOI)</label>
-                        <div class="noi-input">
-                            <i class="fas fa-dollar-sign"></i>
-                            <input type="text" id="noi" placeholder="Enter NOI (e.g. $245,000)" value="$245,000">
-                        </div>
-                    </div>
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">Configuration</h2>
+                
+                <div class="input-group">
+                    <label for="containerName">Container Name</label>
+                    <input type="text" id="containerName" placeholder="Enter container name (e.g., my-website)" value="my-react-app">
+                    <div id="validationResult" class="validation"></div>
                 </div>
                 
-                <div class="control-group">
-                    <h2><i class="fas fa-sliders-h"></i> Cap Rate Range</h2>
-                    <div class="range-group">
-                        <div class="slider-container">
-                            <div class="slider-value">
-                                <span>Min Cap Rate:</span>
-                                <span id="min-value">5.0%</span>
-                            </div>
-                            <input type="range" id="min-cap" min="1" max="20" step="0.1" value="5">
-                        </div>
-                        
-                        <div class="slider-container">
-                            <div class="slider-value">
-                                <span>Max Cap Rate:</span>
-                                <span id="max-value">10.0%</span>
-                            </div>
-                            <input type="range" id="max-cap" min="1" max="20" step="0.1" value="10">
-                        </div>
-                    </div>
+                <div class="info-box">
+                    <h3>Container Name Rules</h3>
+                    <ul>
+                        <li>Allowed characters: letters (a-z, A-Z), numbers (0-9), underscores (_), dots (.), and hyphens (-)</li>
+                        <li>Must start and end with an alphanumeric character</li>
+                        <li>Cannot contain spaces or special characters</li>
+                    </ul>
                 </div>
                 
-                <div class="control-group">
-                    <h2><i class="fas fa-tachometer-alt"></i> Calculation Interval</h2>
-                    <div class="step-controls">
-                        <button class="step-btn active" data-step="0.25">
-                            <i class="fas fa-chart-bar"></i> 0.25% Intervals
-                        </button>
-                        <button class="step-btn" data-step="0.15">
-                            <i class="fas fa-chart-line"></i> 0.15% Intervals
-                        </button>
-                    </div>
+                <div class="port-info">
+                    <p>Next available port: <span id="portNumber">8085</span></p>
                 </div>
                 
-                <button id="calculate-btn" class="calculate-btn">
-                    <i class="fas fa-calculator"></i> Calculate Property Values
-                </button>
-                
-                <div class="summary">
-                    <div class="summary-box">
-                        <h3>Value at Min Cap Rate</h3>
-                        <div id="min-value-display" class="summary-value">$0</div>
-                    </div>
-                    <div class="summary-box">
-                        <h3>Value at Max Cap Rate</h3>
-                        <div id="max-value-display" class="summary-value">$0</div>
-                    </div>
-                </div>
+                <button id="generateBtn" class="btn">Generate Files</button>
             </div>
             
-            <div class="chart-container">
-                <div class="chart-header">
-                    <h2><i class="fas fa-chart-area"></i> Property Value by Cap Rate</h2>
-                </div>
-                <canvas id="valuation-chart"></canvas>
+            <div class="preview-section">
+                <h2 class="section-title">Generated Files</h2>
                 
-                <h3 style="margin-top: 30px; color: #1a2a6c;"><i class="fas fa-table"></i> Valuation Summary</h3>
-                <div class="results-table-container">
-                    <table class="results-table">
-                        <thead>
-                            <tr>
-                                <th>Cap Rate</th>
-                                <th>Property Value</th>
-                                <th>Value per Cap Point</th>
-                            </tr>
-                        </thead>
-                        <tbody id="results-body">
-                            <!-- Results will be populated here -->
-                        </tbody>
-                    </table>
+                <div class="preview-container">
+                    <h3>docker-compose.yml</h3>
+                    <pre id="composePreview">services:
+  website:
+    image: joseluisq/static-web-server:latest
+    container_name: "my-react-app"
+    ports:
+      - 8085:80
+    restart: unless-stopped
+    environment:
+      # Note: those envs are customizable but also optional
+      - SERVER_ROOT=/var/public
+      - SERVER_CONFIG_FILE=/etc/sws.toml
+    volumes:
+      - ./public:/var/public
+      - ./sws.toml:/etc/sws.toml</pre>
                 </div>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>Cap Rate = NOI / Property Value | Made with <span class="highlight">real estate analytics</span> in mind</p>
-        </div>
-    </div>
+                
+                <div class="preview-container">
+                    <h3>sws.toml</h3>
+                    <pre id="tomlPreview">[general]
+# The default directory your React app will be served from
+root = "./public"
 
+# Logging: set to "info" for debugging during development, or "error" for production
+log-level = "error"
+
+# Enable gzip and brotli compression
+compression = true
+compression-level = "default"
+compression-static = true
+
+# Enables caching headers for better performance
+cache-control-headers = true
+
+# Optional: show directory listings (can be false for React apps)
+directory-listing = false
+
+# Optional: fallback to index.html for React apps using client-side routing
+page-fallback = "./index.html"</pre>
+                </div>
+                
+                <button id="downloadBtn" class="btn btn-download" disabled>Download All Files (ZIP)</button>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3>What's Included in the Download</h3>
+            <ul>
+                <li><strong>docker-compose.yml</strong> - Docker Compose configuration file</li>
+                <li><strong>sws.toml</strong> - Static Web Server configuration</li>
+                <li><strong>public/</strong> - Empty directory for your static files (e.g., React build output)</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Generated files are ready to use. Simply run <code>docker-compose up -d</code> to start your container.</p>
+        </footer>
+    </div>
+    
     <script>
-        // DOM Elements
-        const noiInput = document.getElementById('noi');
-        const minCapSlider = document.getElementById('min-cap');
-        const maxCapSlider = document.getElementById('max-cap');
-        const minValueDisplay = document.getElementById('min-value');
-        const maxValueDisplay = document.getElementById('max-value');
-        const minValueResult = document.getElementById('min-value-display');
-        const maxValueResult = document.getElementById('max-value-display');
-        const stepButtons = document.querySelectorAll('.step-btn');
-        const calculateBtn = document.getElementById('calculate-btn');
-        const resultsBody = document.getElementById('results-body');
-        
-        // Chart initialization
-        const ctx = document.getElementById('valuation-chart').getContext('2d');
-        let valuationChart;
-        
-        // Initialize with default values
-        let currentStep = 0.25;
-        
-        // Event Listeners
-        minCapSlider.addEventListener('input', updateSliderValues);
-        maxCapSlider.addEventListener('input', updateSliderValues);
-        
-        stepButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                stepButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                currentStep = parseFloat(button.dataset.step);
-                calculateValues();
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const containerNameInput = document.getElementById('containerName');
+            const validationResult = document.getElementById('validationResult');
+            const generateBtn = document.getElementById('generateBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const composePreview = document.getElementById('composePreview');
+            const tomlPreview = document.getElementById('tomlPreview');
+            const portNumber = document.getElementById('portNumber');
+            
+            // Container name validation regex
+            const containerNameRegex = /^[a-zA-Z0-9][a-zA-Z0-9_.-]*[a-zA-Z0-9]$/;
+            
+            // Port management
+            let currentPort = 8085;
+            
+            // Initialize with sample data
+            updatePreview();
+            
+            // Validate container name on input
+            containerNameInput.addEventListener('input', function() {
+                validateContainerName();
             });
-        });
-        
-        calculateBtn.addEventListener('click', calculateValues);
-        
-        // Initialize slider values
-        updateSliderValues();
-        
-        // Format currency
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                maximumFractionDigits: 0
-            }).format(value);
-        }
-        
-        // Update slider value displays
-        function updateSliderValues() {
-            minValueDisplay.textContent = minCapSlider.value + '%';
-            maxValueDisplay.textContent = maxCapSlider.value + '%';
-        }
-        
-        // Parse NOI input
-        function parseNOI() {
-            const value = noiInput.value.replace(/[^0-9.]/g, '');
-            return parseFloat(value) || 245000; // Default to example value
-        }
-        
-        // Calculate property values
-        function calculateValues() {
-            const noi = parseNOI();
-            const minCap = parseFloat(minCapSlider.value);
-            const maxCap = parseFloat(maxCapSlider.value);
             
-            // Swap values if min > max
-            if (minCap > maxCap) {
-                minCapSlider.value = maxCap;
-                maxCapSlider.value = minCap;
-                updateSliderValues();
-                return;
-            }
-            
-            // Calculate min and max values
-            const minValue = noi / (minCap / 100);
-            const maxValue = noi / (maxCap / 100);
-            
-            minValueResult.textContent = formatCurrency(minValue);
-            maxValueResult.textContent = formatCurrency(maxValue);
-            
-            // Generate cap rate range
-            const capRates = [];
-            for (let rate = minCap; rate <= maxCap; rate += currentStep) {
-                capRates.push(parseFloat(rate.toFixed(2)));
-            }
-            
-            // Calculate property values for each cap rate
-            const propertyValues = capRates.map(rate => noi / (rate / 100));
-            
-            // Update chart
-            updateChart(capRates, propertyValues);
-            
-            // Update results table
-            updateResultsTable(capRates, propertyValues);
-        }
-        
-        // Update the chart
-        function updateChart(capRates, propertyValues) {
-            if (valuationChart) {
-                valuationChart.destroy();
-            }
-            
-            valuationChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: capRates.map(rate => rate + '%'),
-                    datasets: [{
-                        label: 'Property Value',
-                        data: propertyValues,
-                        borderColor: '#1a2a6c',
-                        backgroundColor: 'rgba(26, 42, 108, 0.1)',
-                        borderWidth: 3,
-                        pointBackgroundColor: '#ff6b6b',
-                        pointRadius: 5,
-                        pointHoverRadius: 8,
-                        fill: true,
-                        tension: 0.2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `Value: ${formatCurrency(context.parsed.y)}`;
-                                },
-                                title: function(context) {
-                                    return `Cap Rate: ${context[0].label}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            title: {
-                                display: true,
-                                text: 'Property Value',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    if (value >= 1000000) {
-                                        return '$' + (value / 1000000).toFixed(1) + 'M';
-                                    }
-                                    if (value >= 1000) {
-                                        return '$' + (value / 1000).toFixed(0) + 'K';
-                                    }
-                                    return '$' + value;
-                                }
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Cap Rate (%)',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            }
-                        }
-                    }
+            // Generate files on button click
+            generateBtn.addEventListener('click', function() {
+                if (validateContainerName()) {
+                    // Get next available port
+                    currentPort = getNextPort();
+                    portNumber.textContent = currentPort;
+                    
+                    // Update previews
+                    updatePreview();
+                    
+                    // Enable download button
+                    downloadBtn.disabled = false;
                 }
             });
-        }
-        
-        // Update results table
-        function updateResultsTable(capRates, propertyValues) {
-            resultsBody.innerHTML = '';
             
-            capRates.forEach((rate, index) => {
-                const value = propertyValues[index];
-                const valuePerCapPoint = (propertyValues[0] - value) / (rate - capRates[0]);
-                
-                const row = document.createElement('tr');
-                
-                row.innerHTML = `
-                    <td>${rate}%</td>
-                    <td class="value-cell">${formatCurrency(value)}</td>
-                    <td class="value-cell">${formatCurrency(valuePerCapPoint)}</td>
-                `;
-                
-                resultsBody.appendChild(row);
+            // Download files as ZIP
+            downloadBtn.addEventListener('click', function() {
+                if (validateContainerName()) {
+                    downloadFiles();
+                }
             });
-        }
-        
-        // Initialize the calculator on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            calculateValues();
+            
+            // Validate container name
+            function validateContainerName() {
+                const name = containerNameInput.value.trim();
+                
+                if (name === '') {
+                    validationResult.textContent = 'Container name cannot be empty';
+                    validationResult.className = 'validation invalid';
+                    return false;
+                }
+                
+                if (!containerNameRegex.test(name)) {
+                    validationResult.textContent = 'Invalid container name. Use only a-z, A-Z, 0-9, _, ., -';
+                    validationResult.className = 'validation invalid';
+                    return false;
+                }
+                
+                validationResult.textContent = 'Container name is valid';
+                validationResult.className = 'validation valid';
+                return true;
+            }
+            
+            // Get next available port
+            function getNextPort() {
+                // In a real app, we would check used ports
+                // For this demo, we'll just increment
+                return currentPort + 1;
+            }
+            
+            // Update file previews
+            function updatePreview() {
+                const containerName = containerNameInput.value.trim();
+                
+                // Update docker-compose preview
+                composePreview.textContent = `services:
+  website:
+    image: joseluisq/static-web-server:latest
+    container_name: "${containerName}"
+    ports:
+      - ${currentPort}:80
+    restart: unless-stopped
+    environment:
+      # Note: those envs are customizable but also optional
+      - SERVER_ROOT=/var/public
+      - SERVER_CONFIG_FILE=/etc/sws.toml
+    volumes:
+      - ./public:/var/public
+      - ./sws.toml:/etc/sws.toml`;
+                
+                // TOML config remains the same
+                tomlPreview.textContent = `[general]
+# The default directory your React app will be served from
+root = "./public"
+
+# Logging: set to "info" for debugging during development, or "error" for production
+log-level = "error"
+
+# Enable gzip and brotli compression
+compression = true
+compression-level = "default"
+compression-static = true
+
+# Enables caching headers for better performance
+cache-control-headers = true
+
+# Optional: show directory listings (can be false for React apps)
+directory-listing = false
+
+# Optional: fallback to index.html for React apps using client-side routing
+page-fallback = "./index.html"`;
+            }
+            
+            // Download files as ZIP
+            function downloadFiles() {
+                const containerName = containerNameInput.value.trim();
+                const zip = new JSZip();
+                
+                // Add docker-compose.yml
+                zip.file("docker-compose.yml", composePreview.textContent);
+                
+                // Add config file (sws.toml)
+                zip.file("sws.toml", tomlPreview.textContent);
+                
+                // Add empty public directory
+                zip.folder("public");
+                
+                // Generate ZIP file
+                zip.generateAsync({type:"blob"}).then(function(content) {
+                    // Save the ZIP file
+                    saveAs(content, `${containerName}-docker-files.zip`);
+                });
+            }
         });
     </script>
 </body>
