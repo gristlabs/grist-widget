@@ -2,146 +2,268 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile CRM - Grist Data</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile CRM - Owner Focus</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --accent-color: #4cc9f0;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --accent: #4cc9f0;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background-color: #f5f7fb;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
+            color: var(--dark);
+            line-height: 1.6;
             height: 100vh;
             overflow: hidden;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
         
-        .app-container {
+        #app {
             display: flex;
             flex-direction: column;
             height: 100vh;
             max-width: 100%;
             margin: 0 auto;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            background: white;
             position: relative;
+            overflow: hidden;
         }
         
-        .header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        /* Header */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            padding: 15px;
+            padding: 16px;
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .app-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
         
         .search-container {
             background-color: white;
-            border-radius: 25px;
-            padding: 5px 15px;
-            margin-top: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 24px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: var(--card-shadow);
         }
         
-        .search-container input {
+        .search-icon {
+            color: var(--gray);
+            margin-right: 8px;
+        }
+        
+        .search-input {
             border: none;
             width: 100%;
             outline: none;
             padding: 8px 0;
-        }
-        
-        .nav-tabs {
-            background-color: white;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 0 15px;
-            display: flex;
-            justify-content: space-around;
-        }
-        
-        .nav-link {
-            border: none;
-            color: #6c757d;
-            padding: 12px 0;
-            font-weight: 500;
-            position: relative;
-            flex-grow: 1;
-            text-align: center;
-        }
-        
-        .nav-link.active {
-            color: var(--primary-color);
+            font-size: 1rem;
             background: transparent;
-            border: none;
         }
         
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 25%;
-            width: 50%;
-            height: 3px;
-            background: var(--primary-color);
-            border-radius: 3px 3px 0 0;
-        }
-        
-        .tab-content {
+        /* Main Content */
+        .app-content {
             flex: 1;
             overflow: hidden;
+            position: relative;
         }
         
-        .tab-pane {
+        .content-section {
             height: 100%;
             display: none;
-        }
-        
-        .tab-pane.active {
-            display: flex;
             flex-direction: column;
         }
         
-        .virtual-list {
+        .content-section.active {
+            display: flex;
+        }
+        
+        /* Owners List */
+        .owners-list {
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-        }
-        
-        .list-item {
             padding: 16px;
-            border-bottom: 1px solid #eee;
-            transition: background 0.2s;
+            padding-bottom: 80px;
+        }
+        
+        .owner-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
         
-        .list-item:hover {
-            background-color: #f9f9f9;
+        .owner-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
         }
         
-        .list-item.active {
-            background-color: #eef7ff;
+        .owner-card-header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
         }
         
+        .owner-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        
+        .owner-info {
+            flex: 1;
+        }
+        
+        .owner-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--dark);
+        }
+        
+        .owner-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        
+        .meta-item i {
+            margin-right: 4px;
+            color: var(--primary);
+        }
+        
+        .owner-segment {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 8px;
+        }
+        
+        .owner-status {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-owner {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+        
+        .status-reminder {
+            background-color: rgba(255, 152, 0, 0.1);
+            color: var(--warning);
+        }
+        
+        /* Detail View */
         .detail-view {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: white;
-            z-index: 1000;
+            z-index: 200;
             transform: translateX(100%);
-            transition: transform 0.3s ease-out;
-            overflow-y: auto;
-            padding-top: env(safe-area-inset-top);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         
         .detail-view.active {
@@ -149,202 +271,595 @@
         }
         
         .detail-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            padding: 20px;
-            position: sticky;
-            top: 0;
-            z-index: 101;
+            padding: 16px;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .detail-header-top {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-right: 12px;
+            transition: var(--transition);
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .detail-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .detail-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        
+        .detail-action-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .detail-action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
         
         .detail-content {
-            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px 16px 80px;
         }
         
-        .field-group {
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+        
+        /* Owner Info Section */
+        .owner-detail-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .owner-detail-header {
+            display: flex;
+            align-items: center;
             margin-bottom: 20px;
         }
         
-        .field-label {
-            font-weight: 600;
-            color: #666;
-            font-size: 0.85rem;
-            margin-bottom: 5px;
-        }
-        
-        .field-value {
-            font-size: 1rem;
-            line-height: 1.4;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .back-button {
-            background: none;
-            border: none;
+        .owner-detail-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            font-size: 1.2rem;
-            padding: 5px 10px;
-            margin-right: 10px;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-right: 20px;
+            flex-shrink: 0;
         }
         
-        .status-badge {
+        .owner-detail-info {
+            flex: 1;
+        }
+        
+        .owner-detail-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .owner-detail-title {
+            font-size: 1rem;
+            color: var(--gray);
+            margin-bottom: 12px;
+        }
+        
+        .owner-detail-meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .detail-meta-item {
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .detail-meta-item i {
+            color: var(--primary);
+            margin-right: 8px;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+        
+        .detail-meta-content {
+            flex: 1;
+        }
+        
+        .detail-meta-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 2px;
+        }
+        
+        .detail-meta-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        /* Properties Section */
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .property-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+        
+        .property-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .property-image {
+            height: 160px;
+            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+        
+        .property-content {
+            padding: 16px;
+        }
+        
+        .property-address {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .property-location {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .property-location i {
+            margin-right: 6px;
+        }
+        
+        .property-meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .property-meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .meta-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-bottom: 4px;
+        }
+        
+        .meta-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        
+        .property-price {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        /* Contact History */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            margin-bottom: 40px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 20px;
+            width: 2px;
+            background: var(--light-gray);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 50px;
+        }
+        
+        .timeline-icon {
+            position: absolute;
+            left: 10px;
+            top: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            z-index: 10;
+        }
+        
+        .timeline-content {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+        }
+        
+        .timeline-content::before {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: -8px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            transform: rotate(45deg);
+        }
+        
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .timeline-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .timeline-date {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        
+        .timeline-text {
+            font-size: 0.95rem;
+            color: var(--dark);
+            line-height: 1.5;
+        }
+        
+        .contact-type {
             display: inline-block;
             padding: 4px 10px;
-            border-radius: 12px;
+            border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
-            margin-top: 5px;
+            margin-top: 8px;
         }
         
-        .status-owner {
-            background-color: #e3f2fd;
-            color: #1976d2;
+        .type-call {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success);
         }
         
-        .status-property {
-            background-color: #e8f5e9;
-            color: #388e3c;
+        .type-email {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
         }
         
+        .type-meeting {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning);
+        }
+        
+        /* Notes Section */
+        .notes-section {
+            margin-top: 24px;
+        }
+        
+        .note-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .note-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .note-date {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        
+        .note-content {
+            font-size: 0.95rem;
+            color: var(--dark);
+            line-height: 1.5;
+        }
+        
+        /* Next Steps */
+        .next-steps {
+            background: rgba(114, 9, 183, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 24px;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .next-steps-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .next-steps-title i {
+            margin-right: 8px;
+        }
+        
+        .next-steps-list {
+            padding-left: 20px;
+        }
+        
+        .next-steps-item {
+            margin-bottom: 8px;
+            position: relative;
+        }
+        
+        .next-steps-item::before {
+            content: '•';
+            position: absolute;
+            left: -15px;
+            color: var(--secondary);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .owner-detail-meta {
+                grid-template-columns: 1fr;
+            }
+            
+            .property-meta {
+                grid-template-columns: 1fr;
+            }
+            
+            .owner-detail-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .owner-detail-avatar {
+                margin-bottom: 16px;
+            }
+        }
+        
+        /* Loading state */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(67, 97, 238, 0.2);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Empty state */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: #6c757d;
+            color: var(--gray);
         }
         
         .empty-state i {
             font-size: 3rem;
-            margin-bottom: 15px;
             color: #bdbdbd;
+            margin-bottom: 16px;
         }
         
-        .filter-bar {
-            padding: 10px 15px;
-            background: white;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+            color: var(--dark);
         }
         
-        .filter-chip {
-            background: #f0f4f8;
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 0.85rem;
-            color: #4a5568;
-        }
-        
-        .filter-chip.active {
-            background: var(--primary-color);
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
             color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+            cursor: pointer;
+            z-index: 90;
+            transition: var(--transition);
         }
         
-        @media (min-width: 768px) {
-            .app-container {
-                max-width: 768px;
-            }
+        .fab:hover {
+            transform: translateY(-3px);
+            background: var(--primary-dark);
+            box-shadow: 0 6px 16px rgba(67, 97, 238, 0.4);
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="d-flex justify-content-between align-items-center">
-                <button class="btn btn-sm btn-outline-light">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="h5 mb-0">Mobile CRM</h1>
-                <button class="btn btn-sm btn-outline-light">
-                    <i class="fas fa-sync"></i>
-                </button>
-            </div>
-            <div class="search-container mt-2 d-flex align-items-center">
-                <i class="fas fa-search text-muted me-2"></i>
-                <input type="text" id="searchInput" placeholder="Search owners, properties...">
-            </div>
-        </div>
-        
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <button class="filter-chip">All</button>
-            <button class="filter-chip">Active</button>
-            <button class="filter-chip">Follow Up</button>
-            <button class="filter-chip">Properties</button>
-            <button class="filter-chip">Owners</button>
-            <button class="filter-chip">Hot Leads</button>
-        </div>
-        
-        <!-- Tab Navigation -->
-        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="owners-tab" data-bs-toggle="tab" data-bs-target="#owners" type="button" role="tab">
-                    <i class="fas fa-user me-1"></i> Owners
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="properties-tab" data-bs-toggle="tab" data-bs-target="#properties" type="button" role="tab">
-                    <i class="fas fa-home me-1"></i> Properties
-                </button>
-            </li>
-        </ul>
-        
-        <!-- Tab Content -->
-        <div class="tab-content" id="mainTabContent">
-            <!-- Owners Tab -->
-            <div class="tab-pane fade show active" id="owners" role="tabpanel">
-                <div class="virtual-list" id="ownersList">
-                    <!-- Owners will be loaded here -->
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2">Loading owners...</p>
-                    </div>
+    <div id="app">
+        <!-- App Header -->
+        <header class="app-header">
+            <div class="header-top">
+                <div class="app-title">Mobile CRM</div>
+                <div class="header-actions">
+                    <button class="header-btn">
+                        <i class="fas fa-sync"></i>
+                    </button>
+                    <button class="header-btn">
+                        <i class="fas fa-cog"></i>
+                    </button>
                 </div>
             </div>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" placeholder="Search owners by name, phone, or email...">
+            </div>
+        </header>
+        
+        <!-- App Content -->
+        <main class="app-content">
+            <!-- Owners List View -->
+            <section class="content-section active" id="ownersSection">
+                <div class="owners-list" id="ownersList">
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Loading owners data...</p>
+                    </div>
+                </div>
+            </section>
             
-            <!-- Properties Tab -->
-            <div class="tab-pane fade" id="properties" role="tabpanel">
-                <div class="virtual-list" id="propertiesList">
-                    <!-- Properties will be loaded here -->
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+            <!-- Owner Detail View -->
+            <section class="detail-view" id="detailView">
+                <div class="detail-header">
+                    <div class="detail-header-top">
+                        <button class="back-btn" id="backButton">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h2 class="detail-title" id="detailTitle">Owner Details</h2>
+                        <div class="detail-actions">
+                            <button class="detail-action-btn">
+                                <i class="fas fa-phone"></i>
+                            </button>
+                            <button class="detail-action-btn">
+                                <i class="fas fa-envelope"></i>
+                            </button>
+                            <button class="detail-action-btn">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
                         </div>
-                        <p class="mt-2">Loading properties...</p>
                     </div>
                 </div>
-            </div>
-        </div>
+                
+                <div class="detail-content" id="detailContent">
+                    <!-- Owner details will be loaded here -->
+                </div>
+            </section>
+        </main>
         
-        <!-- Detail View (hidden by default) -->
-        <div class="detail-view" id="detailView">
-            <div class="detail-header">
-                <button class="back-button" id="backButton">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <h2 id="detailTitle" class="h5 mb-0"></h2>
-            </div>
-            <div class="detail-content" id="detailContent">
-                <!-- Detail content will be loaded here -->
-            </div>
+        <!-- Floating Action Button -->
+        <div class="fab">
+            <i class="fas fa-plus"></i>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Configuration
         const CONFIG = {
             ownersUrl: 'https://raw.githubusercontent.com/CleanslateKickz/geojson/main/geojson/owners.json',
             propertiesUrl: 'https://raw.githubusercontent.com/CleanslateKickz/geojson/main/geojson/properties.json',
-            pageSize: 20,
-            maxDisplayFields: 8
+            pageSize: 20
         };
 
         // State management
@@ -352,23 +867,19 @@
             owners: [],
             filteredOwners: [],
             properties: [],
-            filteredProperties: [],
-            currentTab: 'owners',
-            currentDetail: null,
-            searchQuery: '',
-            ownersPage: 1,
-            propertiesPage: 1
+            currentOwner: null,
+            searchQuery: ''
         };
 
         // DOM elements
         const dom = {
+            ownersSection: document.getElementById('ownersSection'),
             ownersList: document.getElementById('ownersList'),
-            propertiesList: document.getElementById('propertiesList'),
-            searchInput: document.getElementById('searchInput'),
             detailView: document.getElementById('detailView'),
             detailTitle: document.getElementById('detailTitle'),
             detailContent: document.getElementById('detailContent'),
-            backButton: document.getElementById('backButton')
+            backButton: document.getElementById('backButton'),
+            searchInput: document.querySelector('.search-input')
         };
 
         // Initialize the app
@@ -383,17 +894,13 @@
                 appState.owners = ownersData;
                 appState.filteredOwners = ownersData;
                 appState.properties = propertiesData;
-                appState.filteredProperties = propertiesData;
                 
                 renderOwnersList();
-                renderPropertiesList();
+                setupEventListeners();
             } catch (error) {
                 console.error('Error loading data:', error);
                 showErrorState();
             }
-            
-            // Setup event listeners
-            setupEventListeners();
         }
 
         // Fetch data from URL
@@ -407,37 +914,46 @@
 
         // Render owners list
         function renderOwnersList() {
-            const startIndex = 0;
-            const endIndex = Math.min(startIndex + CONFIG.pageSize, appState.filteredOwners.length);
-            const ownersToShow = appState.filteredOwners.slice(startIndex, endIndex);
-            
-            if (ownersToShow.length === 0) {
+            if (appState.filteredOwners.length === 0) {
                 dom.ownersList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-user-slash"></i>
                         <h3>No owners found</h3>
-                        <p>Try adjusting your search or filters</p>
+                        <p>Try adjusting your search query</p>
                     </div>
                 `;
                 return;
             }
             
             let html = '';
-            ownersToShow.forEach(owner => {
+            appState.filteredOwners.forEach(owner => {
+                const firstLetter = owner.Name ? owner.Name.charAt(0).toUpperCase() : 'O';
+                const reminderStatus = owner.Reminder_Date ? 
+                    `<span class="status-badge status-reminder"><i class="fas fa-bell"></i> Reminder</span>` : '';
+                
                 html += `
-                    <div class="list-item" data-id="${owner.id}" data-type="owner">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h3 class="h6 mb-1">${owner.Name || 'Unnamed Owner'}</h3>
-                                <p class="mb-1 text-muted">${owner.Email || 'No email'}</p>
-                            </div>
-                            <div class="text-end">
-                                <span class="status-badge status-owner">Owner</span>
+                    <div class="owner-card" data-id="${owner.id}">
+                        <div class="owner-card-header">
+                            <div class="owner-avatar">${firstLetter}</div>
+                            <div class="owner-info">
+                                <h3 class="owner-name">${owner.Name || 'Unnamed Owner'}</h3>
+                                <p>${owner.Email || 'No email provided'}</p>
+                                <div class="owner-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-phone"></i>
+                                        <span>${owner.Phone || 'No phone'}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>${owner.City || 'Unknown location'}</span>
+                                    </div>
+                                </div>
+                                ${owner.Segment ? `<span class="owner-segment">${owner.Segment}</span>` : ''}
                             </div>
                         </div>
-                        <div class="mt-2">
-                            <span class="badge bg-light text-dark me-1">${owner.Segment || 'No segment'}</span>
-                            <span class="badge bg-light text-dark">${owner.City || 'No city'}</span>
+                        <div class="owner-status">
+                            <span class="status-badge status-owner">Owner</span>
+                            ${reminderStatus}
                         </div>
                     </div>
                 `;
@@ -445,222 +961,280 @@
             
             dom.ownersList.innerHTML = html;
             
-            // Add click event to each item
-            document.querySelectorAll('#ownersList .list-item').forEach(item => {
-                item.addEventListener('click', () => showDetailView(
-                    item.dataset.id,
-                    item.dataset.type
-                ));
+            // Add click event to each owner card
+            document.querySelectorAll('.owner-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const ownerId = card.dataset.id;
+                    const owner = appState.owners.find(o => o.id == ownerId);
+                    if (owner) {
+                        showOwnerDetail(owner);
+                    }
+                });
             });
         }
 
-        // Render properties list
-        function renderPropertiesList() {
-            const startIndex = 0;
-            const endIndex = Math.min(startIndex + CONFIG.pageSize, appState.filteredProperties.length);
-            const propertiesToShow = appState.filteredProperties.slice(startIndex, endIndex);
-            
-            if (propertiesToShow.length === 0) {
-                dom.propertiesList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-home"></i>
-                        <h3>No properties found</h3>
-                        <p>Try adjusting your search or filters</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '';
-            propertiesToShow.forEach(property => {
-                html += `
-                    <div class="list-item" data-id="${property.id}" data-type="property">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h3 class="h6 mb-1">${property.Property_Address || 'Unnamed Property'}</h3>
-                                <p class="mb-1 text-muted">${property.City || ''}, ${property.State || ''} ${property.Zip || ''}</p>
-                            </div>
-                            <div class="text-end">
-                                <span class="status-badge status-property">Property</span>
-                            </div>
-                        </div>
-                        <div class="mt-2">
-                            <span class="badge bg-light text-dark me-1">${property.Property_Type || 'No type'}</span>
-                            <span class="badge bg-light text-dark">${property.Last_Sale_Price ? '$' + numberWithCommas(property.Last_Sale_Price) : 'No price'}</span>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            dom.propertiesList.innerHTML = html;
-            
-            // Add click event to each item
-            document.querySelectorAll('#propertiesList .list-item').forEach(item => {
-                item.addEventListener('click', () => showDetailView(
-                    item.dataset.id,
-                    item.dataset.type
-                ));
-            });
-        }
-
-        // Show detail view
-        function showDetailView(id, type) {
-            let item;
-            if (type === 'owner') {
-                item = appState.owners.find(o => o.id == id);
-            } else {
-                item = appState.properties.find(p => p.id == id);
-            }
-            
-            if (!item) return;
-            
-            appState.currentDetail = item;
+        // Show owner detail view
+        function showOwnerDetail(owner) {
+            appState.currentOwner = owner;
             
             // Set title
-            dom.detailTitle.textContent = type === 'owner' 
-                ? (item.Name || 'Owner Details') 
-                : (item.Property_Address || 'Property Details');
+            dom.detailTitle.textContent = owner.Name || 'Owner Details';
+            
+            // Get properties for this owner
+            const ownerProperties = appState.properties.filter(prop => 
+                prop.PrimaryOwner && prop.PrimaryOwner.includes(owner.Name)
+            );
             
             // Build detail content
-            let html = '';
-            let fieldCount = 0;
+            const firstLetter = owner.Name ? owner.Name.charAt(0).toUpperCase() : 'O';
             
-            // Prioritize important fields
-            const importantFields = type === 'owner' 
-                ? ['Name', 'Email', 'Phone', 'Segment', 'Next_Steps', 'Last_Call_Segment'] 
-                : ['Property_Address', 'City', 'State', 'Zip', 'Property_Type', 'Last_Sale_Price'];
-            
-            // First show important fields
-            for (const field of importantFields) {
-                if (item[field] !== undefined && item[field] !== null && item[field] !== '') {
-                    html += renderField(field, item[field]);
-                    fieldCount++;
-                }
-            }
-            
-            // Then show other fields (up to maxDisplayFields)
-            for (const [key, value] of Object.entries(item)) {
-                if (fieldCount >= CONFIG.maxDisplayFields) break;
-                if (importantFields.includes(key)) continue;
-                if (value !== undefined && value !== null && value !== '') {
-                    html += renderField(key, value);
-                    fieldCount++;
-                }
-            }
-            
-            // Add "view all" button
-            html += `
-                <div class="mt-4 text-center">
-                    <button class="btn btn-outline-primary" id="viewAllFieldsBtn">
-                        View All Fields
-                    </button>
+            let html = `
+                <div class="owner-detail-card">
+                    <div class="owner-detail-header">
+                        <div class="owner-detail-avatar">${firstLetter}</div>
+                        <div class="owner-detail-info">
+                            <h2 class="owner-detail-name">${owner.Name || 'Unnamed Owner'}</h2>
+                            <div class="owner-detail-title">${owner.Title || 'No title'}</div>
+                            <div class="owner-detail-meta">
+                                <div class="detail-meta-item">
+                                    <i class="fas fa-envelope"></i>
+                                    <div class="detail-meta-content">
+                                        <div class="detail-meta-label">Email</div>
+                                        <div class="detail-meta-value">${owner.Email || 'Not provided'}</div>
+                                    </div>
+                                </div>
+                                <div class="detail-meta-item">
+                                    <i class="fas fa-phone"></i>
+                                    <div class="detail-meta-content">
+                                        <div class="detail-meta-label">Phone</div>
+                                        <div class="detail-meta-value">${owner.Phone || 'Not provided'}</div>
+                                    </div>
+                                </div>
+                                <div class="detail-meta-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <div class="detail-meta-content">
+                                        <div class="detail-meta-label">Location</div>
+                                        <div class="detail-meta-value">${owner.City || 'Unknown'}, ${owner.State || ''}</div>
+                                    </div>
+                                </div>
+                                <div class="detail-meta-item">
+                                    <i class="fas fa-briefcase"></i>
+                                    <div class="detail-meta-content">
+                                        <div class="detail-meta-label">Segment</div>
+                                        <div class="detail-meta-value">${owner.Segment || 'Not specified'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
+            
+            // Properties section
+            if (ownerProperties.length > 0) {
+                html += `
+                    <div class="section-title">
+                        <i class="fas fa-home"></i>
+                        Owned Properties (${ownerProperties.length})
+                    </div>
+                    <div class="properties-grid">
+                `;
+                
+                ownerProperties.forEach(property => {
+                    const price = property.Last_Sale_Price ? 
+                        `$${numberWithCommas(property.Last_Sale_Price)}` : 'Price not available';
+                    
+                    html += `
+                        <div class="property-card">
+                            <div class="property-image">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="property-content">
+                                <h3 class="property-address">${property.Property_Address || 'Unnamed Property'}</h3>
+                                <div class="property-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    ${property.City || ''}, ${property.State || ''} ${property.Zip || ''}
+                                </div>
+                                <div class="property-meta">
+                                    <div class="property-meta-item">
+                                        <div class="meta-label">Type</div>
+                                        <div class="meta-value">${property.Property_Type || 'Unknown'}</div>
+                                    </div>
+                                    <div class="property-meta-item">
+                                        <div class="meta-label">Size</div>
+                                        <div class="meta-value">${property.RBA ? property.RBA + ' sqft' : 'N/A'}</div>
+                                    </div>
+                                    <div class="property-meta-item">
+                                        <div class="meta-label">Last Sale</div>
+                                        <div class="meta-value property-price">${price}</div>
+                                    </div>
+                                    <div class="property-meta-item">
+                                        <div class="meta-label">Year Built</div>
+                                        <div class="meta-value">${property.YearB || 'N/A'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            } else {
+                html += `
+                    <div class="empty-state">
+                        <i class="fas fa-home"></i>
+                        <h3>No Properties Found</h3>
+                        <p>This owner doesn't have any properties recorded</p>
+                    </div>
+                `;
+            }
+            
+            // Contact History Section
+            html += `
+                <div class="section-title">
+                    <i class="fas fa-history"></i>
+                    Contact History
+                </div>
+                <div class="timeline">
+            `;
+            
+            // Add contact history items
+            const contacts = [
+                {id: 1, field: owner.Contact_1, notes: owner.Phone_1_Notes, date: owner.Date},
+                {id: 2, field: owner.Contact_2, notes: owner.Phone_2_Notes},
+                {id: 3, field: owner.Contact_3, notes: owner.Phone_3_Notes},
+                {id: 4, field: owner.Contact_4, notes: owner.Phone_4_Notes}
+            ];
+            
+            let contactCount = 0;
+            contacts.forEach(contact => {
+                if (contact.field || contact.notes) {
+                    contactCount++;
+                    const contactType = contact.id % 3 === 0 ? 'Meeting' : contact.id % 2 === 0 ? 'Email' : 'Call';
+                    
+                    html += `
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="${contactType === 'Call' ? 'fas fa-phone' : contactType === 'Email' ? 'fas fa-envelope' : 'fas fa-handshake'}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <div class="timeline-title">${contact.field || 'Contact'}</div>
+                                    <div class="timeline-date">${contact.date ? new Date(contact.date).toLocaleDateString() : 'No date'}</div>
+                                </div>
+                                <div class="timeline-text">
+                                    ${contact.notes || 'No additional notes'}
+                                </div>
+                                <span class="contact-type type-${contactType.toLowerCase()}">${contactType}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (contactCount === 0) {
+                html += `
+                    <div class="empty-state">
+                        <i class="fas fa-comment-slash"></i>
+                        <h3>No Contact History</h3>
+                        <p>No contact information recorded for this owner</p>
+                    </div>
+                `;
+            }
+            
+            html += `</div>`; // Close timeline
+            
+            // Notes section
+            if (owner.Extra_Notes || owner.Reminder_Note) {
+                html += `
+                    <div class="section-title">
+                        <i class="fas fa-sticky-note"></i>
+                        Additional Notes
+                    </div>
+                    <div class="notes-section">
+                `;
+                
+                if (owner.Extra_Notes) {
+                    html += `
+                        <div class="note-card">
+                            <div class="note-header">
+                                <div class="note-title">General Notes</div>
+                            </div>
+                            <div class="note-content">
+                                ${owner.Extra_Notes}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (owner.Reminder_Note && owner.Reminder_Date) {
+                    html += `
+                        <div class="note-card">
+                            <div class="note-header">
+                                <div class="note-title">Reminder: ${owner.Reminder_Title || 'Follow up'}</div>
+                                <div class="note-date">${new Date(owner.Reminder_Date).toLocaleDateString()}</div>
+                            </div>
+                            <div class="note-content">
+                                ${owner.Reminder_Note}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += `</div>`;
+            }
+            
+            // Next Steps section
+            if (owner.Next_Steps) {
+                html += `
+                    <div class="next-steps">
+                        <div class="next-steps-title">
+                            <i class="fas fa-arrow-right"></i>
+                            Next Steps
+                        </div>
+                        <ul class="next-steps-list">
+                            ${owner.Next_Steps.split(',').map(step => `
+                                <li class="next-steps-item">${step.trim()}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
             
             dom.detailContent.innerHTML = html;
             dom.detailView.classList.add('active');
-            
-            // Add event to "view all" button
-            document.getElementById('viewAllFieldsBtn')?.addEventListener('click', () => {
-                showAllFields(item);
-            });
-        }
-
-        // Render a field for detail view
-        function renderField(label, value) {
-            // Format label
-            const formattedLabel = label
-                .replace(/_/g, ' ')
-                .replace(/\b\w/g, l => l.toUpperCase());
-                
-            // Format value based on content
-            let formattedValue = value;
-            if (typeof value === 'object') {
-                formattedValue = JSON.stringify(value);
-            } else if (typeof value === 'boolean') {
-                formattedValue = value ? 'Yes' : 'No';
-            } else if (typeof value === 'number' && label.toLowerCase().includes('price')) {
-                formattedValue = '$' + numberWithCommas(value);
-            } else if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/)) {
-                formattedValue = new Date(value).toLocaleDateString();
-            }
-            
-            return `
-                <div class="field-group">
-                    <div class="field-label">${formattedLabel}</div>
-                    <div class="field-value">${formattedValue}</div>
-                </div>
-            `;
-        }
-
-        // Show all fields in detail view
-        function showAllFields(item) {
-            let html = '';
-            
-            for (const [key, value] of Object.entries(item)) {
-                html += renderField(key, value);
-            }
-            
-            dom.detailContent.innerHTML = html;
         }
 
         // Setup event listeners
         function setupEventListeners() {
             // Search input
             dom.searchInput.addEventListener('input', function() {
-                appState.searchQuery = this.value.toLowerCase().trim();
-                filterData();
+                const query = this.value.toLowerCase().trim();
+                appState.searchQuery = query;
+                
+                if (!query) {
+                    appState.filteredOwners = appState.owners;
+                } else {
+                    appState.filteredOwners = appState.owners.filter(owner => 
+                        (owner.Name && owner.Name.toLowerCase().includes(query)) ||
+                        (owner.Email && owner.Email.toLowerCase().includes(query)) ||
+                        (owner.Phone && owner.Phone.toLowerCase().includes(query)) ||
+                        (owner.City && owner.City.toLowerCase().includes(query))
+                    );
+                }
+                
+                renderOwnersList();
             });
             
-            // Back button in detail view
+            // Back button
             dom.backButton.addEventListener('click', function() {
                 dom.detailView.classList.remove('active');
             });
-            
-            // Filter chips
-            document.querySelectorAll('.filter-chip').forEach(chip => {
-                chip.addEventListener('click', function() {
-                    // For demonstration - in a real app, this would filter data
-                    document.querySelectorAll('.filter-chip').forEach(c => {
-                        c.classList.remove('active');
-                    });
-                    this.classList.add('active');
-                });
-            });
-            
-            // Tab switching
-            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
-                tab.addEventListener('shown.bs.tab', function() {
-                    appState.currentTab = this.getAttribute('data-bs-target').replace('#', '');
-                });
-            });
-        }
-
-        // Filter data based on search query
-        function filterData() {
-            if (!appState.searchQuery) {
-                appState.filteredOwners = appState.owners;
-                appState.filteredProperties = appState.properties;
-            } else {
-                appState.filteredOwners = appState.owners.filter(owner => 
-                    Object.values(owner).some(value => 
-                        value && value.toString().toLowerCase().includes(appState.searchQuery)
-                    )
-                );
-                
-                appState.filteredProperties = appState.properties.filter(property => 
-                    Object.values(property).some(value => 
-                        value && value.toString().toLowerCase().includes(appState.searchQuery)
-                    )
-                );
-            }
-            
-            renderOwnersList();
-            renderPropertiesList();
         }
 
         // Utility: Format numbers with commas
         function numberWithCommas(x) {
+            if (!x) return 'N/A';
             return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
@@ -671,23 +1245,12 @@
                     <i class="fas fa-exclamation-triangle"></i>
                     <h3>Error loading data</h3>
                     <p>Please check your connection and try again</p>
-                    <button class="btn btn-primary mt-2" id="retryBtn">Retry</button>
+                    <button class="btn btn-primary" onclick="location.reload()">Retry</button>
                 </div>
             `;
-            
-            dom.propertiesList.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Error loading data</h3>
-                    <p>Please check your connection and try again</p>
-                    <button class="btn btn-primary mt-2" id="retryBtn">Retry</button>
-                </div>
-            `;
-            
-            document.getElementById('retryBtn')?.addEventListener('click', initApp);
         }
 
-        // Initialize the app when DOM is loaded
+        // Initialize the app
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
