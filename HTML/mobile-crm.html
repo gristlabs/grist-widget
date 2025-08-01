@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile CRM - Owner Focus</title>
+    <title>Property CRM - Mobile Edition</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -20,6 +20,7 @@
             --light-gray: #e9ecef;
             --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             --transition: all 0.3s ease;
+            --border-radius: 16px;
         }
         
         * {
@@ -27,10 +28,10 @@
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
         
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
             color: var(--dark);
             line-height: 1.6;
@@ -47,6 +48,7 @@
             margin: 0 auto;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
         }
         
         /* Header */
@@ -125,6 +127,7 @@
             flex: 1;
             overflow: hidden;
             position: relative;
+            background: #f8fafc;
         }
         
         .content-section {
@@ -144,29 +147,27 @@
             -webkit-overflow-scrolling: touch;
             padding: 16px;
             padding-bottom: 80px;
+            display: grid;
+            gap: 16px;
         }
         
         .owner-card {
             background: white;
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             padding: 16px;
-            margin-bottom: 16px;
             box-shadow: var(--card-shadow);
             transition: var(--transition);
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            border-left: 4px solid var(--primary);
         }
         
         .owner-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-        }
-        
-        .owner-card-header {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 12px;
         }
         
         .owner-avatar {
@@ -207,6 +208,9 @@
             align-items: center;
             font-size: 0.85rem;
             color: var(--gray);
+            background: var(--light-gray);
+            padding: 4px 10px;
+            border-radius: 20px;
         }
         
         .meta-item i {
@@ -214,21 +218,7 @@
             color: var(--primary);
         }
         
-        .owner-segment {
-            background: rgba(67, 97, 238, 0.1);
-            color: var(--primary);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            display: inline-block;
-            margin-top: 8px;
-        }
-        
         .owner-status {
-            position: absolute;
-            top: 16px;
-            right: 16px;
             display: flex;
             gap: 8px;
         }
@@ -345,7 +335,7 @@
         .section-title {
             font-size: 1.1rem;
             font-weight: 600;
-            margin-bottom: 16px;
+            margin: 24px 0 16px;
             padding-bottom: 8px;
             border-bottom: 2px solid var(--light-gray);
             display: flex;
@@ -360,7 +350,7 @@
         /* Owner Info Section */
         .owner-detail-card {
             background: white;
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             padding: 20px;
             margin-bottom: 24px;
             box-shadow: var(--card-shadow);
@@ -403,50 +393,72 @@
             margin-bottom: 12px;
         }
         
-        .owner-detail-meta {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        
-        .detail-meta-item {
+        .contact-buttons {
             display: flex;
-            align-items: flex-start;
+            gap: 12px;
+            margin-top: 16px;
         }
         
-        .detail-meta-item i {
-            color: var(--primary);
-            margin-right: 8px;
-            margin-top: 4px;
-            flex-shrink: 0;
-        }
-        
-        .detail-meta-content {
+        .contact-btn {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(67, 97, 238, 0.1);
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
         }
         
-        .detail-meta-label {
-            font-size: 0.8rem;
+        .contact-btn:hover {
+            background: rgba(67, 97, 238, 0.2);
+        }
+        
+        .contact-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .info-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 0.85rem;
             color: var(--gray);
-            margin-bottom: 2px;
+            margin-bottom: 6px;
         }
         
-        .detail-meta-value {
-            font-size: 0.95rem;
-            font-weight: 500;
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
         }
         
         /* Properties Section */
         .properties-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
         
         .property-card {
             background: white;
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: var(--card-shadow);
             transition: var(--transition);
@@ -458,13 +470,20 @@
         }
         
         .property-image {
-            height: 160px;
-            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+            height: 180px;
+            background-color: #e0e7ff;
+            background-size: cover;
+            background-position: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 2rem;
+            color: var(--primary);
+            position: relative;
+        }
+        
+        .property-image-placeholder {
+            font-size: 3rem;
+            opacity: 0.3;
         }
         
         .property-content {
@@ -474,7 +493,7 @@
         .property-address {
             font-size: 1.1rem;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         
         .property-location {
@@ -490,8 +509,8 @@
         }
         
         .property-meta {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            display: flex;
+            flex-wrap: wrap;
             gap: 12px;
             margin-top: 12px;
         }
@@ -499,6 +518,7 @@
         .property-meta-item {
             display: flex;
             flex-direction: column;
+            min-width: 100px;
         }
         
         .meta-label {
@@ -512,8 +532,14 @@
             font-weight: 500;
         }
         
-        .property-price {
-            font-weight: 700;
+        .tenant-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px dashed var(--light-gray);
+        }
+        
+        .tenant-value {
+            font-weight: 500;
             color: var(--primary);
         }
         
@@ -596,6 +622,11 @@
             font-size: 0.95rem;
             color: var(--dark);
             line-height: 1.5;
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 3px solid var(--primary);
         }
         
         .contact-type {
@@ -622,46 +653,10 @@
             color: var(--warning);
         }
         
-        /* Notes Section */
-        .notes-section {
-            margin-top: 24px;
-        }
-        
-        .note-card {
-            background: white;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: var(--card-shadow);
-        }
-        
-        .note-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .note-title {
-            font-weight: 600;
-            color: var(--dark);
-        }
-        
-        .note-date {
-            font-size: 0.85rem;
-            color: var(--gray);
-        }
-        
-        .note-content {
-            font-size: 0.95rem;
-            color: var(--dark);
-            line-height: 1.5;
-        }
-        
         /* Next Steps */
         .next-steps {
             background: rgba(114, 9, 183, 0.05);
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             padding: 20px;
             margin-top: 24px;
             border-left: 4px solid var(--secondary);
@@ -697,14 +692,6 @@
         
         /* Responsive adjustments */
         @media (max-width: 480px) {
-            .owner-detail-meta {
-                grid-template-columns: 1fr;
-            }
-            
-            .property-meta {
-                grid-template-columns: 1fr;
-            }
-            
             .owner-detail-header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -712,6 +699,14 @@
             
             .owner-detail-avatar {
                 margin-bottom: 16px;
+            }
+            
+            .contact-buttons {
+                flex-direction: column;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
             }
         }
         
@@ -746,6 +741,10 @@
             text-align: center;
             padding: 40px 20px;
             color: var(--gray);
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin: 16px 0;
         }
         
         .empty-state i {
@@ -785,6 +784,29 @@
             background: var(--primary-dark);
             box-shadow: 0 6px 16px rgba(67, 97, 238, 0.4);
         }
+        
+        /* Contact History Tabs */
+        .contact-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        
+        .contact-tab {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .contact-tab.active {
+            background: var(--primary);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -792,7 +814,7 @@
         <!-- App Header -->
         <header class="app-header">
             <div class="header-top">
-                <div class="app-title">Mobile CRM</div>
+                <div class="app-title">Property CRM</div>
                 <div class="header-actions">
                     <button class="header-btn">
                         <i class="fas fa-sync"></i>
@@ -804,7 +826,7 @@
             </div>
             <div class="search-container">
                 <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-input" placeholder="Search owners by name, phone, or email...">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search owners by name, phone, or email...">
             </div>
         </header>
         
@@ -868,7 +890,8 @@
             filteredOwners: [],
             properties: [],
             currentOwner: null,
-            searchQuery: ''
+            searchQuery: '',
+            currentContactTab: 1
         };
 
         // DOM elements
@@ -879,7 +902,7 @@
             detailTitle: document.getElementById('detailTitle'),
             detailContent: document.getElementById('detailContent'),
             backButton: document.getElementById('backButton'),
-            searchInput: document.querySelector('.search-input')
+            searchInput: document.getElementById('searchInput')
         };
 
         // Initialize the app
@@ -933,22 +956,22 @@
                 
                 html += `
                     <div class="owner-card" data-id="${owner.id}">
-                        <div class="owner-card-header">
-                            <div class="owner-avatar">${firstLetter}</div>
-                            <div class="owner-info">
-                                <h3 class="owner-name">${owner.Name || 'Unnamed Owner'}</h3>
-                                <p>${owner.Email || 'No email provided'}</p>
-                                <div class="owner-meta">
-                                    <div class="meta-item">
-                                        <i class="fas fa-phone"></i>
-                                        <span>${owner.Phone || 'No phone'}</span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span>${owner.City || 'Unknown location'}</span>
-                                    </div>
+                        <div class="owner-avatar">${firstLetter}</div>
+                        <div class="owner-info">
+                            <h3 class="owner-name">${owner.Name || 'Unnamed Owner'}</h3>
+                            <div class="owner-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-phone"></i>
+                                    <span>${owner.Phone || 'No phone'}</span>
                                 </div>
-                                ${owner.Segment ? `<span class="owner-segment">${owner.Segment}</span>` : ''}
+                                <div class="meta-item">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>${owner.Email || 'No email'}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>${owner.City || 'Unknown'}</span>
+                                </div>
                             </div>
                         </div>
                         <div class="owner-status">
@@ -995,36 +1018,39 @@
                         <div class="owner-detail-info">
                             <h2 class="owner-detail-name">${owner.Name || 'Unnamed Owner'}</h2>
                             <div class="owner-detail-title">${owner.Title || 'No title'}</div>
-                            <div class="owner-detail-meta">
-                                <div class="detail-meta-item">
-                                    <i class="fas fa-envelope"></i>
-                                    <div class="detail-meta-content">
-                                        <div class="detail-meta-label">Email</div>
-                                        <div class="detail-meta-value">${owner.Email || 'Not provided'}</div>
-                                    </div>
-                                </div>
-                                <div class="detail-meta-item">
+                            <div class="contact-buttons">
+                                <button class="contact-btn">
                                     <i class="fas fa-phone"></i>
-                                    <div class="detail-meta-content">
-                                        <div class="detail-meta-label">Phone</div>
-                                        <div class="detail-meta-value">${owner.Phone || 'Not provided'}</div>
-                                    </div>
-                                </div>
-                                <div class="detail-meta-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <div class="detail-meta-content">
-                                        <div class="detail-meta-label">Location</div>
-                                        <div class="detail-meta-value">${owner.City || 'Unknown'}, ${owner.State || ''}</div>
-                                    </div>
-                                </div>
-                                <div class="detail-meta-item">
-                                    <i class="fas fa-briefcase"></i>
-                                    <div class="detail-meta-content">
-                                        <div class="detail-meta-label">Segment</div>
-                                        <div class="detail-meta-value">${owner.Segment || 'Not specified'}</div>
-                                    </div>
-                                </div>
+                                    Call
+                                </button>
+                                <button class="contact-btn">
+                                    <i class="fas fa-envelope"></i>
+                                    Email
+                                </button>
+                                <button class="contact-btn">
+                                    <i class="fas fa-comment"></i>
+                                    Message
+                                </button>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <div class="info-label">Segment</div>
+                            <div class="info-value">${owner.Segment || 'N/A'}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Personality</div>
+                            <div class="info-value">${owner.Owner_Personality || 'N/A'}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Activity</div>
+                            <div class="info-value">${owner.Activity || 'N/A'}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Properties</div>
+                            <div class="info-value">${ownerProperties.length}</div>
                         </div>
                     </div>
                 </div>
@@ -1041,38 +1067,65 @@
                 `;
                 
                 ownerProperties.forEach(property => {
-                    const price = property.Last_Sale_Price ? 
-                        `$${numberWithCommas(property.Last_Sale_Price)}` : 'Price not available';
+                    // Get first image URL if available
+                    let imageUrl = '';
+                    let imageContent = '<i class="fas fa-home property-image-placeholder"></i>';
+                    
+                    if (property.ImageURLs) {
+                        // Extract first URL from comma-separated list
+                        const urls = property.ImageURLs.split(',');
+                        if (urls.length > 0 && urls[0].trim() !== '') {
+                            imageUrl = urls[0].trim();
+                            imageContent = '';
+                        }
+                    }
+                    
+                    // Property address
+                    const propertyAddress = property.Property_Address || '';
+                    
+                    // Location
+                    let location = '';
+                    if (property.City) location += property.City;
+                    if (property.State) location += location ? `, ${property.State}` : property.State;
+                    if (property.Zip) location += location ? ` ${property.Zip}` : property.Zip;
+                    
+                    // Property type - only show if available
+                    const propertyType = property.Property_Type ? `
+                        <div class="property-meta-item">
+                            <div class="meta-label">Type</div>
+                            <div class="meta-value">${property.Property_Type}</div>
+                        </div>
+                    ` : '';
+                    
+                    // Size - only show if available
+                    const propertySize = property.RBA ? `
+                        <div class="property-meta-item">
+                            <div class="meta-label">Size</div>
+                            <div class="meta-value">${property.RBA} sqft</div>
+                        </div>
+                    ` : '';
+                    
+                    // Tenants
+                    const tenants = property.Tenants ? `
+                        <div class="tenant-section">
+                            <div class="meta-label">Tenant(s)</div>
+                            <div class="tenant-value">${property.Tenants}</div>
+                        </div>
+                    ` : '';
                     
                     html += `
                         <div class="property-card">
-                            <div class="property-image">
-                                <i class="fas fa-home"></i>
+                            <div class="property-image" style="${imageUrl ? `background-image: url('${imageUrl}')` : ''}">
+                                ${imageContent}
                             </div>
                             <div class="property-content">
-                                <h3 class="property-address">${property.Property_Address || 'Unnamed Property'}</h3>
-                                <div class="property-location">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    ${property.City || ''}, ${property.State || ''} ${property.Zip || ''}
-                                </div>
+                                <h3 class="property-address">${propertyAddress}</h3>
+                                ${location ? `<div class="property-location">${location}</div>` : ''}
                                 <div class="property-meta">
-                                    <div class="property-meta-item">
-                                        <div class="meta-label">Type</div>
-                                        <div class="meta-value">${property.Property_Type || 'Unknown'}</div>
-                                    </div>
-                                    <div class="property-meta-item">
-                                        <div class="meta-label">Size</div>
-                                        <div class="meta-value">${property.RBA ? property.RBA + ' sqft' : 'N/A'}</div>
-                                    </div>
-                                    <div class="property-meta-item">
-                                        <div class="meta-label">Last Sale</div>
-                                        <div class="meta-value property-price">${price}</div>
-                                    </div>
-                                    <div class="property-meta-item">
-                                        <div class="meta-label">Year Built</div>
-                                        <div class="meta-value">${property.YearB || 'N/A'}</div>
-                                    </div>
+                                    ${propertyType}
+                                    ${propertySize}
                                 </div>
+                                ${tenants}
                             </div>
                         </div>
                     `;
@@ -1095,93 +1148,47 @@
                     <i class="fas fa-history"></i>
                     Contact History
                 </div>
-                <div class="timeline">
             `;
             
-            // Add contact history items
-            const contacts = [
-                {id: 1, field: owner.Contact_1, notes: owner.Phone_1_Notes, date: owner.Date},
-                {id: 2, field: owner.Contact_2, notes: owner.Phone_2_Notes},
-                {id: 3, field: owner.Contact_3, notes: owner.Phone_3_Notes},
-                {id: 4, field: owner.Contact_4, notes: owner.Phone_4_Notes}
-            ];
+            // Contact tabs
+            html += `<div class="contact-tabs" id="contactTabs">`;
+            for (let i = 1; i <= 4; i++) {
+                if (owner[`Contact_${i}`] || owner[`Phone_${i}_Notes`]) {
+                    const activeClass = appState.currentContactTab === i ? 'active' : '';
+                    html += `<div class="contact-tab ${activeClass}" data-tab="${i}">Contact ${i}</div>`;
+                }
+            }
+            html += `</div>`;
             
-            let contactCount = 0;
-            contacts.forEach(contact => {
-                if (contact.field || contact.notes) {
-                    contactCount++;
-                    const contactType = contact.id % 3 === 0 ? 'Meeting' : contact.id % 2 === 0 ? 'Email' : 'Call';
+            // Contact content
+            for (let i = 1; i <= 4; i++) {
+                const contactMethod = owner[`Contact_${i}`];
+                const contactNotes = owner[`Phone_${i}_Notes`];
+                
+                if (contactMethod || contactNotes) {
+                    const displayStyle = appState.currentContactTab === i ? 'block' : 'none';
+                    const contactType = i % 3 === 0 ? 'Meeting' : i % 2 === 0 ? 'Email' : 'Call';
                     
                     html += `
-                        <div class="timeline-item">
-                            <div class="timeline-icon">
-                                <i class="${contactType === 'Call' ? 'fas fa-phone' : contactType === 'Email' ? 'fas fa-envelope' : 'fas fa-handshake'}"></i>
-                            </div>
-                            <div class="timeline-content">
-                                <div class="timeline-header">
-                                    <div class="timeline-title">${contact.field || 'Contact'}</div>
-                                    <div class="timeline-date">${contact.date ? new Date(contact.date).toLocaleDateString() : 'No date'}</div>
+                        <div class="timeline" style="display: ${displayStyle};" id="contactContent${i}">
+                            <div class="timeline-item">
+                                <div class="timeline-icon">
+                                    <i class="${contactType === 'Call' ? 'fas fa-phone' : contactType === 'Email' ? 'fas fa-envelope' : 'fas fa-handshake'}"></i>
                                 </div>
-                                <div class="timeline-text">
-                                    ${contact.notes || 'No additional notes'}
+                                <div class="timeline-content">
+                                    <div class="timeline-header">
+                                        <div class="timeline-title">${contactMethod || 'Contact'}</div>
+                                        <div class="timeline-date">${owner.Date ? new Date(owner.Date).toLocaleDateString() : 'No date'}</div>
+                                    </div>
+                                    <div class="timeline-text">
+                                        ${contactNotes || 'No additional notes'}
+                                    </div>
+                                    <span class="contact-type type-${contactType.toLowerCase()}">${contactType}</span>
                                 </div>
-                                <span class="contact-type type-${contactType.toLowerCase()}">${contactType}</span>
                             </div>
                         </div>
                     `;
                 }
-            });
-            
-            if (contactCount === 0) {
-                html += `
-                    <div class="empty-state">
-                        <i class="fas fa-comment-slash"></i>
-                        <h3>No Contact History</h3>
-                        <p>No contact information recorded for this owner</p>
-                    </div>
-                `;
-            }
-            
-            html += `</div>`; // Close timeline
-            
-            // Notes section
-            if (owner.Extra_Notes || owner.Reminder_Note) {
-                html += `
-                    <div class="section-title">
-                        <i class="fas fa-sticky-note"></i>
-                        Additional Notes
-                    </div>
-                    <div class="notes-section">
-                `;
-                
-                if (owner.Extra_Notes) {
-                    html += `
-                        <div class="note-card">
-                            <div class="note-header">
-                                <div class="note-title">General Notes</div>
-                            </div>
-                            <div class="note-content">
-                                ${owner.Extra_Notes}
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                if (owner.Reminder_Note && owner.Reminder_Date) {
-                    html += `
-                        <div class="note-card">
-                            <div class="note-header">
-                                <div class="note-title">Reminder: ${owner.Reminder_Title || 'Follow up'}</div>
-                                <div class="note-date">${new Date(owner.Reminder_Date).toLocaleDateString()}</div>
-                            </div>
-                            <div class="note-content">
-                                ${owner.Reminder_Note}
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                html += `</div>`;
             }
             
             // Next Steps section
@@ -1203,6 +1210,28 @@
             
             dom.detailContent.innerHTML = html;
             dom.detailView.classList.add('active');
+            
+            // Add event listeners to contact tabs
+            document.querySelectorAll('.contact-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabIndex = parseInt(tab.dataset.tab);
+                    appState.currentContactTab = tabIndex;
+                    
+                    // Update active tab
+                    document.querySelectorAll('.contact-tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    tab.classList.add('active');
+                    
+                    // Show correct content
+                    for (let i = 1; i <= 4; i++) {
+                        const content = document.getElementById(`contactContent${i}`);
+                        if (content) {
+                            content.style.display = i === tabIndex ? 'block' : 'none';
+                        }
+                    }
+                });
+            });
         }
 
         // Setup event listeners
@@ -1230,12 +1259,6 @@
             dom.backButton.addEventListener('click', function() {
                 dom.detailView.classList.remove('active');
             });
-        }
-
-        // Utility: Format numbers with commas
-        function numberWithCommas(x) {
-            if (!x) return 'N/A';
-            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
         // Show error state
