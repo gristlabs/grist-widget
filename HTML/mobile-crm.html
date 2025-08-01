@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile CRM - Grist Data</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #f5f7fb;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            background: white;
+            position: relative;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .search-container {
+            background-color: white;
+            border-radius: 25px;
+            padding: 5px 15px;
+            margin-top: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .search-container input {
+            border: none;
+            width: 100%;
+            outline: none;
+            padding: 8px 0;
+        }
+        
+        .nav-tabs {
+            background-color: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0 15px;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .nav-link {
+            border: none;
+            color: #6c757d;
+            padding: 12px 0;
+            font-weight: 500;
+            position: relative;
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        .nav-link.active {
+            color: var(--primary-color);
+            background: transparent;
+            border: none;
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .tab-content {
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .tab-pane {
+            height: 100%;
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .virtual-list {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .list-item {
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        
+        .list-item:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .list-item.active {
+            background-color: #eef7ff;
+        }
+        
+        .detail-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+            overflow-y: auto;
+            padding-top: env(safe-area-inset-top);
+        }
+        
+        .detail-view.active {
+            transform: translateX(0);
+        }
+        
+        .detail-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 101;
+        }
+        
+        .detail-content {
+            padding: 20px;
+        }
+        
+        .field-group {
+            margin-bottom: 20px;
+        }
+        
+        .field-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+        
+        .field-value {
+            font-size: 1rem;
+            line-height: 1.4;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .back-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            padding: 5px 10px;
+            margin-right: 10px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .status-owner {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-property {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #bdbdbd;
+        }
+        
+        .filter-bar {
+            padding: 10px 15px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .filter-chip {
+            background: #f0f4f8;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+        
+        .filter-chip.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        @media (min-width: 768px) {
+            .app-container {
+                max-width: 768px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center">
+                <button class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="h5 mb-0">Mobile CRM</h1>
+                <button class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-sync"></i>
+                </button>
+            </div>
+            <div class="search-container mt-2 d-flex align-items-center">
+                <i class="fas fa-search text-muted me-2"></i>
+                <input type="text" id="searchInput" placeholder="Search owners, properties...">
+            </div>
+        </div>
+        
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <button class="filter-chip">All</button>
+            <button class="filter-chip">Active</button>
+            <button class="filter-chip">Follow Up</button>
+            <button class="filter-chip">Properties</button>
+            <button class="filter-chip">Owners</button>
+            <button class="filter-chip">Hot Leads</button>
+        </div>
+        
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="owners-tab" data-bs-toggle="tab" data-bs-target="#owners" type="button" role="tab">
+                    <i class="fas fa-user me-1"></i> Owners
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="properties-tab" data-bs-toggle="tab" data-bs-target="#properties" type="button" role="tab">
+                    <i class="fas fa-home me-1"></i> Properties
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content" id="mainTabContent">
+            <!-- Owners Tab -->
+            <div class="tab-pane fade show active" id="owners" role="tabpanel">
+                <div class="virtual-list" id="ownersList">
+                    <!-- Owners will be loaded here -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading owners...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Properties Tab -->
+            <div class="tab-pane fade" id="properties" role="tabpanel">
+                <div class="virtual-list" id="propertiesList">
+                    <!-- Properties will be loaded here -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading properties...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detail View (hidden by default) -->
+        <div class="detail-view" id="detailView">
+            <div class="detail-header">
+                <button class="back-button" id="backButton">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2 id="detailTitle" class="h5 mb-0"></h2>
+            </div>
+            <div class="detail-content" id="detailContent">
+                <!-- Detail content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const CONFIG = {
+            ownersUrl: 'https://raw.githubusercontent.com/CleanslateKickz/geojson/main/geojson/owners.json',
+            propertiesUrl: 'https://raw.githubusercontent.com/CleanslateKickz/geojson/main/geojson/properties.json',
+            pageSize: 20,
+            maxDisplayFields: 8
+        };
+
+        // State management
+        let appState = {
+            owners: [],
+            filteredOwners: [],
+            properties: [],
+            filteredProperties: [],
+            currentTab: 'owners',
+            currentDetail: null,
+            searchQuery: '',
+            ownersPage: 1,
+            propertiesPage: 1
+        };
+
+        // DOM elements
+        const dom = {
+            ownersList: document.getElementById('ownersList'),
+            propertiesList: document.getElementById('propertiesList'),
+            searchInput: document.getElementById('searchInput'),
+            detailView: document.getElementById('detailView'),
+            detailTitle: document.getElementById('detailTitle'),
+            detailContent: document.getElementById('detailContent'),
+            backButton: document.getElementById('backButton')
+        };
+
+        // Initialize the app
+        async function initApp() {
+            // Load data
+            try {
+                const [ownersData, propertiesData] = await Promise.all([
+                    fetchData(CONFIG.ownersUrl),
+                    fetchData(CONFIG.propertiesUrl)
+                ]);
+                
+                appState.owners = ownersData;
+                appState.filteredOwners = ownersData;
+                appState.properties = propertiesData;
+                appState.filteredProperties = propertiesData;
+                
+                renderOwnersList();
+                renderPropertiesList();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showErrorState();
+            }
+            
+            // Setup event listeners
+            setupEventListeners();
+        }
+
+        // Fetch data from URL
+        async function fetchData(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch data from ${url}`);
+            }
+            return await response.json();
+        }
+
+        // Render owners list
+        function renderOwnersList() {
+            const startIndex = 0;
+            const endIndex = Math.min(startIndex + CONFIG.pageSize, appState.filteredOwners.length);
+            const ownersToShow = appState.filteredOwners.slice(startIndex, endIndex);
+            
+            if (ownersToShow.length === 0) {
+                dom.ownersList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-slash"></i>
+                        <h3>No owners found</h3>
+                        <p>Try adjusting your search or filters</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            ownersToShow.forEach(owner => {
+                html += `
+                    <div class="list-item" data-id="${owner.id}" data-type="owner">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="h6 mb-1">${owner.Name || 'Unnamed Owner'}</h3>
+                                <p class="mb-1 text-muted">${owner.Email || 'No email'}</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-badge status-owner">Owner</span>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge bg-light text-dark me-1">${owner.Segment || 'No segment'}</span>
+                            <span class="badge bg-light text-dark">${owner.City || 'No city'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            dom.ownersList.innerHTML = html;
+            
+            // Add click event to each item
+            document.querySelectorAll('#ownersList .list-item').forEach(item => {
+                item.addEventListener('click', () => showDetailView(
+                    item.dataset.id,
+                    item.dataset.type
+                ));
+            });
+        }
+
+        // Render properties list
+        function renderPropertiesList() {
+            const startIndex = 0;
+            const endIndex = Math.min(startIndex + CONFIG.pageSize, appState.filteredProperties.length);
+            const propertiesToShow = appState.filteredProperties.slice(startIndex, endIndex);
+            
+            if (propertiesToShow.length === 0) {
+                dom.propertiesList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-home"></i>
+                        <h3>No properties found</h3>
+                        <p>Try adjusting your search or filters</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            propertiesToShow.forEach(property => {
+                html += `
+                    <div class="list-item" data-id="${property.id}" data-type="property">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="h6 mb-1">${property.Property_Address || 'Unnamed Property'}</h3>
+                                <p class="mb-1 text-muted">${property.City || ''}, ${property.State || ''} ${property.Zip || ''}</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-badge status-property">Property</span>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge bg-light text-dark me-1">${property.Property_Type || 'No type'}</span>
+                            <span class="badge bg-light text-dark">${property.Last_Sale_Price ? '$' + numberWithCommas(property.Last_Sale_Price) : 'No price'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            dom.propertiesList.innerHTML = html;
+            
+            // Add click event to each item
+            document.querySelectorAll('#propertiesList .list-item').forEach(item => {
+                item.addEventListener('click', () => showDetailView(
+                    item.dataset.id,
+                    item.dataset.type
+                ));
+            });
+        }
+
+        // Show detail view
+        function showDetailView(id, type) {
+            let item;
+            if (type === 'owner') {
+                item = appState.owners.find(o => o.id == id);
+            } else {
+                item = appState.properties.find(p => p.id == id);
+            }
+            
+            if (!item) return;
+            
+            appState.currentDetail = item;
+            
+            // Set title
+            dom.detailTitle.textContent = type === 'owner' 
+                ? (item.Name || 'Owner Details') 
+                : (item.Property_Address || 'Property Details');
+            
+            // Build detail content
+            let html = '';
+            let fieldCount = 0;
+            
+            // Prioritize important fields
+            const importantFields = type === 'owner' 
+                ? ['Name', 'Email', 'Phone', 'Segment', 'Next_Steps', 'Last_Call_Segment'] 
+                : ['Property_Address', 'City', 'State', 'Zip', 'Property_Type', 'Last_Sale_Price'];
+            
+            // First show important fields
+            for (const field of importantFields) {
+                if (item[field] !== undefined && item[field] !== null && item[field] !== '') {
+                    html += renderField(field, item[field]);
+                    fieldCount++;
+                }
+            }
+            
+            // Then show other fields (up to maxDisplayFields)
+            for (const [key, value] of Object.entries(item)) {
+                if (fieldCount >= CONFIG.maxDisplayFields) break;
+                if (importantFields.includes(key)) continue;
+                if (value !== undefined && value !== null && value !== '') {
+                    html += renderField(key, value);
+                    fieldCount++;
+                }
+            }
+            
+            // Add "view all" button
+            html += `
+                <div class="mt-4 text-center">
+                    <button class="btn btn-outline-primary" id="viewAllFieldsBtn">
+                        View All Fields
+                    </button>
+                </div>
+            `;
+            
+            dom.detailContent.innerHTML = html;
+            dom.detailView.classList.add('active');
+            
+            // Add event to "view all" button
+            document.getElementById('viewAllFieldsBtn')?.addEventListener('click', () => {
+                showAllFields(item);
+            });
+        }
+
+        // Render a field for detail view
+        function renderField(label, value) {
+            // Format label
+            const formattedLabel = label
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+                
+            // Format value based on content
+            let formattedValue = value;
+            if (typeof value === 'object') {
+                formattedValue = JSON.stringify(value);
+            } else if (typeof value === 'boolean') {
+                formattedValue = value ? 'Yes' : 'No';
+            } else if (typeof value === 'number' && label.toLowerCase().includes('price')) {
+                formattedValue = '$' + numberWithCommas(value);
+            } else if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+                formattedValue = new Date(value).toLocaleDateString();
+            }
+            
+            return `
+                <div class="field-group">
+                    <div class="field-label">${formattedLabel}</div>
+                    <div class="field-value">${formattedValue}</div>
+                </div>
+            `;
+        }
+
+        // Show all fields in detail view
+        function showAllFields(item) {
+            let html = '';
+            
+            for (const [key, value] of Object.entries(item)) {
+                html += renderField(key, value);
+            }
+            
+            dom.detailContent.innerHTML = html;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Search input
+            dom.searchInput.addEventListener('input', function() {
+                appState.searchQuery = this.value.toLowerCase().trim();
+                filterData();
+            });
+            
+            // Back button in detail view
+            dom.backButton.addEventListener('click', function() {
+                dom.detailView.classList.remove('active');
+            });
+            
+            // Filter chips
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    // For demonstration - in a real app, this would filter data
+                    document.querySelectorAll('.filter-chip').forEach(c => {
+                        c.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                });
+            });
+            
+            // Tab switching
+            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function() {
+                    appState.currentTab = this.getAttribute('data-bs-target').replace('#', '');
+                });
+            });
+        }
+
+        // Filter data based on search query
+        function filterData() {
+            if (!appState.searchQuery) {
+                appState.filteredOwners = appState.owners;
+                appState.filteredProperties = appState.properties;
+            } else {
+                appState.filteredOwners = appState.owners.filter(owner => 
+                    Object.values(owner).some(value => 
+                        value && value.toString().toLowerCase().includes(appState.searchQuery)
+                    )
+                );
+                
+                appState.filteredProperties = appState.properties.filter(property => 
+                    Object.values(property).some(value => 
+                        value && value.toString().toLowerCase().includes(appState.searchQuery)
+                    )
+                );
+            }
+            
+            renderOwnersList();
+            renderPropertiesList();
+        }
+
+        // Utility: Format numbers with commas
+        function numberWithCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // Show error state
+        function showErrorState() {
+            dom.ownersList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error loading data</h3>
+                    <p>Please check your connection and try again</p>
+                    <button class="btn btn-primary mt-2" id="retryBtn">Retry</button>
+                </div>
+            `;
+            
+            dom.propertiesList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error loading data</h3>
+                    <p>Please check your connection and try again</p>
+                    <button class="btn btn-primary mt-2" id="retryBtn">Retry</button>
+                </div>
+            `;
+            
+            document.getElementById('retryBtn')?.addEventListener('click', initApp);
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
