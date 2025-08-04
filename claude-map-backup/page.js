@@ -138,14 +138,6 @@ function initializeMap() {
         });
     }
 
-    // Add after map initialization but before the ready event
-    amap.on('popupopen', function(e) {
-        const feature = e.popup._source;
-        if (feature && feature.record) {
-            grist.setCursorPos({rowId: feature.record.id}).catch(() => {});
-        }
-    });
-
     return amap;
 }
 
@@ -223,6 +215,10 @@ function createMarker(record) {
         maxWidth: 240,
         minWidth: 240,
         className: 'custom-popup'
+    });
+
+    marker.on('click', () => {
+        grist.setCursorPos({ rowId: record.id }).catch(() => {});
     });
 
     popups[record.id] = marker;
@@ -340,14 +336,11 @@ function selectMaker(id) {
     const previouslyClicked = popups[selectedRowId];
     if (previouslyClicked) {
         previouslyClicked.setIcon(defaultIcon);
-        previouslyClicked.pane = 'otherMarkers';
     }
     const marker = popups[id];
     if (!marker) { return null; }
     selectedRowId = id;
     marker.setIcon(selectedIcon);
-    previouslyClicked.pane = 'selectedMarker';
-    markers.refreshClusters();
     grist.setCursorPos?.({rowId: id}).catch(() => {});
     return marker;
 }
@@ -390,14 +383,14 @@ function selectOnMap(rec) {
 }
 
 grist.onRecord((record, mappings) => {
+    lastRecord = grist.mapColumnNames(record) || record;
     if (mode === 'single') {
-        lastRecord = grist.mapColumnNames(record) || record;
         selectOnMap(lastRecord);
         scanOnNeed(defaultMapping(record, mappings));
     } else {
         const marker = selectMaker(record.id);
         if (!marker) { return; }
-        markers.zoomToShowLayer(marker);
+        markersLayer.zoomToShowLayer(marker);
         marker.openPopup();
     }
 });
