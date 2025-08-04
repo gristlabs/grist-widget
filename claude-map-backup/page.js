@@ -1,6 +1,6 @@
 "use strict";
 
-/* global grist, window */
+/* global grist, window, L */
 
 let amap;
 let markersLayer;
@@ -30,16 +30,20 @@ let lastRecord;
 let lastRecords;
 
 const selectedIcon = new L.Icon({
-    iconUrl: 'marker-icon-green.png',
-    iconRetinaUrl: 'marker-icon-green-2x.png',
-    shadowUrl: 'marker-shadow.png',
+    iconUrl: 'claude-map-backup/marker-icon-green.png',
+    iconRetinaUrl: 'claude-map-backup/marker-icon-green-2x.png',
+    shadowUrl: 'claude-map-backup/marker-shadow.png',
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
     shadowSize: [41, 41]
 });
 
-const defaultIcon = new L.Icon.Default();
+const defaultIcon = new L.Icon.Default({
+    iconUrl: 'claude-map-backup/marker-icon.png',
+    iconRetinaUrl: 'claude-map-backup/marker-icon-2x.png',
+    shadowUrl: 'claude-map-backup/marker-shadow.png'
+});
 
 const baseLayers = {
     "Google Hybrid": L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
@@ -126,16 +130,6 @@ function initializeMap() {
         syncMaps();
     } else {
         console.error("Google MyMap iframe not found!");
-    }
-
-    // Collapsible minimap logic
-    const minimapContainer = document.getElementById('minimap-container');
-    const toggleButton = document.getElementById('toggleMinimap');
-
-    if (toggleButton && minimapContainer) {
-        toggleButton.addEventListener('click', function () {
-            minimapContainer.classList.toggle('collapsed');
-        });
     }
 
     return amap;
@@ -468,9 +462,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const toggleButton = document.getElementById('toggleMinimap');
 
     // Toggle minimap visibility
-    toggleButton.addEventListener('click', function () {
-        minimapContainer.classList.toggle('collapsed');
-    });
+    if (toggleButton && minimapContainer) {
+        toggleButton.addEventListener('click', function () {
+            minimapContainer.classList.toggle('collapsed');
+        });
+    }
 });
 
 grist.onOptions((options, interaction) => {
