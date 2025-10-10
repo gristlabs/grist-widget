@@ -54,3 +54,10 @@ or run it in development mode with automatic reload:
 yarn install
 yarn run grist:dev
 ```
+
+## Other widgets
+
+There are many other custom widgets than those included here. Some people maintain lists:
+
+ * [Heloise Ouvry's list](https://docs.getgrist.com/9DZa7JFegUxz/GristHub)
+ * [Nick Bush's list](https://grist-marketing.getgrist.com/oHQcp1bG7DS8/Community-Widgets)
