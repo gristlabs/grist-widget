@@ -66,17 +66,17 @@ describe('calendar', function () {
   }
 
   it('should show calendar', async function () {
-      const docId = await grist.upload('test/fixtures/docs/Calendar.grist');
-      await grist.openDoc(docId);
-      await grist.toggleSidePanel('right', 'open');
-      await grist.addNewSection(/Custom/, /Table1/);
-      await grist.clickWidgetGallery();
-      await grist.selectCustomWidget(/Calendar/);
-      await grist.setCustomWidgetAccess('full');
-      await grist.setCustomWidgetMapping('startDate', /From/);
-      await grist.setCustomWidgetMapping('endDate', /To/);
-      await grist.setCustomWidgetMapping('title', /Label/);
-      await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
+    const docId = await grist.upload('test/fixtures/docs/Calendar.grist');
+    await grist.openDoc(docId);
+    await grist.toggleSidePanel('right', 'open');
+    await grist.addNewSection(/Custom/, /Table1/);
+    await grist.clickWidgetGallery();
+    await grist.selectCustomWidget(/Calendar/);
+    await grist.setCustomWidgetAccess('full');
+    await grist.setCustomWidgetMapping('startDate', /From/);
+    await grist.setCustomWidgetMapping('endDate', /To/);
+    await grist.setCustomWidgetMapping('title', /Label/);
+    await grist.setCustomWidgetMapping('isAllDay', /IsFullDay/);
   });
 
   it('should create new event when new row is added', async function () {
@@ -346,7 +346,7 @@ describe('calendar', function () {
     });
   }
 
-  it("Switch language to polish, check if text are different", async function () {
+  it("switch language to polish, check if text are different", async function () {
     async function switchLanguage(language: string) {
       const profileSettings = await grist.openProfileSettingsPage();
       //Switch language

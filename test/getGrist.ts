@@ -291,7 +291,7 @@ export class GristUtils extends GristWebDriverUtils {
   }
 
   public async inCustomWidget<T>(op: () => Promise<T>): Promise<T> {
-    const iframe = driver.find('iframe');
+    const iframe = driver.findWait('iframe', 1000);
     try {
       await this.driver.switchTo().frame(iframe);
       return await op();
@@ -323,6 +323,7 @@ export class GristUtils extends GristWebDriverUtils {
       await this.acceptAlert();
     }
     await this.waitForServer();
+    await this.dismissBehavioralPrompts();
   }
 
   public async addColumn(table: string, name: string) {

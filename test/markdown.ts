@@ -8,6 +8,9 @@ describe('markdown', function() {
   it('renders text as markdown', async function() {
     const docId = await grist.upload('test/fixtures/docs/SchoolsSample.grist');
     await grist.openDoc(docId);
+    await grist.waitToPass(async () => {
+      await grist.dismissBehavioralPrompts();
+    });
     await grist.toggleSidePanel('right', 'open');
     await grist.addNewSection(/Custom/, /School/, {dismissTips: true});
     await grist.clickWidgetGallery();
@@ -36,6 +39,7 @@ describe('markdown', function() {
         ' - Phone Number: (123) 456-7890');
     });
     await grist.driver.findWait('.test-dm-account', 2000).click();
+    await grist.dismissBehavioralPrompts();
     await grist.waitToPass(async () => {
       const heading = await grist.getCustomWidgetBody('.editor-preview > h1');
       assert.equal(heading, 'SUPERINTENDENT - DR. MARGUERITE VANDEN WYNGAARD');
