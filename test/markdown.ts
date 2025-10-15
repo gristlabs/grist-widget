@@ -2,7 +2,7 @@ import { Key, assert } from 'mocha-webdriver';
 import { getGrist } from 'test/getGrist';
 
 describe('markdown', function() {
-  this.timeout(200000);
+  this.timeout('20s');
   const gu = getGrist();
   gu.bigScreen();
 
