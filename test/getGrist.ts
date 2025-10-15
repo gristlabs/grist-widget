@@ -1,7 +1,7 @@
 import {ChildProcess, execSync, spawn} from 'child_process';
 import FormData from 'form-data';
 import fs from 'fs';
-import { driver, enableDebugCapture } from 'mocha-webdriver';
+import { assert, driver, enableDebugCapture } from 'mocha-webdriver';
 import fetch from 'node-fetch';
 
 import {Key} from 'mocha-webdriver';
@@ -264,6 +264,10 @@ export class GristUtils extends GristWebDriverUtils {
     };
     await this.driver.find(`.test-config-widget-access .test-select-open`).click();
     await this.driver.findContentWait(`.test-select-menu li`, text[option], 100).click();
+    await this.waitForServer();
+    await this.waitToPass(async () => {
+      assert.isFalse(await this.driver.find('.grist-floating-menu').isPresent());
+    });
   }
 
   public async waitForFrame() {
@@ -282,16 +286,20 @@ export class GristUtils extends GristWebDriverUtils {
     };
     const toggleDrop = async (selector: string) => await click(`${selector} .test-select-open`);
     const pickerDrop = (name: string) => `.test-config-widget-mapping-for-${name}`;
-    await toggleDrop(pickerDrop(name));
-    const clickOption = async (text: string | RegExp) => {
-      await driver.findContentWait('.test-select-menu li', text, 2000).click();
-      await this.waitForServer();
-    };
-    await clickOption(value);
+    await driver.findWait('.test-config-widget-mapping-for-' + name, 1000);
+    await this.waitToPass(async () => {
+      // There is still exchange in api calls between custom widget
+      // and Grist (ready message and themes update), so this picker
+      // might get recreated, and it is not easy to wait for it
+      await toggleDrop(pickerDrop(name));
+      await driver.findWait('.grist-floating-menu', 100);
+      await driver.findContentWait('.test-select-menu li', value, 100).click();
+    });
+    await this.waitForServer();
   }
 
   public async inCustomWidget<T>(op: () => Promise<T>): Promise<T> {
-    const iframe = driver.find('iframe');
+    const iframe = driver.findWait('iframe', 1000);
     try {
       await this.driver.switchTo().frame(iframe);
       return await op();
@@ -323,6 +331,7 @@ export class GristUtils extends GristWebDriverUtils {
       await this.acceptAlert();
     }
     await this.waitForServer();
+    await this.dismissBehavioralPrompts();
   }
 
   public async addColumn(table: string, name: string) {

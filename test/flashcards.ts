@@ -8,6 +8,7 @@ describe('flashcards', function() {
   it('can show a flashcard', async function() {
     const docId = await grist.upload('test/fixtures/docs/SchoolsSample.grist');
     await grist.openDoc(docId);
+    await grist.dismissBehavioralPrompts();
     await grist.toggleSidePanel('right', 'open');
     await grist.addNewSection(/Custom/, /School/, {dismissTips: true});
     await grist.clickWidgetGallery();
