@@ -151,7 +151,7 @@ function updateOrder(row) {
     const want = new Set(Object.keys(addDemo({})));
     const accepted = new Set(['References']);
     const importance = ['PONumber', 'Vendor', 'Items', 'Total', 'Purchaser', 'PODate', 'Subtotal', 'Deduction', 'Taxes', 'Note'];
-    if (row.PODate === undefined) {
+    if (!('PODate' in row)) {
       const seen = new Set(Object.keys(row).filter(k => k !== 'id' && k !== '_error_'));
       const help = row.Help = {};
       help.seen = prepareList(seen);

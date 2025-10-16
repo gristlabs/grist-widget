@@ -10,9 +10,9 @@ function ready(fn) {
  * Demo is only shown when the row has no Issued or Due date.
  */
 function addDemo(row) {
-  if (!isDefined(row.Issued) && !isDefined(row.Due)) {
+  if (!('Issued' in row) && !('Due' in row)) {
     for (const key of ['Number', 'Issued', 'Due']) {
-      if (!isDefined(row[key])) { row[key] = key; }
+      if (!(key in row)) { row[key] = key; }
     }
     for (const key of ['Subtotal', 'Deduction', 'Taxes', 'Total']) {
       if (!(key in row)) { row[key] = key; }
@@ -136,11 +136,6 @@ function prepareList(lst, order) {
   return lst;
 }
 
-
-function isDefined(v) {
-  return typeof v !== 'undefined';
-}
-
 function updateInvoice(row) {
   try {
     data.status = '';
@@ -161,7 +156,7 @@ function updateInvoice(row) {
     const accepted = new Set(['References']);
     const importance = ['Number', 'Client', 'Items', 'Total', 'Invoicer', 'Due', 
                         'Issued', 'Subtotal', 'Deduction', 'Taxes', 'Note', 'Paid'];
-    if (!(isDefined(row.Due) || isDefined(row.Issued))) {
+    if (!('Due' in row || 'Issued' in row)) {
       const seen = new Set(Object.keys(row).filter(k => k !== 'id' && k !== '_error_'));
       const help = row.Help = {};
       help.seen = prepareList(seen);
