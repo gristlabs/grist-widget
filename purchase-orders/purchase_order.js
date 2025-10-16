@@ -6,10 +6,13 @@ function ready(fn) {
   }
 }
 
+/**
+ * Demo is only shown when the row has no PODate.
+ */
 function addDemo(row) {
-  if (!row.PODate) {
+  if (!('PODate' in row)) {
     for (const key of ['PONumber', 'PODate']) {
-      if (!row[key]) { row[key] = key; }
+      if (!(key in row)) { row[key] = key; }
     }
     for (const key of ['Subtotal', 'Deduction', 'Taxes', 'Total']) {
       if (!(key in row)) { row[key] = key; }
@@ -136,7 +139,6 @@ function updateOrder(row) {
     if (row === null) {
       throw new Error("(No data - not on row - please add or select a row)");
     }
-    console.log("GOT...", JSON.stringify(row));
     if (row.References) {
       try {
         Object.assign(row, row.References);
@@ -149,7 +151,7 @@ function updateOrder(row) {
     const want = new Set(Object.keys(addDemo({})));
     const accepted = new Set(['References']);
     const importance = ['PONumber', 'Vendor', 'Items', 'Total', 'Purchaser', 'PODate', 'Subtotal', 'Deduction', 'Taxes', 'Note'];
-    if (!row.PODate) {
+    if (!('PODate' in row)) {
       const seen = new Set(Object.keys(row).filter(k => k !== 'id' && k !== '_error_'));
       const help = row.Help = {};
       help.seen = prepareList(seen);
@@ -165,7 +167,7 @@ function updateOrder(row) {
       if (recognized.length > 0) {
         help.recognized = prepareList(recognized);
       }
-      if (!seen.has('References') && !row.PODate) {
+      if (!seen.has('References')) {
         row.SuggestReferencesColumn = true;
       }
     }
