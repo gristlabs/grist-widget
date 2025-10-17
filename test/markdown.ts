@@ -48,4 +48,23 @@ describe('markdown', function() {
       assert.equal(listItem, 'Phone Number: (123) 456-7890');
     });
   });
+
+  it('sanitizes XSS attempts', async function() {
+    await gu.inCustomWidget(async () => {
+      await gu.driver.find('button.edit').click();
+      await gu.driver.sendKeys(Key.ENTER, Key.ENTER);
+      // Try to inject XSS with onerror handler
+      await gu.driver.sendKeys('<img class="test-image" src=x onerror=\'alert("asdf");\'>');
+      await gu.driver.find('button.save').click();
+    });
+    await gu.waitForServer();
+    await gu.waitToPass(async () => {
+      // Check that the img tag exists but without the onerror attribute
+      const img = await gu.inCustomWidget(
+        () => gu.driver.find('.editor-preview img.test-image').getAttribute('onerror')
+      );
+      // The onerror attribute should be stripped by DOMPurify
+      assert.equal(img, null);
+    });
+  });
 });

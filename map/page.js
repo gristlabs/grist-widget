@@ -89,7 +89,7 @@ const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
   }
 };
 
-const geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
+let geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
 if (URLSearchParams && location.search && geocoder) {
   const c = new URLSearchParams(location.search).get('geocoder');
   if (c && L.Control.Geocoder[c]) {
@@ -194,7 +194,7 @@ function getInfo(rec) {
 }
 
 // Function to clear last added markers. Used to clear the map when new record is selected.
-let clearMakers = () => {};
+let clearMarkers = () => {};
 
 let markers = [];
 
@@ -289,7 +289,7 @@ function updateMap(data) {
   }
   map.addLayer(markers);
 
-  clearMakers = () => map.removeLayer(markers);
+  clearMarkers = () => map.removeLayer(markers);
 
   try {
     map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
@@ -311,6 +311,16 @@ function updateMap(data) {
   makeSureSelectedMarkerIsShown();
 }
 
+
+function clearPopupMarker() {
+  const marker = popups[selectedRowId];
+  if (marker) {
+    marker.closePopup();
+    marker.setIcon(defaultIcon);
+    marker.pane = 'otherMarkers';
+  }
+}
+
 function selectMaker(id) {
    // Reset the options from the previously selected marker.
    const previouslyClicked = popups[selectedRowId];
@@ -326,7 +336,7 @@ function selectMaker(id) {
 
    // Set the options for the newly selected marker.
    marker.setIcon(selectedIcon);
-   previouslyClicked.pane = 'selectedMarker';
+   marker.pane = 'selectedMarker';
 
    // Rerender markers in this cluster
    markers.refreshClusters();
@@ -403,14 +413,21 @@ grist.onRecords((data, mappings) => {
 });
 
 grist.onNewRecord(() => {
-  clearMakers();
-  clearMakers = () => {};
+  if (mode === 'single') {
+    clearMarkers();
+    clearMarkers = () => {};
+  } else {
+    clearPopupMarker();
+  }
+  selectedRowId = null;
 })
 
 function updateMode() {
   if (mode === 'single') {
-    selectedRowId = lastRecord.id;
-    updateMap([lastRecord]);
+    if (lastRecord) {
+      selectedRowId = lastRecord.id;
+      updateMap([lastRecord]);
+    }
   } else {
     updateMap(lastRecords);
   }

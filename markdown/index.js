@@ -170,6 +170,11 @@ ready(() => {
         status: false,
         minHeight: '0px',
         toolbar: editable ? toolbar : false,
+        renderingConfig: {
+          sanitizerFunction: function(renderedHTML) {
+            return DOMPurify.sanitize(renderedHTML);
+          },
+        },
       });
       if (editable) {
         dom.update(document.querySelector(".edit-action"), dom.hide(isEditMode));
