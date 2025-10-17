@@ -172,7 +172,7 @@ ready(() => {
         toolbar: editable ? toolbar : false,
         renderingConfig: {
           sanitizerFunction: function(renderedHTML) {
-            return DOMPurify.sanitize(renderedHTML);
+            return DOMPurify.sanitize(renderedHTML, {FORCE_BODY: true});
           },
         },
       });
