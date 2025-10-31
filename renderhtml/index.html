@@ -33,7 +33,7 @@
         if (!content) {
           el.style.display = 'none';
         } else {
-          el.innerHTML = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR});
+          el.innerHTML = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR, FORCE_BODY: true});
           // If we are allowing scripts, let them execute, which doesn't
           // normally happen when adding script elements using innerHTML.
           if (ADD_TAGS?.includes("script")) {
