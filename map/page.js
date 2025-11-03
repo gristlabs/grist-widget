@@ -217,7 +217,7 @@ function updateMap(data) {
   //    Old source was natgeo world map, but that only has data up to zoom 16
   //    (can't zoom in tighter than about 10 city blocks across)
   //
-  const tiles = L.tileLayer(mapSource, { attribution: mapCopyright });
+  const tiles = L.tileLayer(mapSource, { attribution: DOMPurify.sanitize(mapCopyright, {FORCE_BODY: true})});
 
   const error = document.querySelector('.error');
   if (error) { error.remove(); }
