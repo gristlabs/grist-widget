@@ -2,7 +2,7 @@
   "name": "@gristlabs/widget-qrcode",
   "description": "Simple widget that can be used to generate qrcodes with data from selected record.",
   "homePage": "https://github.com/gristlabs/grist-widget",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "grist": [
     {
       "name": "QR code",
@@ -16,6 +16,10 @@
         {
           "name": "jperon",
           "url": "https://github.com/jperon"
+        },
+        {
+          "name": "Héloïse OUVRY",
+          "url": "https://github.com/ouvry-ems"
         }
       ]
     }
