@@ -19,7 +19,68 @@
         {{ status }}
       </template>
     </div>
-    <pre v-else>{{ records }}</pre>
+    <pre style="display: none" v-else>{{ records }}</pre>
+
+<!-- working prompt
+I have some an array of json data in records, like this:
+  SAMPLE OF DATA
+
+Give me a vuejs template to present this data in nice-looking cards. Include html to go inside
+<div id="app">, include css in <style> tag to go outside of it. Don't include js: assume the
+format provided.
+-->
+
+    <!-- from chatgpt -->
+<div id="app">
+  <div class="card-list">
+    <div class="card" v-for="item in records" :key="item.id">
+      <h2 class="card-company">{{ item.Company }}</h2>
+      <p class="card-notes" v-if="item.Notes">{{ item.Notes }}</p>
+      <p class="card-notes empty" v-else>No notes available.</p>
+    </div>
   </div>
+</div>
+    <!-- ^^ from chatgpt -->
+
+  </div>
+
+<!-- from chatgpt -->
+<style>
+  .card-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+  }
+
+  .card-company {
+    font-size: 1.1rem;
+    margin: 0 0 .6rem 0;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .card-notes {
+    white-space: pre-line;
+    color: #555;
+    margin: 0;
+  }
+
+  .card-notes.empty {
+    font-style: italic;
+    color: #aaa;
+  }
+</style>
+
+<!-- ^^ from chatgpt -->
+
 </body>
 </html>
