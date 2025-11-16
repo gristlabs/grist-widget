@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Page Designer</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="index.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="status" v-if="status">
+      <template v-if="status === 'waiting'">
+        <p>Waiting for data...</p>
+      </template>
+      <template v-else>
+        {{ status }}
+      </template>
+    </div>
+    <pre v-else>{{ records }}</pre>
+  </div>
+</body>
+</html>
