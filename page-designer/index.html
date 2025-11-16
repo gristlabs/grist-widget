@@ -6,6 +6,7 @@
   <title>Page Designer</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="index.js"></script>
 </head>
 
@@ -31,56 +32,49 @@ format provided.
 -->
 
     <!-- from chatgpt -->
-<div id="app">
-  <div class="card-list">
-    <div class="card" v-for="item in records" :key="item.id">
-      <h2 class="card-company">{{ item.Company }}</h2>
-      <p class="card-notes" v-if="item.Notes">{{ item.Notes }}</p>
-      <p class="card-notes empty" v-else>No notes available.</p>
+    <div class="grid gap-8 p-6 sm:grid-cols-2 lg:grid-cols-3">
+  <div
+    v-for="item in records"
+    :key="item.id"
+    class="group relative bg-white rounded-3xl p-7 border border-gray-200 shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300"
+  >
+    <!-- Accent bar -->
+    <div class="absolute top-0 left-0 w-full h-2 rounded-t-3xl bg-indigo-500 opacity-70 group-hover:opacity-100 transition-opacity"></div>
+
+    <!-- Header -->
+    <div class="flex items-start gap-4 mb-5">
+      <div class="h-12 w-12 flex items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 font-bold text-xl shadow-inner">
+        {{ item.Company[0] }}
+      </div>
+      <h2 class="text-xl font-semibold text-gray-800 leading-tight group-hover:text-indigo-600 transition-colors duration-200">
+        {{ item.Company }}
+      </h2>
+    </div>
+
+    <!-- Notes -->
+    <div v-if="item.Notes" class="text-gray-700 whitespace-pre-line leading-relaxed">
+      {{ item.Notes }}
+    </div>
+
+    <div v-else class="italic text-gray-400">
+      No notes available.
+    </div>
+
+    <!-- Action -->
+    <div class="mt-6">
+      <button
+        class="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+      >
+        View Details →
+      </button>
     </div>
   </div>
 </div>
+
     <!-- ^^ from chatgpt -->
 
   </div>
 
-<!-- from chatgpt -->
-<style>
-  .card-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
-  }
-
-  .card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1rem 1.2rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    border: 1px solid #eee;
-  }
-
-  .card-company {
-    font-size: 1.1rem;
-    margin: 0 0 .6rem 0;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .card-notes {
-    white-space: pre-line;
-    color: #555;
-    margin: 0;
-  }
-
-  .card-notes.empty {
-    font-style: italic;
-    color: #aaa;
-  }
-</style>
-
-<!-- ^^ from chatgpt -->
 
 </body>
 </html>
