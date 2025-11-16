@@ -1,6 +1,7 @@
 const { createApp, ref, shallowRef } = Vue;
 
 const status = ref('waiting');
+const tab = ref('preview');
 
 function reportError(err) {
   status.value = String(err).replace(/^Error: /, '');
@@ -35,7 +36,7 @@ ready(function() {
   const records = shallowRef(null);
   const app = createApp({
     setup() {
-      return {records, status};
+      return {records, status, tab};
     }
   });
   app.config.errorHandler = reportError;
