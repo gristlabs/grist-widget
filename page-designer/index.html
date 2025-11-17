@@ -7,38 +7,12 @@
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
   <script src="index.js"></script>
 </head>
 
-<body>
+<body class="h-screen">
   <div id="app">
-    <div class="flex items-center justify-between bg-gray-50 px-3 py-2 border-b text-sm sticky top-0">
-      <!-- Toggle group -->
-      <div class="flex border border-gray-300 rounded-md overflow-hidden">
-        <button id="edit"
-          class="px-3 py-1"
-          :class="tab === 'edit' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
-                  'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
-          @click="tab = 'edit'">
-          Edit
-        </button>
-        <button id="preview"
-          class="px-3 py-1"
-          :class="tab === 'preview' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
-                  'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
-          @click="tab = 'preview'">
-          Preview
-        </button>
-      </div>
-
-      <!-- Right: Hide button -->
-      <button id="hide"
-        class="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-100">
-        Hide
-      </button>
-    </div>
-
-
     <div class="status" v-if="status">
       <template v-if="status === 'waiting'">
         <p>Waiting for data...</p>
@@ -47,7 +21,35 @@
         {{ status }}
       </template>
     </div>
-    <pre style="display: none" v-else>{{ records }}</pre>
+    <template v-else>
+      <div class="sticky top-0 h-12 flex items-center justify-between bg-gray-50 px-3 py-2 border-b text-sm">
+        <!-- Toggle group -->
+        <div class="flex border border-gray-300 rounded-md overflow-hidden">
+          <button id="edit"
+                  class="px-3 py-1"
+                  :class="tab === 'edit' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
+                          'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
+                  @click="tab = 'edit'">
+            Edit
+          </button>
+          <button id="preview"
+                  class="px-3 py-1"
+                  :class="tab === 'preview' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
+                          'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
+                  @click="tab = 'preview'">
+            Preview
+          </button>
+        </div>
+
+        <!-- Right: Hide button -->
+        <button id="hide"
+                class="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-100">
+          Hide
+        </button>
+      </div>
+
+      <div id="editor" v-show="tab === 'edit'" class="fixed top-12 left-0 right-0 bottom-0"></div>
+      <template v-if="tab === 'preview'">
 
 <!-- working prompt
   I have some an array of json data in records, like this:
@@ -100,9 +102,8 @@ Give me a vuejs template to present this data in nice-looking cards. Include htm
 
 
     <!-- ^^ from chatgpt -->
-
+      </template>
+    </template>
   </div>
-
-
 </body>
 </html>

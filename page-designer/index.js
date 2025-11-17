@@ -1,4 +1,4 @@
-const { createApp, ref, shallowRef } = Vue;
+const { createApp, nextTick, ref, shallowRef, watch} = Vue;
 
 const status = ref('waiting');
 const tab = ref('preview');
@@ -32,13 +32,40 @@ ready(function() {
     }
   });
 
+  let isMonacoInitialized = false;
+
   // Initialize Vue.
   const records = shallowRef(null);
   const app = createApp({
     setup() {
+      watch(tab, async (newVal) => {
+        if (newVal === "edit" && !isMonacoInitialized) {
+          isMonacoInitialized = true;
+          await nextTick();
+          await initMonaco();
+        }
+      });
       return {records, status, tab};
     }
   });
   app.config.errorHandler = reportError;
   app.mount('#app');
+
+  // Initialize Monaco editor.
+  async function initMonaco() {
+    require.config({ paths: {'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs'}});
+    await new Promise((resolve, reject) => require(['vs/editor/editor.main'], resolve, reject));
+    const editor = monaco.editor.create(document.getElementById("editor"), {
+      value: `<div class="box">\n  Hello!\n</div>`,
+      language: "html",
+      theme: "vs-dark",
+      automaticLayout: true,
+      wordWrap: 'on',
+      minimap: {enabled: false},
+      lineNumbers: 'off',
+      glyphMargin: false,
+      folding: false,
+      scrollBeyondLastLine: false,
+    });
+  }
 });
