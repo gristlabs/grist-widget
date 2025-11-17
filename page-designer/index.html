@@ -7,6 +7,8 @@
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- moment uses a loader that conflicts with monaco-editor, but works if moment is included first. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
   <script src="index.js"></script>
@@ -62,7 +64,7 @@
 
       <div id="editor" v-show="tab === 'edit'" class="fixed top-12 left-0 right-0 bottom-0"></div>
       <template v-if="tab === 'preview'">
-        <shadow-wrap :css="splitHtmlCss.css" :component="compiledComponent" :records="records"><shadow-wrap>
+        <shadow-wrap :css="splitHtmlCss.css" :component="compiledComponent" :params="params"><shadow-wrap>
       </template>
     </template>
   </div>

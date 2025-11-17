@@ -91,7 +91,8 @@ const compiledComponent = computed(() => {
   // get recomputed.
   const render = compile(splitHtmlCss.value.html);
   return defineComponent({
-    props: ["records"],
+    props: ["params"],
+    setup(props) { return {...props.params}; },
     render,
   });
 });
@@ -99,10 +100,10 @@ const compiledComponent = computed(() => {
 // We wrap the component and the split-out CSS into a custom element to scope the CSS in the
 // template to the template itself (and not to the rest of the custom widget UI).
 customElements.define("shadow-wrap", defineCustomElement({
-  props: ['css', 'component', 'records'],
+  props: ['css', 'component', 'params'],
   template: `
     <component is=style>{{css}}</component>
-    <component :is="component" :records="records"></component>
+    <component :is="component" :params="params"></component>
   `
 }));
 
@@ -152,9 +153,10 @@ ready(function() {
         }
       });
       return {
-        records, status, tab,
+        status, tab,
         compiledComponent, splitHtmlCss,
         haveLocalEdits, serverDiverged, resetFromOptions,
+        params: {records, formatDate, formatUSD},
       };
     }
   });
@@ -190,3 +192,18 @@ ready(function() {
     editor.getModel().onDidChangeContent(onEditorContentChanged);
   }
 });
+
+function formatUSD(value) {
+  if (typeof value !== "number") { return value || '—'; }   // Show falsy as a dash.
+  value = Math.round(value * 100) / 100;    // Round to nearest cent.
+  value = (value === -0 ? 0 : value);       // Avoid negative zero.
+  const result = value.toLocaleString('en', { style: 'currency', currency: 'USD' });
+  if (result.includes('NaN')) { return value; }
+  return result;
+}
+
+function formatDate(value, format = "MMMM DD, YYYY") {
+  if (typeof(value) === 'number') { value = new Date(value * 1000); }
+  const date = moment.utc(value)
+  return date.isValid() ? date.format(format) : value;
+}
