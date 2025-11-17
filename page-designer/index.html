@@ -9,6 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- moment uses a loader that conflicts with monaco-editor, but works if moment is included first. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/liquidjs/10.21.1/liquid.browser.min.js" integrity="sha512-d0alIbxiMUdiKNxO5Gd8E3L+CIXKb39FnhIdAztNRB4J4KWZWThtJYL2o3U55IiOLRlsq6iCBaHEtzh1cB2ODA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
   <script type="module" src="index.js"></script>
@@ -79,7 +80,9 @@
         </div>
       </template>
       <template v-else>
-        <shadow-wrap :css="splitHtmlCss.css" :component="compiledComponent" :params="params"><shadow-wrap>
+        <div class="fixed top-12 bottom-0 left-0 right-0">
+          <iframe :srcdoc="renderedTemplate" class="w-full h-full border-0"></iframe>
+        </div>
       </template>
     </template>
   </div>

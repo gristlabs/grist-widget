@@ -3,12 +3,17 @@ const {
   h, nextTick, ref, shallowRef, watch,
 } = Vue;
 
+const {Liquid} = liquidjs;
+const liquidEngine = new Liquid();
+
 const waitingForData = ref(true);
 const vueError = ref(null);
 const tab = ref('preview');
 const template = ref('');
 const serverDiverged = ref(false);
 const haveLocalEdits = ref(false);
+const records = shallowRef(null);
+const renderedTemplate = ref('');
 let editor = null;
 
 function ready(fn) {
@@ -94,36 +99,14 @@ function goToError(error) {
 }
 
 const compiledTemplate = computed(() => {
-  const errors = [];
-  let render;
   try {
-    render = compile(splitHtmlCss.value.html, {onError: (e) => errors.push(e)});
+    return liquidEngine.parse(template.value);
   } catch (err) {
-    render = h('div', `Failed to compile: ${err}`);
+    throw err;
   }
-  return {render, errors};
 });
 
 const compileErrors = computed(() => compiledTemplate.value.errors);
-
-// Computed that compiles HTML template into a custom component.
-const compiledComponent = computed(() => {
-  return defineComponent({
-    props: ["params"],
-    setup(props) { return {...props.params, compileErrors}; },
-    render: compiledTemplate.value.render,
-  });
-});
-
-// We wrap the component and the split-out CSS into a custom element to scope the CSS in the
-// template to the template itself (and not to the rest of the custom widget UI).
-customElements.define("shadow-wrap", defineCustomElement({
-  props: ['css', 'component', 'params'],
-  template: `
-    <component is=style>{{css}}</component>
-    <component :is="component" :params="params"></component>
-  `
-}));
 
 const statusMessage = computed(() => {
   if (waitingForData.value) { return 'Waiting for data...'; }
@@ -182,7 +165,6 @@ ready(function() {
   let isMonacoInitialized = false;
 
   // Initialize Vue.
-  const records = shallowRef(null);
   const app = createApp({
     setup() {
       watch(tab, async (newVal) => {
@@ -193,10 +175,15 @@ ready(function() {
         }
       });
       watch(compileErrors, setEditorErrorMarkers);
+      watch([compiledTemplate, records], async ([compiledTemplate, records]) => {
+        renderedTemplate.value = await liquidEngine.render(compiledTemplate, {records});
+      });
+
       return {
         statusMessage, tab,
-        compiledComponent, splitHtmlCss, compileErrors, goToError,
+        splitHtmlCss, compileErrors, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
+        renderedTemplate,
         params: {records, formatDate, formatUSD},
       };
     }
@@ -250,3 +237,8 @@ function formatDate(value, format = "MMMM DD, YYYY") {
   const date = moment.utc(value)
   return date.isValid() ? date.format(format) : value;
 }
+
+liquidEngine.registerFilter('formatUSD', formatUSD);
+liquidEngine.registerFilter('formatDate', formatDate);
+liquidEngine.registerFilter('isArray', Array.isArray);
+liquidEngine.registerFilter('isString', v => (typeof(v) === 'string'));
