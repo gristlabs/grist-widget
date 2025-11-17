@@ -1,18 +1,15 @@
 const {
   compile, computed, createApp, defineComponent, defineCustomElement,
-  nextTick, ref, shallowRef, watch,
+  h, nextTick, ref, shallowRef, watch,
 } = Vue;
 
-const status = ref('waiting');
+const waitingForData = ref(true);
+const vueError = ref(null);
 const tab = ref('preview');
 const template = ref('');
 const serverDiverged = ref(false);
 const haveLocalEdits = ref(false);
 let editor = null;
-
-function reportError(err) {
-  status.value = String(err).replace(/^Error: /, '');
-}
 
 function ready(fn) {
   if (document.readyState !== 'loading'){
@@ -76,24 +73,45 @@ const initialValue = `
 
 // Vue won't compile <style> tags into compiled templates. Extract those for rendering separately.
 const splitHtmlCss = computed(() => {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(template.value, "text/html");
-  const styles = [...doc.querySelectorAll("style")];
-  const css = styles.map(node => node.textContent).join("\n\n");
-  styles.forEach(node => node.remove());
-  const html = doc.body.innerHTML.trim();
-  return {html, css};
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(template.value, "text/html");
+    const styles = [...doc.querySelectorAll("style")];
+    const css = styles.map(node => node.textContent).join("\n\n");
+    styles.forEach(node => node.remove());
+    const html = doc.body.innerHTML.trim();
+    return {html, css};
+  } catch (e) {
+    return {html: template.value, css: ''};
+  }
 });
+
+let compileErrorsRender;
+
+const compiledTemplate = computed(() => {
+  const errors = [];
+  let render;
+  try {
+    render = compile(splitHtmlCss.value.html, {onError: (e) => errors.push(e)});
+  } catch (err) {
+    if (!compileErrorsRender) {
+      const errorTemplate = document.getElementById("compile-errors").innerHTML;
+      console.warn("errorTemplate", errorTemplate);
+      compileErrorsRender = compile(errorTemplate);
+    }
+    render = compileErrorsRender;
+  }
+  return {render, errors};
+});
+
+const compileErrors = computed(() => compiledTemplate.value.errors);
 
 // Computed that compiles HTML template into a custom component.
 const compiledComponent = computed(() => {
-  // This seems nicely efficient, in that if compiledComponent isn't being rendered, it doesn't
-  // get recomputed.
-  const render = compile(splitHtmlCss.value.html);
   return defineComponent({
     props: ["params"],
-    setup(props) { return {...props.params}; },
-    render,
+    setup(props) { return {...props.params, compileErrors}; },
+    render: compiledTemplate.value.render,
   });
 });
 
@@ -107,6 +125,30 @@ customElements.define("shadow-wrap", defineCustomElement({
   `
 }));
 
+const statusMessage = computed(() => {
+  if (waitingForData.value) { return 'Waiting for data...'; }
+  if (vueError.value) { return String(vueError.value); }
+  if (compileErrors.value?.length) { return "COMPILE ERROR"; }
+  return null;
+});
+
+function setEditorErrorMarkers(errors) {
+  if (!editor) { return; }
+  try {
+    const markers = (errors || []).map(e => ({
+      startLineNumber: e.loc.start.line,
+      startColumn: e.loc.start.column,
+      endLineNumber: e.loc.end.line,
+      endColumn: e.loc.end.column,
+      message: e.message,
+      severity: monaco?.MarkerSeverity.Error
+    }));
+    monaco.editor.setModelMarkers(editor.getModel(), "page-designer", markers);
+  } catch (e) {
+    console.warn("Error setting error markers", e);
+    monaco.editor.setModelMarkers(editor.getModel(), "page-designer", []);
+  }
+}
 
 ready(function() {
   // Initialize Grist connection.
@@ -117,6 +159,7 @@ ready(function() {
   let serverOptions = null;
   function getServerTemplateValue() { return serverOptions?.html || initialValue; }
   function resetFromOptions() {
+    vueError.value = null;
     template.value = getServerTemplateValue();
     if (editor) { editor.setValue(template.value); }
     haveLocalEdits.value = false;
@@ -131,13 +174,10 @@ ready(function() {
     }
   })
   grist.onRecords((rows) => {
-    try {
-      status.value = '';
-      records.value = grist.mapColumnNames(rows);
-    } catch (e) {
-      reportError(e);
-    }
-  });
+    waitingForData.value = false;
+    vueError.value = null;
+    records.value = grist.mapColumnNames(rows);
+  }, {expandRefs: false});
 
   let isMonacoInitialized = false;
 
@@ -152,15 +192,16 @@ ready(function() {
           await initMonaco();
         }
       });
+      watch(compileErrors, setEditorErrorMarkers);
       return {
-        status, tab,
-        compiledComponent, splitHtmlCss,
+        statusMessage, tab,
+        compiledComponent, splitHtmlCss, compileErrors,
         haveLocalEdits, serverDiverged, resetFromOptions,
         params: {records, formatDate, formatUSD},
       };
     }
   });
-  app.config.errorHandler = reportError;
+  app.config.errorHandler = (err) => { vueError.value = err; };
   app.mount('#app');
 
   // Initialize Monaco editor.
@@ -181,6 +222,7 @@ ready(function() {
     });
     function _onEditorContentChanged() {
       const newValue = editor.getValue();
+      vueError.value = null;
       template.value = newValue;
       serverDiverged.value = false;
       if (newValue !== getServerTemplateValue()) {
@@ -190,6 +232,7 @@ ready(function() {
     }
     const onEditorContentChanged = _.debounce(_onEditorContentChanged, 1000);
     editor.getModel().onDidChangeContent(onEditorContentChanged);
+    setEditorErrorMarkers(compileErrors.value);
   }
 });
 

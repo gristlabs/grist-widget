@@ -11,21 +11,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
-  <script src="index.js"></script>
+  <script type="module" src="index.js"></script>
 </head>
 
 <body class="h-screen">
   <div id="app">
-    <div class="status" v-if="status">
-      <template v-if="status === 'waiting'">
-        <p>Waiting for data...</p>
-      </template>
-      <template v-else>
-        {{ status }}
-      </template>
-    </div>
-    <template v-else>
-      <div class="sticky top-0 h-12 flex items-center justify-between bg-gray-50 px-3 py-2 border-b text-sm">
+    <div class="sticky top-0">
+      <div class="h-12 flex items-center justify-between bg-gray-50 px-3 py-2 border-b text-sm">
         <div class="flex items-center gap-2">
           <!-- Toggle group -->
           <div class="flex border border-gray-300 rounded-md overflow-hidden">
@@ -61,12 +53,36 @@
           Hide
         </button>
       </div>
+      <div v-if="statusMessage"
+           class="h-8 bg-yellow-100 px-3 py-1 border-b text-sm truncate"
+           :title="statusMessage">
+        {{ statusMessage }}
+      </div>
+    </div>
 
-      <div id="editor" v-show="tab === 'edit'" class="fixed top-12 left-0 right-0 bottom-0"></div>
-      <template v-if="tab === 'preview'">
-        <shadow-wrap :css="splitHtmlCss.css" :component="compiledComponent" :params="params"><shadow-wrap>
-      </template>
+    <div id="editor" v-show="tab === 'edit'" class="fixed top-12 left-0 right-0 bottom-0"></div>
+    <template v-if="tab === 'preview'">
+      <shadow-wrap :css="splitHtmlCss.css" :component="compiledComponent" :params="params"><shadow-wrap>
     </template>
   </div>
+
+
+  <template id="compile-errors">
+    <div class="space-y-2">
+      <div v-for="err in compileErrors" :key="err.id"
+           class="p-3 border-l-4 border-red-500 bg-red-50 rounded shadow">
+        <div class="font-bold text-red-700">{{ err.message }}</div>
+        <div class="text-xs text-red-700">
+          Line {{ err.loc.start.line }}, Column {{ err.loc.start.column }}
+        </div>
+
+        <button @click="goTo(err)"
+             class="mt-2 px-2 py-1 bg-red-600 text-white rounded text-xs">
+          Go to error
+        </button>
+      </div>
+    </div>
+  </template>
+
 </body>
 </html>
