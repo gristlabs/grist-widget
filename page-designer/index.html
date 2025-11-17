@@ -62,7 +62,7 @@
 
       <div id="editor" v-show="tab === 'edit'" class="fixed top-12 left-0 right-0 bottom-0"></div>
       <template v-if="tab === 'preview'">
-        <component :is="compiledComponent" :records="records"></component>
+        <shadow-wrap :css="splitHtmlCss.css" :component="compiledComponent" :records="records"><shadow-wrap>
       </template>
     </template>
   </div>

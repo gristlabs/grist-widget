@@ -1,4 +1,7 @@
-const { compile, computed, createApp, defineComponent, nextTick, ref, shallowRef, watch} = Vue;
+const {
+  compile, computed, createApp, defineComponent, defineCustomElement,
+  nextTick, ref, shallowRef, watch,
+} = Vue;
 
 const status = ref('waiting');
 const tab = ref('preview');
@@ -71,15 +74,38 @@ const initialValue = `
 </div>
 `;
 
+// Vue won't compile <style> tags into compiled templates. Extract those for rendering separately.
+const splitHtmlCss = computed(() => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(template.value, "text/html");
+  const styles = [...doc.querySelectorAll("style")];
+  const css = styles.map(node => node.textContent).join("\n\n");
+  styles.forEach(node => node.remove());
+  const html = doc.body.innerHTML.trim();
+  return {html, css};
+});
+
+// Computed that compiles HTML template into a custom component.
 const compiledComponent = computed(() => {
   // This seems nicely efficient, in that if compiledComponent isn't being rendered, it doesn't
   // get recomputed.
-  const render = compile(template.value);
+  const render = compile(splitHtmlCss.value.html);
   return defineComponent({
     props: ["records"],
     render,
   });
 });
+
+// We wrap the component and the split-out CSS into a custom element to scope the CSS in the
+// template to the template itself (and not to the rest of the custom widget UI).
+customElements.define("shadow-wrap", defineCustomElement({
+  props: ['css', 'component', 'records'],
+  template: `
+    <component is=style>{{css}}</component>
+    <component :is="component" :records="records"></component>
+  `
+}));
+
 
 ready(function() {
   // Initialize Grist connection.
@@ -96,7 +122,6 @@ ready(function() {
     serverDiverged.value = false;
   }
   grist.onOptions((options) => {
-    console.warn("OPTIONS", options);
     serverOptions = options;
     if (!haveLocalEdits.value) {
       resetFromOptions();
@@ -128,7 +153,7 @@ ready(function() {
       });
       return {
         records, status, tab,
-        compiledComponent,
+        compiledComponent, splitHtmlCss,
         haveLocalEdits, serverDiverged, resetFromOptions,
       };
     }
