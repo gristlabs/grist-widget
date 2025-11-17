@@ -5,7 +5,8 @@ const GRIST_PORT = process.env.GRIST_PORT || 8484;
 // <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 module.exports = function (req, res, next) {
   // Rewrite only for GET method and an URL containing .htm fragment.
-  if (req.url && (req.url.includes(".htm") || req.url.endsWith("/")) && req.method === 'GET') {
+  const path = new URL(req.url, 'http://localhost/').pathname;
+  if (req.url && (req.url.includes(".htm") || path.endsWith("/")) && req.method === 'GET') {
     // Overwrite Response's write() method.
     const origWrite = res.write;
     res.write = function (data, encoding, callback) {

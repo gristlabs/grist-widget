@@ -12,10 +12,10 @@ const serve = sirv('.', { dev: true });
 
 http.createServer((req, res) => {
   // Redirect /foo to /foo/
-  const { url } = req;
-  if (!url.endsWith('/') && !url.includes('.')) {
+  const url = new URL(req.url, 'http://localhost/');
+  if (!url.pathname.endsWith('/') && !url.pathname.includes('.')) {
     res.statusCode = 301;
-    res.setHeader('Location', url + '/');
+    res.setHeader('Location', url.pathname + '/' + url.search + url.hash);
     return res.end();
   }
   lrMiddleware(req, res, () => {
