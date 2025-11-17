@@ -86,7 +86,12 @@ const splitHtmlCss = computed(() => {
   }
 });
 
-let compileErrorsRender;
+function goToError(error) {
+  const { line, column } = error.loc.start;
+  props.editor.setPosition({ lineNumber: line, column });
+  props.editor.revealPositionInCenter({ lineNumber: line, column });
+  props.editor.getAction("editor.action.marker.next").run();
+}
 
 const compiledTemplate = computed(() => {
   const errors = [];
@@ -94,12 +99,7 @@ const compiledTemplate = computed(() => {
   try {
     render = compile(splitHtmlCss.value.html, {onError: (e) => errors.push(e)});
   } catch (err) {
-    if (!compileErrorsRender) {
-      const errorTemplate = document.getElementById("compile-errors").innerHTML;
-      console.warn("errorTemplate", errorTemplate);
-      compileErrorsRender = compile(errorTemplate);
-    }
-    render = compileErrorsRender;
+    render = h('div', `Failed to compile: ${err}`);
   }
   return {render, errors};
 });
@@ -195,7 +195,7 @@ ready(function() {
       watch(compileErrors, setEditorErrorMarkers);
       return {
         statusMessage, tab,
-        compiledComponent, splitHtmlCss, compileErrors,
+        compiledComponent, splitHtmlCss, compileErrors, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
         params: {records, formatDate, formatUSD},
       };

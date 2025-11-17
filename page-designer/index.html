@@ -62,27 +62,27 @@
 
     <div id="editor" v-show="tab === 'edit'" class="fixed top-12 left-0 right-0 bottom-0"></div>
     <template v-if="tab === 'preview'">
-      <shadow-wrap :css="splitHtmlCss.css" :component="compiledComponent" :params="params"><shadow-wrap>
+      <template v-if="compileErrors?.length">
+        <div class="space-y-2 p-3 text-sm">
+          <div v-for="err in compileErrors" :key="err.id"
+               class="p-3 border-l-4 border-red-500 bg-red-50 rounded shadow">
+            <div class="font-bold text-red-700">{{ err.message }}</div>
+            <div class="text-xs text-red-700">
+              Line {{ err.loc.start.line }}, Column {{ err.loc.start.column }}
+            </div>
+
+            <button @click="goToError(err)"
+                 class="mt-2 px-2 py-1 bg-red-600 text-white rounded text-xs">
+              Go to error
+            </button>
+          </div>
+        </div>
+      </template>
+      <template v-else>
+        <shadow-wrap :css="splitHtmlCss.css" :component="compiledComponent" :params="params"><shadow-wrap>
+      </template>
     </template>
   </div>
-
-
-  <template id="compile-errors">
-    <div class="space-y-2">
-      <div v-for="err in compileErrors" :key="err.id"
-           class="p-3 border-l-4 border-red-500 bg-red-50 rounded shadow">
-        <div class="font-bold text-red-700">{{ err.message }}</div>
-        <div class="text-xs text-red-700">
-          Line {{ err.loc.start.line }}, Column {{ err.loc.start.column }}
-        </div>
-
-        <button @click="goTo(err)"
-             class="mt-2 px-2 py-1 bg-red-600 text-white rounded text-xs">
-          Go to error
-        </button>
-      </div>
-    </div>
-  </template>
 
 </body>
 </html>
