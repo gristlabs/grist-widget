@@ -2,6 +2,10 @@ const { compile, computed, createApp, defineComponent, nextTick, ref, shallowRef
 
 const status = ref('waiting');
 const tab = ref('preview');
+const template = ref('');
+const serverDiverged = ref(false);
+const haveLocalEdits = ref(false);
+let editor = null;
 
 function reportError(err) {
   status.value = String(err).replace(/^Error: /, '');
@@ -66,7 +70,6 @@ const initialValue = `
   </div>
 </div>
 `;
-const template = ref(initialValue);
 
 const compiledComponent = computed(() => {
   // This seems nicely efficient, in that if compiledComponent isn't being rendered, it doesn't
@@ -83,8 +86,23 @@ ready(function() {
   grist.ready({
     requiredAccess: 'read table',
   });
+
+  let serverOptions = null;
+  function getServerTemplateValue() { return serverOptions?.html || initialValue; }
+  function resetFromOptions() {
+    template.value = getServerTemplateValue();
+    if (editor) { editor.setValue(template.value); }
+    haveLocalEdits.value = false;
+    serverDiverged.value = false;
+  }
   grist.onOptions((options) => {
-    template.value = options?.html || initialValue;
+    console.warn("OPTIONS", options);
+    serverOptions = options;
+    if (!haveLocalEdits.value) {
+      resetFromOptions();
+    } else {
+      serverDiverged.value = (getServerTemplateValue() !== template.value);
+    }
   })
   grist.onRecords((rows) => {
     try {
@@ -108,7 +126,11 @@ ready(function() {
           await initMonaco();
         }
       });
-      return {records, status, tab, compiledComponent, template};
+      return {
+        records, status, tab,
+        compiledComponent,
+        haveLocalEdits, serverDiverged, resetFromOptions,
+      };
     }
   });
   app.config.errorHandler = reportError;
@@ -118,8 +140,8 @@ ready(function() {
   async function initMonaco() {
     require.config({ paths: {'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs'}});
     await new Promise((resolve, reject) => require(['vs/editor/editor.main'], resolve, reject));
-    const editor = monaco.editor.create(document.getElementById("editor"), {
-      value: initialValue,
+    editor = monaco.editor.create(document.getElementById("editor"), {
+      value: template.value,
       language: "html",
       theme: "vs-dark",
       automaticLayout: true,
@@ -131,7 +153,13 @@ ready(function() {
       scrollBeyondLastLine: false,
     });
     function _onEditorContentChanged() {
-      grist.setOptions({html: editor.getValue()});
+      const newValue = editor.getValue();
+      template.value = newValue;
+      serverDiverged.value = false;
+      if (newValue !== getServerTemplateValue()) {
+        haveLocalEdits.value = true;
+        grist.setOptions({html: newValue});
+      }
     }
     const onEditorContentChanged = _.debounce(_onEditorContentChanged, 1000);
     editor.getModel().onDidChangeContent(onEditorContentChanged);

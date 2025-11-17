@@ -24,21 +24,32 @@
     </div>
     <template v-else>
       <div class="sticky top-0 h-12 flex items-center justify-between bg-gray-50 px-3 py-2 border-b text-sm">
-        <!-- Toggle group -->
-        <div class="flex border border-gray-300 rounded-md overflow-hidden">
-          <button id="edit"
-                  class="px-3 py-1"
-                  :class="tab === 'edit' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
-                          'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
-                  @click="tab = 'edit'">
-            Edit
-          </button>
-          <button id="preview"
-                  class="px-3 py-1"
-                  :class="tab === 'preview' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
-                          'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
-                  @click="tab = 'preview'">
-            Preview
+        <div class="flex items-center gap-2">
+          <!-- Toggle group -->
+          <div class="flex border border-gray-300 rounded-md overflow-hidden">
+            <button id="edit"
+                    class="px-3 py-1"
+                    :class="tab === 'edit' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
+                            'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
+                    @click="tab = 'edit'">
+              Edit
+            </button>
+            <button id="preview"
+                    class="px-3 py-1"
+                    :class="tab === 'preview' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
+                            'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
+                    @click="tab = 'preview'">
+              Preview
+            </button>
+          </div>
+
+          <!-- Reload (only when out of sync) -->
+          <button
+            v-if="serverDiverged"
+            class="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-100"
+            title="Server version changed. Click to load the latest."
+            @click="resetFromOptions">
+            ⚠️ Reload
           </button>
         </div>
 
