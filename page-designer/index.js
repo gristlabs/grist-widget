@@ -1,3 +1,37 @@
+/**
+ * Here is some usage documentation. User may write a LiquidJS template. It's documented at
+ * https://liquidjs.com/tutorials/intro-to-liquid.html, but a better introduction to syntax is at
+ * https://shopify.dev/docs/api/liquid.
+ *
+ * The following variables are available:
+ *  - record
+ *      A single selected Grist record. You may use it to build a view like the Grist "Card"
+ *      widget, to show the current record (often you'd want your widget linked to a table).
+ *  - records
+ *      All Grist records in this view, as for the Grist "Table" widget. This would be all records
+ *      in a table when the widget isn't linked to anything (with sort & filters available), or a
+ *      subset of records when it's linked to another widget.
+ *  - locale: default for 'currency' and 'formatDate' filters (default: "en-US"). See filter documentation.
+ *  - currency: default for 'currency' filters (default: "USD"). See filter documentation.
+ *  - dateFormat: default for 'formatDate' filters (default: "MMMM DD, YYYY"). See filter documentation.
+ *
+ * The following additional filters are available:
+ *  {{ num | currency }}
+ *  {{ num | currency: "EUR" }}
+ *  {{ num | currency: "EUR" "fr-FR" }}
+ *      Formats `num` as currency, optionally overriding currency and locale. See above for
+ *      setting the default currency and locale.
+ *  {{ date | formatDate }}
+ *  {{ date | formatDate: "DD MM YY" }}
+ *  {{ date | formatDate: "DD MM YY" "de" }}
+ *      Formats `date`, optionally overriding date format and locale. See above for setting the
+ *      default date format and locale.
+ *  {{ value | isString }}
+ *      Returns whether value is of type 'string'
+ *  {{ value | isArray }}
+ *      Returns whether value is an array.
+ */
+
 const {
   compile, computed, createApp, defineComponent, defineCustomElement,
   h, nextTick, ref, shallowRef, watch,
@@ -326,11 +360,49 @@ function currency(value, currency = undefined, locale = undefined) {
   return result;
 }
 
-function formatDate(value, dateFormat = undefined) {
+const momentLocalesLoaded = new Map();
+
+async function formatDate(value, dateFormat = undefined, locale = undefined) {
+  if (!locale) { locale = this.context.get(['locale']); }
   if (!dateFormat) { dateFormat = this.context.get(['dateFormat']); }
+
   if (typeof(value) === 'number') { value = new Date(value * 1000); }
-  const date = moment.utc(value)
+  let useLocale = momentLocalesLoaded.get(locale);
+  if (!useLocale) {
+    momentLocalesLoaded.set(locale, locale);
+    useLocale = await loadMomentLocale(locale);
+    momentLocalesLoaded.set(locale, useLocale);
+  }
+  const date = moment.utc(value).locale(locale);
   return date.isValid() ? date.format(dateFormat) : value;
+}
+
+async function loadMomentLocale(locale) {
+  locale = locale.toLowerCase();                // E.g. 'de' or 'de-DE'
+  if (!await doLoadMomentLocale(locale)) {
+    const shortLocale = locale.split("-")[0]; // E.g. "de"
+    await doLoadMomentLocale(shortLocale);
+  }
+}
+async function doLoadMomentLocale(locale) {
+  await withMaskedGlobals(['define', 'require', 'module'], () =>
+    new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = `https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/locale/${locale}.min.js`;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    })
+  );
+}
+async function withMaskedGlobals(globalNames, cb) {
+  const saved = Object.fromEntries(globalNames.map(n => [n, window[n]]));
+  globalNames.forEach(n => { window[n] = undefined; });
+  try {
+    return await cb();
+  } finally {
+    globalNames.forEach(n => { window[n] = saved[n]; });
+  }
 }
 
 liquidEngine.registerFilter('currency', currency);
