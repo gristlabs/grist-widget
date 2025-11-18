@@ -252,6 +252,9 @@ class RecordDrop extends Drop {
     }
     return value;
   }
+  toJSON() {
+    return this._record;
+  }
 }
 
 const pending = Object();
@@ -370,40 +373,37 @@ function currency(value, currency = undefined, locale = undefined) {
   return result;
 }
 
-const momentLocalesLoaded = new Map();
+const momentLocalesLoaded = new Map([['en', 'en']]);
 
 async function formatDate(value, dateFormat = undefined, locale = undefined) {
   if (!locale) { locale = this.context.get(['locale']); }
   if (!dateFormat) { dateFormat = this.context.get(['dateFormat']); }
 
   if (typeof(value) === 'number') { value = new Date(value * 1000); }
-  let useLocale = momentLocalesLoaded.get(locale);
-  if (!useLocale) {
-    momentLocalesLoaded.set(locale, locale);
-    useLocale = await loadMomentLocale(locale);
-    momentLocalesLoaded.set(locale, useLocale);
-  }
-  const date = moment.utc(value).locale(locale);
+  let useLocale = momentLocalesLoaded.get(locale) || await loadMomentLocale(locale);
+  const date = moment.utc(value).locale(useLocale);
   return date.isValid() ? date.format(dateFormat) : value;
 }
 
 async function loadMomentLocale(locale) {
   locale = locale.toLowerCase();                // E.g. 'de' or 'de-DE'
-  if (!await doLoadMomentLocale(locale)) {
-    const shortLocale = locale.split("-")[0]; // E.g. "de"
-    await doLoadMomentLocale(shortLocale);
-  }
+  return await doLoadMomentLocale(locale) ||
+    await doLoadMomentLocale(locale.split("-")[0]); // E.g. "de"
 }
 async function doLoadMomentLocale(locale) {
-  await withMaskedGlobals(['define', 'require', 'module'], () =>
-    new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = `https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/locale/${locale}.min.js`;
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.head.appendChild(script);
-    })
-  );
+  if (momentLocalesLoaded.get(locale)) {
+    momentLocalesLoaded.set(locale, locale);
+    await withMaskedGlobals(['define', 'require', 'module'], () =>
+      new Promise((resolve) => {
+        const script = document.createElement("script");
+        script.src = `https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/locale/${locale}.min.js`;
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.head.appendChild(script);
+      })
+    );
+  }
+  return locale;
 }
 async function withMaskedGlobals(globalNames, cb) {
   const saved = Object.fromEntries(globalNames.map(n => [n, window[n]]));
