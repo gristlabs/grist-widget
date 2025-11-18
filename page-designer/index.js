@@ -1,7 +1,8 @@
 /**
- * Here is some usage documentation. User may write a LiquidJS template. It's documented at
- * https://liquidjs.com/tutorials/intro-to-liquid.html, but a better introduction to syntax is at
- * https://shopify.dev/docs/api/liquid.
+ * Here is some usage documentation. User may write a LiquidJS template.
+ * - Introduction to syntax: https://shopify.dev/docs/api/liquid
+ * - Cheatsheet: https://www.shopify.com/partners/shopify-cheat-sheet
+ * - Developer documentation: https://liquidjs.com/tutorials/intro-to-liquid.html
  *
  * The following variables are available:
  *  - record
@@ -188,8 +189,9 @@ async function fetchSelectedRecord(rowId) {
   const record = (rowId === 'new') ? {} : await grist.docApi.fetchSelectedRecord(rowId, fetchOptions());
   return new RecordDrop(record);
 }
-async function fetchSelectedRecords() {
-  const records = await grist.docApi.fetchSelectedRecords(fetchOptions());
+async function fetchSelectedTable() {
+  console.log("A", fetchOptions());
+  const records = await grist.docApi.fetchSelectedTable(fetchOptions());
   return records.map(r => new RecordDrop(r));
 }
 
@@ -210,11 +212,19 @@ async function fetchRecords(tableId, filters) {
   return records.map(r => ({id: r.id, ...r.fields}));
 }
 async function fetchReference(tableId, rowId) {
-  const records = await fetchRecords(tableId, {id: [rowId]});
-  return records?.[0] || null;
+  try {
+    const records = await fetchRecords(tableId, {id: [rowId]});
+    return records?.[0] || null;
+  } catch (err) {
+    return `${tableId}[${rowId}]`;
+  }
 }
 async function fetchReferenceList(tableId, rowIds) {
-  return await fetchRecords(tableId, {id: rowIds});
+  try {
+    return await fetchRecords(tableId, {id: rowIds});
+  } catch (err) {
+    return `${tableId}[[${rowIds}]]`;
+  }
 }
 
 let _lastRowId = null;
