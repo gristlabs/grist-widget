@@ -16,8 +16,8 @@
 </head>
 
 <body class="h-screen">
-  <div id="app">
-    <div class="sticky top-0">
+  <div id="app" class="h-screen flex flex-col overflow-hidden">
+    <div>
       <div class="h-12 flex items-center justify-between bg-gray-50 px-3 py-2 border-b text-sm">
         <div class="flex items-center gap-2">
           <!-- Toggle group -->
@@ -56,34 +56,35 @@
       </div>
       <div v-if="statusMessage"
            class="h-8 bg-yellow-100 px-3 py-1 border-b text-sm truncate"
+           v-show="tab !== 'edit'"
            :title="statusMessage">
         {{ statusMessage }}
       </div>
     </div>
 
-    <div id="editor" v-show="tab === 'edit'" class="fixed top-12 left-0 right-0 bottom-0"></div>
+    <div id="editor" v-show="tab === 'edit'" class="flex-1 overflow-y-auto"></div>
     <template v-if="tab === 'preview'">
-      <template v-if="compileErrors?.length">
-        <div class="space-y-2 p-3 text-sm">
-          <div v-for="err in compileErrors" :key="err.id"
-               class="p-3 border-l-4 border-red-500 bg-red-50 rounded shadow">
-            <div class="font-bold text-red-700">{{ err.message }}</div>
-            <div class="text-xs text-red-700">
-              Line {{ err.loc.start.line }}, Column {{ err.loc.start.column }}
-            </div>
+      <div class="flex-1 overflow-y-auto">
+        <template v-if="templateError">
+          <div class="space-y-2 p-3 text-sm">
+            <div v-for="err in [templateError]" :key="err.id"
+                 class="p-3 border-l-4 border-red-500 bg-red-50 rounded shadow">
+              <div class="font-bold text-red-700">{{ err.message }}</div>
+              <div class="text-xs text-red-700">
+                Line {{ err.loc?.start.line }}, Column {{ err.loc?.start.column }}
+              </div>
 
-            <button @click="goToError(err)"
-                 class="mt-2 px-2 py-1 bg-red-600 text-white rounded text-xs">
-              Go to error
-            </button>
+              <button @click="goToError(err)"
+                   class="mt-2 px-2 py-1 bg-red-600 text-white rounded text-xs">
+                Go to error
+              </button>
+            </div>
           </div>
-        </div>
-      </template>
-      <template v-else>
-        <div class="fixed top-12 bottom-0 left-0 right-0">
+        </template>
+        <template v-else>
           <iframe :srcdoc="renderedTemplate" class="w-full h-full border-0"></iframe>
-        </div>
-      </template>
+        </template>
+      </div>
     </template>
   </div>
 

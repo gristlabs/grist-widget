@@ -4,17 +4,20 @@ const {
 } = Vue;
 
 const {Liquid} = liquidjs;
-const liquidEngine = new Liquid();
 
+const liquidEngine = new Liquid();
 const waitingForData = ref(true);
-const vueError = ref(null);
 const tab = ref('preview');
 const template = ref('');
 const serverDiverged = ref(false);
 const haveLocalEdits = ref(false);
 const records = shallowRef(null);
 const renderedTemplate = ref('');
+const vueError = ref(null);
+const templateError = ref(null);
 let editor = null;
+let _editorPromise = null;
+const ensureEditor = () => (_editorPromise || (_editorPromise = _initEditor()));
 
 function ready(fn) {
   if (document.readyState !== 'loading'){
@@ -26,110 +29,117 @@ function ready(fn) {
 
 // TODO: this should be generated based on fields.
 /*
-<!-- working prompt
-  I have some an array of json data in records, like this:
- {
-    "id": 1,
-    "Company": "Batz, Prohaska and Schmeler",
-    "Notes": "Prolific blogger.\nVery interesting person. Likes to dig up, analyze, and then write about interesting data."
-  },
-  {
-    "id": 2,
-    "Company": "Considine-Mante",
-    "Notes": ""
-  },
+<!-- working prompt -- but needs to use liquidjs
+I have some an array of json data in records, like this:
+...
 
 Give me a vuejs template to present this data in nice-looking cards. Include html to go inside <div id="app"> (don't include this div itself). Don't include js: assume the format provided. Use tailwindcss for styling. Make an effort to make cards look really nice. Use color when it helps. Make each care clearly stand out.
 -->
 */
 
 const initialValue = `
+<script src="https://cdn.tailwindcss.com"></script>
 <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 p-4">
-  <div
-    v-for="item in records"
-    :key="item.id"
-    class="rounded-2xl shadow-lg p-6 bg-white border border-gray-200 hover:shadow-xl transition-shadow duration-200"
-    >
-    <h2 class="text-xl font-semibold text-indigo-700 mb-2">
-      {{ item.Company }}
-    </h2>
+  {% for item in records %}
+    <div class="rounded-2xl shadow-lg p-6 bg-white border border-gray-200 hover:shadow-xl transition-shadow duration-200">
 
-    <p class="text-gray-600 whitespace-pre-line" v-if="item.Notes">
-    {{ item.Notes }}
-    </p>
+      <h2 class="text-xl font-semibold text-indigo-700 mb-2">
+        {{ item.Company }}
+      </h2>
 
-    <p
-      class="text-sm text-gray-400 italic"
-      v-else
-      >
-      No notes available.
-    </p>
+      {% if item.Notes %}
+        <p class="text-gray-600 whitespace-pre-line">
+          {{ item.Notes | downcase }}
+        </p>
+      {% else %}
+        <p class="text-sm text-gray-400 italic">
+          No notes available.
+        </p>
+      {% endif %}
 
-    <div class="mt-4 flex justify-end">
-      <span
-        class="text-xs font-medium bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full"
-        >
-        #{{ item.id }}
-      </span>
+      <div class="mt-4 flex justify-end">
+        <span class="text-xs font-medium bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">
+          #{{ item.id }}
+        </span>
+      </div>
+
     </div>
-  </div>
+  {% endfor %}
 </div>
 `;
 
-// Vue won't compile <style> tags into compiled templates. Extract those for rendering separately.
-const splitHtmlCss = computed(() => {
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(template.value, "text/html");
-    const styles = [...doc.querySelectorAll("style")];
-    const css = styles.map(node => node.textContent).join("\n\n");
-    styles.forEach(node => node.remove());
-    const html = doc.body.innerHTML.trim();
-    return {html, css};
-  } catch (e) {
-    return {html: template.value, css: ''};
-  }
-});
+let serverOptions = null;
+const getServerTemplateValue = () => (serverOptions?.html || initialValue);
 
-function goToError(error) {
+async function goToError(error) {
+  tab.value = 'edit';
+  const editor = await ensureEditor();
   const { line, column } = error.loc.start;
-  props.editor.setPosition({ lineNumber: line, column });
-  props.editor.revealPositionInCenter({ lineNumber: line, column });
-  props.editor.getAction("editor.action.marker.next").run();
+  editor.setPosition({ lineNumber: line, column });
+  editor.revealPositionInCenter({ lineNumber: line, column });
+  editor.getAction("editor.action.marker.next").run();
+}
+
+function getLineCol(text, pos) {
+  let line = 1;
+  let lastNL = -1;
+  for (let i = 0; i < pos; i++) {
+    if (text.charCodeAt(i) === 10) {    // '\n' is charCode 10
+      line++;
+      lastNL = i;
+    }
+  }
+  return { line, column: pos - lastNL };
 }
 
 const compiledTemplate = computed(() => {
   try {
-    return liquidEngine.parse(template.value);
-  } catch (err) {
-    throw err;
+    const tpl = liquidEngine.parse(template.value);
+    templateError.value = null;
+    return tpl;
+  } catch (error) {
+    templateError.value = enhanceTemplateError(error);
+    return [];
   }
 });
 
-const compileErrors = computed(() => compiledTemplate.value.errors);
+function enhanceTemplateError(error) {
+  if (error.token?.input && error.token.begin >= 0 && error.token.end >= 0) {
+    // Convert error location to one we can use more readily with monaco editor.
+    error.loc = {
+      start: getLineCol(error.token.input, error.token.begin),
+      end: getLineCol(error.token.input, error.token.end),
+    };
+  }
+  return error;
+}
 
 const statusMessage = computed(() => {
   if (waitingForData.value) { return 'Waiting for data...'; }
   if (vueError.value) { return String(vueError.value); }
-  if (compileErrors.value?.length) { return "COMPILE ERROR"; }
+  if (templateError.value) { return `Template error`; }
   return null;
 });
 
-function setEditorErrorMarkers(errors) {
+function setEditorErrorMarkers(error) {
   if (!editor) { return; }
+  const errors = error ? [error] : [];
+  let markers = [];
   try {
-    const markers = (errors || []).map(e => ({
+    markers = errors.map(e => ({
       startLineNumber: e.loc.start.line,
       startColumn: e.loc.start.column,
       endLineNumber: e.loc.end.line,
       endColumn: e.loc.end.column,
       message: e.message,
-      severity: monaco?.MarkerSeverity.Error
+      severity: monaco.MarkerSeverity.Error
     }));
-    monaco.editor.setModelMarkers(editor.getModel(), "page-designer", markers);
   } catch (e) {
     console.warn("Error setting error markers", e);
-    monaco.editor.setModelMarkers(editor.getModel(), "page-designer", []);
+  }
+  monaco.editor.setModelMarkers(editor.getModel(), "page-designer", markers);
+  if (!markers.length) {
+    editor.trigger(null, "closeMarkersNavigation", null);
   }
 }
 
@@ -139,8 +149,6 @@ ready(function() {
     requiredAccess: 'read table',
   });
 
-  let serverOptions = null;
-  function getServerTemplateValue() { return serverOptions?.html || initialValue; }
   function resetFromOptions() {
     vueError.value = null;
     template.value = getServerTemplateValue();
@@ -162,66 +170,70 @@ ready(function() {
     records.value = grist.mapColumnNames(rows);
   }, {expandRefs: false});
 
-  let isMonacoInitialized = false;
 
   // Initialize Vue.
   const app = createApp({
     setup() {
       watch(tab, async (newVal) => {
-        if (newVal === "edit" && !isMonacoInitialized) {
-          isMonacoInitialized = true;
-          await nextTick();
-          await initMonaco();
-        }
+        if (newVal === "edit") { await ensureEditor(); }
       });
-      watch(compileErrors, setEditorErrorMarkers);
+      watch(templateError, setEditorErrorMarkers, {immediate: true});
       watch([compiledTemplate, records], async ([compiledTemplate, records]) => {
-        renderedTemplate.value = await liquidEngine.render(compiledTemplate, {records});
-      });
+        if (!compiledTemplate?.length) { return; }
+        try {
+          renderedTemplate.value = await liquidEngine.render(compiledTemplate, {records});
+          templateError.value = null;
+        } catch (error) {
+          templateError.value = enhanceTemplateError(error);
+        }
+      }, {immediate: true});
 
       return {
         statusMessage, tab,
-        splitHtmlCss, compileErrors, goToError,
+        templateError, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
         renderedTemplate,
         params: {records, formatDate, formatUSD},
       };
     }
   });
-  app.config.errorHandler = (err) => { vueError.value = err; };
+  app.config.errorHandler = (err) => { console.warn("Vue Error", err); vueError.value = err; };
   app.mount('#app');
 
-  // Initialize Monaco editor.
-  async function initMonaco() {
-    require.config({ paths: {'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs'}});
-    await new Promise((resolve, reject) => require(['vs/editor/editor.main'], resolve, reject));
-    editor = monaco.editor.create(document.getElementById("editor"), {
-      value: template.value,
-      language: "html",
-      theme: "vs-dark",
-      automaticLayout: true,
-      wordWrap: 'on',
-      minimap: {enabled: false},
-      lineNumbers: 'off',
-      glyphMargin: false,
-      folding: false,
-      scrollBeyondLastLine: false,
-    });
-    function _onEditorContentChanged() {
-      const newValue = editor.getValue();
-      vueError.value = null;
-      template.value = newValue;
-      serverDiverged.value = false;
-      if (newValue !== getServerTemplateValue()) {
-        haveLocalEdits.value = true;
-        grist.setOptions({html: newValue});
-      }
-    }
-    const onEditorContentChanged = _.debounce(_onEditorContentChanged, 1000);
-    editor.getModel().onDidChangeContent(onEditorContentChanged);
-    setEditorErrorMarkers(compileErrors.value);
-  }
 });
+
+// Initialize Monaco editor.
+async function _initEditor() {
+  require.config({ paths: {'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs'}});
+  await new Promise((resolve, reject) => require(['vs/editor/editor.main'], resolve, reject));
+  editor = monaco.editor.create(document.getElementById("editor"), {
+    value: template.value,
+    language: "html",
+    theme: "vs-dark",
+    automaticLayout: true,
+    wordWrap: 'on',
+    minimap: {enabled: false},
+    lineNumbers: 'off',
+    glyphMargin: false,
+    folding: false,
+    scrollBeyondLastLine: false,
+  });
+  function _onEditorContentChanged() {
+    const newValue = editor.getValue();
+    vueError.value = null;
+    template.value = newValue;
+    serverDiverged.value = false;
+    if (newValue !== getServerTemplateValue()) {
+      haveLocalEdits.value = true;
+      grist.setOptions({html: newValue});
+    }
+  }
+  const onEditorContentChanged = _.debounce(_onEditorContentChanged, 1000);
+  editor.getModel().onDidChangeContent(onEditorContentChanged);
+  setEditorErrorMarkers(templateError.value);
+  return editor;
+}
+
 
 function formatUSD(value) {
   if (typeof value !== "number") { return value || '—'; }   // Show falsy as a dash.
