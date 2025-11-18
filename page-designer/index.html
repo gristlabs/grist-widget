@@ -6,43 +6,133 @@
   <title>Page Designer</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
   <!-- moment uses a loader that conflicts with monaco-editor, but works if moment is included first. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/liquidjs/10.21.1/liquid.browser.min.js" integrity="sha512-d0alIbxiMUdiKNxO5Gd8E3L+CIXKb39FnhIdAztNRB4J4KWZWThtJYL2o3U55IiOLRlsq6iCBaHEtzh1cB2ODA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
   <script type="module" src="index.js"></script>
+  <style>
+    *, ::before, ::after { box-sizing: border-box; }
+    body { height: 100vh; margin: 0; padding: 0; }
+    #app { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    @media print { .topbar { display: none !important; } }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 3rem;
+      padding: 0.5rem 0.75rem;
+      background-color: rgb(243 244 246);
+      border-bottom: 1px solid rgb(209 213 219);
+      font-size: small;
+    }
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .main-area {
+      flex: auto;
+      overflow-y: auto;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .button {
+      padding: 0.25rem 0.75rem;
+      font-size: small;
+      border: 1px solid rgb(209 213 219);
+      border-radius: 0.375rem;
+      color: #111827;
+      background-color: #ffffff;
+    }
+    .button-group {
+      display: flex;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      overflow: hidden;
+    }
+    .button-active {
+      color: #111827;
+      background-color: #ffffff;
+      border: 1px solid #d1d5db;
+      font-weight: 500;
+      border-radius: 0.375rem;
+      margin: -1px;
+      z-index: 10;
+    }
+    .button-inactive {
+      color: #4b5563;
+      background-color: #f3f4f6;
+      border: none;
+    }
+    .button-inactive:hover {
+      color: #1f2937;
+      background-color: #f0f1f2;
+    }
+    .status-bar {
+      height: 2rem;
+      background-color: #fef9c3;
+      padding: 0.25rem 0.75rem;
+      border-bottom: 1px solid #0000001a;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .errors-container {
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+    .error-card {
+      margin-top: 0.5rem;
+      padding: 0.75rem;
+      border-left: 4px solid #ef4444;
+      background-color: #fef2f2;
+      border-radius: 0.25rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .error-title { font-weight: 700; color: #b91c1c; }
+    .error-meta { font-size: 0.75rem; color: #b91c1c; }
+    .error-button {
+      margin-top: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      background-color: #dc2626;
+      color: #fff;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+    }
+  </style>
 </head>
 
 
-<body class="h-screen">
-  <div id="app" class="h-screen flex flex-col overflow-hidden">
-    <div class="print:hidden">
-      <div class="h-12 flex items-center justify-between bg-gray-50 px-3 py-2 border-b text-sm">
-        <div class="flex items-center gap-2">
+<body>
+  <div id="app">
+    <div class="topbar">
+      <div class="toolbar">
+        <div class="toolbar-left">
           <!-- Toggle group -->
-          <div class="flex border border-gray-300 rounded-md overflow-hidden">
-            <button id="edit"
-                    class="px-3 py-1"
-                    :class="tab === 'edit' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
-                            'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
+          <div class="button-group">
+            <button id="edit" class="button"
+                    :class="tab === 'edit' ? 'button-active' : 'button-inactive'"
                     @click="tab = 'edit'">
               Edit
             </button>
-            <button id="preview"
-                    class="px-3 py-1"
-                    :class="tab === 'preview' ? 'text-gray-900 bg-white border border-gray-300 font-medium rounded-md -m-px z-10' :
-                            'text-gray-600 hover:text-gray-800 hover:bg-gray-100'"
+            <button id="preview" class="button"
+                    :class="tab === 'preview' ? 'button-active' : 'button-inactive'"
                     @click="tab = 'preview'">
               Preview
             </button>
           </div>
 
           <!-- Reload (only when out of sync) -->
-          <button
+          <button class="button"
             v-if="serverDiverged"
-            class="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-100"
             title="Server version changed. Click to load the latest."
             @click="resetFromOptions">
             ⚠️ Reload
@@ -50,40 +140,35 @@
         </div>
 
         <!-- Right: Hide button -->
-        <button id="hide"
-                class="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-100">
+        <button id="hide" class="button">
           Hide
         </button>
       </div>
-      <div v-if="statusMessage"
-           class="h-8 bg-yellow-100 px-3 py-1 border-b text-sm truncate"
-           v-show="tab !== 'edit'"
-           :title="statusMessage">
+      <div v-if="statusMessage && tab !== 'edit'"
+           class="status-bar" :title="statusMessage">
         {{ statusMessage }}
       </div>
     </div>
 
-    <div id="editor" v-show="tab === 'edit'" class="flex-1 overflow-y-auto"></div>
+    <div id="editor" class="main-area" v-show="tab === 'edit'"></div>
     <template v-if="tab === 'preview'">
-      <div class="flex-1 overflow-y-auto">
+      <div class="main-area">
         <template v-if="templateError">
-          <div class="space-y-2 p-3 text-sm">
-            <div v-for="err in [templateError]" :key="err.id"
-                 class="p-3 border-l-4 border-red-500 bg-red-50 rounded shadow">
-              <div class="font-bold text-red-700">{{ err.message }}</div>
-              <div class="text-xs text-red-700">
+          <div class="errors-container">
+            <div v-for="err in [templateError]" :key="err.id" class="error-card">
+              <div class="error-title">{{ err.message }}</div>
+              <div class="error-meta">
                 Line {{ err.loc?.start.line }}, Column {{ err.loc?.start.column }}
               </div>
 
-              <button @click="goToError(err)"
-                   class="mt-2 px-2 py-1 bg-red-600 text-white rounded text-xs">
+              <button @click="goToError(err)" class="error-button">
                 Go to error
               </button>
             </div>
           </div>
         </template>
         <template v-else>
-          <iframe :srcdoc="renderedTemplate" class="w-full h-full border-0"></iframe>
+          <iframe :srcdoc="renderedTemplate"></iframe>
         </template>
       </div>
     </template>

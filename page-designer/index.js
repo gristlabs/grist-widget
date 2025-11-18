@@ -1,6 +1,6 @@
 /**
  * Here is some usage documentation. User may write a LiquidJS template.
- * - Introduction to syntax: https://shopify.dev/docs/api/liquid
+ * - Introduction to syntax: https://shopify.github.io/liquid/basics/introduction/
  * - Cheatsheet: https://www.shopify.com/partners/shopify-cheat-sheet
  * - Developer documentation: https://liquidjs.com/tutorials/intro-to-liquid.html
  *
@@ -40,7 +40,13 @@ const {
 
 const {Drop, Hash, Liquid} = liquidjs;
 
-const liquidEngine = new Liquid();
+const liquidEngine = new Liquid({
+  outputEscape: "escape",
+  // Some limits as recommended in https://liquidjs.com/tutorials/dos.html
+  parseLimit: 1e8,   // typical size of your templates in each render
+  renderLimit: 1000, // limit each render to be completed in 1s
+  memoryLimit: 1e9,  // memory available for LiquidJS (1e9 for 1GB)
+});
 const waitingForData = ref(true);
 const tab = ref('preview');
 const template = ref('');
@@ -62,45 +68,37 @@ function ready(fn) {
   }
 }
 
-// TODO: this should be generated based on fields.
-/*
-<!-- working prompt -- but needs to use liquidjs
-I have some an array of json data in records, like this:
-...
+const initialValue = `\
+<button class="copy-btn"
+        title="Copy instructions to clipboard"
+        onclick="
+          window.getSelection().selectAllChildren(document.querySelector('.copy-content'));
+          document.execCommand('copy')
+        ">
+  Copy
+</button>
 
-Give me a vuejs template to present this data in nice-looking cards. Include html to go inside <div id="app"> (don't include this div itself). Don't include js: assume the format provided. Use tailwindcss for styling. Make an effort to make cards look really nice. Use color when it helps. Make each care clearly stand out.
--->
-*/
+<div class="copy-content">
 
-const initialValue = `
-<style>
-body {
-  font-family: sans-serif;
-  font-size: small;
-  line-height: 1.5;
-}
-pre, code {
-  background-color: #EEE;
-  border-radius: 3px;
-  padding: 2px 4px;
-}
-</style>
 <p>You have access to records of this form:
 
 <p><pre>
 {{ record | inspect: 2 }}
 </pre>
 
-<p>You may use liquidjs template syntax. Available placeholders are <code>record</code> if you need
+<p>You may use <a href="https://shopify.github.io/liquid/basics/introduction/" target="_blank">LiquidJS
+template syntax</a>.
+Available placeholders are <code>record</code> if you need
 to show a page for a single record, or <code>record</code> to show a list of cards or similar for a list of
 records.
 
-<p>In addition to regular filters, you have available: <code>isString</code> <code>isArray</code> as well as:
+<p>In addition to regular <a href="https://liquidjs.com/filters/overview.html" target="_blank">filters</a>,
+you have available: <code>isString</code> <code>isArray</code> as well as:
 <ul>
-<li>{{ num | currency }} Formats <code>num</code> as currency, with optional params for
-  currency and locale.
-<li>{{ date | formatDate }} Formats <code>date</code> as a date, with optional params for
-  format and locale (format uses moment.js syntax)
+<li>{% raw %}<code>{{ num | currency }}</code>{% endraw %} Formats <code>num</code> as currency,
+  with optional params for currency and locale.
+<li>{% raw %}<code>{{ date | formatDate }}</code>{% endraw %} Formats <code>date</code> as a date,
+  with optional params for format and locale (format uses moment.js syntax)
 </ul>
 
 <p>These global variables may be overridden using {% raw %}{% assign %}{% endraw %}:
@@ -113,8 +111,40 @@ records.
   (default: "MMMM DD, YYYY").
 </ul>
 
-<p>You may produce a full HTML page, including <code>&lt;style&gt;</code> tags or a styling
-library like Tailwind CSS.
+<p>You may produce a full HTML page. You can include <code>&lt;style&gt;</code> and
+<code>&lt;script&gt;</code> tags or import external stylesheets and scripts.
+
+  </div>
+</div>
+
+<style>
+body {
+  font-family: sans-serif;
+  font-size: small;
+  line-height: 1.5;
+  margin: 0.75rem;
+}
+pre, code {
+  background-color: #EEE;
+  border-radius: 3px;
+  padding: 2px 4px;
+  overflow-x: auto;
+}
+.copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e1e5eb;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.copy-btn:hover {
+  background: #f5f7fb;
+}
+</style>
 `;
 
 let gristSettings = null;
@@ -290,7 +320,7 @@ function fromPromise(ref, promise) {
 ready(function() {
   // Initialize Grist connection.
   grist.ready({
-    requiredAccess: 'read table',
+    requiredAccess: 'full',
   });
 
   function resetFromOptions() {
