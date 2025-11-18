@@ -150,14 +150,17 @@ const fetchOptions = () => ({
   includeColumns: gristSettings?.accessLevel === 'full' ? 'normal' : undefined,
 });
 
+async function fetchSelectedRecord(rowId) {
+  if (rowId === 'new') { return {}; }
+  return grist.docApi.fetchSelectedRecord(rowId, fetchOptions());
+}
+
 let _lastRowId = null;
 let _lastFetchedRecord = ref(null);
 let _lastFetchedRecords = ref(null);
 class DataDrop extends Drop {
   record() {
-    if (_lastRowId === 'new') { return {}; }
-    return _lastFetchedRecord.value ||
-      fromPromise(_lastFetchedRecord, grist.docApi.fetchSelectedRecord(_lastRowId, fetchOptions()));
+    return _lastFetchedRecord.value || fromPromise(_lastFetchedRecord, fetchSelectedRecord(_lastRowId));
   }
   records() {
     return _lastFetchedRecords.value ||
@@ -169,7 +172,6 @@ const dataDrop = new DataDrop();
 const pending = Object();
 function fromPromise(ref, promise) {
   ref.value = pending;
-  console.trace("fromPromise", _lastRowId);
   promise.then(val => { ref.value = val; }).catch(e => { ref.value = null; throw e; });
 }
 
