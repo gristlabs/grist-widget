@@ -3,7 +3,7 @@ const {
   h, nextTick, ref, shallowRef, watch,
 } = Vue;
 
-const {Liquid} = liquidjs;
+const {Drop, Liquid} = liquidjs;
 
 const liquidEngine = new Liquid();
 const waitingForData = ref(true);
@@ -68,6 +68,7 @@ const initialValue = `
 </div>
 `;
 
+let gristSettings = null;
 let serverOptions = null;
 const getServerTemplateValue = () => (serverOptions?.html || initialValue);
 
@@ -143,6 +144,35 @@ function setEditorErrorMarkers(error) {
   }
 }
 
+const fetchOptions = () => ({
+  format: 'rows',
+  expandRefs: false,
+  includeColumns: gristSettings?.accessLevel === 'full' ? 'normal' : undefined,
+});
+
+let _lastRowId = null;
+let _lastFetchedRecord = ref(null);
+let _lastFetchedRecords = ref(null);
+class DataDrop extends Drop {
+  record() {
+    if (_lastRowId === 'new') { return {}; }
+    return _lastFetchedRecord.value ||
+      fromPromise(_lastFetchedRecord, grist.docApi.fetchSelectedRecord(_lastRowId, fetchOptions()));
+  }
+  records() {
+    return _lastFetchedRecords.value ||
+      fromPromise(_lastFetchedRecords, grist.docApi.fetchSelectedTable(fetchOptions()));
+  }
+}
+const dataDrop = new DataDrop();
+
+const pending = Object();
+function fromPromise(ref, promise) {
+  ref.value = pending;
+  console.trace("fromPromise", _lastRowId);
+  promise.then(val => { ref.value = val; }).catch(e => { ref.value = null; throw e; });
+}
+
 ready(function() {
   // Initialize Grist connection.
   grist.ready({
@@ -156,7 +186,8 @@ ready(function() {
     haveLocalEdits.value = false;
     serverDiverged.value = false;
   }
-  grist.onOptions((options) => {
+  grist.onOptions((options, settings) => {
+    gristSettings = settings;
     serverOptions = options;
     if (!haveLocalEdits.value) {
       resetFromOptions();
@@ -164,12 +195,18 @@ ready(function() {
       serverDiverged.value = (getServerTemplateValue() !== template.value);
     }
   })
-  grist.onRecords((rows) => {
+
+  grist.rpc.on('message', async function(msg) {
     waitingForData.value = false;
     vueError.value = null;
-    records.value = grist.mapColumnNames(rows);
-  }, {expandRefs: false});
-
+    if (msg.rowId) {
+      _lastRowId = msg.rowId;
+      _lastFetchedRecord.value = null;
+    }
+    if (msg.dataChange) {
+      _lastFetchedRecords.value = null;
+    }
+  });
 
   // Initialize Vue.
   const app = createApp({
@@ -178,10 +215,10 @@ ready(function() {
         if (newVal === "edit") { await ensureEditor(); }
       });
       watch(templateError, setEditorErrorMarkers, {immediate: true});
-      watch([compiledTemplate, records], async ([compiledTemplate, records]) => {
+      watch([compiledTemplate, _lastFetchedRecord, _lastFetchedRecords], async ([compiledTemplate]) => {
         if (!compiledTemplate?.length) { return; }
         try {
-          renderedTemplate.value = await liquidEngine.render(compiledTemplate, {records});
+          renderedTemplate.value = await liquidEngine.render(compiledTemplate, dataDrop);
           templateError.value = null;
         } catch (error) {
           templateError.value = enhanceTemplateError(error);
