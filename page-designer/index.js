@@ -73,34 +73,48 @@ Give me a vuejs template to present this data in nice-looking cards. Include htm
 */
 
 const initialValue = `
-<script src="https://cdn.tailwindcss.com"></script>
-<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 p-4">
-  {% for item in records %}
-    <div class="rounded-2xl shadow-lg p-6 bg-white border border-gray-200 hover:shadow-xl transition-shadow duration-200">
+<style>
+body {
+  font-family: sans-serif;
+  font-size: small;
+  line-height: 1.5;
+}
+pre, code {
+  background-color: #EEE;
+  border-radius: 3px;
+  padding: 2px 4px;
+}
+</style>
+<p>You have access to records of this form:
 
-      <h2 class="text-xl font-semibold text-indigo-700 mb-2">
-        {{ item.Company }}
-      </h2>
+<p><pre>
+{{ record | inspect: 2 }}
+</pre>
 
-      {% if item.Notes %}
-        <p class="text-gray-600 whitespace-pre-line">
-          {{ item.Notes | downcase }}
-        </p>
-      {% else %}
-        <p class="text-sm text-gray-400 italic">
-          No notes available.
-        </p>
-      {% endif %}
+<p>You may use liquidjs template syntax. Available placeholders are <code>record</code> if you need
+to show a page for a single record, or <code>record</code> to show a list of cards or similar for a list of
+records.
 
-      <div class="mt-4 flex justify-end">
-        <span class="text-xs font-medium bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">
-          #{{ item.id }}
-        </span>
-      </div>
+<p>In addition to regular filters, you have available: <code>isString</code> <code>isArray</code> as well as:
+<ul>
+<li>{{ num | currency }} Formats <code>num</code> as currency, with optional params for
+  currency and locale.
+<li>{{ date | formatDate }} Formats <code>date</code> as a date, with optional params for
+  format and locale (format uses moment.js syntax)
+</ul>
 
-    </div>
-  {% endfor %}
-</div>
+<p>These global variables may be overridden using {% raw %}{% assign %}{% endraw %}:
+<ul>
+<li><code>locale</code>: to change the default locale for 'currency' and 'formatDate' filters
+  (default: "en-US").
+<li><code>currency</code>: to change the default for the 'currency' filter
+  (default: "USD").
+<li><code>dateFormat</code>: to change the default for 'formatDate' filter, using moment.js syntax
+  (default: "MMMM DD, YYYY").
+</ul>
+
+<p>You may produce a full HTML page, including <code>&lt;style&gt;</code> tags or a styling
+library like Tailwind CSS.
 `;
 
 let gristSettings = null;
@@ -252,8 +266,18 @@ class RecordDrop extends Drop {
     }
     return value;
   }
-  toJSON() {
-    return this._record;
+  toJSON(expandRefLevels = 1) {
+    return Object.fromEntries(Object.keys(this._record).map(key => {
+      let value = this.liquidMethodMissing(key);
+      if (value instanceof RecordDrop) {
+        value = expandRefLevels > 0 ? value.toJSON(expandRefLevels - 1) : `${value.tableId}[${value.rowId}]`;
+      } else if (Array.isArray(value)) {
+        if (value.length && value[0] instanceof RecordDrop) {
+          value = expandRefLevels > 0 ? [value.toJSON(expandRefLevels - 1)] : [`${value.tableId}[${value.rowId}]`];
+        }
+      }
+      return [key, value];
+    }));
   }
 }
 
