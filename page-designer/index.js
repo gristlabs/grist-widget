@@ -3,7 +3,7 @@ const {
   h, nextTick, ref, shallowRef, watch,
 } = Vue;
 
-const {Drop, Liquid} = liquidjs;
+const {Drop, Hash, Liquid} = liquidjs;
 
 const liquidEngine = new Liquid();
 const waitingForData = ref(true);
@@ -151,23 +151,64 @@ const fetchOptions = () => ({
 });
 
 async function fetchSelectedRecord(rowId) {
-  if (rowId === 'new') { return {}; }
-  return grist.docApi.fetchSelectedRecord(rowId, fetchOptions());
+  const record = (rowId === 'new') ? {} : await grist.docApi.fetchSelectedRecord(rowId, fetchOptions());
+  return new RecordDrop(record);
+}
+async function fetchSelectedRecords() {
+  const records = await grist.docApi.fetchSelectedRecords(fetchOptions());
+  return records.map(r => new RecordDrop(r));
+}
+
+let _token = null;
+const getToken = () => (_token || (_token = fetchToken()));
+async function fetchToken() {
+  const tokenResult = await grist.getAccessToken({readOnly: true});
+  setTimeout(() => { _token = null; }, tokenResult.ttlMsecs - 10000);
+  return tokenResult;
+}
+async function fetchRecords(tableId, filters) {
+  const tokenResult = await getToken();
+  const url = new URL(tokenResult.baseUrl + `/tables/${tableId}/records`);
+  url.searchParams.set('auth', tokenResult.token);
+  url.searchParams.set('filter', JSON.stringify(filters))
+  const {records} = await (await fetch(url)).json();
+  if (!records) { return null; }
+  return records.map(r => ({id: r.id, ...r.fields}));
+}
+async function fetchReference(tableId, rowId) {
+  const records = await fetchRecords(tableId, {id: [rowId]});
+  return records?.[0] || null;
+}
+async function fetchReferenceList(tableId, rowIds) {
+  return await fetchRecords(tableId, {id: rowIds});
 }
 
 let _lastRowId = null;
 let _lastFetchedRecord = ref(null);
 let _lastFetchedRecords = ref(null);
 class DataDrop extends Drop {
-  record() {
-    return _lastFetchedRecord.value || fromPromise(_lastFetchedRecord, fetchSelectedRecord(_lastRowId));
-  }
-  records() {
-    return _lastFetchedRecords.value ||
-      fromPromise(_lastFetchedRecords, grist.docApi.fetchSelectedTable(fetchOptions()));
-  }
+  record() { return _lastFetchedRecord.value || fromPromise(_lastFetchedRecord, fetchSelectedRecord(_lastRowId)); }
+  records() { return _lastFetchedRecords.value || fromPromise(_lastFetchedRecords, fetchSelectedTable()); }
+  locale() { return 'en-US'; }
+  currency() { return 'USD'; }
+  dateFormat() { return 'MMMM DD, YYYY'; }
 }
 const dataDrop = new DataDrop();
+
+class RecordDrop extends Drop {
+  constructor(record) { super(); this._record = record; }
+  liquidMethodMissing(key) {
+    const value = this._record[key];
+    if (value?.tableId) {
+      if (value.rowId) {  // Reference
+        return value.cached || (value.cached = fetchReference(value.tableId, value.rowId));
+      } else if (value.rowIds) {  // ReferenceList
+        return value.cached || (value.cached = fetchReferenceList(value.tableId, value.rowIds));
+      }
+    }
+    return value;
+  }
+}
 
 const pending = Object();
 function fromPromise(ref, promise) {
@@ -232,7 +273,6 @@ ready(function() {
         templateError, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
         renderedTemplate,
-        params: {records, formatDate, formatUSD},
       };
     }
   });
@@ -274,22 +314,26 @@ async function _initEditor() {
 }
 
 
-function formatUSD(value) {
+function currency(value, currency = undefined, locale = undefined) {
+  if (!currency) { currency = this.context.get(['currency']); }
+  if (!locale) { locale = this.context.get(['locale']); }
+
   if (typeof value !== "number") { return value || '—'; }   // Show falsy as a dash.
   value = Math.round(value * 100) / 100;    // Round to nearest cent.
   value = (value === -0 ? 0 : value);       // Avoid negative zero.
-  const result = value.toLocaleString('en', { style: 'currency', currency: 'USD' });
+  const result = value.toLocaleString(locale, { style: 'currency', currency });
   if (result.includes('NaN')) { return value; }
   return result;
 }
 
-function formatDate(value, format = "MMMM DD, YYYY") {
+function formatDate(value, dateFormat = undefined) {
+  if (!dateFormat) { dateFormat = this.context.get(['dateFormat']); }
   if (typeof(value) === 'number') { value = new Date(value * 1000); }
   const date = moment.utc(value)
-  return date.isValid() ? date.format(format) : value;
+  return date.isValid() ? date.format(dateFormat) : value;
 }
 
-liquidEngine.registerFilter('formatUSD', formatUSD);
+liquidEngine.registerFilter('currency', currency);
 liquidEngine.registerFilter('formatDate', formatDate);
 liquidEngine.registerFilter('isArray', Array.isArray);
 liquidEngine.registerFilter('isString', v => (typeof(v) === 'string'));
