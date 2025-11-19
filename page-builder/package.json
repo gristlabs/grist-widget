@@ -1,12 +1,12 @@
 {
-  "name": "@gristlabs/widget-page-designer",
+  "name": "@gristlabs/widget-page-builder",
   "description": "Create printable pages or catalogs from Grist data.",
   "homePage": "https://github.com/gristlabs/grist-widget",
   "version": "0.0.1",
   "grist": {
-    "name": "Page Designer",
-    "url": "https://gristlabs.github.io/grist-widget/page-designer/index.html",
-    "widgetId": "@gristlabs/page-designer",
+    "name": "Page Builder",
+    "url": "https://gristlabs.github.io/grist-widget/page-builder/index.html",
+    "widgetId": "@gristlabs/page-builder",
     "published": true,
     "accessLevel": "read table",
     "renderAfterReady": true,

@@ -156,7 +156,7 @@ function setEditorErrorMarkers(error) {
   } catch (e) {
     console.warn("Error setting error markers", e);
   }
-  monaco.editor.setModelMarkers(editor.getModel(), "page-designer", markers);
+  monaco.editor.setModelMarkers(editor.getModel(), "page-builder", markers);
   if (!markers.length) {
     editor.trigger(null, "closeMarkersNavigation", null);
   }
