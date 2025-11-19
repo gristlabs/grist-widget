@@ -34,6 +34,7 @@
  */
 
 import {debounce} from "https://cdn.jsdelivr.net/npm/perfect-debounce@1.0.0/dist/index.mjs";
+import {decodeObject} from "./objtypes.js";
 
 const {
   compile, computed, createApp, defineComponent, defineCustomElement,
@@ -184,17 +185,22 @@ async function fetchRecords(tableId, filters) {
   if (!records) { return null; }
   return records.map(r => ({id: r.id, ...r.fields}));
 }
+function decodeRecord(data) {
+  return Object.fromEntries(Object.entries(data).map(([k, v]) => [k, decodeObject(v)]));
+}
 async function fetchReference(tableId, rowId) {
   try {
     const records = await fetchRecords(tableId, {id: [rowId]});
-    return records?.[0] || null;
+    const rec = records?.[0] || null;
+    return rec ? new RecordDrop(decodeRecord(rec)) : rec;
   } catch (err) {
     return `${tableId}[${rowId}]`;
   }
 }
 async function fetchReferenceList(tableId, rowIds) {
   try {
-    return await fetchRecords(tableId, {id: rowIds});
+    const records = await fetchRecords(tableId, {id: rowIds});
+    return Array.isArray(records) ? records.map(r => new RecordDrop(decodeRecord(r))) : records;
   } catch (err) {
     return `${tableId}[[${rowIds}]]`;
   }
@@ -222,28 +228,71 @@ class RecordDrop extends Drop {
       } else if (value.rowIds) {  // ReferenceList
         return value.cached || (value.cached = fetchReferenceList(value.tableId, value.rowIds));
       }
+    } else if (Array.isArray(value) && value.every(v => typeof(v) === 'number')) {
+      return value.cached || (value.cached = new AttachmentsDrop(value));
     }
     return value;
   }
   toJSON(expandRefLevels = 1) {
-    return Object.fromEntries(Object.keys(this._record).map(key => {
-      let value = this.liquidMethodMissing(key);
+    function process(value) {
       if (value instanceof RecordDrop) {
         value = expandRefLevels > 0 ? value.toJSON(expandRefLevels - 1) : `${value.tableId}[${value.rowId}]`;
-      } else if (Array.isArray(value)) {
-        if (value.length && value[0] instanceof RecordDrop) {
-          value = expandRefLevels > 0 ? [value.toJSON(expandRefLevels - 1)] : [`${value.tableId}[${value.rowId}]`];
+      } else if (Array.isArray(value) && value[0] instanceof RecordDrop) {
+        if (expandRefLevels > 0) {
+          return value.map(v => v.toJSON(expandRefLevels - 1));
         }
+        return `${value.tableId}[[${value.rowIds}]]`;
       }
-      return [key, value];
+      return value;
+    }
+    return Object.fromEntries(Object.keys(this._record).map(key => {
+      const value = this.liquidMethodMissing(key);
+      return [key, value instanceof Promise ? value.then(process) : process(value)];
     }));
   }
+}
+
+// This may also represent a plain number from a list because that looks the same as attachments.
+class AttachmentsDrop extends Drop {
+  constructor(attIds) { super(); this._att = attIds.map(id => new AttDrop(id)); }
+  valueOf() { return this._att; }
+  info() { return this._att[0]?.info(); }
+  url() { return this._att[0]?.url(); }
+  toJSON() { return this._att; }
+}
+class AttDrop extends Drop {
+  constructor(attId) { super(); this._attId = attId; }
+  valueOf() { return this._attId; }
+  url() { return this._cachedUrl || (this._cachedUrl = getAttachmentUrl(this._attId)); }
+  info() { return this._cachedInfo || (this._cachedInfo = fetchAttachmentInfo(this._attId)); }
+  toJSON() { return Promise.all([this.url(), this.info()]).then(([url, info]) => ({url, info})); }
+}
+async function fetchAttachmentInfo(attId) {
+  try {
+    const entries = await fetchRecords('_grist_Attachments', {id: [attId]});
+    if (!entries[0] || typeof(entries[0]) !== 'object') { return null; }
+    const result = pick(entries[0], ["fileName", "fileSize", "imageHeight", "imageWidth"]);
+    if (typeof(result.timeUploaded) === 'number') {
+      result.timeUploded = new Date(result.timeUploaded);
+    }
+    return result;
+  } catch (err) {
+    return `Att[${attId}]`;
+  }
+}
+async function getAttachmentUrl(attId) {
+  const tokenResult = await getToken();
+  const url = new URL(tokenResult.baseUrl + `/attachments/${attId}/download`);
+  url.searchParams.set('auth', tokenResult.token);
+  return url.href;
 }
 
 const _infoRecord = ref(null);
 const infoRecord = computed(() => {
   const rec = _lastFetchedRecord.value || (_lastFetchedRecord.value = fetchSelectedRecord(_lastRowId));
-  rec.then(r => { _infoRecord.value = r; });
+  rec.then(r => asyncJson(r)).then(r => {
+    _infoRecord.value = JSON.stringify(trimListsInJson(r), null, 2);
+  });
   return _infoRecord.value;
 });
 
@@ -372,7 +421,7 @@ async function _initEditor() {
       grist.setOptions({html: newValue});
     }
   }
-  const onEditorContentChanged = _.debounce(_onEditorContentChanged, 1000);
+  const onEditorContentChanged = debounce(_onEditorContentChanged, 1000);
   editor.getModel().onDidChangeContent(onEditorContentChanged);
   setEditorErrorMarkers(templateError.value);
   return editor;
@@ -433,7 +482,47 @@ async function withMaskedGlobals(globalNames, cb) {
   }
 }
 
+const pick = (obj, keys) => Object.fromEntries(keys.filter(k => k in obj).map(k => [k, obj[k]]));
+
+async function asyncJson(v) {
+  if (v instanceof Promise) {
+    v  = await v;
+  }
+  if (v && typeof v.toJSON === 'function') {
+    const r = v.toJSON();
+    v = r instanceof Promise ? await r : r;
+  }
+  if (Array.isArray(v)) {
+    return Promise.all(v.map(asyncJson));
+  }
+  if (v && typeof v === 'object') {
+    const entries = await Promise.all(
+      Object.entries(v).map(async ([k, val]) => [k, await asyncJson(val)])
+    );
+    return Object.fromEntries(entries);
+  }
+  return v;
+}
+
+async function asyncJsonStringify(value, indent) {
+  return JSON.stringify(await asyncJson(value), null, indent);
+}
+
+function trimListsInJson(value) {
+  function walk(val) {
+    if (Array.isArray(val)) {
+      return val.slice(0, 1).map(walk);
+    }
+    if (val && typeof val === 'object') {
+      return Object.fromEntries(Object.entries(val).map(([k, v]) => [k, walk(v)]));
+    }
+    return val;
+  }
+  return walk(value);
+}
+
 liquidEngine.registerFilter('currency', currency);
 liquidEngine.registerFilter('formatDate', formatDate);
 liquidEngine.registerFilter('isArray', Array.isArray);
 liquidEngine.registerFilter('isString', v => (typeof(v) === 'string'));
+liquidEngine.registerFilter('json', asyncJsonStringify);
