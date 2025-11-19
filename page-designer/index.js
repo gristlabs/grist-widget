@@ -33,6 +33,8 @@
  *      Returns whether value is an array.
  */
 
+import {debounce} from "https://cdn.jsdelivr.net/npm/perfect-debounce@1.0.0/dist/index.mjs";
+
 const {
   compile, computed, createApp, defineComponent, defineCustomElement,
   h, nextTick, ref, shallowRef, watch,
@@ -53,12 +55,12 @@ const template = ref('');
 const serverDiverged = ref(false);
 const haveLocalEdits = ref(false);
 const records = shallowRef(null);
-const renderedTemplate = ref('');
 const vueError = ref(null);
 const templateError = ref(null);
 let editor = null;
 let _editorPromise = null;
 const ensureEditor = () => (_editorPromise || (_editorPromise = _initEditor()));
+const userContent = ref(null);
 
 function ready(fn) {
   if (document.readyState !== 'loading'){
@@ -234,7 +236,6 @@ async function fetchSelectedRecord(rowId) {
   return new RecordDrop(record);
 }
 async function fetchSelectedTable() {
-  console.log("A", fetchOptions());
   const records = await grist.docApi.fetchSelectedTable(fetchOptions());
   return records.map(r => new RecordDrop(r));
 }
@@ -275,8 +276,8 @@ let _lastRowId = null;
 let _lastFetchedRecord = ref(null);
 let _lastFetchedRecords = ref(null);
 class DataDrop extends Drop {
-  record() { return _lastFetchedRecord.value || fromPromise(_lastFetchedRecord, fetchSelectedRecord(_lastRowId)); }
-  records() { return _lastFetchedRecords.value || fromPromise(_lastFetchedRecords, fetchSelectedTable()); }
+  async record() { return _lastFetchedRecord.value || (_lastFetchedRecord.value = fetchSelectedRecord(_lastRowId)); }
+  records() { return _lastFetchedRecords.value || (_lastFetchedRecords.value = fetchSelectedTable()); }
   locale() { return 'en-US'; }
   currency() { return 'USD'; }
   dateFormat() { return 'MMMM DD, YYYY'; }
@@ -311,11 +312,25 @@ class RecordDrop extends Drop {
   }
 }
 
-const pending = Object();
-function fromPromise(ref, promise) {
-  ref.value = pending;
-  promise.then(val => { ref.value = val; }).catch(e => { ref.value = null; throw e; });
+let currentURL = null;
+async function _renderTemplate([compiledTemplate]) {
+  _lastFetchedRecord.value = null;
+  _lastFetchedRecords.value = null;
+  if (!compiledTemplate?.length || !userContent.value) { return; }
+  try {
+    const html = await liquidEngine.render(compiledTemplate, dataDrop);
+    if (userContent.value) {
+      if (currentURL) { URL.revokeObjectURL(currentURL); }
+      currentURL = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+      userContent.value.src = currentURL;
+    }
+
+    templateError.value = null;
+  } catch (error) {
+    templateError.value = enhanceTemplateError(error);
+  }
 }
+const renderTemplate = debounce(_renderTemplate, 100);
 
 ready(function() {
   // Initialize Grist connection.
@@ -343,12 +358,20 @@ ready(function() {
   grist.rpc.on('message', async function(msg) {
     waitingForData.value = false;
     vueError.value = null;
+    let reRender = false;
     if (msg.rowId) {
       _lastRowId = msg.rowId;
-      _lastFetchedRecord.value = null;
+      if (_lastFetchedRecord.value !== null) {
+        reRender = true;
+      }
     }
     if (msg.dataChange) {
-      _lastFetchedRecords.value = null;
+      if (_lastFetchedRecords.value !== null) {
+        reRender = true;
+      }
+    }
+    if (reRender) {
+      renderTemplate([compiledTemplate.value]);
     }
   });
 
@@ -359,21 +382,14 @@ ready(function() {
         if (newVal === "edit") { await ensureEditor(); }
       });
       watch(templateError, setEditorErrorMarkers, {immediate: true});
-      watch([compiledTemplate, _lastFetchedRecord, _lastFetchedRecords], async ([compiledTemplate]) => {
-        if (!compiledTemplate?.length) { return; }
-        try {
-          renderedTemplate.value = await liquidEngine.render(compiledTemplate, dataDrop);
-          templateError.value = null;
-        } catch (error) {
-          templateError.value = enhanceTemplateError(error);
-        }
-      }, {immediate: true});
+
+      watch([compiledTemplate, userContent], renderTemplate, {immediate: true});
 
       return {
         statusMessage, tab,
         templateError, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
-        renderedTemplate,
+        userContent,
       };
     }
   });
