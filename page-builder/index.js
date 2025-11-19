@@ -365,12 +365,12 @@ ready(function() {
   }
   grist.onOptions((options, settings) => {
     gristSettings = settings;
-    if (!serverOptions && !options?.html && options.toolbar !== false) {
+    if (!serverOptions && !options?.html && options?.toolbar !== false) {
       tab.value = "edit";
       showInfo.value = true;
     }
     serverOptions = options;
-    showToolbar.value = (options.toolbar !== false);
+    showToolbar.value = (options?.toolbar !== false);
     if (!haveLocalEdits.value) {
       resetFromOptions();
     } else {
