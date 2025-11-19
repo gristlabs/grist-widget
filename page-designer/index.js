@@ -74,10 +74,16 @@ function ready(fn) {
 }
 
 const initialValue = `\
-Available records: {{ records | size }}. Selected record:
+This is an example of a template you could write. See "Info" button for full instructions.
+<h2>Record {{ record.id }}</h2>
+<p>There are {{ records | size }} records available. Selected record:
 <pre>
 {{ record | json: 2 }}
 </pre>
+<!-- You can add styles too -->
+<style>
+  h2 { color: lightblue; }
+</style>
 `;
 
 let gristSettings = null;
@@ -290,11 +296,25 @@ async function getAttachmentUrl(attId) {
 }
 
 const _infoRecord = ref(null);
+let _infoFetching = false;
 const infoRecord = computed(() => {
   const rec = _lastFetchedRecord.value || (_lastFetchedRecord.value = fetchSelectedRecord(_lastRowId));
-  rec.then(r => asyncJson(r)).then(r => {
-    _infoRecord.value = JSON.stringify(trimListsInJson(r), null, 2);
-  });
+  if (!_infoFetching) {
+    _infoFetching = true;
+    rec.then(r => asyncJson(r))
+      .then(
+        r => { _infoRecord.value = JSON.stringify(trimListsInJson(r), null, 2); },
+        err => {
+          if (/Access not granted/.test(err.message)) {
+            _infoRecord.value = `⚠️ Use Creator Panel to grant access to data`;
+          } else {
+            _infoRecord.value = `[Data not available] ${err.message}`;
+          }
+        }
+
+      )
+      .then(() => { _infoFetching = false; });
+  }
   return _infoRecord.value;
 });
 
