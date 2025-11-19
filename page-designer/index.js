@@ -55,6 +55,8 @@ const tab = ref('preview');
 const template = ref('');
 const serverDiverged = ref(false);
 const haveLocalEdits = ref(false);
+const showInfo = ref(false);
+const hideToolbar = ref(false);
 const records = shallowRef(null);
 const vueError = ref(null);
 const templateError = ref(null);
@@ -161,7 +163,7 @@ const fetchOptions = () => ({
 });
 
 async function fetchSelectedRecord(rowId) {
-  const record = (rowId === 'new') ? {} : await grist.docApi.fetchSelectedRecord(rowId, fetchOptions());
+  const record = (rowId === 'new') ? {id: rowId} : await grist.docApi.fetchSelectedRecord(rowId, fetchOptions());
   return new RecordDrop(record);
 }
 async function fetchSelectedTable() {
@@ -339,8 +341,9 @@ ready(function() {
   }
   grist.onOptions((options, settings) => {
     gristSettings = settings;
-    if (!serverOptions) {
-      tab.value = (options?.html ? 'preview' : 'info');
+    if (!serverOptions &&  !options?.html) {
+      tab.value = "edit";
+      showInfo.value = true;
     }
     serverOptions = options;
     if (!haveLocalEdits.value) {
@@ -384,6 +387,7 @@ ready(function() {
 
       return {
         statusMessage, tab, infoRecord,
+        showInfo, hideToolbar,
         templateError, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
         userContent,
