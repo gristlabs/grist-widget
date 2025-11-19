@@ -71,7 +71,7 @@
     }
     .button-inactive:hover {
       color: #1f2937;
-      background-color: #f0f1f2;
+      background-color: #ffffff;
     }
     .status-bar {
       height: 2rem;
@@ -107,6 +107,35 @@
       border-radius: 0.25rem;
       font-size: 0.75rem;
     }
+    .info-text {
+      font-family: sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 0.75rem;
+      position: relative;
+    }
+    .info-text pre, .info-text code {
+      background-color: #EEE;
+      border-radius: 3px;
+      padding: 2px 4px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      background: #ffffff;
+      border: 1px solid #e1e5eb;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      background: #f5f7fb;
+    }
+</style>
   </style>
 </head>
 
@@ -127,6 +156,11 @@
                     :class="tab === 'preview' ? 'button-active' : 'button-inactive'"
                     @click="tab = 'preview'">
               Preview
+            </button>
+            <button id="preview" class="button"
+                    :class="tab === 'info' ? 'button-active' : 'button-inactive'"
+                    @click="tab = 'info'">
+              Info
             </button>
           </div>
 
@@ -151,6 +185,47 @@
     </div>
 
     <div id="editor" class="main-area" v-show="tab === 'edit'"></div>
+    <div class="main-area info-text" v-if="tab === 'info'">
+      <button class="copy-btn" title="Copy instructions to clipboard"
+              onclick="
+                window.getSelection().selectAllChildren(document.querySelector('.copy-content'));
+                document.execCommand('copy');
+              ">
+        Copy
+      </button>
+      <div class="copy-content">
+        <p>You have access to records of this form:
+        <p><pre>{{ JSON.stringify(infoRecord, null, 2) }}</pre>
+
+        <p>You may use <a href="https://shopify.github.io/liquid/basics/introduction/" target="_blank">LiquidJS
+          template syntax</a>.
+        Available placeholders are <code>record</code> if you need
+        to show a page for a single record, or <code>record</code> to show a list of cards or similar for a list of
+        records.
+
+        <p>In addition to regular <a href="https://liquidjs.com/filters/overview.html" target="_blank">filters</a>,
+        you have available: <code>isString</code> <code>isArray</code> as well as:
+        <ul>
+          <li><code v-pre>{{ num | currency }}</code> Formats <code>num</code> as currency,
+            with optional params for currency and locale.
+            <li><code v-pre>{{ date | formatDate }}</code> Formats <code>date</code> as a date,
+              with optional params for format and locale (format uses moment.js syntax)
+        </ul>
+
+        <p>These global variables may be overridden using <code v-pre>{% assign %}</code>.
+        <ul>
+          <li><code v-pre>{% assign locale=... %}</code>: change the default locale for 'currency' and
+            'formatDate' filters (default: "en-US").</li>
+          <li><code v-pre>{% assign currency=... %}</code>: change the default for the 'currency' filter
+            (default: "USD").</li>
+          <li><code v-pre>{% assign dateFormat=... %}</code>: change the default moment.js format for
+            'formatDate' filter (default: "MMMM DD, YYYY").</li>
+        </ul>
+
+        <p>You may produce a full HTML page. You can include <code>&lt;style&gt;</code> and
+        <code>&lt;script&gt;</code> tags or import external stylesheets and scripts.
+      </div>
+    </div>
     <template v-if="tab === 'preview'">
       <div class="main-area">
         <template v-if="templateError">

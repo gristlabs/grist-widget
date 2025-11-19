@@ -71,82 +71,10 @@ function ready(fn) {
 }
 
 const initialValue = `\
-<button class="copy-btn"
-        title="Copy instructions to clipboard"
-        onclick="
-          window.getSelection().selectAllChildren(document.querySelector('.copy-content'));
-          document.execCommand('copy')
-        ">
-  Copy
-</button>
-
-<div class="copy-content">
-
-<p>You have access to records of this form:
-
-<p><pre>
-{{ record | inspect: 2 }}
+Available records: {{ records | size }}. Selected record:
+<pre>
+{{ record | json: 2 }}
 </pre>
-
-<p>You may use <a href="https://shopify.github.io/liquid/basics/introduction/" target="_blank">LiquidJS
-template syntax</a>.
-Available placeholders are <code>record</code> if you need
-to show a page for a single record, or <code>record</code> to show a list of cards or similar for a list of
-records.
-
-<p>In addition to regular <a href="https://liquidjs.com/filters/overview.html" target="_blank">filters</a>,
-you have available: <code>isString</code> <code>isArray</code> as well as:
-<ul>
-<li>{% raw %}<code>{{ num | currency }}</code>{% endraw %} Formats <code>num</code> as currency,
-  with optional params for currency and locale.
-<li>{% raw %}<code>{{ date | formatDate }}</code>{% endraw %} Formats <code>date</code> as a date,
-  with optional params for format and locale (format uses moment.js syntax)
-</ul>
-
-<p>These global variables may be overridden using {% raw %}{% assign %}{% endraw %}:
-<ul>
-<li><code>locale</code>: to change the default locale for 'currency' and 'formatDate' filters
-  (default: "en-US").
-<li><code>currency</code>: to change the default for the 'currency' filter
-  (default: "USD").
-<li><code>dateFormat</code>: to change the default for 'formatDate' filter, using moment.js syntax
-  (default: "MMMM DD, YYYY").
-</ul>
-
-<p>You may produce a full HTML page. You can include <code>&lt;style&gt;</code> and
-<code>&lt;script&gt;</code> tags or import external stylesheets and scripts.
-
-  </div>
-</div>
-
-<style>
-body {
-  font-family: sans-serif;
-  font-size: small;
-  line-height: 1.5;
-  margin: 0.75rem;
-}
-pre, code {
-  background-color: #EEE;
-  border-radius: 3px;
-  padding: 2px 4px;
-  overflow-x: auto;
-}
-.copy-btn {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  background: #ffffff;
-  border: 1px solid #e1e5eb;
-  border-radius: 0.25rem;
-  cursor: pointer;
-}
-.copy-btn:hover {
-  background: #f5f7fb;
-}
-</style>
 `;
 
 let gristSettings = null;
@@ -276,7 +204,7 @@ let _lastRowId = null;
 let _lastFetchedRecord = ref(null);
 let _lastFetchedRecords = ref(null);
 class DataDrop extends Drop {
-  async record() { return _lastFetchedRecord.value || (_lastFetchedRecord.value = fetchSelectedRecord(_lastRowId)); }
+  record() { return _lastFetchedRecord.value || (_lastFetchedRecord.value = fetchSelectedRecord(_lastRowId)); }
   records() { return _lastFetchedRecords.value || (_lastFetchedRecords.value = fetchSelectedTable()); }
   locale() { return 'en-US'; }
   currency() { return 'USD'; }
@@ -312,6 +240,13 @@ class RecordDrop extends Drop {
   }
 }
 
+const _infoRecord = ref(null);
+const infoRecord = computed(() => {
+  const rec = _lastFetchedRecord.value || (_lastFetchedRecord.value = fetchSelectedRecord(_lastRowId));
+  rec.then(r => { _infoRecord.value = r; });
+  return _infoRecord.value;
+});
+
 let currentURL = null;
 async function _renderTemplate([compiledTemplate]) {
   _lastFetchedRecord.value = null;
@@ -321,7 +256,7 @@ async function _renderTemplate([compiledTemplate]) {
     const html = await liquidEngine.render(compiledTemplate, dataDrop);
     if (userContent.value) {
       if (currentURL) { URL.revokeObjectURL(currentURL); }
-      currentURL = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+      currentURL = URL.createObjectURL(new Blob([cleanUpHtml(html)], { type: "text/html" }));
       userContent.value.src = currentURL;
     }
 
@@ -331,6 +266,14 @@ async function _renderTemplate([compiledTemplate]) {
   }
 }
 const renderTemplate = debounce(_renderTemplate, 100);
+
+function cleanUpHtml(input) {
+  const body = (s) => /^<body[\s>]/i.test(s) ? s : `<body>${s}</body>`;
+  const head = (s) => /^<head[\s>]/i.test(s) ? s : `<head><meta charset="utf-8"></head>${body(s)}`;
+  const html = (s) => /^<html[\s>]/i.test(s) ? s : `<html>${head(s)}</html>`;
+  const doctype = (s) => /^<!doctype/i.test(s) ? s : `<!doctype html>\n${html(s)}`;
+  return doctype(input.trimStart());
+}
 
 ready(function() {
   // Initialize Grist connection.
@@ -347,6 +290,9 @@ ready(function() {
   }
   grist.onOptions((options, settings) => {
     gristSettings = settings;
+    if (!serverOptions) {
+      tab.value = (options?.html ? 'preview' : 'info');
+    }
     serverOptions = options;
     if (!haveLocalEdits.value) {
       resetFromOptions();
@@ -356,7 +302,9 @@ ready(function() {
   })
 
   grist.rpc.on('message', async function(msg) {
-    waitingForData.value = false;
+    if (waitingForData.value) {
+      waitingForData.value = false;
+    }
     vueError.value = null;
     let reRender = false;
     if (msg.rowId) {
@@ -386,7 +334,7 @@ ready(function() {
       watch([compiledTemplate, userContent], renderTemplate, {immediate: true});
 
       return {
-        statusMessage, tab,
+        statusMessage, tab, infoRecord,
         templateError, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
         userContent,
