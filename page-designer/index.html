@@ -18,7 +18,7 @@
 <body>
   <div id="app">
     <div class="topbar">
-      <div class="toolbar">
+      <div class="toolbar" v-show="showToolbar">
         <div class="toolbar-group">
           <!-- Toggle group -->
           <div class="button-group">
@@ -44,7 +44,7 @@
         <!-- Right: Hide button -->
         <div class="toolbar-group">
           <button class="button" @click="showInfo = true">Info</button>
-          <button class="button" @click="hideToolbar = true">Hide</button>
+          <button class="button" @click="hideToolbar">Hide</button>
         </div>
       </div>
       <div v-if="statusMessage && tab !== 'edit'"

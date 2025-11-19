@@ -56,7 +56,7 @@ const template = ref('');
 const serverDiverged = ref(false);
 const haveLocalEdits = ref(false);
 const showInfo = ref(false);
-const hideToolbar = ref(false);
+const showToolbar = ref(true);
 const records = shallowRef(null);
 const vueError = ref(null);
 const templateError = ref(null);
@@ -352,6 +352,10 @@ ready(function() {
     requiredAccess: 'full',
   });
 
+  // Tell Grist to show "Open configuration" link. That links unhides our toolbar.
+  // For some reason, this only works if called a bit later.
+  setTimeout(() => grist.sectionApi.configure({ hasCustomOptions: true }), 0);
+
   function resetFromOptions() {
     vueError.value = null;
     template.value = getServerTemplateValue();
@@ -361,17 +365,22 @@ ready(function() {
   }
   grist.onOptions((options, settings) => {
     gristSettings = settings;
-    if (!serverOptions &&  !options?.html) {
+    if (!serverOptions && !options?.html && options.toolbar !== false) {
       tab.value = "edit";
       showInfo.value = true;
     }
     serverOptions = options;
+    showToolbar.value = (options.toolbar !== false);
     if (!haveLocalEdits.value) {
       resetFromOptions();
     } else {
       serverDiverged.value = (getServerTemplateValue() !== template.value);
     }
   })
+  grist.rpc.registerFunc('editOptions', () => {
+    showToolbar.value = true;
+    grist.setOption('toolbar', true);
+  });
 
   grist.rpc.on('message', async function(msg) {
     if (waitingForData.value) {
@@ -405,9 +414,15 @@ ready(function() {
 
       watch([compiledTemplate, userContent], renderTemplate, {immediate: true});
 
+      function hideToolbar() {
+        tab.value = 'preview';
+        showToolbar.value = false;
+        grist.setOption('toolbar', false);
+      }
+
       return {
         statusMessage, tab, infoRecord,
-        showInfo, hideToolbar,
+        showInfo, showToolbar, hideToolbar,
         templateError, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
         userContent,
@@ -442,7 +457,7 @@ async function _initEditor() {
     serverDiverged.value = false;
     if (newValue !== getServerTemplateValue()) {
       haveLocalEdits.value = true;
-      grist.setOptions({html: newValue});
+      grist.setOptions({html: newValue, toolbar: true});
     }
   }
   const onEditorContentChanged = debounce(_onEditorContentChanged, 1000);
