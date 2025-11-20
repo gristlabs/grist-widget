@@ -44,12 +44,21 @@
         <!-- Right: Hide button -->
         <div class="toolbar-group">
           <button class="button" @click="showInfo = true">Info</button>
+          <button class="button" @click="printIframe">Print</button>
           <button class="button" @click="hideToolbar">Hide</button>
         </div>
       </div>
       <div v-if="statusMessage && tab !== 'edit'"
            class="status-bar" :title="statusMessage">
         {{ statusMessage }}
+      </div>
+    </div>
+
+    <div class="drawer" v-show="!showToolbar">
+      <button class="expand-button"></button>
+      <div class="drawer-expand">
+        <button class="button" @click="printIframe">Print</button>
+        <button class="button" @click="hideToolbar(false)">Show</button>
       </div>
     </div>
 
@@ -90,7 +99,7 @@
       <div class="modal info-text">
         <div class="copy-content">
           <p>You have access to records of this form:
-          <p><textarea rows=8>{{ infoRecord }}</textarea>
+          <p><pre class="info-record">{{ infoRecord }}</pre>
 
           <p>You may use <a href="https://shopify.github.io/liquid/basics/introduction/" target="_blank">LiquidJS
             template syntax</a>. Available variables are
@@ -119,7 +128,10 @@
               'formatDate' filter (default: "MMMM DD, YYYY").</li>
           </ul>
 
-          <p>You may produce a full HTML page. You can include <code>&lt;style&gt;</code> and
+          <p>Note that LiquidJS is set to escape HTML by default.
+
+          <p>You may produce a full HTML page or just contents for its body.
+          You can include <code>&lt;style&gt;</code> and
           <code>&lt;script&gt;</code> tags or import external stylesheets and scripts.
         </div>
       </div>

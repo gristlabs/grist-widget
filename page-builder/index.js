@@ -45,6 +45,7 @@ const {Drop, Hash, Liquid} = liquidjs;
 
 const liquidEngine = new Liquid({
   outputEscape: "escape",
+  jsTruthy: true,
   // Some limits as recommended in https://liquidjs.com/tutorials/dos.html
   parseLimit: 1e8,   // typical size of your templates in each render
   renderLimit: 1000, // limit each render to be completed in 1s
@@ -346,15 +347,20 @@ function cleanUpHtml(input) {
   return doctype(input.trimStart());
 }
 
-ready(function() {
+ready(async function() {
   // Initialize Grist connection.
-  grist.ready({
+  await grist.ready({
     requiredAccess: 'full',
   });
 
   // Tell Grist to show "Open configuration" link. That links unhides our toolbar.
   // For some reason, this only works if called a bit later.
-  setTimeout(() => grist.sectionApi.configure({ hasCustomOptions: true }), 0);
+  grist.sectionApi.configure({ hasCustomOptions: true });
+
+  // Set document title. We'll also use this for printing.
+  grist.selectedTable.getTableId().then(tableId => {
+    document.title = tableId;
+  });
 
   function resetFromOptions() {
     vueError.value = null;
@@ -414,10 +420,10 @@ ready(function() {
 
       watch([compiledTemplate, userContent], renderTemplate, {immediate: true});
 
-      function hideToolbar() {
-        tab.value = 'preview';
-        showToolbar.value = false;
-        grist.setOption('toolbar', false);
+      function hideToolbar(yesNo = true) {
+        if (yesNo) { tab.value = 'preview'; }
+        showToolbar.value = !yesNo;
+        grist.setOption('toolbar', !yesNo);
       }
 
       return {
@@ -425,7 +431,7 @@ ready(function() {
         showInfo, showToolbar, hideToolbar,
         templateError, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
-        userContent,
+        userContent, printIframe,
       };
     }
   });
@@ -433,6 +439,13 @@ ready(function() {
   app.mount('#app');
 
 });
+
+function printIframe() {
+  if (!userContent.value) { return; }
+  const win = userContent.value.contentWindow;
+  win.document.title = document.title;
+  win.print();
+}
 
 // Initialize Monaco editor.
 async function _initEditor() {

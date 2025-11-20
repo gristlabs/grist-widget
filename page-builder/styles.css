@@ -9,15 +9,24 @@ body {
   height: 100vh; display: flex; flex-direction: column; overflow: hidden;
 }
 @media print {
+  /*
+   * The styles in this section are in play when printing from the widget's "Print" menu option,
+   * but it's really hard to print well via that, because we have an iframe inside an iframe. This
+   * doesn't work for multi-page content. There are difficult solutions, like copying iframe
+   * content to main frame, adjusting styles, etc, which run into other problems (e.g. preserving
+   * linked stylesheets). Instead, we will expose a "Print" button to print the inner iframe
+   * directly.
+   */
   .topbar {
     display: none !important;
   }
 }
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  height: 3rem;
+  min-height: 3rem;
   padding: 0.5rem 0.75rem;
   background-color: rgb(243 244 246);
   border-bottom: 1px solid rgb(209 213 219);
@@ -27,6 +36,9 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+.toolbar-group:last-child {
+  margin-left: auto;
 }
 .main-area {
   flex: auto;
@@ -45,6 +57,7 @@ button, .button {
   color: #111827;
   background-color: #ffffff;
   cursor: pointer;
+  white-space: nowrap;
 }
 .button:not(.button-active):hover {
   color: #1f2937;
@@ -74,6 +87,65 @@ button, .button {
   color: #1f2937;
   background-color: #f0f1f2;
 }
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  height: 3rem;
+  padding: 0.5rem 0 0.5rem 0;
+  gap: 0.5rem;
+  z-index: 1;
+}
+.drawer-expand {
+  display: flex;
+  align-items: top;
+  height: 3rem;
+  padding: 0.5rem 2rem;
+  align-items: center;
+  justify-content: end;
+  gap: 0.5rem;
+  z-index: 2;
+  transform: translateX(100%);
+  transition: all 0.2s ease-out;
+  background-color: rgba(100, 100, 100, 0.15);
+  box-shadow: 0px 0px 0.5rem 0 rgba(100, 100, 100, 0.5);
+  opacity: 0;
+}
+.drawer-expand:hover, .drawer:hover .drawer-expand:hover, .drawer:hover .expand-button:hover + .drawer-expand {
+  transform: translateX(0);
+  opacity: 1;
+}
+.drawer-expand button {
+  box-shadow: 0px 0px 0.5rem 0 rgba(100, 100, 100, 0.5);
+}
+.expand-button::before {
+  content: "❮";
+}
+.expand-button {
+  position: fixed;
+  right: 0;
+  line-height: 1rem;
+  color: #888;
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  padding: 0.25rem;
+  opacity: 0.7;
+  transition: all 0.1s ease-out;
+  z-index: 100;
+}
+.expand-button:hover {
+  border-color: #aaa;
+}
+.drawer:hover .expand-button {
+  transform-origin: right;
+  padding: 0.25rem 0.5rem;
+  opacity: 1;
+}
+
 .status-bar {
   height: 2rem;
   background-color: #fef9c3;
@@ -115,17 +187,17 @@ button, .button {
   padding: 1rem;
   position: relative;
 }
-.info-text code, .info-text textarea {
+.info-text code, .info-text pre {
   background-color: #EEE;
   border-radius: 3px;
   padding: 2px 4px;
   overflow-x: auto;
   font-size: 13px;
 }
-.info-text textarea {
-  width: 100%;
-  border: none;
+.info-record {
   resize: vertical;
+  overflow: auto;
+  height: 130px;
 }
 .modal-bg {
   position: absolute;
