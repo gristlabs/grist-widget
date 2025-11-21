@@ -48,7 +48,7 @@ const liquidEngine = new Liquid({
   jsTruthy: true,
   // Some limits as recommended in https://liquidjs.com/tutorials/dos.html
   parseLimit: 1e8,   // typical size of your templates in each render
-  renderLimit: 1000, // limit each render to be completed in 1s
+  renderLimit: 5000, // limit each render to be completed in 1s
   memoryLimit: 1e9,  // memory available for LiquidJS (1e9 for 1GB)
 });
 const waitingForData = ref(true);
@@ -65,6 +65,7 @@ let editor = null;
 let _editorPromise = null;
 const ensureEditor = () => (_editorPromise || (_editorPromise = _initEditor()));
 const userContent = ref(null);
+const currentTableId = ref('');
 
 function ready(fn) {
   if (document.readyState !== 'loading'){
@@ -171,11 +172,12 @@ const fetchOptions = () => ({
 
 async function fetchSelectedRecord(rowId) {
   const record = (rowId === 'new') ? {id: rowId} : await grist.docApi.fetchSelectedRecord(rowId, fetchOptions());
-  return new RecordDrop(record);
+  return new RecordDrop(currentTableId.value, record);
 }
 async function fetchSelectedTable() {
   const records = await grist.docApi.fetchSelectedTable(fetchOptions());
-  return records.map(r => new RecordDrop(r));
+  const tableId = currentTableId.value;
+  return records.map(r => new RecordDrop(tableId, r));
 }
 
 let _token = null;
@@ -197,11 +199,13 @@ async function fetchRecords(tableId, filters) {
 function decodeRecord(data) {
   return Object.fromEntries(Object.entries(data).map(([k, v]) => [k, decodeObject(v)]));
 }
+// TODO: This is terribly horribly inefficient when fetching many references. It fetches one at a
+// time, sequentially. Unclear if this can be optimized if using liquidjs.
 async function fetchReference(tableId, rowId) {
   try {
     const records = await fetchRecords(tableId, {id: [rowId]});
     const rec = records?.[0] || null;
-    return rec ? new RecordDrop(decodeRecord(rec)) : rec;
+    return rec ? new RecordDrop(tableId, decodeRecord(rec)) : rec;
   } catch (err) {
     return `${tableId}[${rowId}]`;
   }
@@ -209,7 +213,7 @@ async function fetchReference(tableId, rowId) {
 async function fetchReferenceList(tableId, rowIds) {
   try {
     const records = await fetchRecords(tableId, {id: rowIds});
-    return Array.isArray(records) ? records.map(r => new RecordDrop(decodeRecord(r))) : records;
+    return Array.isArray(records) ? records.map(r => new RecordDrop(tableId, decodeRecord(r))) : records;
   } catch (err) {
     return `${tableId}[[${rowIds}]]`;
   }
@@ -228,7 +232,7 @@ class DataDrop extends Drop {
 const dataDrop = new DataDrop();
 
 class RecordDrop extends Drop {
-  constructor(record) { super(); this._record = record; }
+  constructor(tableId, record) { super(); this._tableId = tableId; this._record = record; }
   liquidMethodMissing(key) {
     const value = this._record[key];
     if (value?.tableId) {
@@ -241,6 +245,9 @@ class RecordDrop extends Drop {
       return value.cached || (value.cached = new AttachmentsDrop(value));
     }
     return value;
+  }
+  valueOf() {
+    return `${this._tableId}[${this._record.id}]`;
   }
   toJSON(expandRefLevels = 1) {
     function process(value) {
@@ -359,6 +366,7 @@ ready(async function() {
 
   // Set document title. We'll also use this for printing.
   grist.selectedTable.getTableId().then(tableId => {
+    currentTableId.value = tableId;
     document.title = tableId;
   });
 

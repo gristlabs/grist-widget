@@ -17,7 +17,7 @@ body {
    * linked stylesheets). Instead, we will expose a "Print" button to print the inner iframe
    * directly.
    */
-  .topbar {
+  .topbar, .drawer {
     display: none !important;
   }
 }
