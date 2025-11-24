@@ -48,7 +48,7 @@ const liquidEngine = new Liquid({
   jsTruthy: true,
   // Some limits as recommended in https://liquidjs.com/tutorials/dos.html
   parseLimit: 1e8,   // typical size of your templates in each render
-  renderLimit: 5000, // limit each render to be completed in 1s
+  renderLimit: 2500, // limit each render to be completed in 1s
   memoryLimit: 1e9,  // memory available for LiquidJS (1e9 for 1GB)
 });
 const waitingForData = ref(true);
@@ -67,6 +67,9 @@ const ensureEditor = () => (_editorPromise || (_editorPromise = _initEditor()));
 const userContent = ref(null);
 const currentTableId = ref('');
 const isReadonly = ref(false);
+
+let fetchRecordsPerRenderCount = 0;
+const fetchRecordsPerRenderLimit = 5;
 
 function ready(fn) {
   if (document.readyState !== 'loading') {
@@ -189,6 +192,11 @@ async function fetchToken() {
   return tokenResult;
 }
 async function fetchRecords(tableId, filters) {
+  fetchRecordsPerRenderCount++;
+  if (fetchRecordsPerRenderCount > fetchRecordsPerRenderLimit) {
+    throw new Error(`Too many fetches of referenced data. \
+      Consider using formulas instead to bring referenced data into the main table.`);
+  }
   const tokenResult = await getToken();
   const url = new URL(tokenResult.baseUrl + `/tables/${tableId}/records`);
   url.searchParams.set('auth', tokenResult.token);
@@ -201,23 +209,16 @@ function decodeRecord(data) {
   return Object.fromEntries(Object.entries(data).map(([k, v]) => [k, decodeObject(v)]));
 }
 // TODO: This is terribly horribly inefficient when fetching many references. It fetches one at a
-// time, sequentially. Unclear if this can be optimized if using liquidjs.
+// time, sequentially. Unclear if batching is possible with liquidjs, that's why instead we limit
+// total fetches per render in fetchRecords().
 async function fetchReference(tableId, rowId) {
-  try {
-    const records = await fetchRecords(tableId, {id: [rowId]});
-    const rec = records?.[0] || null;
-    return rec ? new RecordDrop(tableId, decodeRecord(rec)) : rec;
-  } catch (err) {
-    return `${tableId}[${rowId}]`;
-  }
+  const records = await fetchRecords(tableId, {id: [rowId]});
+  const rec = records?.[0] || null;
+  return rec ? new RecordDrop(tableId, decodeRecord(rec)) : rec;
 }
 async function fetchReferenceList(tableId, rowIds) {
-  try {
-    const records = await fetchRecords(tableId, {id: rowIds});
-    return Array.isArray(records) ? records.map(r => new RecordDrop(tableId, decodeRecord(r))) : records;
-  } catch (err) {
-    return `${tableId}[[${rowIds}]]`;
-  }
+  const records = await fetchRecords(tableId, {id: rowIds});
+  return Array.isArray(records) ? records.map(r => new RecordDrop(tableId, decodeRecord(r))) : records;
 }
 
 let _lastRowId = null;
@@ -243,7 +244,7 @@ class RecordDrop extends Drop {
         return value.cached || (value.cached = fetchReferenceList(value.tableId, value.rowIds));
       }
     } else if (Array.isArray(value) && value.every(v => typeof(v) === 'number')) {
-      return value.cached || (value.cached = new AttachmentsDrop(value));
+      return value.cached || (value.cached = new AttachmentsCellDrop(value));
     }
     return value;
   }
@@ -270,32 +271,31 @@ class RecordDrop extends Drop {
 }
 
 // This may also represent a plain number from a list because that looks the same as attachments.
-class AttachmentsDrop extends Drop {
-  constructor(attIds) { super(); this._att = attIds.map(id => new AttDrop(id)); }
+class AttachmentsCellDrop extends Drop {
+  constructor(attIds) { super(); this._attIds = attIds; this._att = attIds.map(id => new AttDrop(this, id)); }
+  _infoMap() { return this._cachedInfo || (this._cachedInfo = fetchAttachmentsInfo(this._attIds)); }
   valueOf() { return this._att; }
   info() { return this._att[0]?.info(); }
   url() { return this._att[0]?.url(); }
   toJSON() { return this._att; }
 }
 class AttDrop extends Drop {
-  constructor(attId) { super(); this._attId = attId; }
+  constructor(attCell, attId) { super(); this._attCell = attCell; this._attId = attId; }
   valueOf() { return this._attId; }
   url() { return this._cachedUrl || (this._cachedUrl = getAttachmentUrl(this._attId)); }
-  info() { return this._cachedInfo || (this._cachedInfo = fetchAttachmentInfo(this._attId)); }
+  info() { return this._attCell._infoMap().then(m => m.get(this._attId)); }
   toJSON() { return Promise.all([this.url(), this.info()]).then(([url, info]) => ({url, info})); }
 }
-async function fetchAttachmentInfo(attId) {
-  try {
-    const entries = await fetchRecords('_grist_Attachments', {id: [attId]});
-    if (!entries[0] || typeof(entries[0]) !== 'object') { return null; }
-    const result = pick(entries[0], ["fileName", "fileSize", "imageHeight", "imageWidth"]);
+async function fetchAttachmentsInfo(attIds) {
+  if (!attIds || !attIds.length) { return []; }
+  const entries = await fetchRecords('_grist_Attachments', {id: attIds});
+  return new Map(entries.map(entry => {
+    const result = pick(entry, ["fileName", "fileSize", "imageHeight", "imageWidth"]);
     if (typeof(result.timeUploaded) === 'number') {
       result.timeUploded = new Date(result.timeUploaded);
     }
-    return result;
-  } catch (err) {
-    return `Att[${attId}]`;
-  }
+    return [entry.id, result];
+  }));
 }
 async function getAttachmentUrl(attId) {
   const tokenResult = await getToken();
@@ -333,6 +333,7 @@ async function _renderTemplate([compiledTemplate]) {
   _lastFetchedRecords.value = null;
   if (!compiledTemplate?.length || !userContent.value) { return; }
   try {
+    fetchRecordsPerRenderCount = 0;
     const html = await liquidEngine.render(compiledTemplate, dataDrop);
     if (userContent.value) {
       if (currentURL) { URL.revokeObjectURL(currentURL); }
