@@ -185,6 +185,7 @@ button, .button {
   font-size: 14px;
   line-height: 1.5;
   padding: 1rem;
+  padding-top: 2rem;
   position: relative;
 }
 .info-text code, .info-text pre {

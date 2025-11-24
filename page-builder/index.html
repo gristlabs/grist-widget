@@ -85,7 +85,22 @@
       </div>
     </template>
 
-    <div class="modal-bg" v-if="showInfo" @click.self="showInfo = false">
+    <div class="modal-bg" v-if="isReadonly && (showInfo || tab === 'edit')" @click.self="dismissNotice">
+      <div class="floating-buttons" v-if="template !== ''">
+        <button class="button" title="Close info" @click="dismissNotice">
+          Close
+        </button>
+      </div>
+      <div class="modal info-text">
+        <p>Page Builder makes it easier to builder custom widgets. It is available on getgrist.com
+        and on self-hosted Grist Enterprise plans.
+
+        <p>In the open-source Grist version, Page Builder doesn't support building or editing, but
+        if you have an existing Page Builder widget imported with a document built in another
+        installation, it should show correctly.
+      </div>
+    </div>
+    <div class="modal-bg" v-else-if="showInfo" @click.self="showInfo = false">
       <div class="floating-buttons">
         <button class="button" title="Copy instructions to clipboard"
            onclick="window.getSelection().selectAllChildren(document.querySelector('.copy-content'));

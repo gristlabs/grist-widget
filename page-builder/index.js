@@ -66,9 +66,10 @@ let _editorPromise = null;
 const ensureEditor = () => (_editorPromise || (_editorPromise = _initEditor()));
 const userContent = ref(null);
 const currentTableId = ref('');
+const isReadonly = ref(false);
 
 function ready(fn) {
-  if (document.readyState !== 'loading'){
+  if (document.readyState !== 'loading') {
     fn();
   } else {
     document.addEventListener('DOMContentLoaded', fn);
@@ -90,7 +91,7 @@ This is an example of a template you could write. See "Info" button for full ins
 
 let gristSettings = null;
 let serverOptions = null;
-const getServerTemplateValue = () => (serverOptions?.html || initialValue);
+const getServerTemplateValue = () => (serverOptions?.html || (isReadonly.value ? '' : initialValue));
 
 async function goToError(error) {
   tab.value = 'edit';
@@ -379,6 +380,7 @@ ready(async function() {
   }
   grist.onOptions((options, settings) => {
     gristSettings = settings;
+    isReadonly.value = !['enterprise', 'saas'].includes(settings.deploymentType);
     if (!serverOptions && !options?.html && options?.toolbar !== false) {
       tab.value = "edit";
       showInfo.value = true;
@@ -390,7 +392,7 @@ ready(async function() {
     } else {
       serverDiverged.value = (getServerTemplateValue() !== template.value);
     }
-  })
+  });
   grist.rpc.registerFunc('editOptions', () => {
     showToolbar.value = true;
     grist.setOption('toolbar', true);
@@ -437,16 +439,23 @@ ready(async function() {
       return {
         statusMessage, tab, infoRecord,
         showInfo, showToolbar, hideToolbar,
-        templateError, goToError,
+        template, templateError, goToError,
         haveLocalEdits, serverDiverged, resetFromOptions,
         userContent, printIframe,
+        isReadonly, dismissNotice,
       };
     }
   });
   app.config.errorHandler = (err) => { console.warn("Vue Error", err); vueError.value = err; };
   app.mount('#app');
-
 });
+
+function dismissNotice() {
+  if (template.value) {
+    showInfo.value = false;
+  }
+  tab.value = 'preview';
+}
 
 function printIframe() {
   if (!userContent.value) { return; }
@@ -457,6 +466,7 @@ function printIframe() {
 
 // Initialize Monaco editor.
 async function _initEditor() {
+  if (isReadonly.value) { return; }
   require.config({ paths: {'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs'}});
   await new Promise((resolve, reject) => require(['vs/editor/editor.main'], resolve, reject));
   editor = monaco.editor.create(document.getElementById("editor"), {
