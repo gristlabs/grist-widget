@@ -34,6 +34,23 @@ body {
   content: 'Regular'
 }
 
+.ql-snow .ql-picker {
+  color: var(--grist-theme-body, #262633);
+}
+.ql-snow .ql-picker-options {
+  background-color: var(--grist-theme-bg-default, white);
+}
+.ql-snow .ql-stroke {
+  stroke: var(--grist-theme-body, #262633);
+}
+.ql-snow .ql-fill,
+.ql-snow .ql-stroke.ql-fill {
+  fill: var(--grist-theme-body, #262633);
+}
+.ql-toolbar.ql-snow {
+  border-color: var(--grist-theme-decoration, #d9d9d9);
+}
+
 @media print {
   html, body {
     height: unset !important;
@@ -41,6 +58,8 @@ body {
     margin: 0 !important;
     padding: 0;
     overflow: unset;
+    background-color: white;
+    color: black;
   }
   @page {
     margin: 0 !important;

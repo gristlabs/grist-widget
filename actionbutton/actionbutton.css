@@ -13,7 +13,7 @@ body {
 .status {
   padding: 8px;
   margin-top: 40px;
-  color: blue;
+  color: var(--grist-theme-info, #3b82f6);
 }
 
 
