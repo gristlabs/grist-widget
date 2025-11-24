@@ -17,6 +17,6 @@
         "url": "https://github.com/gristlabs"
       }
     ],
-    "isGristLabsMaintained": true
+    "isGristLabsMaintained": "enterprise"
   }
 }
