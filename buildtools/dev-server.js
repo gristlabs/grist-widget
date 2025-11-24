@@ -1,3 +1,11 @@
+/**
+ * Runs a dev server for developing custom widgets. It does a few things:
+ * (1) Serve everything from the current directory. E.g. it allows access to /map/index.html.
+ * (2) When it responds with an HTML page containing 'https://docs.getgrist.com/grist-plugin-api.js',
+ *     it replaces that with `http://localhost:${GRIST_PORT}/grist-plugin-api.js`.
+ *     This way, when running against a dev Grist server, it will use the API library from that
+ *     dev server. See rewriteUrl.js for details.
+ */
 const http = require('node:http');
 const sirv = require('sirv');
 const livereload = require('livereload');
