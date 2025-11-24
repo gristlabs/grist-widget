@@ -84,14 +84,13 @@ export class GristTestServer {
       throw new Error(`Expected buildtools/rewriteUrl.js to exist at ${pwd}/buildtools/rewriteUrl.js`);
     }
 
-    this._assetServer = spawn('live-server', [
-      `--port=${contentPort}`, '--no-browser', '-q',
-      `--middleware=${pwd}/buildtools/rewriteUrl.js`
-    ], {
+    this._assetServer = spawn('node', ['./buildtools/dev-server.js'], {
       env: {
         ...process.env,
+        PORT: String(contentPort),
         GRIST_PORT: String(gristPort),
-      }
+      },
+      stdio: 'inherit',
     });
   }
 
