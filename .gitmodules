@@ -12,3 +12,4 @@
 [submodule "template-builder"]
 	path = template-builder
 	url = https://github.com/gristlabs/template-builder-widget
+  branch = main
