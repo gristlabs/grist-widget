@@ -5,20 +5,26 @@ const GRIST_PORT = process.env.GRIST_PORT || 8484;
 // <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 module.exports = function (req, res, next) {
   // Rewrite only for GET method and an URL containing .htm fragment.
-  if (req.url && req.url.includes(".htm") && req.method === 'GET') {
-    // Overwrite Response internal _writeRaw method.
-    const _writeRaw = res._writeRaw.bind(res);
-    res._writeRaw = function (data, encoding, callback) {
-      // Make sure that the Response data is a string.
-      if (typeof data === 'string' && data) {
-        const prodUrl = 'https://docs.getgrist.com/grist-plugin-api.js';
-        const devUrl = `http://localhost:${GRIST_PORT}/grist-plugin-api.js`;
-        // Replace first occurrence of grist-plugin-api.js URL.
-        // Add extra space at the end to match Content-Length header.
-        data = data.replace(prodUrl, devUrl.padEnd(prodUrl.length));
+  const path = new URL(req.url, 'http://localhost/').pathname;
+  if (req.url && (req.url.includes(".htm") || path.endsWith("/")) && req.method === 'GET') {
+    // Overwrite Response's write() method.
+    const origWrite = res.write;
+    res.write = function (data, encoding, callback) {
+      if (Buffer.isBuffer(data)) {
+        data = Buffer.from(replaceUrl(data.toString('utf8')), 'utf8');
+      } else if (typeof data === 'string' && data) {
+        data = replaceUrl(data);
       }
-      _writeRaw(data, encoding, callback);
+      origWrite.call(this, data, encoding, callback);
     };
   }
   next();
 };
+
+function replaceUrl(data) {
+  const prodUrl = 'https://docs.getgrist.com/grist-plugin-api.js';
+  const devUrl = `http://localhost:${GRIST_PORT}/grist-plugin-api.js`;
+  // Replace first occurrence of grist-plugin-api.js URL.
+  // Add extra space at the end to match Content-Length header.
+  return data.replace(prodUrl, devUrl.padEnd(prodUrl.length));
+}
