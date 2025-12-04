@@ -3,6 +3,7 @@
   "jupyterlite": {},
   // Grist Labs maintained widget
   "chart": {},
+  "template-builder": {},
   "varamil/simplefilter": {
     // Url is changed to point to the grist-widget repository.
     "url": "https://gristlabs.github.io/grist-widget/varamil/simplefilter/index.html",
