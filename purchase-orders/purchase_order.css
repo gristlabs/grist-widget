@@ -8,6 +8,16 @@ body {
   --highlight-fg-color: white;
 }
 
+a {
+  color: #0000EE;
+}
+
+.order {
+  background-color: white;
+  color: black;
+  padding: 16px;
+}
+
 .meta {
   color: var(--title-fg-color);
 }
@@ -56,7 +66,7 @@ body {
 
 .vendor .details {
   padding: 4px;
-  background-color: var(--grist-theme-page-panels-main-panel-bg, white);
+  background-color: white;
 }
 
 table.items {
@@ -74,7 +84,7 @@ table.items th {
 }
 
 table.items td {
-  background-color: var(--grist-theme-page-panels-main-panel-bg, white);
+  background-color: white;
   padding: 4px;
 }
 
@@ -247,4 +257,3 @@ div.column-name {
   margin-bottom: 1px;
   border-radius: 0.25em;
 }
-

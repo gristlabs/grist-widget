@@ -2,7 +2,7 @@ body {
   font-family: Sans-Serif;
   padding: 0;
   margin: 0;
-  --label-outline: 0 0 0 1px #aaa;
+  --label-outline: 0 0 0 1px var(--grist-theme-decoration, #d9d9d9);
 }
 
 *, *:before, *:after {
@@ -14,7 +14,7 @@ body {
 .status {
   padding: 8px;
   margin-top: 40px;
-  color: blue;
+  color: var(--grist-theme-info, #3b82f6);
 }
 
 .label-content {
@@ -46,6 +46,7 @@ body {
   padding: 0.08in;
   border-radius: 0.06in;
   background-color: white;
+  color: black;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -126,7 +127,7 @@ body {
 .header {
   margin: 8px;
   font-size: 11pt;
-  color: #666;
+  color: var(--grist-theme-secondary, #929299);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -134,7 +135,9 @@ body {
 #labeltype {
   font-size: 11pt;
   padding: 4px;
-  color: #666;
+  background-color: var(--grist-theme-bg-default, white);
+  border-color: var(--grist-theme-decoration, #d9d9d9);
+  color: var(--grist-theme-body, #262633);
 }
 #options-btn {
   font-size: 30px;
@@ -151,20 +154,25 @@ body {
   z-index: 1;
 }
 #options-popup {
-  border: 1px solid #ddd;
-  box-shadow: 0 2px 20px 0 rgba(80,80,80,0.6);
-  background-color: white;
+  border: 1px solid var(--grist-theme-decoration, #d9d9d9);
+  box-shadow: 0 2px 20px 0 var(--grist-theme-menu-shadow, rgba(38, 38, 51, 0.6));
+  background-color: var(--grist-theme-bg-default, white);
   max-width: max-content;
   position: absolute;
   right: 8px;
   top: 40px;
   padding: 16px;
-  color: #666;
+  color: var(--grist-theme-body, #262633);
 }
 #blanks {
   font-size: 11pt;
   width: 4em;
   margin-left: 1em;
+  color: var(--grist-theme-emphasis, #000);
+  background-color: var(--grist-theme-bg-default, #fff);
+  border: 1px solid var(--grist-theme-decoration, #d9d9d9);
+  padding: 4px 8px;
+  border-radius: 3px;
 }
 
 @media print {

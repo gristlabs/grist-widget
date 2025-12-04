@@ -5,6 +5,16 @@ body {
   padding: 5px;
 }
 
+a {
+  color: #0000EE;
+}
+
+.invoice {
+  background-color: white;
+  color: black;
+  padding: 16px;
+}
+
 .meta {
   color: #ff8000;
 }
@@ -53,7 +63,7 @@ body {
 
 .client .details, .summary .details {
   padding: 4px;
-  background-color: var(--grist-theme-page-panels-main-panel-bg, white);
+  background-color: white;
 }
 
 table.items {
@@ -71,7 +81,7 @@ table.items th {
 }
 
 table.items td {
-  background-color: var(--grist-theme-page-panels-main-panel-bg, white);
+  background-color: white;
   padding: 4px;
 }
 
