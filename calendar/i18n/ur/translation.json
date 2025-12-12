@@ -1,1 +1,22 @@
-{}
+{
+    "previous": "کیلنڈر",
+    "next": "اگلا",
+    "newEvent": "نیا ایونٹ",
+    "Title": "عنوان",
+    "Start Date": "شروع کی تاریخ",
+    "End Date": "اختتامی تاریخ",
+    "Is All Day": "کیا پورا دن؟",
+    "All Day": "پورا دن",
+    "starting point of event": "ایونٹ کا نقطہ آغاز",
+    "ending point of event": "ایونٹ کا نقطہ اختتام",
+    "title of event": "ایونٹ کا عنوان",
+    "is event all day long": "کیا ایونٹ پورے دن کا ہے؟",
+    "Sun": "اتوار",
+    "Mon": "پیر",
+    "Tue": "منگل",
+    "Wed": "بدھ",
+    "Thu": "جمعرات",
+    "Fri": "جمعہ",
+    "Sat": "ہفتہ",
+    "Delete": "حذف کریں"
+}
