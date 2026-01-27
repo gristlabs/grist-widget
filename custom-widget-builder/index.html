@@ -46,6 +46,7 @@
   <div id="_bar" style="display: none; flex: 0; justify-content: space-between; font-size: 12px; font-family: Arial, Helvetica, sans-serif;">
     <div style="user-select: none;">
       <span class="_tab" id="tab_html" onclick="changeTab('html');">HTML</span>
+      <span class="_tab" id="tab_css" onclick="changeTab('css');">CSS</span>
       <span class="_tab" id="tab_js" onclick="changeTab('js');">JavaScript</span>
       <span class="_tab" id="tab_help" onclick="changeTab('help');">Help</span>
     </div>
@@ -123,7 +124,7 @@
           This editor allows you to write code for a custom widget and "install" it inside a Grist document.
         </p>
         <p>
-          There are two tabs: <strong>JavaScript</strong> and <strong>HTML</strong>. The <strong>JavaScript</strong> tab is where you write code that interacts with the Grist plugin API, while the <strong>HTML</strong> tab is where you write the code that displays the results of the JavaScript code.
+          There are three tabs: <strong>HTML</strong>, <strong>CSS</strong>, and <strong>JavaScript</strong>. The <strong>HTML</strong> tab is where you structure your widget's appearance, the <strong>CSS</strong> tab is for styling, and the <strong>JavaScript</strong> tab is where you write code that interacts with the Grist plugin API.
         </p>
 
         <h2>Modifying the Custom Widget</h2>
@@ -134,7 +135,7 @@
         <h2>Installing the Custom Widget</h2>
         <ul>
           <li>
-            When you click the <code>"Preview"</code> button, the widget (both the JavaScript and HTML code) will be saved in the document's metadata, and the editor will then replace itself with the widget you have created.
+            When you click the <code>"Preview"</code> button, the widget (HTML, CSS, and JavaScript code) will be saved in the document's metadata, and the editor will then replace itself with your custom widget.
           </li>
           <li>
             After installing the widget, you need to press the <code>"Save"</code> button and save the configuration for a tab. It works similarly to saving filters in Grist.
@@ -149,19 +150,20 @@
         <div class="developer-note">
           <h3>Note for Developers</h3>
           <p>
-            The widget's state is persisted in the widget's metadata as <strong>JSON</strong>, with content encoded as two properties: <code>_js</code> and <code>_html</code>.
+            The widget's state is persisted in the widget's metadata as <strong>JSON</strong>, with content encoded as three properties: <code>_html</code>, <code>_css</code>, and <code>_js</code>.
           </p>
           <div class="code-snippet">
             <pre><code>
 grist.setOptions({
-  _installed: true, // Flat indicating that the widget is installed.
-  _js: `...your js code....`,
-  _html: `...your html code...`,
+  _installed: true, // Flag indicating that the widget is installed.
+  _html: `...your HTML code...`,
+  _css: `...your CSS code...`,
+  _js: `...your JavaScript code...`,
 });
             </code></pre>
           </div>
           <p>
-            In the final widget, the <code>_html</code> field is inserted as is into an iframe, and the <code>_js</code> field is embedded within a script tag afterwards.
+            In the final widget, the <code>_html</code> field is inserted as is into an iframe, the <code>_css</code> is injected in a style tag, and the <code>_js</code> field is embedded within a script tag afterwards.
           </p>
           <p>
             For more details on custom widget development, please refer to the <a href="https://support.getgrist.com/widget-custom/" target="_blank">official Grist documentation</a>.
