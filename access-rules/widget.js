@@ -389,6 +389,28 @@ var rulesList = document.getElementById('rules-list');
 var rulesEmpty = document.getElementById('rules-empty');
 
 // =============================================================================
+// UTILS
+// =============================================================================
+
+function removeAccents(str) {
+  var accentsMap = {
+    'à': 'a', 'â': 'a', 'ä': 'a', 'á': 'a', 'ã': 'a',
+    'è': 'e', 'ê': 'e', 'ë': 'e', 'é': 'e',
+    'ì': 'i', 'î': 'i', 'ï': 'i', 'í': 'i',
+    'ò': 'o', 'ô': 'o', 'ö': 'o', 'ó': 'o', 'õ': 'o',
+    'ù': 'u', 'û': 'u', 'ü': 'u', 'ú': 'u',
+    'ç': 'c', 'ñ': 'n',
+    'À': 'A', 'Â': 'A', 'Ä': 'A', 'Á': 'A', 'Ã': 'A',
+    'È': 'E', 'Ê': 'E', 'Ë': 'E', 'É': 'E',
+    'Ì': 'I', 'Î': 'I', 'Ï': 'I', 'Í': 'I',
+    'Ò': 'O', 'Ô': 'O', 'Ö': 'O', 'Ó': 'O', 'Õ': 'O',
+    'Ù': 'U', 'Û': 'U', 'Ü': 'U', 'Ú': 'U',
+    'Ç': 'C', 'Ñ': 'N'
+  };
+  return str.split('').map(function(c) { return accentsMap[c] || c; }).join('');
+}
+
+// =============================================================================
 // MESSAGES
 // =============================================================================
 
@@ -1212,7 +1234,7 @@ function updateAttrPreview() {
   attrPreviewCode.textContent = 'user.' + name;
 
   if (isAuto && attrAutoInfoTable && attrAutoInfoCols) {
-    var tableName = 'Utilisateurs_' + (attrName.value.trim() || 'Attribut');
+    var tableName = 'Utilisateurs_' + removeAccents(attrName.value.trim() || 'Attribut');
     attrAutoInfoTable.innerHTML = t('attrAutoTable').replace('{table}', '<strong>' + sanitizeForDisplay(tableName) + '</strong>');
     attrAutoInfoCols.innerHTML = t('attrAutoCols').replace('{attr}', '<strong>' + sanitizeForDisplay(attrName.value.trim() || 'Attribut') + '</strong>');
   }
@@ -1325,8 +1347,8 @@ async function applyAttributeAuto() {
     return;
   }
 
-  // Sanitize table name (no spaces, no special chars)
-  var tableName = 'Utilisateurs_' + name.replace(/[^a-zA-Z0-9_]/g, '_');
+  // Sanitize table name (remove accents, no spaces, no special chars)
+  var tableName = 'Utilisateurs_' + removeAccents(name).replace(/[^a-zA-Z0-9_]/g, '_');
 
   attrApplyBtn.disabled = true;
   attrMessage.innerHTML = '<div class="message message-info">' + t('attrApplying') + '</div>';
@@ -1512,6 +1534,7 @@ var attrDataMessage = document.getElementById('attr-data-message');
 
 // Store loaded attributes info for data management
 var loadedAttrs = [];
+var currentValueColName = null;
 
 async function deleteAttribute(ruleId, attrName) {
   // Check if any rules use this attribute
@@ -1599,7 +1622,18 @@ async function loadAttrData(selectValue) {
     var tableData = await grist.docApi.fetchTable(info.tableId);
     var ids = tableData.id || [];
     var emails = tableData[info.lookupColId] || tableData.Email || [];
-    var values = tableData[info.name] || [];
+
+    // Find the real value column name (may differ from info.name due to accent removal)
+    var valueColName = info.name;
+    var allCols = Object.keys(tableData).filter(function(c) {
+      return c !== 'id' && c !== 'manualSort' && !c.startsWith('gristHelper_') && c !== info.lookupColId && c !== 'Email';
+    });
+    if (allCols.length > 0 && !tableData[info.name]) {
+      valueColName = allCols[0];
+    }
+    // Store for addAttrDataRow
+    currentValueColName = valueColName;
+    var values = tableData[valueColName] || [];
 
     var html = '';
     for (var i = 0; i < ids.length; i++) {
@@ -1648,9 +1682,11 @@ async function addAttrDataRow() {
   attrDataAddBtn.disabled = true;
 
   try {
+    // Use the real column name detected by loadAttrData
+    var colName = currentValueColName || info.name;
     var record = {};
     record[info.lookupColId] = email;
-    record[info.name] = value;
+    record[colName] = value;
 
     await grist.docApi.applyUserActions([
       ['AddRecord', info.tableId, null, record]
