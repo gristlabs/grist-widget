@@ -1,0 +1,806 @@
+<!--
+  Grist Access Rules Manager Widget
+  Copyright 2026 Said Hamadou
+  Licensed under the Apache License, Version 2.0
+  https://github.com/gristlabs/grist-widget
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Rules Manager - Grist Widget</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>">
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      position: relative;
+    }
+
+    h2 { font-size: 24px; margin-bottom: 8px; }
+    .subtitle { color: #64748b; margin-bottom: 24px; font-size: 14px; }
+
+    /* Language switcher */
+    .lang-switcher {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      display: flex;
+      gap: 4px;
+    }
+    .lang-btn {
+      background: #f1f5f9;
+      border: 2px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      transition: all 0.2s;
+    }
+    .lang-btn:hover { background: #e2e8f0; }
+    .lang-btn.active { background: #3b82f6; border-color: #3b82f6; color: white; }
+
+    /* Cards */
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .card-title {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #1e293b;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      color: #64748b;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .tab:hover { color: #3b82f6; }
+    .tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Messages */
+    .message {
+      padding: 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    .message-success { background: #dcfce7; border-left: 4px solid #16a34a; color: #166534; }
+    .message-error { background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; }
+    .message-warning { background: #fef3c7; border-left: 4px solid #f59e0b; color: #92400e; }
+    .message-info { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+
+    /* API Key setup */
+    .setup-section { text-align: center; padding: 40px 20px; }
+    .setup-icon { font-size: 64px; margin-bottom: 16px; }
+    .setup-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .setup-subtitle { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+
+    .api-key-input {
+      width: 100%;
+      max-width: 500px;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: monospace;
+      margin-bottom: 12px;
+    }
+    .api-key-input:focus { outline: none; border-color: #3b82f6; }
+
+    .help-toggle {
+      color: #3b82f6;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+    .help-toggle:hover { text-decoration: underline; }
+
+    .help-steps {
+      text-align: left;
+      max-width: 500px;
+      margin: 0 auto 20px;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #475569;
+    }
+    .help-steps ol { padding-left: 20px; }
+
+    /* Buttons */
+    .btn {
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(59,130,246,0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-secondary { background: #f1f5f9; border: 2px solid #e2e8f0; color: #475569; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-danger { background: #fee2e2; color: #991b1b; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    /* Connection status */
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-dot.connected { background: #16a34a; }
+    .status-dot.disconnected { background: #dc2626; }
+
+    /* Matrix table */
+    .matrix-container {
+      overflow-x: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .matrix-table th, .matrix-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .matrix-table th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #475569;
+      position: sticky;
+      top: 0;
+    }
+    .matrix-table th:first-child,
+    .matrix-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      left: 0;
+      background: white;
+      z-index: 1;
+    }
+    .matrix-table th:first-child { background: #f8fafc; z-index: 2; }
+    .matrix-table tr:hover td { background: #f8fafc; }
+    .matrix-table tr:hover td:first-child { background: #f1f5f9; }
+
+    /* Permission badges */
+    .perm-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .perm-read-write { background: #dcfce7; color: #166534; }
+    .perm-read-only { background: #dbeafe; color: #1e40af; }
+    .perm-none { background: #fee2e2; color: #991b1b; }
+    .perm-inherited { background: #f1f5f9; color: #64748b; border: 1px dashed #cbd5e1; }
+    .perm-badge:hover { transform: scale(1.05); }
+
+    /* User list */
+    .user-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .user-item:last-child { border-bottom: none; }
+    .user-info { display: flex; align-items: center; gap: 12px; }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #475569;
+    }
+    .user-name { font-weight: 600; font-size: 14px; }
+    .user-email { font-size: 12px; color: #64748b; }
+
+    .role-select {
+      padding: 6px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Column detail */
+    .table-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .table-selector select {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    /* Row rules */
+    .rule-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .rule-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .rule-condition {
+      font-family: monospace;
+      font-size: 13px;
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .rule-permissions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-section { text-align: center; padding: 40px; color: #64748b; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      padding: 14px 20px;
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      transform: translateX(120%);
+      transition: transform 0.3s ease;
+      max-width: 350px;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast-success { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .toast-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .toast-info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      transform: scale(0.9);
+      transition: transform 0.2s ease;
+    }
+    .modal-overlay.show .modal-box { transform: scale(1); }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1e293b;
+    }
+    .modal-body {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .modal-body ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+    .modal-body ul li {
+      margin: 4px 0;
+      font-family: monospace;
+      font-size: 12px;
+      color: #64748b;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .modal-btn {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .modal-btn-cancel {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .modal-btn-cancel:hover { background: #e2e8f0; }
+    .modal-btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+    .modal-btn-danger:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Modal -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal-box">
+      <div id="modal-title" class="modal-title"></div>
+      <div id="modal-body" class="modal-body"></div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="modal-cancel-btn">Annuler</button>
+        <button class="modal-btn modal-btn-danger" id="modal-confirm-btn">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Language switcher -->
+    <div class="lang-switcher">
+      <button class="lang-btn active" id="lang-fr" onclick="setLanguage('fr')">FR</button>
+      <button class="lang-btn" id="lang-en" onclick="setLanguage('en')">EN</button>
+    </div>
+
+    <h2 data-i18n="title">🔐 Gestion des accès</h2>
+    <p class="subtitle" data-i18n="subtitle">Gérez les permissions de lecture/écriture par table et colonne</p>
+
+    <!-- Messages -->
+    <div id="message-section" class="hidden"></div>
+
+    <!-- Setup section (shown only outside Grist) -->
+    <div id="setup-section" class="card hidden"></div>
+
+    <!-- Main content -->
+    <div id="main-content" class="hidden">
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="attributes" data-i18n="tabAttributes">� Attributs</button>
+        <button class="tab" data-tab="configure" data-i18n="tabConfigure">⚙️ Configurer</button>
+        <button class="tab" data-tab="tables" data-i18n="tabTables">� Tables</button>
+        <button class="tab" data-tab="columns" data-i18n="tabColumns">📋 Colonnes</button>
+        <button class="tab" data-tab="rules" data-i18n="tabRules">� Règles</button>
+      </div>
+
+      <!-- Tab: Tables -->
+      <div id="tab-tables" class="tab-content">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin-bottom: 0;" data-i18n="tablesTitle">📊 Permissions par table</div>
+            <button class="btn btn-sm btn-secondary" id="refresh-tables-btn">🔄</button>
+          </div>
+          <div id="tables-loading" class="loading-section">
+            <div class="spinner"></div>
+            <p data-i18n="loading">Chargement...</p>
+          </div>
+          <div id="tables-matrix" class="matrix-container hidden"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Columns -->
+      <div id="tab-columns" class="tab-content">
+        <div class="card">
+          <div class="card-title" data-i18n="columnsTitle">📋 Permissions par colonne</div>
+          <div class="table-selector">
+            <label data-i18n="selectTable" style="font-weight: 600; white-space: nowrap;">Table :</label>
+            <select id="column-table-select">
+              <option value="" data-i18n="selectTableOption">-- Sélectionner une table --</option>
+            </select>
+            <button class="btn btn-sm btn-secondary" id="refresh-columns-btn">🔄</button>
+          </div>
+          <div id="columns-loading" class="loading-section hidden">
+            <div class="spinner"></div>
+            <p data-i18n="loading">Chargement...</p>
+          </div>
+          <div id="columns-matrix" class="matrix-container hidden"></div>
+          <div id="columns-empty" class="loading-section">
+            <p data-i18n="selectTablePrompt" style="color: #94a3b8;">Sélectionnez une table pour voir les permissions par colonne</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Rules -->
+      <div id="tab-rules" class="tab-content">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin-bottom: 0;" data-i18n="rulesTitle">📜 Règles d'accès (ACL)</div>
+            <button class="btn btn-sm btn-secondary" id="refresh-rules-btn">🔄</button>
+          </div>
+          <div id="rules-loading" class="loading-section">
+            <div class="spinner"></div>
+            <p data-i18n="loading">Chargement...</p>
+          </div>
+          <div id="rules-list"></div>
+          <div id="rules-empty" class="hidden" style="text-align: center; padding: 20px; color: #94a3b8;">
+            <p data-i18n="noRules">Aucune règle d'accès personnalisée définie</p>
+          </div>
+        </div>
+
+        <div class="card" style="background: #fffbeb; border-left: 4px solid #f59e0b;">
+          <div class="card-title" style="color: #92400e;" data-i18n="defaultRulesTitle">💡 Règles par défaut</div>
+          <ul style="font-size: 13px; color: #78350f; line-height: 1.8; padding-left: 20px;">
+            <li data-i18n="defaultRule1"><strong>Owner</strong> : Accès complet (lecture, écriture, gestion)</li>
+            <li data-i18n="defaultRule2"><strong>Editor</strong> : Lecture et écriture des données</li>
+            <li data-i18n="defaultRule3"><strong>Viewer</strong> : Lecture seule</li>
+            <li data-i18n="defaultRule4">Les règles personnalisées ci-dessus <strong>remplacent</strong> les règles par défaut</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tab: Configure -->
+      <div id="tab-configure" class="tab-content">
+        <div class="card">
+          <div class="card-title" data-i18n="configureTitle">⚙️ Ajouter une règle d'accès</div>
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;" data-i18n="configureSubtitle">Configurez simplement les permissions sans écrire de formule</p>
+
+          <!-- Step 1: Choose scope -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-weight: 600; display: block; margin-bottom: 8px;" data-i18n="cfgScope">1. Portée de la règle</label>
+            <select id="cfg-scope" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+              <option value="table" data-i18n="cfgScopeTable">Toute une table</option>
+              <option value="columns" data-i18n="cfgScopeColumns">Colonnes spécifiques</option>
+            </select>
+          </div>
+
+          <!-- Step 2: Choose table -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-weight: 600; display: block; margin-bottom: 8px;" data-i18n="cfgTable">2. Table</label>
+            <select id="cfg-table" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+              <option value="" data-i18n="selectTableOption">-- Sélectionner une table --</option>
+            </select>
+          </div>
+
+          <!-- Step 3: Choose columns (if scope = columns) -->
+          <div id="cfg-columns-section" class="form-group hidden" style="margin-bottom: 16px;">
+            <label style="font-weight: 600; display: block; margin-bottom: 8px;" data-i18n="cfgColumns">3. Colonnes</label>
+            <div id="cfg-columns-list" style="max-height: 200px; overflow-y: auto; border: 2px solid #e2e8f0; border-radius: 6px; padding: 8px;"></div>
+          </div>
+
+          <!-- Step 4: Choose condition type -->
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="font-weight: 600; display: block; margin-bottom: 8px;" data-i18n="cfgConditionType">3. Condition</label>
+            <select id="cfg-condition-type" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+              <option value="role" data-i18n="cfgCondRole">Par rôle (Viewer, Editor...)</option>
+              <option value="attribute" data-i18n="cfgCondAttr">Par attribut utilisateur (user.UGP, user.Dept...)</option>
+            </select>
+          </div>
+
+          <!-- Condition: by role -->
+          <div id="cfg-role-section" class="form-group" style="margin-bottom: 16px;">
+            <select id="cfg-role" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+              <option value="VIEWER" data-i18n="cfgRoleViewer">Lecteur (Viewer)</option>
+              <option value="EDITOR" data-i18n="cfgRoleEditor">Éditeur (Editor)</option>
+              <option value="EDITOR,VIEWER" data-i18n="cfgRoleBoth">Éditeur + Lecteur</option>
+            </select>
+          </div>
+
+          <!-- Condition: by attribute -->
+          <div id="cfg-attr-section" class="form-group hidden" style="margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: end;">
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;" data-i18n="cfgAttrName">Attribut</label>
+                <select id="cfg-attr-name" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                </select>
+              </div>
+              <div>
+                <select id="cfg-attr-op" style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                  <option value="==">==</option>
+                  <option value="!=">!=</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;" data-i18n="cfgAttrValue">Valeur</label>
+                <input type="text" id="cfg-attr-value" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;" placeholder="commercial, comptable...">
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5: Choose permissions -->
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="font-weight: 600; display: block; margin-bottom: 12px;" data-i18n="cfgPermissions">4. Permissions</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8fafc; border-radius: 6px; cursor: pointer; border: 2px solid #e2e8f0;">
+                <input type="checkbox" id="cfg-perm-read" checked style="width: 18px; height: 18px;">
+                <span>📖 <span data-i18n="ruleRead">Lecture</span></span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8fafc; border-radius: 6px; cursor: pointer; border: 2px solid #e2e8f0;">
+                <input type="checkbox" id="cfg-perm-write" style="width: 18px; height: 18px;">
+                <span>✏️ <span data-i18n="ruleWrite">Écriture</span></span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8fafc; border-radius: 6px; cursor: pointer; border: 2px solid #e2e8f0;">
+                <input type="checkbox" id="cfg-perm-create" style="width: 18px; height: 18px;">
+                <span>➕ <span data-i18n="ruleCreate">Création</span></span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8fafc; border-radius: 6px; cursor: pointer; border: 2px solid #e2e8f0;">
+                <input type="checkbox" id="cfg-perm-delete" style="width: 18px; height: 18px;">
+                <span>🗑️ <span data-i18n="ruleDelete">Suppression</span></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div id="cfg-preview" class="rule-item" style="margin-bottom: 16px;">
+            <div style="font-weight: 600; margin-bottom: 8px;" data-i18n="cfgPreview">Aperçu de la règle :</div>
+            <div id="cfg-preview-condition" class="rule-condition">user.Access in [VIEWER]</div>
+            <div id="cfg-preview-perms" class="rule-permissions"></div>
+          </div>
+
+          <!-- Apply button -->
+          <button class="btn btn-primary" id="cfg-apply-btn" style="width: 100%;" data-i18n="cfgApply">✅ Appliquer la règle</button>
+
+          <div id="cfg-message" class="hidden" style="margin-top: 12px;"></div>
+        </div>
+
+        <!-- Active rules summary -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="card-title" style="margin-bottom: 0;" data-i18n="cfgSummaryTitle">📋 Règles actives</div>
+            <button class="btn btn-sm btn-secondary" id="refresh-summary-btn">🔄</button>
+          </div>
+          <div id="cfg-summary-loading" class="loading-section hidden">
+            <div class="spinner"></div>
+            <p data-i18n="loading">Chargement...</p>
+          </div>
+          <div id="cfg-summary-list"></div>
+          <div id="cfg-summary-empty" class="hidden" style="text-align: center; padding: 16px; color: #94a3b8;">
+            <p data-i18n="cfgSummaryNone">Aucune règle personnalisée configurée</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Attributes -->
+      <div id="tab-attributes" class="tab-content active">
+
+        <!-- STEP 1: Create attribute -->
+        <div class="card" style="border-left: 4px solid #3b82f6;">
+          <div class="card-title" style="margin-bottom: 4px;">
+            <span style="background:#3b82f6; color:white; border-radius:50%; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; margin-right:8px;">1</span>
+            <span data-i18n="attrStep1Title">Créer un attribut</span>
+            <button class="btn btn-sm btn-secondary" id="refresh-attrs-btn" style="margin-left:auto; float:right;">🔄</button>
+          </div>
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 16px; margin-left: 32px;" data-i18n="attrStep1Desc">Définissez un attribut personnalisé (ex: Département, Équipe). La table sera créée automatiquement.</p>
+
+          <!-- Existing attributes -->
+          <div id="attrs-loading" class="loading-section hidden">
+            <div class="spinner"></div>
+            <p data-i18n="loading">Chargement...</p>
+          </div>
+          <div id="attrs-list"></div>
+          <div id="attrs-empty" class="hidden"></div>
+
+          <!-- Add form (collapsible) -->
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+            <!-- Mode selector -->
+            <div class="form-group" style="margin-bottom: 12px;">
+              <select id="attr-mode" style="width: 100%; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 13px;">
+                <option value="auto" data-i18n="attrModeAuto">🚀 Automatique (crée la table pour vous)</option>
+                <option value="manual" data-i18n="attrModeManual">🔧 Manuel (utiliser une table existante)</option>
+              </select>
+            </div>
+
+            <!-- AUTO mode -->
+            <div id="attr-auto-section">
+              <div style="display: flex; gap: 8px; align-items: flex-end;">
+                <div style="flex: 1;">
+                  <label style="font-weight: 600; display: block; margin-bottom: 4px; font-size: 13px;" data-i18n="attrName">Nom de l'attribut</label>
+                  <input type="text" id="attr-name" style="width: 100%; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 13px;" data-i18n-placeholder="attrNamePlaceholder" placeholder="Ex: Departement, Equipe, Site...">
+                </div>
+                <button class="btn btn-primary btn-sm" id="attr-apply-btn" style="white-space: nowrap; padding: 8px 16px;" data-i18n="attrApply">✅ Créer</button>
+              </div>
+              <div id="attr-auto-preview" style="margin-top: 8px; font-size: 12px; color: #64748b;">
+                <span id="attr-auto-info-table"></span> · <span id="attr-auto-info-cols"></span>
+              </div>
+            </div>
+
+            <!-- MANUAL mode -->
+            <div id="attr-manual-section" class="hidden">
+              <div class="form-group" style="margin-bottom: 8px;">
+                <label style="font-weight: 600; display: block; margin-bottom: 4px; font-size: 13px;" data-i18n="attrName">Nom de l'attribut</label>
+                <input type="text" id="attr-name-manual" style="width: 100%; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 13px;" data-i18n-placeholder="attrNamePlaceholder" placeholder="Ex: Departement, Equipe, Site...">
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                <div>
+                  <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;" data-i18n="attrCharId">Appairage</label>
+                  <select id="attr-char-id" style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 12px;">
+                    <option value="Email">Email</option>
+                    <option value="Name">Name</option>
+                    <option value="Access">Access</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;" data-i18n="attrTableId">Table</label>
+                  <select id="attr-table-id" style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 12px;">
+                    <option value="">--</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;" data-i18n="attrLookupCol">Colonne</label>
+                  <select id="attr-lookup-col" style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 12px;">
+                    <option value="">--</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary" id="attr-apply-btn-manual" style="width: 100%;" data-i18n="attrApply">✅ Créer</button>
+            </div>
+
+            <div id="attr-message" class="hidden" style="margin-top: 8px;"></div>
+          </div>
+        </div>
+
+        <!-- STEP 2: Manage users (hidden if no attributes) -->
+        <div id="attr-data-section" class="card hidden" style="border-left: 4px solid #22c55e;">
+          <div class="card-title" style="margin-bottom: 4px;">
+            <span style="background:#22c55e; color:white; border-radius:50%; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; margin-right:8px;">2</span>
+            <span data-i18n="attrStep2Title">Associer les utilisateurs</span>
+          </div>
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 16px; margin-left: 32px;" data-i18n="attrStep2Desc">Saisissez les emails et les valeurs pour chaque utilisateur.</p>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <select id="attr-data-select" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+            </select>
+          </div>
+
+          <div id="attr-data-loading" class="loading-section hidden">
+            <div class="spinner"></div>
+            <p data-i18n="loading">Chargement...</p>
+          </div>
+
+          <div id="attr-data-table-container" class="hidden">
+            <table class="matrix-table" id="attr-data-table" style="margin-bottom: 12px;">
+              <thead><tr><th>Email</th><th id="attr-data-col-header">Attribut</th><th style="width:40px;"></th></tr></thead>
+              <tbody id="attr-data-tbody"></tbody>
+            </table>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="email" id="attr-data-email" style="flex: 1; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 13px;" placeholder="email@exemple.com">
+            <input type="text" id="attr-data-value" style="flex: 1; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 13px;" placeholder="Valeur...">
+            <button class="btn btn-primary btn-sm" id="attr-data-add-btn" style="white-space: nowrap;">➕</button>
+          </div>
+          <div id="attr-data-message" class="hidden" style="margin-top: 8px;"></div>
+        </div>
+
+        <!-- STEP 3: Use in rules -->
+        <div class="card" style="border-left: 4px solid #f59e0b;">
+          <div class="card-title" style="margin-bottom: 4px;">
+            <span style="background:#f59e0b; color:white; border-radius:50%; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; margin-right:8px;">3</span>
+            <span data-i18n="attrStep3Title">Utiliser dans les règles</span>
+          </div>
+          <p style="font-size: 13px; color: #64748b; margin-left: 32px;" data-i18n="attrStep3Desc">Allez dans l'onglet <strong>⚙️ Configurer</strong> et utilisez vos attributs dans les conditions de vos règles d'accès.</p>
+          <div style="margin-left: 32px; margin-top: 8px;">
+            <code id="attr-preview-code" style="display: inline-block; padding: 6px 12px; background: #1e293b; color: #e2e8f0; border-radius: 4px; font-size: 13px;">user.VotreAttribut</code>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span data-i18n="footerCreated">Créé par</span> <strong>Said Hamadou (HmD)</strong> &mdash; 2026
+    </div>
+  </div>
+
+  <script src="widget.js"></script>
+</body>
+</html>

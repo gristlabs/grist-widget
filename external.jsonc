@@ -11,5 +11,10 @@
     // Flag is enforced to false to indicate that this is not a Grist Labs maintained widget.
     "isGristLabsMaintained": false
   },
-  "vibe-view": {}
+  "vibe-view": {},
+  "access-rules": {
+    "url": "https://gristlabs.github.io/grist-widget/access-rules/index.html",
+    "widgetId": "@isaytoo/widget-access-rules",
+    "isGristLabsMaintained": false
+  }
 }
