@@ -1,0 +1,25 @@
+{
+  "name": "@isaytoo/widget-doc-template",
+  "description": "Document Template (Mail Merge): WYSIWYG editor with Grist field variables, Word import, multi-template management, and PDF generation with page break control.",
+  "homePage": "https://github.com/isaytoo/grist-doc-template-widget",
+  "version": "1.0.0",
+  "grist": [
+    {
+      "name": "Document Template",
+      "url": "https://gristlabs.github.io/grist-widget/doc-template/index.html",
+      "widgetId": "@isaytoo/widget-doc-template",
+      "published": true,
+      "accessLevel": "full",
+      "renderAfterReady": true,
+      "description": "WYSIWYG document template editor with mail merge. Import Word (.docx), insert Grist variables, manage multiple named templates, preview with A4/Letter format, add manual page breaks, and generate PDFs. Bilingual FR/EN.",
+      "authors": [
+        {
+          "name": "Said Hamadou",
+          "url": "https://github.com/isaytoo"
+        }
+      ],
+      "isGristLabsMaintained": false
+    }
+  ],
+  "license": "Apache-2.0"
+}
