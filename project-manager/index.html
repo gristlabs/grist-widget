@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestion de Projet</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    /* ========== RESET & BASE ========== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .hidden { display: none !important; }
+
+    /* ========== HEADER ========== */
+    .app-header {
+      padding: 20px 24px 0;
+    }
+    .app-header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+    .app-header p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* ========== LANG BUTTONS ========== */
+    .lang-btns {
+      display: flex;
+      gap: 4px;
+    }
+    .lang-btn {
+      padding: 4px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: white;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #64748b;
+      transition: all 0.15s;
+    }
+    .lang-btn.active {
+      background: #ef4444;
+      color: white;
+      border-color: #ef4444;
+    }
+
+    /* ========== TABS ========== */
+    .tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 4px;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      border-radius: 8px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-btn:hover { color: #1e293b; background: #e2e8f0; }
+    .tab-btn.active { color: #1e293b; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .tab-content { display: none; padding: 0 24px 24px; }
+    .tab-content.active { display: block; }
+
+    /* ========== NEW TASK BUTTON ========== */
+    .btn-new-task {
+      padding: 10px 20px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-new-task:hover { background: #dc2626; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+
+    /* ========== STAT CARDS ========== */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 16px 24px;
+    }
+    .stat-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-card .stat-label { font-size: 12px; color: #64748b; font-weight: 500; }
+    .stat-card .stat-value { font-size: 24px; font-weight: 800; margin-top: 2px; }
+    .stat-card .stat-icon { font-size: 28px; opacity: 0.8; }
+    .stat-total .stat-value { color: #1e293b; }
+    .stat-todo .stat-value { color: #f59e0b; }
+    .stat-progress .stat-value { color: #3b82f6; }
+    .stat-done .stat-value { color: #22c55e; }
+
+    /* ========== BUTTONS ========== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: #ef4444; color: white; }
+    .btn-primary:hover:not(:disabled) { background: #dc2626; }
+    .btn-secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .btn-secondary:hover:not(:disabled) { background: #e2e8f0; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; }
+    .btn-icon {
+      width: 30px; height: 30px; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px; border: none; background: none; cursor: pointer;
+      color: #94a3b8; transition: all 0.15s;
+    }
+    .btn-icon:hover { background: #fee2e2; color: #ef4444; }
+
+    /* ========== KANBAN ========== */
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      min-height: 400px;
+    }
+    .kanban-column {
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 0;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+    }
+    .kanban-col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      font-weight: 700;
+      font-size: 13px;
+      border-bottom: 2px solid transparent;
+    }
+    .kanban-col-header .col-count {
+      background: white;
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+    }
+    .kanban-col-header .col-add {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: none;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      color: #64748b;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .kanban-col-header .col-add:hover { background: #e2e8f0; }
+    .col-todo .kanban-col-header { border-bottom-color: #f59e0b; color: #92400e; }
+    .col-todo .col-count { color: #f59e0b; }
+    .col-progress .kanban-col-header { border-bottom-color: #3b82f6; color: #1e40af; }
+    .col-progress .col-count { color: #3b82f6; }
+    .col-done .kanban-col-header { border-bottom-color: #22c55e; color: #166534; }
+    .col-done .col-count { color: #22c55e; }
+
+    .kanban-cards {
+      flex: 1;
+      padding: 8px;
+      overflow-y: auto;
+      min-height: 100px;
+    }
+    .kanban-cards.drag-over {
+      background: #e0f2fe;
+      border-radius: 8px;
+    }
+    .kanban-empty {
+      text-align: center;
+      padding: 30px 10px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+    .kanban-empty-icon { font-size: 36px; margin-bottom: 6px; }
+    .kanban-add-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px;
+      margin: 4px 8px 8px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      background: none;
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.15s;
+      width: calc(100% - 16px);
+    }
+    .kanban-add-btn:hover { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
+
+    /* ========== TASK CARD ========== */
+    .task-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: grab;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .task-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+    .task-card.dragging { opacity: 0.5; transform: rotate(2deg); }
+    .task-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .task-card-title { font-weight: 700; font-size: 13px; color: #1e293b; flex: 1; }
+    .task-card-actions { display: flex; gap: 2px; }
+    .task-card-desc {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .task-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .priority-badge {
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .priority-high { background: #fef2f2; color: #dc2626; }
+    .priority-medium { background: #fffbeb; color: #d97706; }
+    .priority-low { background: #f0fdf4; color: #16a34a; }
+    .task-card-date {
+      font-size: 10px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .task-card-assignee {
+      font-size: 10px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .overdue-badge {
+      background: #fef2f2;
+      color: #dc2626;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+    .priority-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-high { background: #ef4444; }
+    .dot-medium { background: #f59e0b; }
+    .dot-low { background: #22c55e; }
+
+    /* ========== TABLE VIEW ========== */
+    .table-filters {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .table-filters input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 14px 8px 36px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 12px center;
+    }
+    .table-filters input[type="text"]:focus { outline: none; border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+    .table-filters select {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 12px;
+      background: white;
+      cursor: pointer;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .data-table thead th {
+      background: #f8fafc;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .data-table tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: #fafbfc; }
+    .status-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-todo { background: #fffbeb; color: #92400e; }
+    .status-progress { background: #eff6ff; color: #1e40af; }
+    .status-done { background: #f0fdf4; color: #166534; }
+    .assignee-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      background: #eff6ff;
+      border-radius: 20px;
+      font-size: 11px;
+      color: #1e40af;
+      font-weight: 500;
+    }
+
+    /* ========== GANTT VIEW ========== */
+    .gantt-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .gantt-controls select, .gantt-controls button {
+      padding: 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 12px;
+      background: white;
+      cursor: pointer;
+    }
+    .gantt-controls button:hover { background: #f1f5f9; }
+    .gantt-controls .gantt-today {
+      color: #ef4444;
+      font-weight: 700;
+      border-color: #fecaca;
+    }
+    .gantt-view-btns .active { background: #1e293b; color: white; border-color: #1e293b; }
+    .gantt-container {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .gantt-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+    .gantt-table th {
+      padding: 8px 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      text-align: center;
+      border-bottom: 1px solid #e2e8f0;
+      min-width: 36px;
+      position: relative;
+    }
+    .gantt-table th.today { background: #fef2f2; color: #ef4444; }
+    .gantt-table th.weekend { background: #f8fafc; color: #cbd5e1; }
+    .gantt-task-label {
+      min-width: 260px;
+      max-width: 260px;
+      padding: 8px 12px;
+      border-right: 1px solid #e2e8f0;
+      font-size: 12px;
+    }
+    .gantt-task-label .task-name { font-weight: 700; }
+    .gantt-task-label .task-info { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+    .gantt-cell {
+      padding: 4px 0;
+      position: relative;
+      height: 36px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .gantt-cell.today-col { background: #fef2f2; }
+    .gantt-cell.weekend-col { background: #fafbfc; }
+    .gantt-bar {
+      position: absolute;
+      top: 6px;
+      height: 24px;
+      border-radius: 6px;
+      min-width: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      color: white;
+      z-index: 2;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .gantt-bar:hover { opacity: 0.85; }
+    .gantt-bar-todo { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+    .gantt-bar-progress { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+    .gantt-bar-done { background: linear-gradient(135deg, #22c55e, #4ade80); }
+    .gantt-bar-overdue { background: linear-gradient(135deg, #ef4444, #f87171); }
+    .gantt-footer {
+      padding: 10px 14px;
+      font-size: 11px;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ========== TEMPLATES VIEW ========== */
+    .templates-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .templates-header h2 { font-size: 18px; font-weight: 800; }
+    .templates-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .template-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .template-card-info { flex: 1; }
+    .template-card-info h4 { font-size: 14px; font-weight: 700; }
+    .template-card-info .template-meta {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ========== MODAL ========== */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 800; }
+    .modal-close {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      border: none;
+      background: #f1f5f9;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+    }
+    .modal-close:hover { background: #fee2e2; color: #ef4444; }
+    .modal-body { padding: 20px; }
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .form-group textarea { min-height: 70px; resize: vertical; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ========== TOAST ========== */
+    .toast-container {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .toast-success { background: #22c55e; }
+    .toast-error { background: #ef4444; }
+    .toast-info { background: #3b82f6; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ========== NOT IN GRIST ========== */
+    .not-in-grist {
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+    }
+    .not-in-grist h2 { font-size: 20px; margin-bottom: 8px; color: #1e293b; }
+
+    /* ========== SECTION TITLE ========== */
+    .section-title {
+      border-left: 3px solid #ef4444;
+      padding-left: 12px;
+      margin-bottom: 14px;
+    }
+    .section-title h2 { font-size: 18px; font-weight: 800; }
+    .section-title p { font-size: 12px; color: #94a3b8; }
+
+    /* ========== RICH DETAIL MODAL ========== */
+    .modal-detail { max-width: 720px; }
+    .modal-detail .modal-body { padding: 0; }
+    .modal-detail-top {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .modal-detail-top .group-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .modal-detail-content {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      min-height: 360px;
+    }
+    .modal-detail-left { padding: 20px; border-right: 1px solid #f1f5f9; }
+    .modal-detail-right { padding: 20px; background: #fafbfc; }
+    .detail-title-input {
+      font-size: 20px; font-weight: 800; border: none; width: 100%;
+      padding: 4px 0; margin-bottom: 12px; background: transparent;
+      color: #1e293b;
+    }
+    .detail-title-input:focus { outline: none; border-bottom: 2px solid #ef4444; }
+    .detail-field {
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .detail-field-icon { font-size: 14px; color: #94a3b8; min-width: 20px; margin-top: 6px; }
+    .detail-field-label { font-size: 11px; color: #94a3b8; font-weight: 600; min-width: 70px; margin-top: 6px; }
+    .detail-field-value { flex: 1; }
+    .detail-field-value input,
+    .detail-field-value select,
+    .detail-field-value textarea {
+      width: 100%; padding: 6px 10px; border: 1px solid #e2e8f0;
+      border-radius: 6px; font-size: 12px; font-family: inherit;
+    }
+    .detail-field-value input:focus,
+    .detail-field-value select:focus,
+    .detail-field-value textarea:focus {
+      outline: none; border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.1);
+    }
+    .detail-field-value textarea { min-height: 50px; resize: vertical; }
+
+    /* Assignee chips */
+    .assignee-chips {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;
+    }
+    .assignee-chip-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; background: #ef4444; color: white;
+      border-radius: 20px; font-size: 11px; font-weight: 600;
+    }
+    .assignee-chip-tag .chip-remove {
+      cursor: pointer; margin-left: 2px; font-size: 12px; opacity: 0.8;
+    }
+    .assignee-chip-tag .chip-remove:hover { opacity: 1; }
+    .assignee-add-row {
+      display: flex; gap: 4px; align-items: center;
+    }
+    .assignee-add-row select {
+      flex: 1; padding: 5px 8px; border: 1px solid #e2e8f0;
+      border-radius: 6px; font-size: 11px;
+    }
+    .assignee-add-btn {
+      padding: 5px 10px; border: none; background: #ef4444; color: white;
+      border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;
+    }
+    .assignee-add-btn:hover { background: #dc2626; }
+
+    /* Right panel cards */
+    .detail-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 14px; margin-bottom: 12px;
+    }
+    .detail-card h4 {
+      font-size: 12px; font-weight: 700; color: #475569;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .progress-bar-bg {
+      width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px;
+      overflow: hidden; margin: 8px 0;
+    }
+    .progress-bar-fill {
+      height: 100%; border-radius: 4px; transition: width 0.3s;
+    }
+    .progress-bar-fill.bar-todo { background: #f59e0b; width: 10%; }
+    .progress-bar-fill.bar-progress { background: #3b82f6; width: 50%; }
+    .progress-bar-fill.bar-done { background: #22c55e; width: 100%; }
+    .detail-info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 4px 0; font-size: 11px;
+    }
+    .detail-info-row .info-label { color: #94a3b8; }
+    .detail-info-row .info-value { font-weight: 700; }
+    .quick-action-btn {
+      display: flex; align-items: center; gap: 6px;
+      width: 100%; padding: 8px 12px; margin-bottom: 6px;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      background: white; cursor: pointer; font-size: 12px;
+      font-weight: 600; transition: all 0.15s;
+    }
+    .quick-action-btn:hover { background: #fef2f2; border-color: #fecaca; }
+    .modal-detail-footer {
+      padding: 14px 20px; border-top: 1px solid #e2e8f0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .btn-danger { color: #ef4444; font-weight: 700; font-size: 12px; background: none; border: none; cursor: pointer; }
+    .btn-danger:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .modal-detail-content { grid-template-columns: 1fr; }
+      .modal-detail-right { border-top: 1px solid #f1f5f9; }
+    }
+
+    /* ========== SPINNER ========== */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid #e2e8f0;
+      border-top-color: #ef4444;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .kanban-board { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .header-row { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* ========== FOOTER ========== */
+    .app-footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 11px;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      margin-top: 20px;
+    }
+    .app-footer a { color: #ef4444; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <!-- NOT IN GRIST -->
+  <div class="not-in-grist hidden" id="not-in-grist">
+    <h2>📋 Gestion de Projet</h2>
+    <p data-i18n="notInGrist">Ce widget doit être utilisé dans Grist.</p>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main-content">
+
+    <!-- HEADER -->
+    <div class="app-header">
+      <div class="header-row">
+        <div>
+          <h1>📋 <span data-i18n="appTitle">Gestion de Projet</span></h1>
+          <p data-i18n="appSubtitle">Organisez et suivez vos tâches avec le tableau Kanban ou la vue tableau</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="tabs-bar">
+            <button class="tab-btn active" data-tab="kanban" onclick="switchTab('kanban')">📋 <span data-i18n="tabKanban">Kanban</span></button>
+            <button class="tab-btn" data-tab="table" onclick="switchTab('table')">📊 <span data-i18n="tabTable">Tableau</span></button>
+            <button class="tab-btn" data-tab="gantt" onclick="switchTab('gantt')">📐 <span data-i18n="tabGantt">Gantt</span></button>
+            <button class="tab-btn" data-tab="templates" onclick="switchTab('templates')">🎨 <span data-i18n="tabTemplates">Templates</span></button>
+            <button class="tab-btn" data-tab="team" onclick="switchTab('team')">👥 <span data-i18n="tabTeam">Équipe</span></button>
+          </div>
+          <button class="btn-new-task" onclick="openNewTaskModal()">+ <span data-i18n="newTask">Nouvelle tâche</span></button>
+          <div class="lang-btns">
+            <button class="lang-btn active" onclick="setLang('fr')">FR</button>
+            <button class="lang-btn" onclick="setLang('en')">EN</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card stat-total">
+        <div>
+          <div class="stat-label" data-i18n="statTotal">Total</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-icon">📋</div>
+      </div>
+      <div class="stat-card stat-todo">
+        <div>
+          <div class="stat-label" data-i18n="statTodo">À faire</div>
+          <div class="stat-value" id="stat-todo">0</div>
+        </div>
+        <div class="stat-icon">📝</div>
+      </div>
+      <div class="stat-card stat-progress">
+        <div>
+          <div class="stat-label" data-i18n="statProgress">En cours</div>
+          <div class="stat-value" id="stat-progress">0</div>
+        </div>
+        <div class="stat-icon">🔄</div>
+      </div>
+      <div class="stat-card stat-done">
+        <div>
+          <div class="stat-label" data-i18n="statDone">Terminées</div>
+          <div class="stat-value" id="stat-done">0</div>
+        </div>
+        <div class="stat-icon">✅</div>
+      </div>
+    </div>
+
+    <!-- TAB: KANBAN -->
+    <div class="tab-content active" id="tab-kanban">
+      <div class="kanban-board" id="kanban-board"></div>
+    </div>
+
+    <!-- TAB: TABLE -->
+    <div class="tab-content" id="tab-table">
+      <div class="section-title">
+        <h2 data-i18n="tableTitle">Tableau de Gestion</h2>
+        <p data-i18n="tableSubtitle">Gérez vos tâches avec édition inline avancée</p>
+      </div>
+      <div class="table-filters">
+        <input type="text" id="table-search" placeholder="Rechercher une tâche..." oninput="renderTableView()" />
+        <select id="filter-status" onchange="renderTableView()">
+          <option value="">Tous les statuts</option>
+          <option value="todo">À faire</option>
+          <option value="progress">En cours</option>
+          <option value="done">Terminé</option>
+        </select>
+        <select id="filter-priority" onchange="renderTableView()">
+          <option value="">Toutes priorités</option>
+          <option value="high">Haute</option>
+          <option value="medium">Moyenne</option>
+          <option value="low">Basse</option>
+        </select>
+      </div>
+      <div id="table-view"></div>
+    </div>
+
+    <!-- TAB: GANTT -->
+    <div class="tab-content" id="tab-gantt">
+      <div class="section-title">
+        <h2 data-i18n="ganttTitle">Diagramme de Gantt</h2>
+        <p id="gantt-task-count"></p>
+      </div>
+      <div class="gantt-controls">
+        <button class="btn-secondary btn-sm" onclick="ganttNav(-1)">◀</button>
+        <span data-i18n="ganttYear">Année :</span>
+        <select id="gantt-year" onchange="renderGanttView()"></select>
+        <button class="gantt-today btn-sm" onclick="ganttToday()">Aujourd'hui</button>
+        <button class="btn-secondary btn-sm" onclick="ganttNav(1)">▶</button>
+        <div style="flex:1;"></div>
+        <div class="gantt-view-btns" style="display:flex;gap:4px;">
+          <button class="btn-secondary btn-sm active" onclick="setGanttMode('days')" data-gantt-mode="days" data-i18n="ganttDays">Jours</button>
+          <button class="btn-secondary btn-sm" onclick="setGanttMode('weeks')" data-gantt-mode="weeks" data-i18n="ganttWeeks">Semaines</button>
+          <button class="btn-secondary btn-sm" onclick="setGanttMode('months')" data-gantt-mode="months" data-i18n="ganttMonths">Mois</button>
+        </div>
+      </div>
+      <div id="gantt-view"></div>
+    </div>
+
+    <!-- TAB: TEMPLATES -->
+    <div class="tab-content" id="tab-templates">
+      <div class="templates-header">
+        <div class="section-title">
+          <h2 data-i18n="templatesTitle">Tâches Préformatées</h2>
+          <p data-i18n="templatesSubtitle">Gérez les modèles de tâches disponibles pour tous les utilisateurs</p>
+        </div>
+        <button class="btn-new-task" onclick="openNewTemplateModal()">+ <span data-i18n="newTemplate">Nouveau modèle</span></button>
+      </div>
+      <div class="table-filters">
+        <input type="text" id="template-search" placeholder="Rechercher un modèle..." oninput="renderTemplatesView()" />
+        <select id="filter-template-priority" onchange="renderTemplatesView()">
+          <option value="">Toutes priorités</option>
+          <option value="high">Haute</option>
+          <option value="medium">Moyenne</option>
+          <option value="low">Basse</option>
+        </select>
+      </div>
+      <div id="templates-list"></div>
+    </div>
+
+    <!-- TAB: TEAM -->
+    <div class="tab-content" id="tab-team">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- USERS SECTION -->
+        <div>
+          <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <h2 data-i18n="teamUsersTitle">Utilisateurs</h2>
+              <p data-i18n="teamUsersSubtitle">Gérez les membres de votre équipe</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openNewUserModal()">+ <span data-i18n="addUser">Ajouter</span></button>
+          </div>
+          <div id="users-list"></div>
+        </div>
+
+        <!-- GROUPS SECTION -->
+        <div>
+          <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <h2 data-i18n="teamGroupsTitle">Groupes</h2>
+              <p data-i18n="teamGroupsSubtitle">Organisez vos utilisateurs en groupes</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openNewGroupModal()">+ <span data-i18n="addGroup">Ajouter</span></button>
+          </div>
+          <div id="groups-list"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="app-footer">
+      Créé par <a href="https://github.com/isaytoo" target="_blank">Said Hamadou (HmD)</a> — 2026
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- MODAL CONTAINER -->
+  <div id="modal-container"></div>
+
+  <script src="widget.js"></script>
+</body>
+</html>
