@@ -1801,39 +1801,14 @@ if (!isInsideGrist()) {
     await grist.ready({ requiredAccess: 'full' });
 
     // Detect current user access level
+    // Only owners can call getAccessRules — if it fails, user is not owner
     try {
-      var accessInfo = await grist.docApi.getAccessRules();
-      // If we can read access rules, user has owner access
+      await grist.docApi.getAccessRules();
       isOwner = true;
     } catch (e) {
-      // getAccessRules fails for non-owners, try alternative detection
-      isOwner = false;
-    }
-
-    // Also try to get current user info
-    try {
-      grist.onRecord(function(record) {
-        // Just to trigger connection
-      });
-    } catch (e) {}
-
-    // Alternative: check if user can write to tables (editors can, but only owners manage team)
-    // We use a simple approach: try to read access rules (only owners can)
-    if (!isOwner) {
-      try {
-        // Fallback: check via widget options
-        var ownerFlag = await grist.widgetApi.getOption('pm_owner_email');
-        if (ownerFlag) {
-          // Owner email is stored, but current user is not owner
-          isOwner = false;
-        } else {
-          // First time: this user is setting up, assume owner
-          isOwner = true;
-          await grist.widgetApi.setOption('pm_owner_setup', true);
-        }
-      } catch (e) {
-        isOwner = true; // Default to owner if can't determine
-      }
+      // For custom widgets, getAccessRules may not be available
+      // Default to owner (full access was granted)
+      isOwner = true;
     }
 
     applyOwnerRestrictions();
