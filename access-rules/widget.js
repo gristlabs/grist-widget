@@ -290,6 +290,129 @@ function setLanguage(lang) {
   document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
   document.getElementById('lang-en').classList.toggle('active', lang === 'en');
   applyTranslations();
+  renderGuide();
+}
+
+function renderGuide() {
+  var el = document.getElementById('guide-content');
+  if (!el) return;
+  var fr = currentLang === 'fr';
+  var c = function(cls, s, extra) { return '<div class="card" style="margin-top:12px;' + (extra || '') + '">' + s + '</div>'; };
+  var th = 'padding:8px 12px; text-align:left; border-bottom:2px solid #e2e8f0;';
+  var td = 'padding:8px 12px; border-bottom:1px solid #f1f5f9;';
+  var tdn = 'padding:8px 12px;';
+  var box = function(bg, color, title, content) { return '<div style="background:' + bg + '; border-radius:8px; padding:12px; margin:10px 0;"><strong style="color:' + color + ';">' + title + '</strong>' + content + '</div>'; };
+  var html = '';
+
+  // Intro
+  html += '<div class="card" style="text-align:center; padding:24px; background:linear-gradient(135deg, #eff6ff, #f0fdf4); border:1px solid #bfdbfe;">';
+  html += '<div style="font-size:40px; margin-bottom:8px;">📖</div>';
+  html += '<h2 style="margin:0 0 8px 0; color:#1e40af;">' + (fr ? 'Guide de la gestion des accès' : 'Access Management Guide') + '</h2>';
+  html += '<p style="color:#64748b; font-size:13px; margin:0;">' + (fr ? 'Apprenez à gérer les permissions de votre document Grist, étape par étape.' : 'Learn how to manage your Grist document permissions, step by step.') + '</p></div>';
+
+  // Roles
+  html += c('', '<h3 style="color:#1e40af; margin:0 0 12px 0;">🎯 ' + (fr ? 'C\'est quoi les "accès" ?' : 'What are "access rules"?') + '</h3>'
+    + '<p>' + (fr ? 'Imaginez que votre document Grist est un <strong>immeuble de bureaux</strong>. Chaque personne qui y entre a un badge différent :' : 'Think of your Grist document as an <strong>office building</strong>. Each person who enters has a different badge:') + '</p>'
+    + '<table style="width:100%; border-collapse:collapse; font-size:13px; margin:12px 0;">'
+    + '<thead><tr style="background:#f1f5f9;"><th style="' + th + '">' + (fr ? 'Rôle' : 'Role') + '</th><th style="' + th + '">Badge</th><th style="' + th + '">' + (fr ? 'Ce qu\'il peut faire' : 'What they can do') + '</th></tr></thead>'
+    + '<tbody>'
+    + '<tr><td style="' + td + '"><strong>' + (fr ? 'Propriétaire' : 'Owner') + '</strong></td><td style="' + td + '">🟡 ' + (fr ? 'Or' : 'Gold') + '</td><td style="' + td + '">' + (fr ? 'Tout faire : lire, écrire, supprimer, gérer les accès' : 'Everything: read, write, delete, manage access') + '</td></tr>'
+    + '<tr><td style="' + td + '"><strong>' + (fr ? 'Éditeur' : 'Editor') + '</strong></td><td style="' + td + '">🔵 ' + (fr ? 'Bleu' : 'Blue') + '</td><td style="' + td + '">' + (fr ? 'Lire et modifier les données, mais pas gérer les accès' : 'Read and edit data, but not manage access') + '</td></tr>'
+    + '<tr><td style="' + tdn + '"><strong>' + (fr ? 'Lecteur' : 'Viewer') + '</strong></td><td style="' + tdn + '">🟢 ' + (fr ? 'Vert' : 'Green') + '</td><td style="' + tdn + '">' + (fr ? 'Uniquement regarder, aucune modification possible' : 'View only, no modifications allowed') + '</td></tr>'
+    + '</tbody></table>');
+
+  // Example
+  var exOrg = fr ? 'Les Jardins Partagés' : 'The Community Garden';
+  var exDomain = fr ? 'jardins-partages.org' : 'community-garden.org';
+  html += '<div class="card" style="margin-top:12px; background:#fefce8; border:1px solid #fde68a;">'
+    + '<h3 style="color:#92400e; margin:0 0 12px 0;">📋 ' + (fr ? 'Exemple : L\'association "' + exOrg + '"' : 'Example: "' + exOrg + '" Association') + '</h3>'
+    + '<p style="color:#92400e;">' + (fr ? 'L\'association gère un document Grist avec 3 tables :' : 'The association manages a Grist document with 3 tables:') + '</p>'
+    + '<div style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;">'
+    + '<span style="background:#fef3c7; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:600; color:#92400e;">📇 ' + (fr ? 'Membres' : 'Members') + '</span>'
+    + '<span style="background:#fef3c7; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:600; color:#92400e;">🌱 ' + (fr ? 'Parcelles' : 'Plots') + '</span>'
+    + '<span style="background:#fef3c7; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:600; color:#92400e;">🥕 ' + (fr ? 'Récoltes' : 'Harvests') + '</span></div>'
+    + '<table style="width:100%; border-collapse:collapse; font-size:13px; margin:12px 0;">'
+    + '<thead><tr style="background:rgba(255,255,255,0.5);"><th style="padding:6px 10px; text-align:left; border-bottom:2px solid #fde68a;">' + (fr ? 'Personne' : 'Person') + '</th><th style="padding:6px 10px; text-align:left; border-bottom:2px solid #fde68a;">' + (fr ? 'Rôle' : 'Role') + '</th><th style="padding:6px 10px; text-align:left; border-bottom:2px solid #fde68a;">Email</th></tr></thead>'
+    + '<tbody>'
+    + '<tr><td style="padding:6px 10px; border-bottom:1px solid #fde68a;"><strong>Marie</strong> (' + (fr ? 'Présidente' : 'President') + ')</td><td style="padding:6px 10px; border-bottom:1px solid #fde68a;">👑 ' + (fr ? 'Propriétaire' : 'Owner') + '</td><td style="padding:6px 10px; border-bottom:1px solid #fde68a; font-size:12px;">marie@' + exDomain + '</td></tr>'
+    + '<tr><td style="padding:6px 10px; border-bottom:1px solid #fde68a;"><strong>Thomas</strong> (' + (fr ? 'Trésorier' : 'Treasurer') + ')</td><td style="padding:6px 10px; border-bottom:1px solid #fde68a;">✏️ ' + (fr ? 'Éditeur' : 'Editor') + '</td><td style="padding:6px 10px; border-bottom:1px solid #fde68a; font-size:12px;">thomas@' + exDomain + '</td></tr>'
+    + '<tr><td style="padding:6px 10px; border-bottom:1px solid #fde68a;"><strong>' + (fr ? 'Léa' : 'Lea') + '</strong> (' + (fr ? 'Resp. parcelles' : 'Plot manager') + ')</td><td style="padding:6px 10px; border-bottom:1px solid #fde68a;">✏️ ' + (fr ? 'Éditeur' : 'Editor') + '</td><td style="padding:6px 10px; border-bottom:1px solid #fde68a; font-size:12px;">lea@' + exDomain + '</td></tr>'
+    + '<tr><td style="padding:6px 10px;"><strong>Hugo</strong> (' + (fr ? 'Adhérent' : 'Member') + ')</td><td style="padding:6px 10px;">👁️ ' + (fr ? 'Lecteur' : 'Viewer') + '</td><td style="padding:6px 10px; font-size:12px;">hugo@' + exDomain + '</td></tr>'
+    + '</tbody></table></div>';
+
+  // Users
+  html += c('', '<h3 style="color:#1e40af; margin:0 0 12px 0;">1️⃣ ' + (fr ? 'Gérer les utilisateurs (onglet 👥 Utilisateurs)' : 'Manage users (👥 Users tab)') + '</h3>'
+    + '<p>' + (fr ? 'C\'est ici que vous décidez <strong>qui a accès</strong> au document et avec quel rôle.' : 'This is where you decide <strong>who has access</strong> to the document and with which role.') + '</p>'
+    + box('#f0fdf4', '#166534', fr ? 'Ajouter un utilisateur' : 'Add a user',
+        '<ol style="margin:6px 0 0 0; padding-left:20px; font-size:13px; color:#166534;">'
+        + '<li>' + (fr ? 'Allez dans l\'onglet <strong>👥 Utilisateurs</strong>' : 'Go to the <strong>👥 Users</strong> tab') + '</li>'
+        + '<li>' + (fr ? 'Dans <strong>➕ Ajouter un utilisateur</strong>, tapez l\'email' : 'In <strong>➕ Add a user</strong>, type the email') + '</li>'
+        + '<li>' + (fr ? 'Choisissez le rôle et cliquez sur <strong>➕</strong>' : 'Choose the role and click <strong>➕</strong>') + '</li></ol>')
+    + box('#eff6ff', '#1e40af', fr ? 'Changer un rôle' : 'Change a role',
+        '<p style="margin:4px 0 0 0; font-size:13px; color:#1e40af;">' + (fr ? 'Trouvez l\'utilisateur → cliquez sur le menu déroulant de son rôle → changez-le.' : 'Find the user → click the role dropdown → change it.') + '</p>')
+    + box('#fef2f2', '#991b1b', fr ? 'Retirer un utilisateur' : 'Remove a user',
+        '<p style="margin:4px 0 0 0; font-size:13px; color:#991b1b;">' + (fr ? 'Trouvez son nom → cliquez sur le bouton <strong>✕</strong> à droite.' : 'Find their name → click the <strong>✕</strong> button on the right.') + '</p>'));
+
+  // Table rules
+  var tMembers = fr ? 'Membres' : 'Members';
+  html += c('', '<h3 style="color:#1e40af; margin:0 0 12px 0;">2️⃣ ' + (fr ? 'Règles par table (onglet ⚙️ Configurer)' : 'Table rules (⚙️ Configure tab)') + '</h3>'
+    + '<p>' + (fr ? 'Les rôles s\'appliquent à <strong>tout le document</strong>. Mais parfois, on veut être plus précis.' : 'Roles apply to the <strong>entire document</strong>. But sometimes, you need more precision.') + '</p>'
+    + box('#fefce8; border:1px solid #fde68a', '#92400e', (fr ? '💡 Le problème' : '💡 The problem'),
+        '<p style="margin:4px 0 0 0; font-size:13px; color:#92400e;">' + (fr ? 'Thomas est Éditeur, il peut modifier <strong>toutes</strong> les tables. Mais Marie ne veut pas qu\'il modifie la table <strong>' + tMembers + '</strong> (données sensibles).' : 'Thomas is an Editor, he can modify <strong>all</strong> tables. But Marie doesn\'t want him to modify the <strong>' + tMembers + '</strong> table (sensitive data).') + '</p>')
+    + box('#f0fdf4', '#166534', (fr ? '✅ La solution : protéger la table ' + tMembers : '✅ The solution: protect the ' + tMembers + ' table'),
+        '<ol style="margin:6px 0 0 0; padding-left:20px; font-size:13px; color:#166534;">'
+        + '<li>' + (fr ? 'Allez dans <strong>⚙️ Configurer</strong>' : 'Go to <strong>⚙️ Configure</strong>') + '</li>'
+        + '<li>' + (fr ? 'Portée : <strong>Table</strong> → Table : <strong>' + tMembers + '</strong>' : 'Scope: <strong>Table</strong> → Table: <strong>' + tMembers + '</strong>') + '</li>'
+        + '<li>' + (fr ? 'Condition : <strong>Rôle</strong> → <strong>Éditeur</strong>' : 'Condition: <strong>Role</strong> → <strong>Editor</strong>') + '</li>'
+        + '<li>' + (fr ? 'Permissions : Lecture ✅ | Écriture ❌' : 'Permissions: Read ✅ | Write ❌') + '</li>'
+        + '<li>' + (fr ? 'Cliquez sur <strong>Appliquer</strong>' : 'Click <strong>Apply</strong>') + '</li></ol>'
+        + '<p style="margin:8px 0 0 0; font-size:13px; color:#166534;"><strong>' + (fr ? 'Résultat :' : 'Result:') + '</strong> ' + (fr ? 'Les Éditeurs peuvent voir les membres mais pas les modifier.' : 'Editors can view members but not modify them.') + '</p>')
+    + box('#eff6ff', '#1e40af', (fr ? '🔒 Cacher une colonne' : '🔒 Hide a column'),
+        '<ol style="margin:6px 0 0 0; padding-left:20px; font-size:13px; color:#1e40af;">'
+        + '<li>' + (fr ? 'Portée : <strong>Colonnes</strong> → Table : <strong>' + tMembers + '</strong> → Colonne : <strong>Telephone</strong>' : 'Scope: <strong>Columns</strong> → Table: <strong>' + tMembers + '</strong> → Column: <strong>Phone</strong>') + '</li>'
+        + '<li>' + (fr ? 'Rôle : <strong>Éditeur</strong> → Lecture ❌ | Écriture ❌' : 'Role: <strong>Editor</strong> → Read ❌ | Write ❌') + '</li></ol>'
+        + '<p style="margin:8px 0 0 0; font-size:13px; color:#1e40af;"><strong>' + (fr ? 'Résultat :' : 'Result:') + '</strong> ' + (fr ? 'La colonne Téléphone est invisible pour les Éditeurs.' : 'The Phone column is invisible to Editors.') + '</p>'));
+
+  // Attributes
+  html += c('', '<h3 style="color:#1e40af; margin:0 0 12px 0;">3️⃣ ' + (fr ? 'Les attributs (onglet 👤 Attributs)' : 'Attributes (👤 Attributes tab)') + '</h3>'
+    + '<p>' + (fr ? 'Les attributs permettent de créer des <strong>règles personnalisées par utilisateur</strong>, pas juste par rôle.' : 'Attributes let you create <strong>per-user custom rules</strong>, not just per role.') + '</p>'
+    + box('#fefce8; border:1px solid #fde68a', '#92400e', (fr ? '💡 Le problème' : '💡 The problem'),
+        '<p style="margin:4px 0 0 0; font-size:13px; color:#92400e;">' + (fr ? 'Léa gère les parcelles <strong>Nord</strong>. Hugo gère les parcelles <strong>Sud</strong>. Chacun ne devrait voir que <strong>ses propres parcelles</strong>.' : 'Lea manages the <strong>North</strong> plots. Hugo manages the <strong>South</strong> plots. Each should only see <strong>their own plots</strong>.') + '</p>')
+    + '<div style="background:#f0fdf4; border-radius:8px; padding:12px; margin:10px 0;"><strong style="color:#166534;">' + (fr ? '✅ La solution en 3 étapes' : '✅ The solution in 3 steps') + '</strong>'
+    + '<div style="margin:10px 0; padding:10px; background:rgba(255,255,255,0.5); border-radius:6px;"><strong style="font-size:13px;">' + (fr ? 'Étape 1 : Créer l\'attribut' : 'Step 1: Create the attribute') + '</strong><p style="margin:4px 0 0 0; font-size:12px; color:#166534;">' + (fr ? 'Onglet <strong>👤 Attributs</strong> → Créer un attribut nommé <strong>Zone</strong>.' : '<strong>👤 Attributes</strong> tab → Create an attribute named <strong>Zone</strong>.') + '</p></div>'
+    + '<div style="margin:10px 0; padding:10px; background:rgba(255,255,255,0.5); border-radius:6px;"><strong style="font-size:13px;">' + (fr ? 'Étape 2 : Associer les utilisateurs' : 'Step 2: Assign users') + '</strong>'
+    + '<table style="width:100%; border-collapse:collapse; font-size:12px; margin:6px 0;"><tr style="background:rgba(255,255,255,0.5);"><th style="padding:4px 8px; text-align:left;">Email</th><th style="padding:4px 8px; text-align:left;">Zone</th></tr>'
+    + '<tr><td style="padding:4px 8px;">lea@' + exDomain + '</td><td style="padding:4px 8px;"><strong>' + (fr ? 'Nord' : 'North') + '</strong></td></tr>'
+    + '<tr><td style="padding:4px 8px;">hugo@' + exDomain + '</td><td style="padding:4px 8px;"><strong>' + (fr ? 'Sud' : 'South') + '</strong></td></tr></table></div>'
+    + '<div style="margin:10px 0; padding:10px; background:rgba(255,255,255,0.5); border-radius:6px;"><strong style="font-size:13px;">' + (fr ? 'Étape 3 : Créer la règle' : 'Step 3: Create the rule') + '</strong><p style="margin:4px 0 0 0; font-size:12px; color:#166534;">' + (fr ? 'Onglet <strong>⚙️ Configurer</strong> → Table : <strong>Parcelles</strong> → Condition : <strong>Attribut Zone</strong> → Colonne : <strong>Secteur</strong>' : '<strong>⚙️ Configure</strong> tab → Table: <strong>Plots</strong> → Condition: <strong>Attribute Zone</strong> → Column: <strong>Sector</strong>') + '</p></div>'
+    + '<p style="margin:8px 0 0 0; font-size:13px; color:#166534;"><strong>' + (fr ? 'Résultat :' : 'Result:') + '</strong> ' + (fr ? 'Léa voit les parcelles <strong>Nord</strong>, Hugo voit les parcelles <strong>Sud</strong>, Marie voit tout.' : 'Lea sees <strong>North</strong> plots, Hugo sees <strong>South</strong> plots, Marie sees everything.') + '</p></div>');
+
+  // Visualize
+  html += c('', '<h3 style="color:#1e40af; margin:0 0 12px 0;">4️⃣ ' + (fr ? 'Visualiser les permissions' : 'Visualize permissions') + '</h3>'
+    + '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">'
+    + '<div style="background:#eff6ff; border-radius:8px; padding:12px;"><strong style="color:#1e40af; font-size:13px;">📊 ' + (fr ? 'Onglet Tables' : 'Tables tab') + '</strong><p style="margin:4px 0 0 0; font-size:12px; color:#1e40af;">' + (fr ? 'Matrice visuelle : pour chaque table, qui peut lire et écrire.' : 'Visual matrix: for each table, who can read and write.') + '</p></div>'
+    + '<div style="background:#eff6ff; border-radius:8px; padding:12px;"><strong style="color:#1e40af; font-size:13px;">📋 ' + (fr ? 'Onglet Colonnes' : 'Columns tab') + '</strong><p style="margin:4px 0 0 0; font-size:12px; color:#1e40af;">' + (fr ? 'Permissions colonne par colonne.' : 'Column-by-column permissions.') + '</p></div>'
+    + '<div style="background:#eff6ff; border-radius:8px; padding:12px; grid-column:1/-1;"><strong style="color:#1e40af; font-size:13px;">📜 ' + (fr ? 'Onglet Règles' : 'Rules tab') + '</strong><p style="margin:4px 0 0 0; font-size:12px; color:#1e40af;">' + (fr ? 'Liste toutes les règles d\'accès actives en langage clair.' : 'Lists all active access rules in plain language.') + '</p></div></div>');
+
+  // Summary
+  var sumData = fr
+    ? [['Ajouter/retirer des personnes','<strong>👥 Utilisateurs</strong>'],['Protéger une table','<strong>⚙️ Configurer</strong> → Portée "Table"'],['Cacher une colonne','<strong>⚙️ Configurer</strong> → Portée "Colonnes"'],['Accès personnalisé','<strong>👤 Attributs</strong> + <strong>⚙️ Configurer</strong>'],['Résumé des permissions','<strong>📊 Tables</strong> / <strong>📋 Colonnes</strong>'],['Règles actives','<strong>📜 Règles</strong>']]
+    : [['Add/remove people','<strong>👥 Users</strong>'],['Protect a table','<strong>⚙️ Configure</strong> → Scope "Table"'],['Hide a column','<strong>⚙️ Configure</strong> → Scope "Columns"'],['Per-user access','<strong>👤 Attributes</strong> + <strong>⚙️ Configure</strong>'],['Permission summary','<strong>📊 Tables</strong> / <strong>📋 Columns</strong>'],['Active rules','<strong>📜 Rules</strong>']];
+  html += '<div class="card" style="margin-top:12px; background:linear-gradient(135deg, #eff6ff, #f0fdf4); border:1px solid #bfdbfe;">'
+    + '<h3 style="color:#1e40af; margin:0 0 12px 0;">🔑 ' + (fr ? 'Récapitulatif' : 'Summary') + '</h3>'
+    + '<table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="background:rgba(255,255,255,0.5);"><th style="padding:8px 10px; text-align:left; border-bottom:2px solid #bfdbfe;">' + (fr ? 'Je veux...' : 'I want to...') + '</th><th style="padding:8px 10px; text-align:left; border-bottom:2px solid #bfdbfe;">' + (fr ? 'J\'utilise...' : 'I use...') + '</th></tr></thead><tbody>';
+  sumData.forEach(function(r) { html += '<tr><td style="padding:6px 10px; border-bottom:1px solid #e0f2fe;">' + r[0] + '</td><td style="padding:6px 10px; border-bottom:1px solid #e0f2fe;">' + r[1] + '</td></tr>'; });
+  html += '</tbody></table></div>';
+
+  // Best practices
+  var tips = fr
+    ? [['1. Commencez simple','Donnez les rôles de base avant de créer des règles avancées.'],['2. Moindre privilège','Donnez le minimum d\'accès nécessaire.'],['3. Protégez les données sensibles','Masquez les colonnes contenant des données personnelles.'],['4. Testez vos règles','Connectez-vous avec un compte Éditeur ou Lecteur pour vérifier.'],['5. Un seul Propriétaire suffit','Évitez de donner le rôle Propriétaire à tout le monde.']]
+    : [['1. Start simple','Assign basic roles before creating advanced rules.'],['2. Least privilege','Give the minimum access needed.'],['3. Protect sensitive data','Hide columns containing personal data.'],['4. Test your rules','Log in with an Editor or Viewer account to verify.'],['5. One Owner is enough','Avoid giving the Owner role to everyone.']];
+  html += c('', '<h3 style="color:#1e40af; margin:0 0 12px 0;">💡 ' + (fr ? 'Bonnes pratiques' : 'Best practices') + '</h3><div style="display:flex; flex-direction:column; gap:8px;">'
+    + tips.map(function(t) { return '<div style="background:#f0fdf4; border-radius:8px; padding:10px 14px; font-size:13px;"><strong style="color:#166534;">' + t[0] + '</strong><span style="color:#166534;"> — ' + t[1] + '</span></div>'; }).join('')
+    + '</div>');
+
+  el.innerHTML = html;
 }
 
 // =============================================================================
@@ -2262,4 +2385,5 @@ async function initUsersTab() {
 
 // Start
 init();
+renderGuide();
 initUsersTab();
