@@ -2,7 +2,7 @@
   "name": "@isaytoo/widget-access-rules",
   "description": "Visual interface to manage Grist document access rules",
   "homePage": "https://github.com/isaytoo/grist-access-rules-widget",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "grist": [
     {
       "name": "Access Rules Manager",

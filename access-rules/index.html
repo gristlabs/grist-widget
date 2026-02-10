@@ -240,37 +240,97 @@
     .perm-badge:hover { transform: scale(1.05); }
 
     /* User list */
-    .user-item {
+    .user-card {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
-      border-bottom: 1px solid #f1f5f9;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      transition: all .2s;
     }
-    .user-item:last-child { border-bottom: none; }
-    .user-info { display: flex; align-items: center; gap: 12px; }
+    .user-card:hover { border-color: #bfdbfe; box-shadow: 0 4px 12px rgba(59,130,246,0.08); transform: translateY(-1px); }
+    .user-info { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
     .user-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #e2e8f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 14px;
-      color: #475569;
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0;
     }
-    .user-name { font-weight: 600; font-size: 14px; }
-    .user-email { font-size: 12px; color: #64748b; }
+    .user-avatar.owner { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .user-avatar.editor { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .user-avatar.viewer { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .user-avatar.member { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .user-details { min-width: 0; }
+    .user-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-email { font-size: 12px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
     .role-select {
       padding: 6px 12px;
       border: 2px solid #e2e8f0;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      transition: border-color .2s;
+    }
+    .role-select:focus { border-color: #3b82f6; outline: none; }
+    .role-select.role-owner { border-color: #f59e0b; color: #92400e; }
+    .role-select.role-editor { border-color: #3b82f6; color: #1e40af; }
+    .role-select.role-viewer { border-color: #22c55e; color: #166534; }
+    .role-select.role-member { border-color: #8b5cf6; color: #5b21b6; }
+
+    .user-remove-btn {
+      background: none; border: none; cursor: pointer; font-size: 16px;
+      color: #94a3b8; padding: 4px; border-radius: 6px; transition: all .2s;
+    }
+    .user-remove-btn:hover { color: #dc2626; background: #fee2e2; }
+
+    .users-search {
+      width: 100%; padding: 12px 16px 12px 40px;
+      border: 2px solid #e2e8f0; border-radius: 10px;
+      font-size: 14px; transition: border-color .2s;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") no-repeat 14px center;
+    }
+    .users-search:focus { border-color: #3b82f6; outline: none; }
+
+    .users-stats {
+      display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .users-stat {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all .2s; border: 2px solid transparent;
+    }
+    .users-stat:hover { transform: translateY(-1px); }
+    .users-stat.active { border-color: currentColor; }
+    .users-stat.all { background: #f1f5f9; color: #475569; }
+    .users-stat.owners { background: #fef3c7; color: #92400e; }
+    .users-stat.editors { background: #dbeafe; color: #1e40af; }
+    .users-stat.viewers { background: #dcfce7; color: #166534; }
+    .users-stat.members { background: #ede9fe; color: #5b21b6; }
+
+    .api-key-bar {
+      display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+      margin-bottom: 16px; font-size: 13px; color: #166534;
+    }
+    .api-key-bar.disconnected { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .api-key-bar .dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; flex-shrink: 0; }
+    .api-key-bar.disconnected .dot { background: #dc2626; }
+
+    .add-user-form {
+      display: flex; gap: 8px; margin-bottom: 16px;
+    }
+    .add-user-form input {
+      flex: 1; padding: 10px 14px; border: 2px solid #e2e8f0;
+      border-radius: 8px; font-size: 13px;
+    }
+    .add-user-form input:focus { border-color: #3b82f6; outline: none; }
+    .add-user-form select {
+      padding: 10px 12px; border: 2px solid #e2e8f0;
+      border-radius: 8px; font-size: 13px; font-weight: 600;
     }
 
     /* Column detail */
@@ -474,11 +534,99 @@
 
       <!-- Tabs -->
       <div class="tabs">
-        <button class="tab active" data-tab="attributes" data-i18n="tabAttributes">� Attributs</button>
+        <button class="tab active" data-tab="users" data-i18n="tabUsers">👥 Utilisateurs</button>
+        <button class="tab" data-tab="attributes" data-i18n="tabAttributes">👤 Attributs</button>
         <button class="tab" data-tab="configure" data-i18n="tabConfigure">⚙️ Configurer</button>
-        <button class="tab" data-tab="tables" data-i18n="tabTables">� Tables</button>
+        <button class="tab" data-tab="tables" data-i18n="tabTables">📊 Tables</button>
         <button class="tab" data-tab="columns" data-i18n="tabColumns">📋 Colonnes</button>
-        <button class="tab" data-tab="rules" data-i18n="tabRules">� Règles</button>
+        <button class="tab" data-tab="rules" data-i18n="tabRules">📜 Règles</button>
+      </div>
+
+      <!-- Tab: Users -->
+      <div id="tab-users" class="tab-content active">
+        <!-- API Key setup -->
+        <div id="users-apikey-setup" class="card" style="text-align:center; padding:32px;">
+          <div style="font-size:48px; margin-bottom:12px;">🔑</div>
+          <h3 style="margin-bottom:8px;">Clé API requise</h3>
+          <p style="color:#64748b; font-size:13px; margin-bottom:16px;">Pour gérer les utilisateurs du document, entrez votre clé API Grist.<br>Elle sera stockée uniquement dans votre navigateur.</p>
+          <div style="max-width:500px; margin:0 auto;">
+            <input type="password" id="users-apikey-input" class="api-key-input" placeholder="Collez votre clé API ici..." style="width:100%;">
+            <div style="margin:8px 0;">
+              <a href="#" id="users-apikey-help-toggle" style="color:#3b82f6; font-size:12px; font-weight:600; cursor:pointer;">💡 Comment obtenir ma clé API ?</a>
+            </div>
+            <div id="users-apikey-help" class="hidden" style="text-align:left; background:#f8fafc; padding:14px; border-radius:8px; font-size:12px; color:#475569; line-height:1.8; margin-bottom:12px;">
+              <ol style="padding-left:18px;">
+                <li>Cliquez sur votre nom en haut à droite → <strong>Paramètres du compte</strong></li>
+                <li>Descendez jusqu'à la section <strong>"API Key"</strong> → cliquez sur "Create" ou copiez la clé existante</li>
+                <li>Collez la clé ci-dessus</li>
+              </ol>
+            </div>
+            <button class="btn btn-primary" id="users-apikey-save-btn" style="width:100%;">🔓 Connecter</button>
+            <div id="users-apikey-message" class="hidden" style="margin-top:8px;"></div>
+          </div>
+        </div>
+
+        <!-- No proxy fallback (shown on static hosting like GitHub Pages) -->
+        <div id="users-no-proxy" class="card hidden" style="text-align:center; padding:32px;">
+          <div style="font-size:48px; margin-bottom:12px;">👥</div>
+          <h3 style="margin-bottom:8px;">Gestion des utilisateurs</h3>
+          <p style="color:#64748b; font-size:13px; margin-bottom:16px; line-height:1.7;">
+            La gestion des utilisateurs nécessite un <strong>proxy serveur</strong> pour contourner les restrictions CORS de l'API Grist.<br>
+            Cette fonctionnalité est disponible sur la version hébergée sur <strong>Vercel</strong>.
+          </p>
+          <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:16px; margin-bottom:16px; text-align:left;">
+            <div style="font-weight:700; font-size:14px; color:#1e40af; margin-bottom:8px;">💡 Comment gérer les utilisateurs ?</div>
+            <ul style="font-size:13px; color:#1e40af; line-height:1.8; padding-left:20px; margin:0;">
+              <li>Cliquez sur l'icône <strong>Partager</strong> (🔗) en haut à droite de votre document Grist</li>
+              <li>Ajoutez des emails et attribuez les rôles (Propriétaire, Éditeur, Lecteur)</li>
+              <li>Utilisez les onglets <strong>Attributs</strong> et <strong>Configurer</strong> de ce widget pour les règles avancées</li>
+            </ul>
+          </div>
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px; text-align:left;">
+            <div style="font-weight:700; font-size:13px; color:#166534; margin-bottom:4px;">🚀 Version complète</div>
+            <p style="font-size:12px; color:#166534; margin:0; line-height:1.6;">
+              Pour la gestion complète des utilisateurs, utilisez la version hébergée sur Vercel :<br>
+              <a href="https://grist-access-rules-widget.vercel.app" target="_blank" style="color:#16a34a; font-weight:600;">grist-access-rules-widget.vercel.app</a>
+            </p>
+          </div>
+        </div>
+
+        <!-- Users management (shown after API key validation) -->
+        <div id="users-management" class="hidden">
+          <!-- Connection bar -->
+          <div id="users-connection-bar" class="api-key-bar">
+            <span class="dot"></span>
+            <span>Connecté à l'API Grist</span>
+            <span style="flex:1;"></span>
+            <button class="btn btn-sm btn-secondary" id="users-refresh-btn" style="padding:4px 10px;">🔄</button>
+            <button class="btn btn-sm" id="users-disconnect-btn" style="padding:4px 10px; color:#dc2626; font-size:11px;">Déconnecter</button>
+          </div>
+
+          <!-- Stats pills -->
+          <div class="users-stats" id="users-stats"></div>
+
+          <!-- Search -->
+          <input type="text" id="users-search" class="users-search" placeholder="Rechercher un email, un nom..." style="margin-bottom:12px;">
+
+          <!-- Add user form -->
+          <div class="add-user-form">
+            <input type="email" id="users-add-email" placeholder="email@exemple.com">
+            <select id="users-add-role">
+              <option value="viewers">👁️ Lecteur</option>
+              <option value="editors">✏️ Éditeur</option>
+              <option value="owners">👑 Propriétaire</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="users-add-btn">➕</button>
+          </div>
+
+          <!-- Users list -->
+          <div id="users-loading" class="loading-section hidden">
+            <div class="spinner"></div>
+            <p data-i18n="loading">Chargement...</p>
+          </div>
+          <div id="users-list"></div>
+          <div id="users-empty" class="hidden" style="text-align:center; padding:24px; color:#94a3b8;" data-i18n="noUsers">Aucun utilisateur trouvé</div>
+        </div>
       </div>
 
       <!-- Tab: Tables -->
@@ -668,7 +816,7 @@
       </div>
 
       <!-- Tab: Attributes -->
-      <div id="tab-attributes" class="tab-content active">
+      <div id="tab-attributes" class="tab-content">
 
         <!-- STEP 1: Create attribute -->
         <div class="card" style="border-left: 4px solid #3b82f6;">

@@ -1655,8 +1655,11 @@ async function loadAttrData(selectValue) {
     attrDataTableContainer.classList.remove('hidden');
 
   } catch (error) {
-    console.error('Error loading attribute data:', error);
-    attrDataTbody.innerHTML = '<tr><td colspan="3" style="color:#dc2626;">' + error.message + '</td></tr>';
+    console.warn('Attribute table not found or inaccessible:', info.tableId, error.message);
+    var errMsg = error.message.indexOf('KeyError') !== -1
+      ? 'La table <strong>' + sanitizeForDisplay(info.tableId) + '</strong> n\'existe pas. Supprimez cet attribut et recréez-le.'
+      : sanitizeForDisplay(error.message);
+    attrDataTbody.innerHTML = '<tr><td colspan="3" style="color:#dc2626; padding:12px; font-size:13px;">' + errMsg + '</td></tr>';
     attrDataTableContainer.classList.remove('hidden');
   } finally {
     attrDataLoading.classList.add('hidden');
@@ -1720,5 +1723,429 @@ async function deleteAttrDataRow(rowId, tableId) {
   }
 }
 
+// =============================================================================
+// USERS TAB — Uses Vercel proxy to bypass CORS (works on SaaS + self-hosted)
+// =============================================================================
+
+var usersApiKeySetup = document.getElementById('users-apikey-setup');
+var usersManagement = document.getElementById('users-management');
+var usersRefreshBtn = document.getElementById('users-refresh-btn');
+var usersSearchInput = document.getElementById('users-search');
+var usersAddEmail = document.getElementById('users-add-email');
+var usersAddRole = document.getElementById('users-add-role');
+var usersAddBtn = document.getElementById('users-add-btn');
+var usersListEl = document.getElementById('users-list');
+var usersLoadingEl = document.getElementById('users-loading');
+var usersEmptyEl = document.getElementById('users-empty');
+var usersStatsEl = document.getElementById('users-stats');
+
+var allUsers = [];
+var usersFilterRole = 'all';
+var userApiKey = '';
+var gristServerUrl = ''; // e.g. "https://docs.getgrist.com"
+var gristDocId = '';      // e.g. "t2q2MvbRBWE4"
+var proxyAvailable = false;
+var usersPerPage = 10;
+var usersCurrentPage = 1;
+
+async function detectGristInfo() {
+  var info = await getToken();
+  // info.baseUrl = "https://docs.getgrist.com/api/docs/DOC_ID"
+  var match = info.baseUrl.match(/^(https?:\/\/[^/]+)\/api\/docs\/([^/?]+)/);
+  if (match) {
+    gristServerUrl = match[1];
+    gristDocId = match[2];
+  }
+  console.log('Grist server:', gristServerUrl, 'Doc:', gristDocId);
+}
+
+function getUserApiStorageKey() {
+  return 'grist_user_api_key_' + gristDocId;
+}
+
+function loadUserApiKey() {
+  try { userApiKey = localStorage.getItem(getUserApiStorageKey()) || ''; } catch (e) { userApiKey = ''; }
+  return userApiKey;
+}
+
+function saveUserApiKey(key) {
+  userApiKey = key.replace(/[^\x20-\x7E]/g, '').trim();
+  try { localStorage.setItem(getUserApiStorageKey(), userApiKey); } catch (e) {}
+}
+
+function clearUserApiKey() {
+  userApiKey = '';
+  try { localStorage.removeItem(getUserApiStorageKey()); } catch (e) {}
+}
+
+// All requests go through /api/proxy (same-origin, no CORS)
+async function usersApiFetch(endpoint, method, body) {
+  method = method || 'GET';
+  var proxyUrl = window.location.origin + '/api/proxy';
+  var payload = {
+    gristUrl: gristServerUrl,
+    docId: gristDocId,
+    endpoint: endpoint,
+    method: method,
+    apiKey: userApiKey
+  };
+  if (body) payload.body = body;
+
+  var resp = await fetch(proxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) {
+    var errText = await resp.text();
+    throw new Error(resp.status + ': ' + errText);
+  }
+  var text = await resp.text();
+  return text ? JSON.parse(text) : {};
+}
+
+function renderUsersStats() {
+  var counts = { all: allUsers.length, owners: 0, editors: 0, viewers: 0, members: 0 };
+  allUsers.forEach(function(u) {
+    if (u.access === 'owners') counts.owners++;
+    else if (u.access === 'editors') counts.editors++;
+    else if (u.access === 'viewers') counts.viewers++;
+    else if (u.access === 'members') counts.members++;
+  });
+
+  var html = '';
+  html += '<span class="users-stat all' + (usersFilterRole === 'all' ? ' active' : '') + '" onclick="filterUsers(\'all\')">' + counts.all + ' Total</span>';
+  if (counts.owners) html += '<span class="users-stat owners' + (usersFilterRole === 'owners' ? ' active' : '') + '" onclick="filterUsers(\'owners\')">👑 ' + counts.owners + ' Propriétaire' + (counts.owners > 1 ? 's' : '') + '</span>';
+  if (counts.editors) html += '<span class="users-stat editors' + (usersFilterRole === 'editors' ? ' active' : '') + '" onclick="filterUsers(\'editors\')">✏️ ' + counts.editors + ' Éditeur' + (counts.editors > 1 ? 's' : '') + '</span>';
+  if (counts.viewers) html += '<span class="users-stat viewers' + (usersFilterRole === 'viewers' ? ' active' : '') + '" onclick="filterUsers(\'viewers\')">👁️ ' + counts.viewers + ' Lecteur' + (counts.viewers > 1 ? 's' : '') + '</span>';
+  if (counts.members) html += '<span class="users-stat members' + (usersFilterRole === 'members' ? ' active' : '') + '" onclick="filterUsers(\'members\')">🔗 ' + counts.members + ' Membre' + (counts.members > 1 ? 's' : '') + '</span>';
+  usersStatsEl.innerHTML = html;
+}
+
+function filterUsers(role) {
+  usersFilterRole = role;
+  usersCurrentPage = 1;
+  renderUsersStats();
+  renderUsersList();
+}
+
+function getAvatarClass(access) {
+  if (access === 'owners') return 'owner';
+  if (access === 'editors') return 'editor';
+  if (access === 'viewers') return 'viewer';
+  return 'member';
+}
+
+function getRoleSelectClass(access) {
+  if (access === 'owners') return 'role-owner';
+  if (access === 'editors') return 'role-editor';
+  if (access === 'viewers') return 'role-viewer';
+  return 'role-member';
+}
+
+function getInitials(name, email) {
+  if (name && name.trim()) {
+    var parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  if (email) return email.substring(0, 2).toUpperCase();
+  return '??';
+}
+
+function goToUsersPage(page) {
+  usersCurrentPage = page;
+  renderUsersList();
+}
+
+function renderUsersList() {
+  var search = (usersSearchInput.value || '').trim().toLowerCase();
+  var filtered = allUsers.filter(function(u) {
+    if (usersFilterRole !== 'all' && u.access !== usersFilterRole) return false;
+    if (search) {
+      var hay = ((u.name || '') + ' ' + (u.email || '')).toLowerCase();
+      return hay.indexOf(search) !== -1;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    usersListEl.innerHTML = '';
+    usersEmptyEl.classList.remove('hidden');
+    return;
+  }
+
+  usersEmptyEl.classList.add('hidden');
+
+  // Pagination
+  var totalPages = Math.ceil(filtered.length / usersPerPage);
+  if (usersCurrentPage > totalPages) usersCurrentPage = totalPages;
+  if (usersCurrentPage < 1) usersCurrentPage = 1;
+  var start = (usersCurrentPage - 1) * usersPerPage;
+  var pageUsers = filtered.slice(start, start + usersPerPage);
+
+  var html = '';
+  pageUsers.forEach(function(u) {
+    var initials = getInitials(u.name, u.email);
+    var avatarCls = getAvatarClass(u.access);
+    var roleCls = getRoleSelectClass(u.access);
+    var displayName = u.name || u.email || '—';
+
+    html += '<div class="user-card">';
+    html += '  <div class="user-info">';
+    html += '    <div class="user-avatar ' + avatarCls + '">' + sanitizeForDisplay(initials) + '</div>';
+    html += '    <div class="user-details">';
+    html += '      <div class="user-name">' + sanitizeForDisplay(displayName) + '</div>';
+    html += '      <div class="user-email">' + sanitizeForDisplay(u.email || '') + '</div>';
+    html += '    </div>';
+    html += '  </div>';
+    html += '  <div class="user-actions">';
+    html += '    <select class="role-select ' + roleCls + '" onchange="changeUserRole(\'' + sanitizeForDisplay(u.email).replace(/'/g, "\\'") + '\', this.value)">';
+    html += '      <option value="owners"' + (u.access === 'owners' ? ' selected' : '') + '>👑 Propriétaire</option>';
+    html += '      <option value="editors"' + (u.access === 'editors' ? ' selected' : '') + '>✏️ Éditeur</option>';
+    html += '      <option value="viewers"' + (u.access === 'viewers' ? ' selected' : '') + '>👁️ Lecteur</option>';
+    html += '    </select>';
+    html += '    <button class="user-remove-btn" onclick="removeUser(\'' + sanitizeForDisplay(u.email).replace(/'/g, "\\'") + '\')" title="Retirer">✕</button>';
+    html += '  </div>';
+    html += '</div>';
+  });
+
+  // Pagination bar (only if more than 1 page)
+  if (totalPages > 1) {
+    html += '<div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:12px; flex-wrap:wrap;">';
+    html += '<button class="btn btn-sm btn-secondary" onclick="goToUsersPage(' + (usersCurrentPage - 1) + ')"' + (usersCurrentPage <= 1 ? ' disabled style="opacity:.4;cursor:default;padding:6px 10px;"' : ' style="padding:6px 10px;"') + '>◀</button>';
+    for (var p = 1; p <= totalPages; p++) {
+      if (p === usersCurrentPage) {
+        html += '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:#3b82f6;color:#fff;font-weight:700;font-size:13px;">' + p + '</span>';
+      } else if (p === 1 || p === totalPages || Math.abs(p - usersCurrentPage) <= 1) {
+        html += '<button class="btn btn-sm btn-secondary" style="width:32px;height:32px;padding:0;font-size:13px;" onclick="goToUsersPage(' + p + ')">' + p + '</button>';
+      } else if (Math.abs(p - usersCurrentPage) === 2) {
+        html += '<span style="color:#94a3b8;font-size:12px;">…</span>';
+      }
+    }
+    html += '<button class="btn btn-sm btn-secondary" onclick="goToUsersPage(' + (usersCurrentPage + 1) + ')"' + (usersCurrentPage >= totalPages ? ' disabled style="opacity:.4;cursor:default;padding:6px 10px;"' : ' style="padding:6px 10px;"') + '>▶</button>';
+    html += '<span style="font-size:12px;color:#94a3b8;margin-left:8px;">' + filtered.length + ' utilisateur' + (filtered.length > 1 ? 's' : '') + '</span>';
+    html += '</div>';
+  }
+
+  usersListEl.innerHTML = html;
+}
+
+async function loadUsers() {
+  usersLoadingEl.classList.remove('hidden');
+  usersListEl.innerHTML = '';
+  usersEmptyEl.classList.add('hidden');
+
+  try {
+    var data = await usersApiFetch('/access');
+    allUsers = [];
+    if (data.users) {
+      data.users.forEach(function(u) {
+        if (u.email === 'everyone@getgrist.com' || u.email === 'anon@getgrist.com') return;
+        allUsers.push({
+          id: u.id,
+          email: u.email || '',
+          name: u.name || '',
+          access: u.access || 'viewers'
+        });
+      });
+    }
+    var order = { owners: 0, editors: 1, viewers: 2, members: 3 };
+    allUsers.sort(function(a, b) {
+      var diff = (order[a.access] || 9) - (order[b.access] || 9);
+      if (diff !== 0) return diff;
+      return (a.email || '').localeCompare(b.email || '');
+    });
+
+    renderUsersStats();
+    renderUsersList();
+  } catch (e) {
+    console.error('Error loading users:', e);
+    showToast(t('errorLoadUsers') + e.message, 'error', 5000);
+  } finally {
+    usersLoadingEl.classList.add('hidden');
+  }
+}
+
+async function changeUserRole(email, newRole) {
+  try {
+    var delta = { users: {} };
+    delta.users[email] = newRole;
+    await usersApiFetch('/access', 'PATCH', { delta: delta });
+    showToast(t('roleChanged'), 'success');
+    await loadUsers();
+  } catch (e) {
+    console.error('Error changing role:', e);
+    showToast(t('roleChangeError') + e.message, 'error', 5000);
+    await loadUsers();
+  }
+}
+
+async function removeUser(email) {
+  if (!confirm('Retirer ' + email + ' du document ?')) return;
+  try {
+    var delta = { users: {} };
+    delta.users[email] = null;
+    await usersApiFetch('/access', 'PATCH', { delta: delta });
+    showToast('✅ ' + email + ' retiré', 'success');
+    await loadUsers();
+  } catch (e) {
+    console.error('Error removing user:', e);
+    showToast('❌ Erreur : ' + e.message, 'error', 5000);
+  }
+}
+
+async function addUser() {
+  var email = usersAddEmail.value.trim();
+  var role = usersAddRole.value;
+  if (!email) { showToast('❌ Email requis', 'error'); return; }
+
+  usersAddBtn.disabled = true;
+  try {
+    var delta = { users: {} };
+    delta.users[email] = role;
+    await usersApiFetch('/access', 'PATCH', { delta: delta });
+    showToast('✅ ' + email + ' ajouté en tant que ' + role, 'success');
+    usersAddEmail.value = '';
+    await loadUsers();
+  } catch (e) {
+    console.error('Error adding user:', e);
+    showToast('❌ Erreur : ' + e.message, 'error', 5000);
+  } finally {
+    usersAddBtn.disabled = false;
+  }
+}
+
+function showUsersSetup() {
+  if (usersApiKeySetup) usersApiKeySetup.classList.remove('hidden');
+  if (usersManagement) usersManagement.classList.add('hidden');
+}
+
+function showUsersManagement() {
+  if (usersApiKeySetup) usersApiKeySetup.classList.add('hidden');
+  if (usersManagement) usersManagement.classList.remove('hidden');
+}
+
+function setupUsersListeners() {
+  if (usersRefreshBtn) usersRefreshBtn.addEventListener('click', function() { loadUsers(); });
+  if (usersSearchInput) usersSearchInput.addEventListener('input', function() { usersCurrentPage = 1; renderUsersList(); });
+  if (usersAddBtn) usersAddBtn.addEventListener('click', addUser);
+  if (usersAddEmail) usersAddEmail.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') addUser();
+  });
+
+  var helpToggle = document.getElementById('users-apikey-help-toggle');
+  var helpDiv = document.getElementById('users-apikey-help');
+  var apiInput = document.getElementById('users-apikey-input');
+  var saveBtn = document.getElementById('users-apikey-save-btn');
+  var msgDiv = document.getElementById('users-apikey-message');
+  var disconnectBtn = document.getElementById('users-disconnect-btn');
+
+  if (helpToggle && helpDiv) {
+    helpToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      helpDiv.classList.toggle('hidden');
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async function() {
+      var key = apiInput ? apiInput.value.trim() : '';
+      if (!key) {
+        if (msgDiv) { msgDiv.innerHTML = '<div class="message message-error">❌ Clé API requise</div>'; msgDiv.classList.remove('hidden'); }
+        return;
+      }
+      saveBtn.disabled = true;
+      if (msgDiv) { msgDiv.innerHTML = '<div class="message message-info">⏳ Vérification...</div>'; msgDiv.classList.remove('hidden'); }
+
+      saveUserApiKey(key);
+      try {
+        await usersApiFetch('/access');
+        if (msgDiv) msgDiv.innerHTML = '<div class="message message-success">✅ Connecté !</div>';
+        setTimeout(function() {
+          showUsersManagement();
+          loadUsers();
+        }, 500);
+      } catch (e) {
+        clearUserApiKey();
+        if (msgDiv) { msgDiv.innerHTML = '<div class="message message-error">❌ Clé invalide : ' + sanitizeForDisplay(e.message) + '</div>'; }
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+  }
+
+  if (apiInput) {
+    apiInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && saveBtn) saveBtn.click();
+    });
+  }
+
+  if (disconnectBtn) {
+    disconnectBtn.addEventListener('click', function() {
+      clearUserApiKey();
+      allUsers = [];
+      if (usersListEl) usersListEl.innerHTML = '';
+      if (usersStatsEl) usersStatsEl.innerHTML = '';
+      if (apiInput) apiInput.value = '';
+      showUsersSetup();
+      showToast('🔒 Déconnecté', 'info');
+    });
+  }
+}
+
+// Check if the proxy endpoint is available (Vercel deployment vs static hosting)
+async function detectProxy() {
+  try {
+    var resp = await fetch(window.location.origin + '/api/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gristUrl: '', docId: '', endpoint: '', apiKey: '' })
+    });
+    // 400 = proxy responded (missing params) → available
+    // 404 = no proxy route → not available
+    proxyAvailable = resp.status !== 404;
+  } catch (e) {
+    proxyAvailable = false;
+  }
+  console.log('Proxy available:', proxyAvailable);
+  return proxyAvailable;
+}
+
+function showUsersNoProxy() {
+  if (usersApiKeySetup) usersApiKeySetup.classList.add('hidden');
+  if (usersManagement) usersManagement.classList.add('hidden');
+  var el = document.getElementById('users-no-proxy');
+  if (el) el.classList.remove('hidden');
+}
+
+async function initUsersTab() {
+  await detectGristInfo();
+  setupUsersListeners();
+
+  // Step 1: Check if proxy is available
+  var hasProxy = await detectProxy();
+  if (!hasProxy) {
+    showUsersNoProxy();
+    return;
+  }
+
+  // Step 2: Check for saved API key
+  var key = loadUserApiKey();
+  if (key) {
+    try {
+      await usersApiFetch('/access');
+      showUsersManagement();
+      loadUsers();
+    } catch (e) {
+      clearUserApiKey();
+      showUsersSetup();
+    }
+  } else {
+    showUsersSetup();
+  }
+}
+
 // Start
 init();
+initUsersTab();
