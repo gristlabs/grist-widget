@@ -1745,6 +1745,8 @@ var userApiKey = '';
 var gristServerUrl = ''; // e.g. "https://docs.getgrist.com"
 var gristDocId = '';      // e.g. "t2q2MvbRBWE4"
 var proxyAvailable = false;
+var directApiAvailable = false; // true if CORS allows direct API calls
+var useDirectApi = false;       // which mode is active
 var usersPerPage = 10;
 var usersCurrentPage = 1;
 
@@ -1778,8 +1780,29 @@ function clearUserApiKey() {
   try { localStorage.removeItem(getUserApiStorageKey()); } catch (e) {}
 }
 
-// All requests go through /api/proxy (same-origin, no CORS)
-async function usersApiFetch(endpoint, method, body) {
+// Direct API call (when CORS is allowed, e.g. self-hosted with proper config)
+async function usersDirectFetch(endpoint, method, body) {
+  method = method || 'GET';
+  var url = gristServerUrl + '/api/docs/' + gristDocId + endpoint;
+  var opts = {
+    method: method,
+    headers: {
+      'Authorization': 'Bearer ' + userApiKey,
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  var resp = await fetch(url, opts);
+  if (!resp.ok) {
+    var errText = await resp.text();
+    throw new Error(resp.status + ': ' + errText);
+  }
+  var text = await resp.text();
+  return text ? JSON.parse(text) : {};
+}
+
+// Proxy API call (when CORS blocks direct calls)
+async function usersProxyFetch(endpoint, method, body) {
   method = method || 'GET';
   var proxyUrl = window.location.origin + '/api/proxy';
   var payload = {
@@ -1802,6 +1825,14 @@ async function usersApiFetch(endpoint, method, body) {
   }
   var text = await resp.text();
   return text ? JSON.parse(text) : {};
+}
+
+// Smart fetch: use direct if CORS allows, otherwise proxy
+async function usersApiFetch(endpoint, method, body) {
+  if (useDirectApi) {
+    return usersDirectFetch(endpoint, method, body);
+  }
+  return usersProxyFetch(endpoint, method, body);
 }
 
 function renderUsersStats() {
@@ -1995,6 +2026,23 @@ async function removeUser(email) {
   }
 }
 
+function parseApiError(errMsg) {
+  try {
+    var match = errMsg.match(/\d+:\s*(.*)/);
+    if (match) {
+      var json = JSON.parse(match[1]);
+      if (json.error) {
+        if (json.error.indexOf('collaborators') !== -1 || json.error.indexOf('shares permitted') !== -1) {
+          var max = json.details && json.details.limit ? json.details.limit.maximum : '?';
+          return '⚠️ Limite atteinte : ' + max + ' collaborateurs max sur ce plan. Passez au plan supérieur ou ajoutez l\'utilisateur comme membre de l\'équipe.';
+        }
+        return json.error;
+      }
+    }
+  } catch (e) {}
+  return errMsg;
+}
+
 async function addUser() {
   var email = usersAddEmail.value.trim();
   var role = usersAddRole.value;
@@ -2010,7 +2058,7 @@ async function addUser() {
     await loadUsers();
   } catch (e) {
     console.error('Error adding user:', e);
-    showToast('❌ Erreur : ' + e.message, 'error', 5000);
+    showToast('❌ ' + parseApiError(e.message), 'error', 6000);
   } finally {
     usersAddBtn.disabled = false;
   }
@@ -2060,15 +2108,25 @@ function setupUsersListeners() {
 
       saveUserApiKey(key);
       try {
-        await usersApiFetch('/access');
-        if (msgDiv) msgDiv.innerHTML = '<div class="message message-success">✅ Connecté !</div>';
+        // Try direct first, then proxy
+        var directOk = await detectDirectApi();
+        if (directOk) {
+          useDirectApi = true;
+          await usersDirectFetch('/access');
+        } else {
+          useDirectApi = false;
+          await usersProxyFetch('/access');
+        }
+        var mode = useDirectApi ? 'direct' : 'proxy';
+        console.log('Users API: ' + mode + ' mode');
+        if (msgDiv) msgDiv.innerHTML = '<div class="message message-success">✅ Connecté (' + mode + ')</div>';
         setTimeout(function() {
           showUsersManagement();
           loadUsers();
         }, 500);
       } catch (e) {
         clearUserApiKey();
-        if (msgDiv) { msgDiv.innerHTML = '<div class="message message-error">❌ Clé invalide : ' + sanitizeForDisplay(e.message) + '</div>'; }
+        if (msgDiv) { msgDiv.innerHTML = '<div class="message message-error">❌ Clé invalide : ' + sanitizeForDisplay(parseApiError(e.message)) + '</div>'; }
       } finally {
         saveBtn.disabled = false;
       }
@@ -2094,6 +2152,21 @@ function setupUsersListeners() {
   }
 }
 
+// Test if direct API calls work (CORS allowed)
+// Uses a lightweight request without API key — we only care if CORS passes, not auth
+async function detectDirectApi() {
+  try {
+    var url = gristServerUrl + '/api/';
+    var resp = await fetch(url, { method: 'GET', mode: 'cors' });
+    // If we get here (any status, even 404), CORS passed
+    directApiAvailable = true;
+  } catch (e) {
+    // TypeError = CORS blocked
+    directApiAvailable = false;
+  }
+  return directApiAvailable;
+}
+
 // Check if the proxy endpoint is available (Vercel deployment vs static hosting)
 async function detectProxy() {
   try {
@@ -2102,13 +2175,10 @@ async function detectProxy() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ gristUrl: '', docId: '', endpoint: '', apiKey: '' })
     });
-    // 400 = proxy responded (missing params) → available
-    // 404 = no proxy route → not available
     proxyAvailable = resp.status !== 404;
   } catch (e) {
     proxyAvailable = false;
   }
-  console.log('Proxy available:', proxyAvailable);
   return proxyAvailable;
 }
 
@@ -2123,16 +2193,42 @@ async function initUsersTab() {
   await detectGristInfo();
   setupUsersListeners();
 
-  // Step 1: Check if proxy is available
-  var hasProxy = await detectProxy();
-  if (!hasProxy) {
-    showUsersNoProxy();
+  // Step 1: Check for saved API key
+  var key = loadUserApiKey();
+  if (!key) {
+    // No key yet — detect available mode first, then show setup
+    await detectProxy();
+    if (!proxyAvailable) {
+      showUsersNoProxy();
+      return;
+    }
+    showUsersSetup();
     return;
   }
 
-  // Step 2: Check for saved API key
-  var key = loadUserApiKey();
-  if (key) {
+  // Step 2: Try direct API first (fastest, no proxy overhead)
+  var directOk = await detectDirectApi();
+  if (directOk) {
+    useDirectApi = true;
+    console.log('Users API: direct mode (CORS allowed)');
+    try {
+      await usersApiFetch('/access');
+      showUsersManagement();
+      loadUsers();
+      return;
+    } catch (e) {
+      // Key invalid — clear and show setup
+      clearUserApiKey();
+      showUsersSetup();
+      return;
+    }
+  }
+
+  // Step 3: Fallback to proxy
+  var hasProxy = await detectProxy();
+  if (hasProxy) {
+    useDirectApi = false;
+    console.log('Users API: proxy mode');
     try {
       await usersApiFetch('/access');
       showUsersManagement();
@@ -2142,7 +2238,7 @@ async function initUsersTab() {
       showUsersSetup();
     }
   } else {
-    showUsersSetup();
+    showUsersNoProxy();
   }
 }
 
