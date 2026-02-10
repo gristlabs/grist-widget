@@ -2108,18 +2108,17 @@ function setupUsersListeners() {
 
       saveUserApiKey(key);
       try {
-        // Try direct first, then proxy
-        var directOk = await detectDirectApi();
-        if (directOk) {
-          useDirectApi = true;
-          await usersDirectFetch('/access');
-        } else {
+        // Try proxy first (reliable), then direct
+        if (proxyAvailable) {
           useDirectApi = false;
           await usersProxyFetch('/access');
+        } else {
+          useDirectApi = true;
+          await usersDirectFetch('/access');
         }
         var mode = useDirectApi ? 'direct' : 'proxy';
         console.log('Users API: ' + mode + ' mode');
-        if (msgDiv) msgDiv.innerHTML = '<div class="message message-success">✅ Connecté (' + mode + ')</div>';
+        if (msgDiv) msgDiv.innerHTML = '<div class="message message-success">✅ Connecté</div>';
         setTimeout(function() {
           showUsersManagement();
           loadUsers();
@@ -2152,16 +2151,19 @@ function setupUsersListeners() {
   }
 }
 
-// Test if direct API calls work (CORS allowed)
-// Uses a lightweight request without API key — we only care if CORS passes, not auth
+// Test if direct API calls work (CORS allowed including Authorization header)
+// Must test with the actual Authorization header since some servers allow simple CORS but block auth headers
 async function detectDirectApi() {
+  if (!userApiKey) { directApiAvailable = false; return false; }
   try {
-    var url = gristServerUrl + '/api/';
-    var resp = await fetch(url, { method: 'GET', mode: 'cors' });
-    // If we get here (any status, even 404), CORS passed
+    var url = gristServerUrl + '/api/docs/' + gristDocId + '/access';
+    var resp = await fetch(url, {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + userApiKey }
+    });
+    // If we get here without TypeError, CORS passed (even if 401/403)
     directApiAvailable = true;
   } catch (e) {
-    // TypeError = CORS blocked
     directApiAvailable = false;
   }
   return directApiAvailable;
@@ -2195,37 +2197,20 @@ async function initUsersTab() {
 
   // Step 1: Check for saved API key
   var key = loadUserApiKey();
+
+  // Step 2: Detect available mode (proxy first, then direct)
+  var hasProxy = await detectProxy();
+
   if (!key) {
-    // No key yet — detect available mode first, then show setup
-    await detectProxy();
-    if (!proxyAvailable) {
+    if (hasProxy) {
+      showUsersSetup();
+    } else {
       showUsersNoProxy();
-      return;
     }
-    showUsersSetup();
     return;
   }
 
-  // Step 2: Try direct API first (fastest, no proxy overhead)
-  var directOk = await detectDirectApi();
-  if (directOk) {
-    useDirectApi = true;
-    console.log('Users API: direct mode (CORS allowed)');
-    try {
-      await usersApiFetch('/access');
-      showUsersManagement();
-      loadUsers();
-      return;
-    } catch (e) {
-      // Key invalid — clear and show setup
-      clearUserApiKey();
-      showUsersSetup();
-      return;
-    }
-  }
-
-  // Step 3: Fallback to proxy
-  var hasProxy = await detectProxy();
+  // Step 3: Try proxy first (most reliable, works everywhere)
   if (hasProxy) {
     useDirectApi = false;
     console.log('Users API: proxy mode');
@@ -2233,13 +2218,33 @@ async function initUsersTab() {
       await usersApiFetch('/access');
       showUsersManagement();
       loadUsers();
+      return;
     } catch (e) {
       clearUserApiKey();
       showUsersSetup();
+      return;
     }
-  } else {
-    showUsersNoProxy();
   }
+
+  // Step 4: No proxy — try direct API (self-hosted with CORS configured)
+  var directOk = await detectDirectApi();
+  if (directOk) {
+    useDirectApi = true;
+    console.log('Users API: direct mode (CORS allowed)');
+    try {
+      await usersDirectFetch('/access');
+      showUsersManagement();
+      loadUsers();
+      return;
+    } catch (e) {
+      clearUserApiKey();
+      showUsersSetup();
+      return;
+    }
+  }
+
+  // Step 5: Nothing works
+  showUsersNoProxy();
 }
 
 // Start
