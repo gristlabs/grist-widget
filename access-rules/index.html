@@ -569,19 +569,24 @@
 
         <!-- No proxy fallback (shown on static hosting like GitHub Pages) -->
         <div id="users-no-proxy" class="card hidden" style="text-align:center; padding:32px;">
-          <div style="font-size:48px; margin-bottom:12px;">👥</div>
-          <h3 style="margin-bottom:8px;">Gestion des utilisateurs</h3>
-          <p style="color:#64748b; font-size:13px; margin-bottom:16px; line-height:1.7;">
-            La gestion des utilisateurs depuis ce widget n'est pas disponible dans cette configuration.
+          <div style="font-size:48px; margin-bottom:16px;">�</div>
+          <h3 style="margin-bottom:12px; font-size:18px;">Onglet non disponible sur votre serveur</h3>
+          <p style="color:#64748b; font-size:14px; margin-bottom:20px; line-height:1.8; max-width:480px; margin-left:auto; margin-right:auto;">
+            La configuration de votre serveur Grist ne permet pas d'utiliser cet onglet.<br>
+            <strong>Les 5 autres onglets fonctionnent normalement</strong> (Tables, Colonnes, Règles, Configurer, Attributs).
           </p>
-          <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:16px; text-align:left;">
-            <div style="font-weight:700; font-size:14px; color:#1e40af; margin-bottom:8px;">💡 Comment gérer les utilisateurs ?</div>
-            <ul style="font-size:13px; color:#1e40af; line-height:1.8; padding-left:20px; margin:0;">
-              <li>Cliquez sur l'icône <strong>Partager</strong> (🔗) en haut à droite de votre document Grist</li>
-              <li>Ajoutez des emails et attribuez les rôles (Propriétaire, Éditeur, Lecteur)</li>
-              <li>Gérez les accès avancés depuis le panneau <strong>Permissions avancées</strong> dans le menu de gauche</li>
-            </ul>
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:20px; text-align:left; max-width:480px; margin:0 auto;">
+            <div style="font-weight:700; font-size:15px; color:#166534; margin-bottom:12px;">✅ Pour gérer les utilisateurs, utilisez Grist directement :</div>
+            <ol style="font-size:14px; color:#166534; line-height:2; padding-left:20px; margin:0;">
+              <li>En haut à droite de votre document, cliquez sur <strong>Partager</strong></li>
+              <li>Ajoutez les adresses email des personnes à inviter</li>
+              <li>Choisissez leur rôle : <strong>Propriétaire</strong>, <strong>Éditeur</strong> ou <strong>Lecteur</strong></li>
+            </ol>
           </div>
+          <p style="color:#94a3b8; font-size:12px; margin-top:16px; line-height:1.6;">
+            Si vous êtes administrateur de votre serveur Grist et souhaitez activer cet onglet,<br>
+            contactez votre équipe technique pour autoriser les requêtes externes (CORS).
+          </p>
         </div>
 
         <!-- Users management (shown after API key validation) -->

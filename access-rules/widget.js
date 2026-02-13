@@ -1873,18 +1873,108 @@ var gristDocId = '';      // e.g. "t2q2MvbRBWE4"
 var proxyAvailable = false;
 var directApiAvailable = false; // true if CORS allows direct API calls
 var useDirectApi = false;       // which mode is active
+var isWidgetBuilder = false;    // true if running inside Widget Builder (same domain as Grist)
 var usersPerPage = 10;
 var usersCurrentPage = 1;
 
 async function detectGristInfo() {
-  var info = await getToken();
-  // info.baseUrl = "https://docs.getgrist.com/api/docs/DOC_ID"
-  var match = info.baseUrl.match(/^(https?:\/\/[^/]+)\/api\/docs\/([^/?]+)/);
-  if (match) {
-    gristServerUrl = match[1];
-    gristDocId = match[2];
+  // Method 1: getAccessToken (works when widget has full access)
+  try {
+    var info = await getToken();
+    // info.baseUrl = "https://docs.getgrist.com/api/docs/DOC_ID"
+    var match = info.baseUrl.match(/^(https?:\/\/[^/]+)\/api\/docs\/([^/?]+)/);
+    if (match) {
+      gristServerUrl = match[1];
+      gristDocId = match[2];
+    }
+  } catch (e) {
+    console.warn('detectGristInfo: getAccessToken failed:', e.message);
   }
+
+  // Method 2: parent URL (works in Widget Builder, same domain)
+  if (!gristServerUrl || !gristDocId) {
+    try {
+      var parentUrl = window.parent.location.href;
+      var urlMatch = parentUrl.match(/^(https?:\/\/[^/]+)\/(?:o\/[^/]+\/)?doc\/([^/?#]+)/);
+      if (urlMatch) {
+        gristServerUrl = gristServerUrl || urlMatch[1];
+        gristDocId = gristDocId || urlMatch[2];
+      }
+    } catch (e2) {
+      console.warn('detectGristInfo: parent URL not accessible');
+    }
+  }
+
+  // Method 3: document.referrer (often set by Grist when loading widget)
+  if (!gristServerUrl || !gristDocId) {
+    try {
+      var ref = document.referrer;
+      if (ref) {
+        var refMatch = ref.match(/^(https?:\/\/[^/]+)\/(?:o\/[^/]+\/)?doc\/([^/?#]+)/);
+        if (refMatch) {
+          gristServerUrl = gristServerUrl || refMatch[1];
+          gristDocId = gristDocId || refMatch[2];
+          console.log('detectGristInfo: extracted from document.referrer');
+        }
+      }
+    } catch (e3) {
+      console.warn('detectGristInfo: referrer not available');
+    }
+  }
+
+  // Method 4: ancestorOrigins (Chrome/Edge — gives parent origin)
+  if (!gristServerUrl) {
+    try {
+      if (window.location.ancestorOrigins && window.location.ancestorOrigins.length > 0) {
+        gristServerUrl = window.location.ancestorOrigins[0];
+        console.log('detectGristInfo: extracted origin from ancestorOrigins');
+      }
+    } catch (e4) {
+      console.warn('detectGristInfo: ancestorOrigins not available');
+    }
+  }
+
+  // Method 5: Grist provides docId via onRecord or onOptions
+  if (!gristDocId && gristServerUrl) {
+    // Try to get docId from the URL hash or search params (Grist sometimes passes it)
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var docParam = params.get('docId') || params.get('doc');
+      if (docParam) {
+        gristDocId = docParam;
+        console.log('detectGristInfo: extracted docId from URL params');
+      }
+    } catch (e5) {}
+  }
+
   console.log('Grist server:', gristServerUrl, 'Doc:', gristDocId);
+}
+
+function showManualGristFields() {
+  var container = document.getElementById('users-manual-grist-fields');
+  if (container) { container.classList.remove('hidden'); return; }
+  // Create manual fields dynamically
+  var setupDiv = document.getElementById('users-apikey-setup');
+  if (!setupDiv) return;
+  var inputDiv = setupDiv.querySelector('div[style*="max-width"]');
+  if (!inputDiv) return;
+  var fieldsHtml = '<div id="users-manual-grist-fields" style="margin-bottom:12px; text-align:left;">'
+    + '<div style="background:#fefce8; border:1px solid #fde68a; border-radius:8px; padding:12px; margin-bottom:12px; font-size:12px; color:#92400e;">'
+    + '⚠️ Détection automatique impossible. Entrez manuellement les informations de votre serveur Grist.'
+    + '</div>'
+    + '<label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:#334155;">URL du serveur Grist</label>'
+    + '<input type="url" id="users-grist-url-input" class="api-key-input" placeholder="https://docs.getgrist.com" style="width:100%; margin-bottom:10px;">'
+    + '<label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:#334155;">Document ID</label>'
+    + '<input type="text" id="users-grist-docid-input" class="api-key-input" placeholder="Visible dans l\'URL : /doc/XXXXXX" style="width:100%; margin-bottom:4px;">'
+    + '<p style="font-size:11px; color:#94a3b8; margin:0;">Trouvez le Doc ID dans l\'URL de votre document : https://votre-grist.com/doc/<strong>DOC_ID_ICI</strong></p>'
+    + '</div>';
+  // Insert before the API key input
+  var apiInput = document.getElementById('users-apikey-input');
+  if (apiInput && apiInput.parentNode) {
+    var temp = document.createElement('div');
+    temp.innerHTML = fieldsHtml;
+    apiInput.parentNode.insertBefore(temp.firstChild, apiInput);
+  }
 }
 
 function getUserApiStorageKey() {
@@ -1910,14 +2000,17 @@ function clearUserApiKey() {
 async function usersDirectFetch(endpoint, method, body) {
   method = method || 'GET';
   var url = gristServerUrl + '/api/docs/' + gristDocId + endpoint;
+  // Use query param auth instead of Authorization header to avoid CORS preflight
+  var separator = url.includes('?') ? '&' : '?';
+  url += separator + 'auth=' + encodeURIComponent(userApiKey);
   var opts = {
     method: method,
-    headers: {
-      'Authorization': 'Bearer ' + userApiKey,
-      'Content-Type': 'application/json'
-    }
+    headers: {}
   };
-  if (body) opts.body = JSON.stringify(body);
+  if (body) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
   var resp = await fetch(url, opts);
   if (!resp.ok) {
     var errText = await resp.text();
@@ -1930,7 +2023,7 @@ async function usersDirectFetch(endpoint, method, body) {
 // Proxy API call (when CORS blocks direct calls)
 async function usersProxyFetch(endpoint, method, body) {
   method = method || 'GET';
-  var proxyUrl = window.location.origin + '/api/proxy';
+  var proxyUrl = 'https://proxy.gristup.fr/proxy';
   var payload = {
     gristUrl: gristServerUrl,
     docId: gristDocId,
@@ -2243,12 +2336,39 @@ function setupUsersListeners() {
       if (msgDiv) { msgDiv.innerHTML = '<div class="message message-info">⏳ Vérification...</div>'; msgDiv.classList.remove('hidden'); }
 
       saveUserApiKey(key);
+      // If gristServerUrl/gristDocId not detected, try to get from manual inputs
+      if (!gristServerUrl || !gristDocId) {
+        var manualUrl = document.getElementById('users-grist-url-input');
+        var manualDoc = document.getElementById('users-grist-docid-input');
+        if (manualUrl && manualUrl.value.trim()) gristServerUrl = manualUrl.value.trim().replace(/\/$/, '');
+        if (manualDoc && manualDoc.value.trim()) gristDocId = manualDoc.value.trim();
+      }
+      if (!gristServerUrl || !gristDocId) {
+        if (msgDiv) { msgDiv.innerHTML = '<div class="message message-error">❌ Impossible de détecter l\'URL Grist. Remplissez les champs URL et Doc ID ci-dessus.</div>'; }
+        showManualGristFields();
+        saveBtn.disabled = false;
+        return;
+      }
       try {
-        // Try proxy first (reliable), then direct
-        if (proxyAvailable) {
+        var connected = false;
+        // Widget Builder mode: always direct (same domain)
+        if (isWidgetBuilder) {
+          useDirectApi = true;
+          await usersDirectFetch('/access');
+          connected = true;
+        }
+        // External mode: try proxy first (reliable), then direct
+        if (!connected && proxyAvailable) {
           useDirectApi = false;
-          await usersProxyFetch('/access');
-        } else {
+          try {
+            await usersProxyFetch('/access');
+            connected = true;
+          } catch (proxyErr) {
+            console.warn('Proxy failed, trying direct mode:', proxyErr.message);
+          }
+        }
+        // Fallback to direct API if proxy failed (WAF, etc.)
+        if (!connected) {
           useDirectApi = true;
           await usersDirectFetch('/access');
         }
@@ -2261,7 +2381,15 @@ function setupUsersListeners() {
         }, 500);
       } catch (e) {
         clearUserApiKey();
-        if (msgDiv) { msgDiv.innerHTML = '<div class="message message-error">❌ Clé invalide : ' + sanitizeForDisplay(parseApiError(e.message)) + '</div>'; }
+        var errMsg = parseApiError(e.message);
+        var isNetworkBlock = e.message.indexOf('Failed to fetch') !== -1 || e.message.indexOf('NetworkError') !== -1 || e.message.indexOf('Load failed') !== -1 || e.message.indexOf('CORS') !== -1 || e.message.indexOf('Access-Control') !== -1 || e.message.indexOf('multiorigine') !== -1;
+        if (isNetworkBlock) {
+          // Server blocks external requests — show the friendly "non disponible" panel
+          if (msgDiv) msgDiv.classList.add('hidden');
+          showUsersNoProxy();
+        } else {
+          if (msgDiv) { msgDiv.innerHTML = '<div class="message message-error">❌ Clé invalide : ' + sanitizeForDisplay(errMsg) + '</div>'; }
+        }
       } finally {
         saveBtn.disabled = false;
       }
@@ -2308,7 +2436,7 @@ async function detectDirectApi() {
 // Check if the proxy endpoint is available (Vercel deployment vs static hosting)
 async function detectProxy() {
   try {
-    var resp = await fetch(window.location.origin + '/api/proxy', {
+    var resp = await fetch('https://proxy.gristup.fr/proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ gristUrl: '', docId: '', endpoint: '', apiKey: '' })
@@ -2331,27 +2459,77 @@ async function initUsersTab() {
   await detectGristInfo();
   setupUsersListeners();
 
+  // Detect if running inside Widget Builder
+  // Widget Builder uses blob: or srcdoc: URLs, so window.location.origin is "null" or "blob:..."
+  // But ancestorOrigins contains the Grist origin, and grist.docApi works
+  if (gristServerUrl) {
+    try {
+      var widgetOrigin = window.location.origin;
+      var gristOrigin = new URL(gristServerUrl).origin;
+      isWidgetBuilder = (widgetOrigin === gristOrigin);
+    } catch (e) {
+      isWidgetBuilder = false;
+    }
+  }
+  // Also detect blob:/null origin (Widget Builder creates blob: iframes)
+  if (!isWidgetBuilder) {
+    var loc = window.location.href || '';
+    var ori = window.location.origin || '';
+    if (ori === 'null' || loc.startsWith('blob:') || loc.startsWith('data:')) {
+      isWidgetBuilder = true;
+      // Extract gristServerUrl from ancestorOrigins if not yet set
+      if (!gristServerUrl) {
+        try {
+          if (window.location.ancestorOrigins && window.location.ancestorOrigins.length > 0) {
+            gristServerUrl = window.location.ancestorOrigins[0];
+          }
+        } catch (e) {}
+      }
+      if (!gristServerUrl) {
+        try {
+          var ref = document.referrer;
+          if (ref) {
+            var refOrigin = new URL(ref).origin;
+            if (refOrigin && refOrigin !== 'null') gristServerUrl = refOrigin;
+          }
+        } catch (e) {}
+      }
+    }
+  }
+  if (isWidgetBuilder) {
+    console.log('Users API: Widget Builder mode detected');
+  }
+
   // Step 1: Check for saved API key
   var key = loadUserApiKey();
 
-  // Step 2: Detect available mode (proxy first, then direct)
-  var hasProxy = await detectProxy();
+  // Step 2: Detect available mode
+  // Widget Builder = always direct (same domain, no CORS)
+  // External = try proxy first, then direct
+  var hasProxy = isWidgetBuilder ? false : await detectProxy();
 
   if (!key) {
-    if (hasProxy) {
+    // Always show setup (Widget Builder or proxy available)
+    if (isWidgetBuilder || hasProxy) {
       showUsersSetup();
+      // If Widget Builder but docId missing, show manual fields pre-filled
+      if (isWidgetBuilder && gristServerUrl && !gristDocId) {
+        showManualGristFields();
+        var urlInput = document.getElementById('users-grist-url-input');
+        if (urlInput) urlInput.value = gristServerUrl;
+      }
     } else {
       showUsersNoProxy();
     }
     return;
   }
 
-  // Step 3: Try proxy first (most reliable, works everywhere)
-  if (hasProxy) {
-    useDirectApi = false;
-    console.log('Users API: proxy mode');
+  // Step 3: Widget Builder mode — always use direct API
+  if (isWidgetBuilder) {
+    useDirectApi = true;
+    console.log('Users API: direct mode (Widget Builder, same domain)');
     try {
-      await usersApiFetch('/access');
+      await usersDirectFetch('/access');
       showUsersManagement();
       loadUsers();
       return;
@@ -2362,7 +2540,22 @@ async function initUsersTab() {
     }
   }
 
-  // Step 4: No proxy — try direct API (self-hosted with CORS configured)
+  // Step 4: External mode — try proxy first, fallback to direct
+  if (hasProxy) {
+    useDirectApi = false;
+    console.log('Users API: trying proxy mode');
+    try {
+      await usersProxyFetch('/access');
+      console.log('Users API: proxy mode OK');
+      showUsersManagement();
+      loadUsers();
+      return;
+    } catch (e) {
+      console.warn('Proxy failed, trying direct:', e.message);
+    }
+  }
+
+  // Step 5: Try direct API (self-hosted with CORS or proxy failed due to WAF)
   var directOk = await detectDirectApi();
   if (directOk) {
     useDirectApi = true;
@@ -2377,6 +2570,13 @@ async function initUsersTab() {
       showUsersSetup();
       return;
     }
+  }
+
+  // Step 6: Proxy failed and direct not available — clear key and show setup
+  if (hasProxy) {
+    clearUserApiKey();
+    showUsersSetup();
+    return;
   }
 
   // Step 5: Nothing works
