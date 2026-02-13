@@ -11,5 +11,13 @@
     // Flag is enforced to false to indicate that this is not a Grist Labs maintained widget.
     "isGristLabsMaintained": false
   },
+<<<<<<< HEAD
   "vibe-view": {}
+=======
+  "form-builder": {
+    "url": "https://gristlabs.github.io/grist-widget/form-builder/index.html",
+    "widgetId": "@isaytoo/widget-form-builder",
+    "isGristLabsMaintained": false
+  }
+>>>>>>> b3e7bfa (feat: add Form Builder Pro widget)
 }

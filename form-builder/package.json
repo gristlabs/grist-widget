@@ -1,0 +1,25 @@
+{
+  "name": "@isaytoo/widget-form-builder",
+  "description": "Visual form builder widget with drag & drop, PDF export, signatures, templates and conditional fields",
+  "homePage": "https://github.com/isaytoo/grist-form-builder-widget",
+  "version": "1.0.0",
+  "grist": [
+    {
+      "name": "Form Builder Pro",
+      "url": "https://gristlabs.github.io/grist-widget/form-builder/index.html",
+      "widgetId": "@isaytoo/widget-form-builder",
+      "published": true,
+      "accessLevel": "full",
+      "renderAfterReady": true,
+      "description": "Visual form builder with drag & drop interface. Create professional forms on A4 pages with sections, images, titles, signatures, PDF export, templates, and conditional display rules.",
+      "authors": [
+        {
+          "name": "Said Hamadou",
+          "url": "https://github.com/isaytoo"
+        }
+      ],
+      "isGristLabsMaintained": false
+    }
+  ],
+  "license": "Apache-2.0"
+}
