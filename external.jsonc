@@ -10,5 +10,6 @@
     "widgetId": "@varamil/widget-simplefilter",
     // Flag is enforced to false to indicate that this is not a Grist Labs maintained widget.
     "isGristLabsMaintained": false
-  }
+  },
+  "vibe-view": {}
 }

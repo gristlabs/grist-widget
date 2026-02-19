@@ -9,3 +9,7 @@
 [submodule "varamil"]
 	path = varamil
 	url = https://github.com/Varamil/grist-widget
+[submodule "vibe-view"]
+	path = vibe-view
+	url = https://github.com/gristlabs/vibe-view-widget
+  branch = main
