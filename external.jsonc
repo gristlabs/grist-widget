@@ -15,6 +15,7 @@
   "cross-table": {
     "url": "https://gristlabs.github.io/grist-widget/cross-table/index.html",
     "widgetId": "@isaytoo/widget-cross-table",
-    "isGristLabsMaintained": false
+    "isGristLabsMaintained": false,
+    "published": true
   }
 }
