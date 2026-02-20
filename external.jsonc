@@ -11,5 +11,11 @@
     // Flag is enforced to false to indicate that this is not a Grist Labs maintained widget.
     "isGristLabsMaintained": false
   },
-  "vibe-view": {}
+  "vibe-view": {},
+  "cross-table": {
+    "url": "https://gristlabs.github.io/grist-widget/cross-table/index.html",
+    "widgetId": "@isaytoo/widget-cross-table",
+    "isGristLabsMaintained": false,
+    "published": true
+  }
 }
