@@ -15,6 +15,7 @@
   "access-rules": {
     "url": "https://gristlabs.github.io/grist-widget/access-rules/index.html",
     "widgetId": "@isaytoo/widget-access-rules",
-    "isGristLabsMaintained": false
+    "isGristLabsMaintained": false,
+    "published": true
   }
 }
