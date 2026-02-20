@@ -15,6 +15,7 @@
   "form-builder": {
     "url": "https://gristlabs.github.io/grist-widget/form-builder/index.html",
     "widgetId": "@isaytoo/widget-form-builder",
-    "isGristLabsMaintained": false
+    "isGristLabsMaintained": false,
+    "published": true
   }
 }
