@@ -15,6 +15,7 @@
   "project-manager": {
     "url": "https://gristlabs.github.io/grist-widget/project-manager/index.html",
     "widgetId": "@isaytoo/widget-project-manager",
-    "isGristLabsMaintained": false
+    "isGristLabsMaintained": false,
+    "published": true
   }
 }
