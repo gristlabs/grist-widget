@@ -11,5 +11,11 @@
     // Flag is enforced to false to indicate that this is not a Grist Labs maintained widget.
     "isGristLabsMaintained": false
   },
-  "vibe-view": {}
+  "vibe-view": {},
+  "form-builder": {
+    "url": "https://gristlabs.github.io/grist-widget/form-builder/index.html",
+    "widgetId": "@isaytoo/widget-form-builder",
+    "isGristLabsMaintained": false,
+    "published": true
+  }
 }
