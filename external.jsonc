@@ -15,6 +15,7 @@
   "doc-template": {
     "url": "https://gristlabs.github.io/grist-widget/doc-template/index.html",
     "widgetId": "@isaytoo/widget-doc-template",
-    "isGristLabsMaintained": false
+    "isGristLabsMaintained": false,
+    "published": true
   }
 }
