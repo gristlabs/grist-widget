@@ -54,6 +54,26 @@ function getMonthName() {
   return calendarHandler.calendar.getDate().toDate().toLocaleString(getLanguage(), {month: 'long', year: 'numeric'})
 }
 
+function formatEventTitle(rawTitle) {
+  const escaped = rawTitle
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped
+    .replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/gs, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
+function plainTitle(rawTitle) {
+  return rawTitle
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .trim();
+}
+
 class CalendarHandler {
   //TODO: switch to new variables once they are published.
   _mainColor =  'var(--grist-theme-input-readonly-border)';
@@ -160,13 +180,11 @@ class CalendarHandler {
       template: {
         time(event) {
           const {title} = event;
-          const sanitizedTitle = title.replace('"','&quot;').trim();
-          return `<span title="${sanitizedTitle}">${title}</span>`;
+          return `<span title="${plainTitle(title)}">${formatEventTitle(title)}</span>`;
         },
         allday(event) {
           const {title} = event;
-          const sanitizedTitle = title.replace('"','&quot;').trim();
-          return `<span title="${sanitizedTitle}">${title}</span>`;
+          return `<span title="${plainTitle(title)}">${formatEventTitle(title)}</span>`;
         },
         popupDelete(){
           return t('Delete')
