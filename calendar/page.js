@@ -20,7 +20,6 @@ window.gristCalendar = {
 let TZDate = null;
 
 let isInitialLoad = true;
-let startOnToday = true;
 
 function getLanguage() {
   if (this._lang) {
@@ -542,20 +541,12 @@ async function translatePage() {
 function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
   if (mappedRecord && calendarHandler) {
-    if (isInitialLoad && startOnToday) {
+    if (isInitialLoad) {
       isInitialLoad = false;
       calendarHandler.calendarToday();
       return;
     }
-    isInitialLoad = false;
     calendarHandler.selectRecord(mappedRecord);
-  }
-}
-
-async function startOnTodayChanged(checkbox) {
-  startOnToday = checkbox.checked;
-  if (!isReadOnly) {
-    await grist.setOption('startOnToday', startOnToday);
   }
 }
 
@@ -575,9 +566,7 @@ function onGristSettingsChanged(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
-  startOnToday = options?.startOnToday ?? true;
-  const checkbox = document.getElementById('calendar-start-on-today');
-  if (checkbox) { checkbox.checked = startOnToday; }
+
 };
 
 function changeCalendarView(view) {
