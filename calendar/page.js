@@ -55,7 +55,7 @@ function getMonthName() {
 
 function getFirstDayOfWeek() {
   try {
-    const locale = new Intl.Locale(getLanguage());
+    const locale = new Intl.Locale(urlParams.get('culture') ?? navigator.language ?? getLanguage());
     // Chrome 99+ uses getWeekInfo(), Firefox 126+ and Safari 17+ use weekInfo property
     const weekInfo = locale.getWeekInfo?.() ?? locale.weekInfo;
     if (weekInfo?.firstDay !== undefined) {
