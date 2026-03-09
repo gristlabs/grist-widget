@@ -53,6 +53,21 @@ function getMonthName() {
   return calendarHandler.calendar.getDate().toDate().toLocaleString(getLanguage(), {month: 'long', year: 'numeric'})
 }
 
+function getFirstDayOfWeek() {
+  try {
+    const locale = new Intl.Locale(getLanguage());
+    // Chrome 99+ uses getWeekInfo(), Firefox 126+ and Safari 17+ use weekInfo property
+    const weekInfo = locale.getWeekInfo?.() ?? locale.weekInfo;
+    if (weekInfo?.firstDay !== undefined) {
+      // Intl: 1=Mon, ..., 7=Sun  →  TUI: 0=Sun, 1=Mon, ..., 6=Sat
+      return weekInfo.firstDay === 7 ? 0 : weekInfo.firstDay;
+    }
+  } catch (e) {
+    // Intl.Locale week info not supported by this browser
+  }
+  return 0; // fallback: Sunday
+}
+
 class CalendarHandler {
   //TODO: switch to new variables once they are published.
   _mainColor =  'var(--grist-theme-input-readonly-border)';
@@ -147,9 +162,11 @@ class CalendarHandler {
     return {
       week: {
         taskView: false,
+        startDayOfWeek: getFirstDayOfWeek(),
         dayNames: [t('Sun'), t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat')],
       },
       month: {
+        startDayOfWeek: getFirstDayOfWeek(),
         dayNames: [t('Sun'), t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat')],
       },
       usageStatistics: false,
