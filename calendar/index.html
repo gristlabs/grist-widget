@@ -45,6 +45,10 @@
             </label>
         </div>
         <time id="calendar-title"></time>
+        <label id="calendar-start-on-today-label" class="btn btn-sm checkbox-inline">
+            <input type="checkbox" id="calendar-start-on-today" checked onchange="startOnTodayChanged(this)">
+            <span data-i18n="Start on today">Start on today</span>
+        </label>
     </nav>
     <div id="calendar">
     </div>
