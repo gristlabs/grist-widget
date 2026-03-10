@@ -53,6 +53,16 @@ function getMonthName() {
   return calendarHandler.calendar.getDate().toDate().toLocaleString(getLanguage(), {month: 'long', year: 'numeric'})
 }
 
+function getHour12() {
+  try {
+    const locale = urlParams.get('culture') ?? navigator.language ?? getLanguage();
+    return new Intl.DateTimeFormat(locale, {hour: 'numeric'}).resolvedOptions().hour12;
+  } catch (e) {
+    // Intl.DateTimeFormat not supported or invalid locale
+  }
+  return false; // fallback: 24h
+}
+
 class CalendarHandler {
   //TODO: switch to new variables once they are published.
   _mainColor =  'var(--grist-theme-input-readonly-border)';
@@ -184,8 +194,14 @@ class CalendarHandler {
         },
         popupIsAllday() {
           return t('All Day')
-        }
-
+        },
+        timegridDisplayPrimaryTime({ time }) {
+          const locale = urlParams.get('culture') ?? navigator.language ?? getLanguage();
+          return time.toDate().toLocaleTimeString(locale, {
+            hour: 'numeric',
+            hour12: getHour12(),
+          });
+        },
       },
       calendars: [
         {
