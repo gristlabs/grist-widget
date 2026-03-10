@@ -397,6 +397,21 @@ input:checked + label {
   overflow-y: hidden;
 }
 
+/* Pure-date mode: hide the time grid */
+#calendar.pure-date-mode .toastui-calendar-panel.toastui-calendar-time {
+  display: none !important;
+}
+
+/* Pure-date mode: hide expand/collapse buttons (auto-expand handled by JS) */
+#calendar.pure-date-mode .toastui-calendar-weekday-exceed-in-week {
+  display: none !important;
+}
+
+/* Pure-date mode: allday panel fills the remaining space */
+#calendar.pure-date-mode .toastui-calendar-panel.toastui-calendar-allday {
+  min-height: calc(100% - 44px) !important;
+}
+
 #calendar-container {
   display: flex;
   flex-direction: column;
