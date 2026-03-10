@@ -53,15 +53,22 @@
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 <script src="https://uicdn.toast.com/tui.time-picker/latest/tui-time-picker.js"></script>
 <script>
-  // HACK: Override the default time picker format to be 24-hour. There is no other way to do this,
+  // HACK: Override the default time picker format based on locale. There is no other way to do this,
   // calendar doesn't offer a way to pass this down to the time picker.
   // This also can't be done in the page.js as the next script will grab the reference immediately.
   (function() {
+    var useHour12 = false;
+    try {
+      var culture = new URLSearchParams(window.location.search).get('culture')
+        || navigator.language
+        || 'en';
+      useHour12 = new Intl.DateTimeFormat(culture, {hour: 'numeric'}).resolvedOptions().hour12;
+    } catch(e) {}
     tui.TimePicker = class extends tui.TimePicker {
       constructor(container, options) {
         super(container, {
           ...options,
-          format: 'HH:mm'
+          format: useHour12 ? 'hh:mm A' : 'HH:mm'
         });
       }
     };
