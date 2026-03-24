@@ -493,6 +493,14 @@ function getGristOptions() {
       type: "Choice,ChoiceList",
       description: t("event category and style"),
       allowMultiple: false
+    },
+    {
+      name: "highlight",
+      title: t("Highlight"),
+      optional: true,
+      type: "Bool",
+      description: t("highlight event with yellow background"),
+      strictType: true
     }
   ];
 }
@@ -743,6 +751,12 @@ function buildCalendarEventObject(record, colTypes, colOptions) {
   if (type?.choiceOptions?.[selected]?.fontStrikethrough) {
     textDecoration = textDecoration === 'underline' ? 'line-through underline' : 'line-through';
   }
+  // Apply yellow highlight if the highlight column is truthy.
+  if (record.highlight) {
+    raw.backgroundColor = '#fff9c4';
+    raw.color = '#000000';
+  }
+
   return {
     id: record.id,
     calendarId: CALENDAR_NAME,
