@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Whack-a-Cell</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 4px;
+      color: #e94560;
+      text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+    }
+    .subtitle { color: #888; font-size: 13px; margin-bottom: 20px; }
+
+    button {
+      padding: 12px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.15s;
+      background: #e94560;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    button:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(233, 69, 96, 0.5); }
+    button:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: none; }
+
+    #status {
+      font-size: 14px;
+      padding: 8px;
+      text-align: center;
+      color: #ffd93d;
+      min-height: 28px;
+      margin-bottom: 16px;
+    }
+
+    .leaderboard {
+      width: 100%;
+      max-width: 400px;
+    }
+    .leaderboard h2 {
+      font-size: 16px;
+      color: #aaa;
+      text-align: center;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .leader-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      margin-bottom: 6px;
+      background: #16213e;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    .leader-row.first { background: #2a1a3e; border: 1px solid #e94560; }
+    .leader-rank {
+      font-size: 20px;
+      font-weight: bold;
+      color: #555;
+      width: 36px;
+      text-align: center;
+    }
+    .leader-row.first .leader-rank { color: #ffd93d; }
+    .leader-name {
+      flex: 1;
+      font-size: 16px;
+      color: #ddd;
+      padding-left: 8px;
+    }
+    .leader-score {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffd93d;
+    }
+    .no-players {
+      text-align: center;
+      color: #555;
+      font-size: 14px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Whack-a-Cell</h1>
+  <p class="subtitle">Type X in the red cell to score!</p>
+
+  <button id="btn-start" onclick="startGame()">Start Game</button>
+
+  <div id="status"></div>
+
+  <div class="leaderboard" id="leaderboard">
+    <h2>Leaderboard</h2>
+    <div class="no-players">Waiting for game...</div>
+  </div>
+
+  <script>
+    const COL_IDS = ['C1','C2','C3','C4','C5','C6','C7','C8'];
+    const ROWS = 8;
+    const ROUND_DELAY_MS = 2000;
+
+    let tableId = null;
+    let gamePhase = 'idle'; // idle | playing | between_rounds
+    let activeRow = -1;
+    let activeCol = -1;
+    let rowIds = [];
+    let latestRecords = [];
+    let roundTimer = null;
+    let busy = false;
+
+    const $status = document.getElementById('status');
+    const $leaderboard = document.getElementById('leaderboard');
+    const $btnStart = document.getElementById('btn-start');
+
+    // ─── Grist Init ───
+    grist.ready({ requiredAccess: 'full' });
+
+    grist.on('message', (e) => {
+      if (e.tableId) { tableId = e.tableId; }
+    });
+
+    grist.onRecords((recs) => {
+      if (!recs || recs.length === 0) return;
+      console.log('[WAC] onRecords:', recs.length, 'keys:', Object.keys(recs[0]), 'gamePhase:', gamePhase);
+
+      latestRecords = recs;
+      rowIds = recs.map(r => r.id);
+
+      // Count names across all game cells for the leaderboard
+      const scores = {};
+      for (const rec of recs) {
+        for (const col of COL_IDS) {
+          const val = String(rec[col] || '').trim();
+          if (val && val !== 'x' && val !== 'X') {
+            if (!scores[val]) scores[val] = 0;
+            scores[val]++;
+          }
+        }
+      }
+      renderLeaderboard(scores);
+
+      // Check if someone whacked the active cell
+      if (gamePhase === 'playing' && activeRow >= 0 && activeCol >= 0 && activeRow < recs.length) {
+        const targetRow = recs[activeRow];
+        if (targetRow) {
+          const colKey = COL_IDS[activeCol];
+          const val = String(targetRow[colKey] || '').trim();
+          console.log('[WAC] Active cell check:', colKey, 'row:', activeRow, 'val:', JSON.stringify(val));
+          if (val) {
+            onCellWhacked(val);
+          }
+        }
+      }
+    });
+
+    // ─── Cell whacked ───
+    function onCellWhacked(value) {
+      console.log('[WAC] onCellWhacked called, value:', value, 'gamePhase:', gamePhase);
+      if (gamePhase !== 'playing') {
+        console.log('[WAC] Ignoring whack, gamePhase is not playing');
+        return;
+      }
+      gamePhase = 'between_rounds';
+
+      const winner = value;
+      console.log('[WAC] Winner:', winner, '- moving to next round');
+      setStatus(`${winner} scores!`);
+
+      // Immediately move to next cell
+      nextRound();
+    }
+
+    // ─── Next round ───
+    async function nextRound() {
+      console.log('[WAC] nextRound called. tableId:', tableId, 'rowIds.length:', rowIds.length, 'busy:', busy);
+      if (!tableId || rowIds.length < ROWS || busy) {
+        console.log('[WAC] nextRound skipped. tableId:', !!tableId, 'rows:', rowIds.length, 'busy:', busy);
+        return;
+      }
+      busy = true;
+
+      try {
+        // Find all empty cells from latest records
+        const emptyCells = [];
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COL_IDS.length; c++) {
+            const rec = latestRecords[r];
+            if (rec && !String(rec[COL_IDS[c]] || '').trim()) {
+              emptyCells.push([r, c]);
+            }
+          }
+        }
+
+        if (emptyCells.length === 0) {
+          setStatus('Board is full! Click Start Game to play again.');
+          gamePhase = 'idle';
+          busy = false;
+          return;
+        }
+
+        // Pick a random empty cell
+        const pick = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        activeRow = pick[0];
+        activeCol = pick[1];
+        gamePhase = 'playing';
+
+        // Clear previous Active, set new one — single batch
+        const actions = [];
+        for (let r = 0; r < ROWS; r++) {
+          actions.push(['UpdateRecord', tableId, rowIds[r], { Active: r === activeRow ? COL_IDS[activeCol] : '' }]);
+        }
+        await grist.docApi.applyUserActions(actions);
+
+        setStatus('Whack the red cell!');
+      } catch (e) {
+        console.error('nextRound failed:', e);
+        setStatus('Error: ' + e.message);
+      }
+      busy = false;
+    }
+
+    // ─── Start Game: recreate table and reset scores ───
+    async function startGame() {
+      if (!tableId) {
+        setStatus('Waiting for table connection...');
+        return;
+      }
+
+      $btnStart.disabled = true;
+      setStatus('Setting up board...');
+      activeRow = -1;
+      activeCol = -1;
+      gamePhase = 'idle';
+      clearTimeout(roundTimer);
+      renderLeaderboard({});
+
+      try {
+        // Remove all existing rows
+        const existing = await grist.docApi.fetchTable(tableId);
+        if (existing.id && existing.id.length > 0) {
+          await grist.docApi.applyUserActions([
+            ['BulkRemoveRecord', tableId, existing.id]
+          ]);
+        }
+
+        // Remove existing C1-C8 and Active columns if present
+        const colMeta = await grist.docApi.fetchTable('_grist_Tables_column');
+        const tableRef = await getTableRef();
+
+        if (tableRef) {
+          const colsToRemove = [];
+          for (let i = 0; i < colMeta.id.length; i++) {
+            if (colMeta.parentId[i] === tableRef) {
+              const cid = colMeta.colId[i];
+              if (COL_IDS.includes(cid) || cid === 'Active' || cid.startsWith('gristHelper_ConditionalRule')) {
+                colsToRemove.push(cid);
+              }
+            }
+          }
+          for (const cid of colsToRemove) {
+            try {
+              await grist.docApi.applyUserActions([['RemoveColumn', tableId, cid]]);
+            } catch (e) { /* column may already be gone */ }
+          }
+        }
+
+        // Create columns C1-C8 + Active
+        for (const col of COL_IDS) {
+          await grist.docApi.applyUserActions([
+            ['AddVisibleColumn', tableId, col, { type: 'Text', isFormula: false }]
+          ]);
+        }
+        await grist.docApi.applyUserActions([
+          ['AddVisibleColumn', tableId, 'Active', { type: 'Text', isFormula: false }]
+        ]);
+
+        // Set trigger formulas on C1-C8: user.Name if value == "x" else value
+        await setupTriggerFormulas();
+
+        // Add 8 game rows
+        const addRowActions = [];
+        for (let i = 0; i < ROWS; i++) {
+          const vals = { Active: '' };
+          for (const col of COL_IDS) vals[col] = '';
+          addRowActions.push(['AddRecord', tableId, null, vals]);
+        }
+        await grist.docApi.applyUserActions(addRowActions);
+
+        setStatus('Setting up view sections...');
+        await setupConditionalFormatting();
+        await setColumnWidths();
+        await addFieldsToWidgetSection();
+
+        setStatus('Game started! Type X in the red cell!');
+        setTimeout(() => nextRound(), 500);
+
+      } catch (e) {
+        console.error('startGame failed:', e);
+        setStatus('Error: ' + e.message);
+      }
+      $btnStart.disabled = false;
+    }
+
+    // ─── Get table ref from metadata ───
+    async function getTableRef() {
+      const tables = await grist.docApi.fetchTable('_grist_Tables');
+      for (let i = 0; i < tables.tableId.length; i++) {
+        if (tables.tableId[i] === tableId) return tables.id[i];
+      }
+      return null;
+    }
+
+    // ─── Set trigger formulas on C1-C8 columns ───
+    async function setupTriggerFormulas() {
+      const tableRef = await getTableRef();
+      if (!tableRef) return;
+
+      const colTable = await grist.docApi.fetchTable('_grist_Tables_column');
+      const triggerFormula = 'user.Name if value == "x" else value';
+
+      for (let i = 0; i < colTable.colId.length; i++) {
+        if (COL_IDS.includes(colTable.colId[i]) && colTable.parentId[i] === tableRef) {
+          const colRef = colTable.id[i];
+          await grist.docApi.applyUserActions([
+            ['UpdateRecord', '_grist_Tables_column', colRef, {
+              formula: triggerFormula,
+              recalcWhen: 0,
+              recalcDeps: ['L', colRef],
+            }]
+          ]);
+        }
+      }
+    }
+
+    // ─── Setup conditional formatting ───
+    async function setupConditionalFormatting() {
+      const tableRef = await getTableRef();
+      if (!tableRef) throw new Error('Table ref not found');
+
+      const colTable = await grist.docApi.fetchTable('_grist_Tables_column');
+      const myColMap = {};
+      for (let i = 0; i < colTable.colId.length; i++) {
+        if (COL_IDS.includes(colTable.colId[i]) && colTable.parentId[i] === tableRef) {
+          myColMap[colTable.colId[i]] = colTable.id[i];
+        }
+      }
+
+      for (const col of COL_IDS) {
+        const colRef = myColMap[col];
+        if (!colRef) continue;
+
+        // Add empty conditional rule
+        await grist.docApi.applyUserActions([
+          ['AddEmptyRule', tableId, 0, colRef],
+        ]);
+
+        // Find the newly created rule column
+        const updatedCols = await grist.docApi.fetchTable('_grist_Tables_column');
+        let ruleColId = null;
+        for (let i = 0; i < updatedCols.id.length; i++) {
+          if (updatedCols.id[i] === colRef) {
+            const rules = updatedCols.rules[i];
+            if (rules && Array.isArray(rules) && rules.length > 1) {
+              ruleColId = rules[rules.length - 1];
+            }
+            break;
+          }
+        }
+        if (!ruleColId) continue;
+
+        // Set formula and style
+        await grist.docApi.applyUserActions([
+          ['UpdateRecord', '_grist_Tables_column', ruleColId, {
+            formula: `$Active == "${col}"`
+          }],
+          ['UpdateRecord', '_grist_Tables_column', colRef, {
+            widgetOptions: JSON.stringify({
+              widget: 'TextBox',
+              alignment: 'center',
+              rulesOptions: [{ fillColor: '#FF0000', textColor: '#FFFFFF', fontBold: true }]
+            })
+          }],
+        ]);
+      }
+    }
+
+    // ─── Set narrow column widths on the grid view section ───
+    async function setColumnWidths() {
+      const tableRef = await getTableRef();
+      if (!tableRef) return;
+
+      // Find the grid view section (not raw, not custom)
+      const sections = await grist.docApi.fetchTable('_grist_Views_section');
+      let sectionRef = null;
+      for (let i = 0; i < sections.id.length; i++) {
+        if (sections.tableRef[i] === tableRef) {
+          const kind = String(sections.parentKey[i] || '');
+          if (kind === 'record') {
+            sectionRef = sections.id[i];
+            break;
+          }
+        }
+      }
+      if (!sectionRef) return;
+
+      // Set width on all fields in this section
+      const fields = await grist.docApi.fetchTable('_grist_Views_section_field');
+      const updateActions = [];
+      for (let i = 0; i < fields.id.length; i++) {
+        if (fields.parentId[i] === sectionRef) {
+          updateActions.push(
+            ['UpdateRecord', '_grist_Views_section_field', fields.id[i], { width: 50 }]
+          );
+        }
+      }
+      if (updateActions.length > 0) {
+        await grist.docApi.applyUserActions(updateActions);
+      }
+    }
+
+    // ─── Add fields to the widget's own view section ───
+    async function addFieldsToWidgetSection() {
+      const tableRef = await getTableRef();
+      if (!tableRef) return;
+
+      // Find the custom widget view section for this table
+      const sections = await grist.docApi.fetchTable('_grist_Views_section');
+      let widgetSectionRef = null;
+      for (let i = 0; i < sections.id.length; i++) {
+        if (sections.tableRef[i] === tableRef) {
+          const kind = String(sections.parentKey[i] || '');
+          if (kind === 'custom') {
+            widgetSectionRef = sections.id[i];
+            break;
+          }
+        }
+      }
+      if (!widgetSectionRef) {
+        console.log('[WAC] No custom widget section found');
+        return;
+      }
+      console.log('[WAC] Widget section ref:', widgetSectionRef);
+
+      // Get column refs for C1-C8 + Active
+      const colTable = await grist.docApi.fetchTable('_grist_Tables_column');
+      const colRefs = {};
+      for (let i = 0; i < colTable.colId.length; i++) {
+        if (colTable.parentId[i] === tableRef) {
+          const cid = colTable.colId[i];
+          if (COL_IDS.includes(cid) || cid === 'Active') {
+            colRefs[cid] = colTable.id[i];
+          }
+        }
+      }
+
+      // Check which fields already exist in this section
+      const fields = await grist.docApi.fetchTable('_grist_Views_section_field');
+      const existingColRefs = new Set();
+      for (let i = 0; i < fields.id.length; i++) {
+        if (fields.parentId[i] === widgetSectionRef) {
+          existingColRefs.add(fields.colRef[i]);
+        }
+      }
+
+      // Add missing fields
+      const addActions = [];
+      for (const col of [...COL_IDS, 'Active']) {
+        const colRef = colRefs[col];
+        if (colRef && !existingColRefs.has(colRef)) {
+          addActions.push(['AddRecord', '_grist_Views_section_field', null, {
+            parentId: widgetSectionRef,
+            colRef: colRef,
+          }]);
+        }
+      }
+
+      if (addActions.length > 0) {
+        console.log('[WAC] Adding', addActions.length, 'fields to widget section');
+        await grist.docApi.applyUserActions(addActions);
+      }
+    }
+
+    // ─── UI Helpers ───
+    function setStatus(msg) {
+      $status.textContent = msg;
+    }
+
+    function renderLeaderboard(scores) {
+      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      let html = '<h2>Leaderboard</h2>';
+      if (sorted.length === 0) {
+        html += '<div class="no-players">No scores yet</div>';
+      } else {
+        sorted.forEach(([name, pts], i) => {
+          const cls = i === 0 ? 'leader-row first' : 'leader-row';
+          const d = document.createElement('div');
+          d.textContent = name;
+          html += `<div class="${cls}">
+            <span class="leader-rank">#${i + 1}</span>
+            <span class="leader-name">${d.innerHTML}</span>
+            <span class="leader-score">${pts}</span>
+          </div>`;
+        });
+      }
+      $leaderboard.innerHTML = html;
+    }
+
+    setStatus('Click "Start Game" to set up the board and begin.');
+  </script>
+</body>
+</html>
