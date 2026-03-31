@@ -120,15 +120,10 @@
   <script>
     const COL_IDS = ['C1','C2','C3','C4','C5','C6','C7','C8'];
     const ROWS = 8;
-    const ROUND_DELAY_MS = 2000;
 
     let tableId = null;
-    let gamePhase = 'idle'; // idle | playing | between_rounds
-    let activeRow = -1;
-    let activeCol = -1;
     let rowIds = [];
     let latestRecords = [];
-    let roundTimer = null;
     let busy = false;
 
     const $status = document.getElementById('status');
@@ -144,25 +139,14 @@
 
     grist.onRecords((recs) => {
       if (!recs || recs.length === 0) return;
-      console.log('[WAC] onRecords:', recs.length, 'keys:', Object.keys(recs[0]), 'gamePhase:', gamePhase);
+      console.log('[WAC] onRecords:', recs.length, 'keys:', Object.keys(recs[0]));
 
       latestRecords = recs;
       rowIds = recs.map(r => r.id);
 
-      // Detect active game from table data: if any row has Active set, game is on
-      if (gamePhase === 'idle') {
-        for (let r = 0; r < recs.length; r++) {
-          const active = String(recs[r].Active || '').trim();
-          if (active && COL_IDS.includes(active)) {
-            console.log('[WAC] Detected active game from table: row', r, 'col', active);
-            activeRow = r;
-            activeCol = COL_IDS.indexOf(active);
-            gamePhase = 'playing';
-            setStatus('Whack the red cell!');
-            break;
-          }
-        }
-      }
+      // Detect if game board exists (Active column present in records)
+      const hasActiveColumn = recs.length > 0 && recs[0].hasOwnProperty('Active');
+      $btnStart.textContent = hasActiveColumn ? 'Restart Game' : 'Start Game';
 
       // Count names across all game cells for the leaderboard
       const scores = {};
@@ -177,81 +161,104 @@
       }
       renderLeaderboard(scores);
 
-      // Check if someone whacked the active cell
-      if (gamePhase === 'playing' && activeRow >= 0 && activeCol >= 0 && activeRow < recs.length) {
-        const targetRow = recs[activeRow];
-        if (targetRow) {
-          const colKey = COL_IDS[activeCol];
-          const val = String(targetRow[colKey] || '').trim();
-          console.log('[WAC] Active cell check:', colKey, 'row:', activeRow, 'val:', JSON.stringify(val));
-          if (val && val !== 'x' && val !== 'X') {
-            onCellWhacked(val);
-          }
+      // Read game state entirely from table
+      // Find which row has Active set (= the current red cell)
+      let activeRow = -1;
+      let activeCol = -1;
+      for (let r = 0; r < recs.length; r++) {
+        const active = String(recs[r].Active || '').trim();
+        if (active && COL_IDS.includes(active)) {
+          activeRow = r;
+          activeCol = COL_IDS.indexOf(active);
+          break;
         }
+      }
+
+      if (activeRow === -1) {
+        // No active cell — game is idle or board is full
+        setStatus(hasActiveColumn ? 'Whack the red cell!' : 'Click "Start Game" to begin.');
+        return;
+      }
+
+      // There's an active cell — check if it's been whacked
+      const targetRow = recs[activeRow];
+      const colKey = COL_IDS[activeCol];
+      const val = String(targetRow[colKey] || '').trim();
+      console.log('[WAC] Active cell:', colKey, 'row:', activeRow, 'val:', JSON.stringify(val));
+
+      if (val && val !== 'x' && val !== 'X') {
+        // Someone scored! Move to next round
+        console.log('[WAC] Scored by:', val);
+        setStatus(`${val} scores!`);
+        advanceToNextCell(activeRow, COL_IDS[activeCol]);
+      } else {
+        setStatus('Whack the red cell!');
       }
     });
 
-    // ─── Cell whacked ───
-    function onCellWhacked(value) {
-      console.log('[WAC] onCellWhacked called, value:', value, 'gamePhase:', gamePhase);
-      if (gamePhase !== 'playing') {
-        console.log('[WAC] Ignoring whack, gamePhase is not playing');
-        return;
-      }
-      gamePhase = 'between_rounds';
-
-      const winner = value;
-      console.log('[WAC] Winner:', winner, '- moving to next round');
-      setStatus(`${winner} scores!`);
-
-      // Immediately move to next cell
-      nextRound();
-    }
-
-    // ─── Next round ───
-    async function nextRound() {
-      console.log('[WAC] nextRound called. tableId:', tableId, 'rowIds.length:', rowIds.length, 'busy:', busy);
-      if (!tableId || rowIds.length < ROWS || busy) {
-        console.log('[WAC] nextRound skipped. tableId:', !!tableId, 'rows:', rowIds.length, 'busy:', busy);
-        return;
-      }
+    // ─── Advance to next empty cell ───
+    // scoredRow/scoredCol: the cell that was just scored, used to verify no one else advanced already
+    async function advanceToNextCell(scoredRow, scoredColName) {
+      if (!tableId || busy) return;
       busy = true;
 
       try {
-        // Find all empty cells from latest records
+        // Random delay to reduce race conditions between multiple widgets
+        await new Promise(r => setTimeout(r, Math.floor(Math.random() * 300)));
+
+        // Re-fetch table to get fresh state and check no one else advanced
+        const freshData = await grist.docApi.fetchTable(tableId);
+        if (!freshData.id || freshData.id.length < ROWS) {
+          busy = false;
+          return;
+        }
+
+        // Verify the Active column still points to the scored cell
+        const freshActiveValues = freshData.Active || [];
+        const currentActive = String(freshActiveValues[scoredRow] || '').trim();
+        if (currentActive !== scoredColName) {
+          // Someone else already advanced the game — skip
+          console.log('[WAC] Another widget already advanced. Expected Active=', scoredColName, 'at row', scoredRow, 'but got', currentActive);
+          busy = false;
+          return;
+        }
+
+        const freshRowIds = freshData.id;
+
+        // Find all empty cells from fresh data
         const emptyCells = [];
         for (let r = 0; r < ROWS; r++) {
           for (let c = 0; c < COL_IDS.length; c++) {
-            const rec = latestRecords[r];
-            if (rec && !String(rec[COL_IDS[c]] || '').trim()) {
+            const colKey = COL_IDS[c];
+            const cellVal = String((freshData[colKey] || [])[r] || '').trim();
+            if (!cellVal) {
               emptyCells.push([r, c]);
             }
           }
         }
 
         if (emptyCells.length === 0) {
+          // Board is full — clear all Active
+          const actions = freshRowIds.map(id => ['UpdateRecord', tableId, id, { Active: '' }]);
+          await grist.docApi.applyUserActions(actions);
           setStatus('Board is full! Click Start Game to play again.');
-          gamePhase = 'idle';
           busy = false;
           return;
         }
 
         // Pick a random empty cell
         const pick = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        activeRow = pick[0];
-        activeCol = pick[1];
-        gamePhase = 'playing';
+        const newRow = pick[0];
+        const newCol = pick[1];
 
         // Clear previous Active, set new one — single batch
         const actions = [];
         for (let r = 0; r < ROWS; r++) {
-          actions.push(['UpdateRecord', tableId, rowIds[r], { Active: r === activeRow ? COL_IDS[activeCol] : '' }]);
+          actions.push(['UpdateRecord', tableId, freshRowIds[r], { Active: r === newRow ? COL_IDS[newCol] : '' }]);
         }
         await grist.docApi.applyUserActions(actions);
-
-        setStatus('Whack the red cell!');
       } catch (e) {
-        console.error('nextRound failed:', e);
+        console.error('advanceToNextCell failed:', e);
         setStatus('Error: ' + e.message);
       }
       busy = false;
@@ -266,10 +273,6 @@
 
       $btnStart.disabled = true;
       setStatus('Setting up board...');
-      activeRow = -1;
-      activeCol = -1;
-      gamePhase = 'idle';
-      clearTimeout(roundTimer);
       renderLeaderboard({});
 
       try {
@@ -286,23 +289,20 @@
         const tableRef = await getTableRef();
 
         if (tableRef) {
-          const colsToRemove = [];
+          const removeActions = [];
           for (let i = 0; i < colMeta.id.length; i++) {
             if (colMeta.parentId[i] === tableRef) {
               const cid = colMeta.colId[i];
-              // Skip internal/manualSort columns
-              if (cid.startsWith('manualSort') || cid === 'id') continue;
-              colsToRemove.push(cid);
+              if (cid.startsWith('manualSort') || cid === 'id' || cid.startsWith('gristHelper_')) continue;
+              removeActions.push(['RemoveColumn', tableId, cid]);
             }
           }
-          for (const cid of colsToRemove) {
-            try {
-              await grist.docApi.applyUserActions([['RemoveColumn', tableId, cid]]);
-            } catch (e) { /* column may already be gone */ }
+          if (removeActions.length > 0) {
+            await grist.docApi.applyUserActions(removeActions);
           }
         }
 
-        // Create columns C1-C8 + Active
+        // Create columns one by one for visual effect
         for (const col of COL_IDS) {
           await grist.docApi.applyUserActions([
             ['AddVisibleColumn', tableId, col, { type: 'Text', isFormula: false }]
@@ -329,8 +329,20 @@
         await setColumnWidths();
         await addFieldsToWidgetSection();
 
+        // Pick the first random cell and set it as active in the table
+        const firstRow = Math.floor(Math.random() * ROWS);
+        const firstCol = Math.floor(Math.random() * COL_IDS.length);
+        // Fetch newly created row IDs
+        const newData = await grist.docApi.fetchTable(tableId);
+        const newRowIds = newData.id;
+        const activateActions = [];
+        for (let r = 0; r < ROWS; r++) {
+          activateActions.push(['UpdateRecord', tableId, newRowIds[r], {
+            Active: r === firstRow ? COL_IDS[firstCol] : ''
+          }]);
+        }
+        await grist.docApi.applyUserActions(activateActions);
         setStatus('Game started! Type X in the red cell!');
-        setTimeout(() => nextRound(), 500);
 
       } catch (e) {
         console.error('startGame failed:', e);
@@ -354,20 +366,22 @@
       if (!tableRef) return;
 
       const colTable = await grist.docApi.fetchTable('_grist_Tables_column');
+      const actions = [];
 
       for (let i = 0; i < colTable.colId.length; i++) {
         if (COL_IDS.includes(colTable.colId[i]) && colTable.parentId[i] === tableRef) {
           const colRef = colTable.id[i];
           const colName = colTable.colId[i];
           const formula = `user.Name if value == "x" and $Active == "${colName}" else value`;
-          await grist.docApi.applyUserActions([
-            ['UpdateRecord', '_grist_Tables_column', colRef, {
-              formula: formula,
-              recalcWhen: 0,
-              recalcDeps: ['L', colRef],
-            }]
-          ]);
+          actions.push(['UpdateRecord', '_grist_Tables_column', colRef, {
+            formula: formula,
+            recalcWhen: 0,
+            recalcDeps: ['L', colRef],
+          }]);
         }
+      }
+      if (actions.length > 0) {
+        await grist.docApi.applyUserActions(actions);
       }
     }
 
@@ -384,17 +398,24 @@
         }
       }
 
+      // Add all empty rules in one batch
+      const ruleActions = [];
+      for (const col of COL_IDS) {
+        const colRef = myColMap[col];
+        if (colRef) ruleActions.push(['AddEmptyRule', tableId, 0, colRef]);
+      }
+      if (ruleActions.length > 0) {
+        await grist.docApi.applyUserActions(ruleActions);
+      }
+
+      // Fetch updated columns to find all rule column IDs
+      const updatedCols = await grist.docApi.fetchTable('_grist_Tables_column');
+      const styleActions = [];
+
       for (const col of COL_IDS) {
         const colRef = myColMap[col];
         if (!colRef) continue;
 
-        // Add empty conditional rule
-        await grist.docApi.applyUserActions([
-          ['AddEmptyRule', tableId, 0, colRef],
-        ]);
-
-        // Find the newly created rule column
-        const updatedCols = await grist.docApi.fetchTable('_grist_Tables_column');
         let ruleColId = null;
         for (let i = 0; i < updatedCols.id.length; i++) {
           if (updatedCols.id[i] === colRef) {
@@ -407,8 +428,7 @@
         }
         if (!ruleColId) continue;
 
-        // Set formula and style
-        await grist.docApi.applyUserActions([
+        styleActions.push(
           ['UpdateRecord', '_grist_Tables_column', ruleColId, {
             formula: `$Active == "${col}"`
           }],
@@ -418,8 +438,11 @@
               alignment: 'center',
               rulesOptions: [{ fillColor: '#FF0000', textColor: '#FFFFFF', fontBold: true }]
             })
-          }],
-        ]);
+          }]
+        );
+      }  // end for loop
+      if (styleActions.length > 0) {
+        await grist.docApi.applyUserActions(styleActions);
       }
     }
 
