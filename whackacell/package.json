@@ -1,0 +1,22 @@
+{
+  "name": "@gristlabs/widget-whackacell",
+  "description": "Whack-a-Cell",
+  "homePage": "https://github.com/gristlabs/grist-widget",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Whack-a-Cell",
+    "url": "https://gristlabs.github.io/grist-widget/whackacell/index.html",
+    "widgetId": "@gristlabs/widget-whackacell",
+    "published": true,
+    "accessLevel": "full",
+    "renderAfterReady": true,
+    "description": "Multiplayer reflex game! A random cell turns red — race to click it first and score points.",
+    "authors": [
+      {
+        "name": "Grist Labs",
+        "url": "https://github.com/gristlabs"
+      }
+    ],
+    "isGristLabsMaintained": false
+  }
+}
