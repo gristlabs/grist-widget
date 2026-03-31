@@ -161,7 +161,7 @@
           const colKey = COL_IDS[activeCol];
           const val = String(targetRow[colKey] || '').trim();
           console.log('[WAC] Active cell check:', colKey, 'row:', activeRow, 'val:', JSON.stringify(val));
-          if (val) {
+          if (val && val !== 'x' && val !== 'X') {
             onCellWhacked(val);
           }
         }
@@ -331,14 +331,15 @@
       if (!tableRef) return;
 
       const colTable = await grist.docApi.fetchTable('_grist_Tables_column');
-      const triggerFormula = 'user.Name if value == "x" else value';
 
       for (let i = 0; i < colTable.colId.length; i++) {
         if (COL_IDS.includes(colTable.colId[i]) && colTable.parentId[i] === tableRef) {
           const colRef = colTable.id[i];
+          const colName = colTable.colId[i];
+          const formula = `user.Name if value == "x" and $Active == "${colName}" else value`;
           await grist.docApi.applyUserActions([
             ['UpdateRecord', '_grist_Tables_column', colRef, {
-              formula: triggerFormula,
+              formula: formula,
               recalcWhen: 0,
               recalcDeps: ['L', colRef],
             }]
