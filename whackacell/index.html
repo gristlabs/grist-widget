@@ -5,22 +5,11 @@
   <title>Whack-a-Cell</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <style>
-    :root {
-      --primary: var(--grist-theme-primary, #16b378);
-      --primary-dim: var(--grist-theme-primary-dim, #007548);
-      --bg: var(--grist-theme-bg-default, #ffffff);
-      --bg-secondary: var(--grist-theme-bg-secondary, #f7f7f7);
-      --text: var(--grist-theme-body, #262633);
-      --text-secondary: var(--grist-theme-secondary, #929299);
-      --decoration: var(--grist-theme-decoration, #d9d9d9);
-      --selection: var(--grist-theme-selection-opaque, #dcf4eb);
-      --error: #d0021b;
-    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: var(--grist-theme-font-family, system-ui, sans-serif);
+      background: var(--grist-theme-page-panels-main-panel-bg, inherit);
+      color: var(--grist-theme-text, inherit);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -29,9 +18,13 @@
     h1 {
       font-size: 24px;
       margin-bottom: 4px;
-      color: var(--primary);
+      color: var(--grist-theme-cursor, #16b378);
     }
-    .subtitle { color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; }
+    .subtitle {
+      color: var(--grist-theme-text-light, #929299);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
 
     button {
       padding: 10px 28px;
@@ -41,18 +34,18 @@
       cursor: pointer;
       font-weight: 600;
       transition: all 0.15s;
-      background: var(--primary);
+      background: var(--grist-theme-cursor, #16b378);
       color: #fff;
       margin-bottom: 20px;
     }
-    button:hover { background: var(--primary-dim); }
+    button:hover { opacity: 0.85; }
     button:disabled { opacity: 0.4; cursor: default; }
 
     #status {
       font-size: 13px;
       padding: 8px;
       text-align: center;
-      color: var(--primary-dim);
+      color: var(--grist-theme-cursor, #16b378);
       min-height: 28px;
       margin-bottom: 16px;
     }
@@ -63,7 +56,7 @@
     }
     .leaderboard h2 {
       font-size: 13px;
-      color: var(--text-secondary);
+      color: var(--grist-theme-text-light, #929299);
       text-align: center;
       margin-bottom: 10px;
       text-transform: uppercase;
@@ -74,36 +67,38 @@
       align-items: center;
       padding: 8px 14px;
       margin-bottom: 4px;
-      background: var(--bg-secondary);
+      background: rgba(128, 128, 128, 0.08);
       border-radius: 4px;
-      border: 1px solid var(--decoration);
+      border: 1px solid rgba(128, 128, 128, 0.15);
     }
     .leader-row.first {
-      background: var(--selection);
-      border-color: var(--primary);
+      background: rgba(22, 179, 120, 0.12);
+      border-color: var(--grist-theme-cursor, #16b378);
     }
     .leader-rank {
       font-size: 16px;
       font-weight: bold;
-      color: var(--text-secondary);
+      color: var(--grist-theme-text-light, #929299);
       width: 32px;
       text-align: center;
     }
-    .leader-row.first .leader-rank { color: var(--primary); }
+    .leader-row.first .leader-rank {
+      color: var(--grist-theme-cursor, #16b378);
+    }
     .leader-name {
       flex: 1;
       font-size: 14px;
-      color: var(--text);
+      color: inherit;
       padding-left: 8px;
     }
     .leader-score {
       font-size: 20px;
       font-weight: bold;
-      color: var(--primary);
+      color: var(--grist-theme-cursor, #16b378);
     }
     .no-players {
       text-align: center;
-      color: var(--text-secondary);
+      color: var(--grist-theme-text-light, #929299);
       font-size: 13px;
       padding: 20px;
     }
@@ -153,6 +148,21 @@
 
       latestRecords = recs;
       rowIds = recs.map(r => r.id);
+
+      // Detect active game from table data: if any row has Active set, game is on
+      if (gamePhase === 'idle') {
+        for (let r = 0; r < recs.length; r++) {
+          const active = String(recs[r].Active || '').trim();
+          if (active && COL_IDS.includes(active)) {
+            console.log('[WAC] Detected active game from table: row', r, 'col', active);
+            activeRow = r;
+            activeCol = COL_IDS.indexOf(active);
+            gamePhase = 'playing';
+            setStatus('Whack the red cell!');
+            break;
+          }
+        }
+      }
 
       // Count names across all game cells for the leaderboard
       const scores = {};
@@ -271,7 +281,7 @@
           ]);
         }
 
-        // Remove existing C1-C8 and Active columns if present
+        // Remove ALL columns in the table
         const colMeta = await grist.docApi.fetchTable('_grist_Tables_column');
         const tableRef = await getTableRef();
 
@@ -280,9 +290,9 @@
           for (let i = 0; i < colMeta.id.length; i++) {
             if (colMeta.parentId[i] === tableRef) {
               const cid = colMeta.colId[i];
-              if (COL_IDS.includes(cid) || cid === 'Active' || cid.startsWith('gristHelper_ConditionalRule')) {
-                colsToRemove.push(cid);
-              }
+              // Skip internal/manualSort columns
+              if (cid.startsWith('manualSort') || cid === 'id') continue;
+              colsToRemove.push(cid);
             }
           }
           for (const cid of colsToRemove) {
