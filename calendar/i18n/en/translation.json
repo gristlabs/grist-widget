@@ -30,6 +30,8 @@
   "Type": "type",
   "event category and style": "Event category and style",
   "Highlight": "Highlight",
-  "highlight event with yellow background": "Highlight event with yellow background"
+  "highlight event with yellow background": "Highlight event with yellow background",
+  "Color": "Color",
+  "event background color": "Event background color"
 
 }

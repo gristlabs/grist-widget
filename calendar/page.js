@@ -503,6 +503,14 @@ function getGristOptions() {
       type: "Bool",
       description: t("highlight event with yellow background"),
       strictType: true
+    },
+    {
+      name: "color",
+      title: t("Color"),
+      optional: true,
+      type: "Text,Any",
+      description: t("event background color"),
+      allowMultiple: false
     }
   ];
 }
@@ -753,7 +761,12 @@ function buildCalendarEventObject(record, colTypes, colOptions) {
   if (type?.choiceOptions?.[selected]?.fontStrikethrough) {
     textDecoration = textDecoration === 'underline' ? 'line-through underline' : 'line-through';
   }
-  // Apply yellow highlight if the highlight column is truthy.
+  // Apply explicit color, overrides type colors.
+  if (record.color && typeof record.color === 'string') {
+    raw.backgroundColor = record.color;
+    delete raw.color; // fall back to theme text color for legibility
+  }
+  // Apply yellow highlight if the highlight column is truthy — highest priority, overrides color.
   if (record.highlight) {
     raw.backgroundColor = '#fff9c4';
     raw.color = '#000000';
