@@ -19,6 +19,8 @@ window.gristCalendar = {
 
 let TZDate = null;
 
+let isInitialLoad = true;
+
 function getLanguage() {
   if (this._lang) {
     return this._lang;
@@ -556,6 +558,11 @@ async function translatePage() {
 function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
   if (mappedRecord && calendarHandler) {
+    if (isInitialLoad) {
+      isInitialLoad = false;
+      calendarHandler.calendarToday();
+      return;
+    }
     calendarHandler.selectRecord(mappedRecord);
   }
 }
@@ -576,6 +583,7 @@ function onGristSettingsChanged(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
+
 };
 
 function changeCalendarView(view) {
