@@ -15,6 +15,7 @@ const Name = "Name";
 // Required
 const Longitude = "Longitude";
 // Required
+const GeoJSON = "GeoJSON";
 const Latitude = "Latitude";
 // Optional - switch column to trigger geocoding
 const Geocode = 'Geocode';
@@ -146,6 +147,7 @@ async function scan(tableId, records, mappings) {
         // So clear coordinates (as if the record wasn't scanned before)
         record[Longitude] = null;
         record[Latitude] = null;
+        record[GeoJSON] = null;
       }
     }
     // If address is not empty, and coordinates are empty (or were cleared by cache)
@@ -188,29 +190,106 @@ function getInfo(rec) {
     id: rec.id,
     name: parseValue(rec[Name]),
     lng: parseValue(rec[Longitude]),
-    lat: parseValue(rec[Latitude])
+    lat: parseValue(rec[Latitude]),
+    geojson: parseValue(rec[GeoJSON]),
   };
   return result;
 }
 
+// Recursively extract all coordinate points from a GeoJSON geometry
+function extractPointsFromGeoJSON(geojson) {
+  const points = [];
+
+  function extractCoordinates(coords, depth) {
+    if (depth === 0) {
+      // We've reached a coordinate pair [lng, lat]
+      points.push(new L.LatLng(coords[1], coords[0]));
+      return;
+    }
+
+    // Recurse into nested arrays
+    for (let i = 0; i < coords.length; i++) {
+      extractCoordinates(coords[i], depth - 1);
+    }
+  }
+
+  if (!geojson || !geojson.type) {
+    return points;
+  }
+
+  try {
+    const geometry = geojson.type === "Feature" ? geojson.geometry : geojson;
+
+    if (!geometry || !geometry.coordinates) {
+      return points;
+    }
+
+    // Determine nesting depth based on geometry type
+    const depthMap = {
+      Point: 0,
+      LineString: 1,
+      Polygon: 2,
+      MultiPoint: 1,
+      MultiLineString: 2,
+      MultiPolygon: 3,
+    };
+
+    const depth = depthMap[geometry.type];
+    if (depth !== undefined) {
+      extractCoordinates(geometry.coordinates, depth);
+    } else if (geometry.type === "GeometryCollection") {
+      for (let i = 0; i < geometry.geometries.length; i++) {
+        points.push(...extractPointsFromGeoJSON(geometry.geometries[i]));
+      }
+    }
+  } catch (e) {
+    console.error("Error extracting points from GeoJSON:", e);
+  }
+
+  return points;
+}
+
 // Function to clear last added markers. Used to clear the map when new record is selected.
 let clearMarkers = () => {};
+let clearGeoJSONLayers = () => {};
 
 let markers = [];
+let geoJSONLayers = {};
+let geoJSONGroup = null;
 
-function updateMap(data) {
+function updateMap(data, mappings) {
   data = data || selectedRecords;
   selectedRecords = data;
   if (!data || data.length === 0) {
     showProblem("No data found yet");
     return;
   }
-  if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns"+
-    " in the Creator Panel.");
-    return;
-  }
 
+  // Determine if we're in GeoJSON mode
+  const isGeoJSONMode = mappings && GeoJSON in mappings && mappings[GeoJSON];
+
+  // Check for mixed column usage and show warning
+  if (isGeoJSONMode) {
+    const hasCoordinateColumns = data.some(rec => 
+      (Latitude in rec && rec[Latitude] != null) ||
+      (Longitude in rec && rec[Longitude] != null) ||
+      (Geocode in rec && rec[Geocode] != null)
+    );
+    if (hasCoordinateColumns) {
+      const warningMsg =
+        "GeoJSON column detected - ignoring Latitude, Longitude, and Geocode columns";
+      console.warn(warningMsg);
+      showProblem(warningMsg + ". GeoJSON takes precedence.");
+    }
+  } else {
+    if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
+      showProblem(
+        "Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns" +
+          " in the Creator Panel.",
+      );
+      return;
+    }
+  }
 
   // Map tile source:
   //    https://leaflet-extras.github.io/leaflet-providers/preview/
@@ -243,53 +322,112 @@ function updateMap(data) {
 
   const points = []; //L.LatLng[], used for zooming to bounds of all markers
 
-  popups = {}; // Map: {[rowid]: L.marker}
-  // Make this before markerClusterGroup so iconCreateFunction
-  // can fetch the currently selected marker from popups by function closure
+  popups = {}; // Map: {[rowid]: L.marker or L.geoJSON layer}
+  geoJSONLayers = {};
 
-  markers = L.markerClusterGroup({
-    disableClusteringAtZoom: 18,
-    //If markers are very close together, they'd stay clustered even at max zoom
-    //This disables that behavior explicitly for max zoom (18)
-    maxClusterRadius: 30, //px, default 80
-    // default behavior clusters too aggressively. It's nice to see individual markers
-    showCoverageOnHover: true,
+  if (isGeoJSONMode) {
+    // GeoJSON mode
+    geoJSONGroup = L.featureGroup();
 
-    clusterPane: 'clusters', //lets us specify z-index, so cluster icons can be on top
-    iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
-  });
+    for (const rec of data) {
+      const { id, name, geojson } = getInfo(rec);
 
-  markers.on('click', (e) => {
-    const id = e.layer.options.id;
-    selectMaker(id);
-  });
+      if (!geojson) {
+        continue;
+      }
 
-  for (const rec of data) {
-    const {id, name, lng, lat} = getInfo(rec);
-    // If the record is in the middle of geocoding, skip it.
-    if (String(lng) === '...') { continue; }
-    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
-      // Stuff at 0,0 usually indicates bad imports/geocoding.
-      continue;
+      let parsedGeoJSON;
+      try {
+        parsedGeoJSON =
+          typeof geojson === "string" ? JSON.parse(geojson) : geojson;
+      } catch (e) {
+        console.error("Invalid GeoJSON for row", id, ":", e);
+        continue;
+      }
+
+      // Extract points for bounds
+      points.push(...extractPointsFromGeoJSON(parsedGeoJSON));
+
+      // Create GeoJSON layer
+      const layer = L.geoJSON(parsedGeoJSON, {
+        style: {
+          opacity: id == selectedRowId ? 0.6 : 0.3,
+          fillOpacity: id == selectedRowId ? 0.6 : 0.3,
+        },
+        pointToLayer: function (feature, latlng) {
+          return L.marker(latlng, {
+            icon: id == selectedRowId ? selectedIcon : defaultIcon,
+            pane: id == selectedRowId ? "selectedMarker" : "otherMarkers",
+          });
+        },
+        onEachFeature: function (feature, layer) {
+          layer.bindPopup(name);
+          layer.on("click", () => {
+            selectGeoJSONFeature(id);
+          });
+        },
+      });
+
+      geoJSONGroup.addLayer(layer);
+      geoJSONLayers[id] = layer;
+      popups[id] = layer;
     }
-    const pt = new L.LatLng(lat, lng);
-    points.push(pt);
 
-    const marker = L.marker(pt, {
-      title: name,
-      id: id,
-      icon: (id == selectedRowId) ?  selectedIcon    :  defaultIcon,
-      pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
+    map.addLayer(geoJSONGroup);
+    clearGeoJSONLayers = () => map.removeLayer(geoJSONGroup);
+  } else {
+    // Coordinates mode (original behavior)
+    // Make this before markerClusterGroup so iconCreateFunction
+    // can fetch the currently selected marker from popups by function closure
+
+    markers = L.markerClusterGroup({
+      disableClusteringAtZoom: 18,
+      //If markers are very close together, they'd stay clustered even at max zoom
+      //This disables that behavior explicitly for max zoom (18)
+      maxClusterRadius: 30, //px, default 80
+      // default behavior clusters too aggressively. It's nice to see individual markers
+      showCoverageOnHover: true,
+
+      clusterPane: "clusters", //lets us specify z-index, so cluster icons can be on top
+      iconCreateFunction: selectedRowClusterIconFactory(
+        () => popups[selectedRowId],
+      ),
     });
 
-    marker.bindPopup(name);
-    markers.addLayer(marker);
+    markers.on("click", (e) => {
+      const id = e.layer.options.id;
+      selectMaker(id);
+    });
 
-    popups[id] = marker;
+    for (const rec of data) {
+      const { id, name, lng, lat } = getInfo(rec);
+      // If the record is in the middle of geocoding, skip it.
+      if (String(lng) === "...") {
+        continue;
+      }
+      if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
+        // Stuff at 0,0 usually indicates bad imports/geocoding.
+        continue;
+      }
+      const pt = new L.LatLng(lat, lng);
+      points.push(pt);
+
+      const marker = L.marker(pt, {
+        title: name,
+        id: id,
+        icon: id == selectedRowId ? selectedIcon : defaultIcon,
+        pane: id == selectedRowId ? "selectedMarker" : "otherMarkers",
+      });
+
+      marker.bindPopup(name);
+      markers.addLayer(marker);
+
+      popups[id] = marker;
+    }
+    map.addLayer(markers);
+
+    clearMarkers = () => map.removeLayer(markers);
   }
-  map.addLayer(markers);
-
-  clearMarkers = () => map.removeLayer(markers);
 
   try {
     map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
@@ -300,9 +438,17 @@ function updateMap(data) {
     const rowId = selectedRowId;
 
     if (rowId && popups[rowId]) {
-      var marker = popups[rowId];
-      if (!marker._icon) { markers.zoomToShowLayer(marker); }
-      marker.openPopup();
+      const item = popups[rowId];
+      if (isGeoJSONMode) {
+        // For GeoJSON, open popup on the layer
+        item.openPopup();
+      } else {
+        // For markers
+        if (!item._icon) {
+          markers.zoomToShowLayer(item);
+        }
+        item.openPopup();
+      }
     }
   }
 
@@ -316,8 +462,17 @@ function clearPopupMarker() {
   const marker = popups[selectedRowId];
   if (marker) {
     marker.closePopup();
-    marker.setIcon(defaultIcon);
-    marker.pane = 'otherMarkers';
+    if (marker.setIcon) {
+      // It's a marker
+      marker.setIcon(defaultIcon);
+      marker.pane = "otherMarkers";
+    } else {
+      // It's a GeoJSON layer
+      marker.setStyle({
+        opacity: 0.3,
+        fillOpacity: 0.3,
+      });
+    }
   }
 }
 
@@ -347,6 +502,45 @@ function selectMaker(id) {
    return marker;
 }
 
+function selectGeoJSONFeature(id) {
+  // Reset opacity for previously selected feature
+  const previouslyClicked = geoJSONLayers[selectedRowId];
+  if (previouslyClicked) {
+    previouslyClicked.setStyle({
+      opacity: 0.3,
+      fillOpacity: 0.3,
+    });
+    previouslyClicked.eachLayer(function (layer) {
+      if (layer.setIcon) {
+        layer.setIcon(defaultIcon);
+      }
+    });
+  }
+
+  const layer = geoJSONLayers[id];
+  if (!layer) {
+    return null;
+  }
+
+  // Remember the new selected feature
+  selectedRowId = id;
+
+  // Set style for newly selected feature
+  layer.setStyle({
+    opacity: 0.6,
+    fillOpacity: 0.6,
+  });
+  layer.eachLayer(function (l) {
+    if (l.setIcon) {
+      l.setIcon(selectedIcon);
+    }
+  });
+
+  // Update the selected row in Grist
+  grist.setCursorPos?.({ rowId: id }).catch(() => {});
+
+  return layer;
+}
 
 grist.on('message', (e) => {
   if (e.tableId) { selectedTableId = e.tableId; }
@@ -362,6 +556,7 @@ function defaultMapping(record, mappings) {
       [Longitude]: Longitude,
       [Name]: Name,
       [Latitude]: Latitude,
+      [GeoJSON]: hasCol(GeoJSON, record) ? GeoJSON : null,
       [Address]: hasCol(Address, record) ? Address : null,
       [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
       [Geocode]: hasCol(Geocode, record) ? Geocode : null,
@@ -370,15 +565,15 @@ function defaultMapping(record, mappings) {
   return mappings;
 }
 
-function selectOnMap(rec) {
+function selectOnMap(rec, mappings) {
   // If this is already selected row, do nothing (to avoid flickering)
   if (selectedRowId === rec.id) { return; }
 
   selectedRowId = rec.id;
-  if (mode === 'single') {
-    updateMap([rec]);
+  if (mode === "single") {
+    updateMap([rec], mappings);
   } else {
-    updateMap();
+    updateMap(null, mappings);
   }
 }
 
@@ -388,13 +583,24 @@ grist.onRecord((record, mappings) => {
     // This is done to support existing widgets which where configured by
     // renaming column names.
     lastRecord = grist.mapColumnNames(record) || record;
-    selectOnMap(lastRecord);
+    selectOnMap(lastRecord, mappings);
     scanOnNeed(defaultMapping(record, mappings));
   } else {
-    const marker = selectMaker(record.id);
-    if (!marker) { return; }
-    markers.zoomToShowLayer(marker);
-    marker.openPopup();
+    const isGeoJSONMode = mappings && GeoJSON in mappings && mappings[GeoJSON];
+    if (isGeoJSONMode) {
+      const feature = selectGeoJSONFeature(record.id);
+      if (!feature) {
+        return;
+      }
+      feature.openPopup();
+    } else {
+      const marker = selectMaker(record.id);
+      if (!marker) {
+        return;
+      }
+      markers.zoomToShowLayer(marker);
+      marker.openPopup();
+    }
   }
 });
 grist.onRecords((data, mappings) => {
@@ -403,9 +609,9 @@ grist.onRecords((data, mappings) => {
     // If mappings are not done, we will assume that table has correct columns.
     // This is done to support existing widgets which where configured by
     // renaming column names.
-    updateMap(lastRecords);
+    updateMap(lastRecords, mappings);
     if (lastRecord) {
-      selectOnMap(lastRecord);
+      selectOnMap(lastRecord, mappings);
     }
     // We need to mimic the mappings for old widgets
     scanOnNeed(defaultMapping(data[0], mappings));
@@ -415,21 +621,23 @@ grist.onRecords((data, mappings) => {
 grist.onNewRecord(() => {
   if (mode === 'single') {
     clearMarkers();
+    clearGeoJSONLayers();
     clearMarkers = () => {};
+    clearGeoJSONLayers = () => {};
   } else {
     clearPopupMarker();
   }
   selectedRowId = null;
 })
 
-function updateMode() {
-  if (mode === 'single') {
+function updateMode(mappings) {
+  if (mode === "single") {
     if (lastRecord) {
       selectedRowId = lastRecord.id;
-      updateMap([lastRecord]);
+      updateMap([lastRecord], mappings);
     }
   } else {
-    updateMap(lastRecords);
+    updateMap(lastRecords, mappings);
   }
 }
 
@@ -460,11 +668,23 @@ const optional = true;
 grist.ready({
   columns: [
     "Name",
-    { name: "Longitude", type: 'Numeric'} ,
-    { name: "Latitude", type: 'Numeric'},
-    { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
-    { name: "Address", type: 'Text', optional, optional},
-    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
+    { name: "Longitude", type: "Numeric" },
+    { name: "Latitude", type: "Numeric" },
+    {
+      name: "GeoJSON",
+      type: "Text",
+      optional,
+      description:
+        "`geometry` attribute of geojson data. If set, `Longitude` and `Latitude` will not be used.",
+    },
+    { name: "Geocode", type: "Bool", title: "Geocode", optional },
+    { name: "Address", type: "Text", optional },
+    {
+      name: "GeocodedAddress",
+      type: "Text",
+      title: "Geocoded Address",
+      optional,
+    },
   ],
   allowSelectBy: true,
   onEditOptions
