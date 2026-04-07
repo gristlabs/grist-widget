@@ -16,7 +16,7 @@ describe('jupyterlite', function () {
     await grist.forceDismissTips();
     await grist.addNewSection(/Custom/, /Table1/, {dismissTips: true});
     await grist.clickWidgetGallery();
-    await grist.selectCustomWidget('JupyterLite Notebook');
+    await grist.selectCustomWidget(/JupyterLite notebook/i);
     await grist.setCustomWidgetAccess('read table');  // required
 
     // Wait for a blank notebook to load in the widget
