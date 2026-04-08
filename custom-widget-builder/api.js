@@ -15,6 +15,7 @@ function memory(name) {
 // Global state, to keep track of the editor state, and file content.
 const currentJs = memory('js');
 const currentHtml = memory('html');
+const currentCss = memory('css');
 const state = memory('state'); // null, 'installed', 'editor'
 const DEFAULT_HTML = `<html>
 <head>
@@ -46,8 +47,12 @@ grist.onRecord(record => {
 });
 `.trim();
 
+const DEFAULT_CSS = `/* Add your custom CSS here */
+`.trim();
+
 let htmlModel;
 let jsModel;
+let cssModel;
 
 let monacoLoaded = false;
 /** Helper method that loads monaco scripts asynchronously  */
@@ -110,12 +115,16 @@ function buildEditor() {
   }
   htmlModel = monaco.editor.createModel(currentHtml() ?? DEFAULT_HTML, 'html');
   jsModel = monaco.editor.createModel(currentJs() ?? DEFAULT_JS, 'javascript');
+  cssModel = monaco.editor.createModel(currentCss() ?? DEFAULT_CSS, 'css');
 
   jsModel.onDidChangeContent(() => {
     currentJs(jsModel.getValue());
   });
   htmlModel.onDidChangeContent(() => {
     currentHtml(htmlModel.getValue());
+  });
+  cssModel.onDidChangeContent(() => {
+    currentCss(cssModel.getValue());
   });
   // Replace script tag with a div that will be used as a container for monaco editor.
   const container = document.getElementById('container');
@@ -147,8 +156,9 @@ const page_editor = document.getElementById('page_editor');
 const page_help = document.getElementById('page_help');
 const btnTabJs = document.getElementById('tab_js');
 const btnTabHtml = document.getElementById('tab_html');
+const btnTabCss = document.getElementById('tab_css');
 const btnTabHelp = document.getElementById('tab_help');
-const tabs = [btnTabJs, btnTabHtml, btnTabHelp];
+const tabs = [btnTabJs, btnTabHtml, btnTabCss, btnTabHelp];
 function resetTabs() {
   // Remove .selected class from all tabs.
   tabs.forEach(e => e.classList.remove('selected'));
@@ -161,7 +171,7 @@ const btnInstall = document.getElementById('btnInstall');
 const bar = document.getElementById('_bar');
 let wFrame = null;
 
-const bntTabs = [btnTabJs, btnTabHtml, btnTabHelp];
+const bntTabs = [btnTabJs, btnTabHtml, btnTabCss, btnTabHelp];
 const pages = [page_editor, page_help, page_widget];
 
 /** Clears element's innerHTML */
@@ -219,21 +229,36 @@ function changeTab(lang) {
   cleanUi();
   page_editor.style.display = 'block';
   page_help.style.display = 'none';
-  editor.setModel(lang === 'js' ? jsModel : htmlModel);
+  if (lang === 'js') {
+    editor.setModel(jsModel);
+    selectTab(btnTabJs);
+  } else if (lang === 'html') {
+    editor.setModel(htmlModel);
+    selectTab(btnTabHtml);
+  } else if (lang === 'css') {
+    editor.setModel(cssModel);
+    selectTab(btnTabCss);
+  }
   editor.getModel().updateOptions({tabSize: 2});
-  selectTab(lang == 'js' ? btnTabJs : btnTabHtml);
 }
 
 
 
-function installWidget(code, html) {
+function installWidget(code, html, css) {
   state('installed');
   code = code ?? jsModel.getValue();
   html = html ?? htmlModel.getValue();
+  css = css ?? cssModel.getValue();
   createFrame();
   const content = wFrame.contentWindow;
   content.document.open();
   content.document.write(html);
+  
+  // Inject CSS if provided
+  if (css && css.trim()) {
+    content.document.write(`<style>${css}</style>`);
+  }
+  
   if (code.trim()) {
     if (!html.includes('grist-plugin-api.js')) {
       content.document.write(
@@ -278,6 +303,7 @@ async function showEditor() {
   buildEditor();
   jsModel.setValue(currentJs() ?? DEFAULT_JS);
   htmlModel.setValue(currentHtml() ?? DEFAULT_HTML);
+  cssModel.setValue(currentCss() ?? DEFAULT_CSS);
 
   page_widget.style.display = 'none';
   page_editor.style.display = 'block';
@@ -301,11 +327,12 @@ grist.onOptions(async options => {
   if (!options) {
     if (state() === 'installed') {
       // If we are already installed, check that we don't have any code shown.
-      if (currentJs() || currentHtml()) {
+      if (currentJs() || currentHtml() || currentCss()) {
         // If we have, remove it and install default widget.
         currentHtml(null);
         currentJs(null);
-        installWidget(DEFAULT_JS, DEFAULT_HTML);
+        currentCss(null);
+        installWidget(DEFAULT_JS, DEFAULT_HTML, DEFAULT_CSS);
       } else {
         // Don't need to do anything.
       }
@@ -313,21 +340,24 @@ grist.onOptions(async options => {
       // We are not installed, so install the default widget.
       currentHtml(null);
       currentJs(null);
+      currentCss(null);
       state('installed');
-      installWidget(DEFAULT_JS, DEFAULT_HTML);
+      installWidget(DEFAULT_JS, DEFAULT_HTML, DEFAULT_CSS);
     }
   } else {
     // Install the widget from options, if we don't have any code in memory.
     const newJs = options?._js ?? null;
     const newHtml = options?._html ?? null;
+    const newCss = options?._css ?? null;
 
-    if (currentJs() !== newJs || currentHtml() !== newHtml) {
+    if (currentJs() !== newJs || currentHtml() !== newHtml || currentCss() !== newCss) {
       // If we have code in memory, and it is different from the one in options,
       // we need to update it.
       currentJs(newJs);
       currentHtml(newHtml);
+      currentCss(newCss);
       state('installed');
-      installWidget(currentJs() ?? DEFAULT_JS, currentHtml() ?? DEFAULT_HTML);
+      installWidget(currentJs() ?? DEFAULT_JS, currentHtml() ?? DEFAULT_HTML, currentCss() ?? DEFAULT_CSS);
     }
   }
 });
@@ -336,6 +366,7 @@ function btnInstall_onClick() {
   const options = {
     _js: jsModel.getValue(),
     _html: htmlModel.getValue(),
+    _css: cssModel.getValue(),
   };
 
   state('installed');
@@ -347,6 +378,7 @@ function btnInstall_onClick() {
     // Copy file contents into memory.
     currentJs(options?._js);
     currentHtml(options?._html);
+    currentCss(options?._css);
   }
 
   // Hide editor.
@@ -356,12 +388,13 @@ function btnInstall_onClick() {
   bar.style.display = 'none';
 
   // Now install this widget (create frame rewire etc).
-  installWidget(currentJs(), currentHtml());
+  installWidget(currentJs(), currentHtml(), currentCss());
 }
 
 function bntReset_onClick() {
   htmlModel.setValue(DEFAULT_HTML);
   jsModel.setValue(DEFAULT_JS);
+  cssModel.setValue(DEFAULT_CSS);
 }
 
 // We are here very careful to not call configure endpoint, as it will reload the editor
