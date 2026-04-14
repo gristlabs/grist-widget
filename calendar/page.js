@@ -310,9 +310,6 @@ class CalendarHandler {
     if (this._selectedRecordId) {
       this._clearHighlightEvent(this._selectedRecordId);
     }
-    const [startType] = await colTypesFetcher.getColTypes();
-    const startDate = getAdjustedDate(record.startDate, startType);
-    this.calendar.setDate(startDate);
     this._selectedRecordId = record.id;
     updateUIAfterNavigation();
 
@@ -576,6 +573,7 @@ function onGristSettingsChanged(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
+  calendarHandler.calendarToday();
 };
 
 function changeCalendarView(view) {
