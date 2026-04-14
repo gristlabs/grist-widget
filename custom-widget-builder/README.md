@@ -7,7 +7,7 @@ This widget enables you to create other custom widgets for Grist documents, righ
 To begin developing your custom widget, follow these steps:
 
 1. **Open the Widget Editor:** Click on the "Open configuration" button in the creator panel or clear the saved filter settings for the relevant tab.
-2. **Edit Code:** Write your widget's logic in the JavaScript tab and structure its appearance in the HTML tab.
+2. **Edit Code:** Write your widget's structure in the HTML tab, add your styles in the CSS tab, and implement your logic in the JavaScript tab.
 3. **Preview and Install:** Click the "Preview" button to see your widget in action. This will save the widget's code to the document's metadata.
 4. **Save Configuration:** Press the "Save" button to persist the widget settings to ensure they remain active after refreshing the page.
 
@@ -20,15 +20,16 @@ The widget's configuration data is stored in the widget's metadata using the fol
 ```javascript
 const options = {
     _installed: true,
-    _js: `...your JavaScript code...`,
     _html: `...your HTML code...`,
+    _css: `...your CSS code...`,
+    _js: `...your JavaScript code...`,
 };
 grist.setOptions(options);
 ```
 
-In the final widget, the <code>_html</code> field is inserted as is into an iframe, and the <code>_js</code> field is embedded within a script tag afterwards.
+In the final widget, the <code>_html</code> field is inserted as is into an iframe, the <code>_css</code> is injected in a style tag, and the <code>_js</code> field is embedded within a script tag afterwards.
 
-This widget in itself doesn't require any access to documents metadata, but it can be used to create widgets that do. Storing <code>Javascript</code> and <code>HTML</code> code in the metadata stores it only temporarily. User needs to save it in order to persist the changes (just like for regular <code>filters</code>).
+This widget in itself doesn't require any access to documents metadata, but it can be used to create widgets that do. Storing <code>Javascript</code>, <code>CSS</code>, and <code>HTML</code> code in the metadata stores it only temporarily. User needs to save it in order to persist the changes (just like for regular <code>filters</code>).
 
 Any contribution is welcome, the big thing missing is dark mode support.
         
