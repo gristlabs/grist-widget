@@ -12,4 +12,7 @@
 [submodule "vibe-view"]
 	path = vibe-view
 	url = https://github.com/gristlabs/vibe-view-widget
-  branch = main
+	branch = main
+[submodule "form-builder"]
+	path = form-builder
+	url = https://github.com/isaytoo/grist-form-builder-widget.git
