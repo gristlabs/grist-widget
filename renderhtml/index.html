@@ -19,21 +19,80 @@
           padding: 20px;
           text-align: center;
       }
+      #link-frame {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border: none;
+      }
     </style>
   </head>
   <body>
     <div id="error"></div>
     <div id="rendered"></div>
+    <iframe id="link-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
     <script>
       var params = new URLSearchParams(window.location.search)
       var ADD_TAGS = params.get('tags')?.split(",");
       var ADD_ATTR = params.get('attr')?.split(",");
+
+      var linkFrame = document.getElementById('link-frame');
+
+      // ancestorOrigins and document.referrer are both readable cross-origin
+      // so they work whether the widget and Grist share an origin or not.
+      function getGristOrigin() {
+        try {
+          if (window.location.ancestorOrigins?.length > 0) {
+            return new URL(window.location.ancestorOrigins[0]).origin;
+          }
+          if (document.referrer) {
+            return new URL(document.referrer).origin;
+          }
+        } catch (_) {}
+        return null;
+      }
+
+      function isGristLink(href) {
+        try {
+          const gristOrigin = getGristOrigin();
+          return gristOrigin !== null && new URL(href).origin === gristOrigin;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function showLinkFrame(url) {
+        linkFrame.src = url;
+        linkFrame.style.display = 'block';
+      }
+
+      function hideLinkFrame() {
+        linkFrame.style.display = 'none';
+        linkFrame.src = 'about:blank';
+      }
+
       function render(elemId, content) {
         var el = document.getElementById(elemId);
         if (!content) {
           el.style.display = 'none';
         } else {
           el.innerHTML = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR, FORCE_BODY: true});
+          // Intercept link clicks to force this behavior:
+          // - internal grist links redirect you in the main window
+          // - external links load in the inner iframe (keeps the onRecord listener alive).
+          el.querySelectorAll('a[href]').forEach(a => {
+            a.addEventListener('click', function(e) {
+              e.preventDefault();
+              if (isGristLink(a.href)) {
+                window.top.location.href = a.href;
+              } else {
+                showLinkFrame(a.href);
+              }
+            });
+          });
           // If we are allowing scripts, let them execute, which doesn't
           // normally happen when adding script elements using innerHTML.
           if (ADD_TAGS?.includes("script")) {
@@ -60,6 +119,7 @@
         return columns.length === 1 ? record[columns[0]] : undefined;
       }
       grist.onNewRecord(() => {
+        hideLinkFrame();
         render("error", null);
         render("rendered", "");
         lastData = "";
@@ -77,6 +137,7 @@
         } else {
           render("error", null);
           if (lastId !== record.id || lastData !== data) {
+            hideLinkFrame();
             render("rendered", String(data || ''));
           }
           lastId = record.id;
