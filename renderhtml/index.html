@@ -41,15 +41,12 @@
 
       var linkFrame = document.getElementById('link-frame');
 
-      // ancestorOrigins and document.referrer are both readable cross-origin
-      // so they work whether the widget and Grist share an origin or not.
+      // ancestorOrigins is readable cross-origin, so it works whether the widget
+      // and Grist share an origin or not.
       function getGristOrigin() {
         try {
           if (window.location.ancestorOrigins?.length > 0) {
             return new URL(window.location.ancestorOrigins[0]).origin;
-          }
-          if (document.referrer) {
-            return new URL(document.referrer).origin;
           }
         } catch (_) {}
         return null;
