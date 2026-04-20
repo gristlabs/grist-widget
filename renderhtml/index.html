@@ -6,7 +6,7 @@
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@2.2.9/dist/purify.min.js"></script>
     <style>
-      html, body, textarea {
+      html, body {
           width: 100%;
           height: 100vh;
           padding: 0;
@@ -19,11 +19,8 @@
           padding: 20px;
           text-align: center;
       }
-      #link-frame {
+      #rendered {
           display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
           width: 100%;
           height: 100%;
           border: none;
@@ -32,21 +29,25 @@
   </head>
   <body>
     <div id="error"></div>
-    <div id="rendered"></div>
-    <iframe id="link-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+    <iframe id="rendered" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation"></iframe>
     <script>
       var params = new URLSearchParams(window.location.search)
       var ADD_TAGS = params.get('tags')?.split(",");
       var ADD_ATTR = params.get('attr')?.split(",");
 
-      var linkFrame = document.getElementById('link-frame');
+      var renderedFrame = document.getElementById('rendered');
 
-      // ancestorOrigins is readable cross-origin, so it works whether the widget
-      // and Grist share an origin or not.
+      // ancestorOrigins is readable cross-origin, so it works
+      // whether the widgetand Grist share an origin or not.
+      // document.referrer is used as a fallback for browsers 
+      // that don't support ancestorOrigins.
       function getGristOrigin() {
         try {
           if (window.location.ancestorOrigins?.length > 0) {
             return new URL(window.location.ancestorOrigins[0]).origin;
+          }
+          if (document.referrer) {
+            return new URL(document.referrer).origin;
           }
         } catch (_) {}
         return null;
@@ -61,14 +62,21 @@
         }
       }
 
-      function showLinkFrame(url) {
-        linkFrame.src = url;
-        linkFrame.style.display = 'block';
-      }
-
-      function hideLinkFrame() {
-        linkFrame.style.display = 'none';
-        linkFrame.src = 'about:blank';
+      // Add target="_top" to internal Grist links so they navigate the main window.
+      // External links are left as-is: they open in the iframe, and when the cell
+      // changes the srcdoc is updated, resetting the iframe automatically.
+      // If the grist origin can't be detected, all links get target="_blank" as a
+      // safe fallback to avoid opening a nested grist inside the iframe.
+      function processLinks(el) {
+        const gristOrigin = getGristOrigin();
+        el.querySelectorAll('a[href]').forEach(a => {
+          if (gristOrigin === null) {
+            a.setAttribute('target', '_blank');
+            a.setAttribute('rel', 'noopener noreferrer');
+          } else if (isGristLink(a.href)) {
+            a.setAttribute('target', '_top');
+          }
+        });
       }
 
       function render(elemId, content) {
@@ -76,34 +84,19 @@
         if (!content) {
           el.style.display = 'none';
         } else {
-          el.innerHTML = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR, FORCE_BODY: true});
-          // Intercept link clicks to force this behavior:
-          // - internal grist links redirect you in the main window
-          // - external links load in the inner iframe (keeps the onRecord listener alive).
-          el.querySelectorAll('a[href]').forEach(a => {
-            a.addEventListener('click', function(e) {
-              e.preventDefault();
-              if (isGristLink(a.href)) {
-                window.top.location.href = a.href;
-              } else {
-                showLinkFrame(a.href);
-              }
-            });
-          });
-          // If we are allowing scripts, let them execute, which doesn't
-          // normally happen when adding script elements using innerHTML.
-          if (ADD_TAGS?.includes("script")) {
-            Array.from(el.querySelectorAll("script")).forEach(oldScript => {
-              const newScript = document.createElement("script");
-              Array.from(oldScript.attributes)
-                .forEach(attr => newScript.setAttribute(attr.name, attr.value));
-              newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-              oldScript.parentNode.replaceChild(newScript, oldScript);
-            });
-          }
           el.style.display = 'block';
+          if (elemId === 'rendered') {
+            const sanitized = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR, FORCE_BODY: true});
+            const tmp = document.createElement('div');
+            tmp.innerHTML = sanitized;
+            processLinks(tmp);
+            renderedFrame.srcdoc = tmp.innerHTML;
+          } else {
+            el.innerHTML = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR, FORCE_BODY: true});
+          }
         }
       }
+
       grist.ready({
         columns:["Html"],
         requiredAccess: 'read table'
@@ -116,7 +109,6 @@
         return columns.length === 1 ? record[columns[0]] : undefined;
       }
       grist.onNewRecord(() => {
-        hideLinkFrame();
         render("error", null);
         render("rendered", "");
         lastData = "";
@@ -134,7 +126,6 @@
         } else {
           render("error", null);
           if (lastId !== record.id || lastData !== data) {
-            hideLinkFrame();
             render("rendered", String(data || ''));
           }
           lastId = record.id;
