@@ -1,0 +1,45 @@
+name: Bump Version and Publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bump_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Get desired version
+        id: get_version
+        run: echo "version=$(node buildtools/get_version.js --update-cache)" >> "$GITHUB_OUTPUT"
+
+      - name: Get current version
+        id: current_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version if changed
+        if: steps.get_version.outputs.version != steps.current_version.outputs.version
+        run: |
+          npm version "${{ steps.get_version.outputs.version }}" --no-git-tag-version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json buildtools/version-cache.json
+          git commit -m "Bump version to ${{ steps.get_version.outputs.version }}"
+          git push
+
+      - name: Publish to npm
+        if: steps.get_version.outputs.version != steps.current_version.outputs.version
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
