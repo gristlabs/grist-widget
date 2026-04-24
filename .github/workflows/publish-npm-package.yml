@@ -48,6 +48,7 @@ jobs:
 
       - name: Publish to npm
         if: steps.get_version.outputs.version != steps.current_version.outputs.version
-        run: npm publish --access public
+        run: npm publish --access public $DRY_RUN
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DRY_RUN: ${{ github.ref_name != 'master' && '--dry-run' || '' }}
