@@ -38,7 +38,7 @@ const BUMP_TYPES = [null, 'patch', 'minor', 'major'];
 
 function parseSemver(str) {
   const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(str || ''));
-  if (!m) { return null; }
+  if (!m) { throw new Error(`Unparseable semver version: "${str}"`); }
   return {major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3])};
 }
 
@@ -49,7 +49,6 @@ function formatSemver({major, minor, patch}) {
 function determineBumpType(oldVer, newVer) {
   const oldSv = parseSemver(oldVer);
   const newSv = parseSemver(newVer);
-  if (!oldSv || !newSv) { return BUMP_MAJOR; }
   if (newSv.major !== oldSv.major) { return BUMP_MAJOR; }
   if (newSv.minor !== oldSv.minor) { return BUMP_MINOR; }
   if (newSv.patch !== oldSv.patch) { return BUMP_PATCH; }
@@ -58,7 +57,6 @@ function determineBumpType(oldVer, newVer) {
 
 function applyBump(version, bumpType) {
   const sv = parseSemver(version);
-  if (!sv) { throw new Error(`Unparseable root version: ${version}`); }
   if (bumpType === 'major') {
     return formatSemver({major: sv.major + 1, minor: 0, patch: 0});
   }
