@@ -96,7 +96,11 @@ function main() {
   // Load cache.
   let cache = {};
   if (fs.existsSync(cacheFile)) {
-    try { cache = JSON.parse(fs.readFileSync(cacheFile, 'utf-8')); } catch (e) { cache = {}; }
+    try {
+      cache = JSON.parse(fs.readFileSync(cacheFile, 'utf-8'));
+    } catch (e) {
+      throw new Error(`Failed to parse version cache at ${cacheFile}: ${e.message}`);
+    }
   }
 
   // Determine most severe bump.
