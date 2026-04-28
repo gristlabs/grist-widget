@@ -2,7 +2,7 @@
   "name": "@gristlabs/widget-calendar",
   "description": "Widget for visualizing data as an calendar",
   "homePage": "https://github.com/gristlabs/grist-widget",
-  "version": "0.0.1",
+  "version": "0.1.2",
   "grist": [
     {
       "name": "Calendar",
