@@ -83,11 +83,16 @@ jobs:
           ref: ${{ needs.bump_version.outputs.sha }}
           submodules: true
 
-      - name: Use Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 24
           registry-url: https://registry.npmjs.org
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
