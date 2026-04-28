@@ -40,11 +40,17 @@ jobs:
         # On re-run after a publish failure, the bump job becomes a no-op (cache
         # already up to date, versions match) while the publish job still detects
         # the NPM discrepancy and retries.
-        run: echo "version=$(node buildtools/get_version.js --update-cache)" >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(node buildtools/get_version.js --update-cache)
+          echo "Desired version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Get current version
         id: current_version
-        run: echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(node -p 'require("./package.json").version')
+          echo "Current version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Bump version if changed
         if: steps.get_version.outputs.version != steps.current_version.outputs.version
@@ -62,7 +68,10 @@ jobs:
         id: get_sha
         # Captures HEAD after the bump commit (if any) so the publish job
         # checks out the exact tree with the updated package.json.
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        run: |
+          SHA=$(git rev-parse HEAD)
+          echo "Post-bump SHA: $SHA"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
   publish:
     needs: bump_version
@@ -85,14 +94,20 @@ jobs:
 
       - name: Get local version
         id: local_version
-        run: echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(node -p 'require("./package.json").version')
+          echo "Local version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Get NPM version
         id: npm_version
         # Returns 0.0.0 if the package is not yet on NPM (first publish) or if
         # the registry is unreachable. In the latter case a publish attempt will
         # also fail, so this is harmless.
-        run: echo "version=$(npm view @gristlabs/grist-widget version 2>/dev/null || echo '0.0.0')" >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(npm view @gristlabs/grist-widget version 2>/dev/null || echo '0.0.0')
+          echo "NPM version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Publish to npm
         if: >-
