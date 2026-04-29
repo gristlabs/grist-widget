@@ -17,33 +17,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  bump_version:
+  bump_and_publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
-    outputs:
-      sha: ${{ steps.get_sha.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Use Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
       - name: Get desired version
         id: get_version
-        # --update-cache updates buildtools/version-cache.json as a side effect.
-        # This runs regardless of whether publishing later succeeds, but is safe
-        # because the publish job independently compares local vs NPM versions.
-        # On re-run after a publish failure, the bump job becomes a no-op (cache
-        # already up to date, versions match) while the publish job still detects
-        # the NPM discrepancy and retries.
         run: |
           VERSION=$(node buildtools/get_version.js --update-cache)
           echo "Desired version: $VERSION"
@@ -69,46 +68,6 @@ jobs:
         env:
           VERSION: ${{ steps.get_version.outputs.version }}
 
-      - name: Get post-bump commit SHA
-        id: get_sha
-        # Captures HEAD after the bump commit (if any) so the publish job
-        # checks out the exact tree with the updated package.json.
-        run: |
-          SHA=$(git rev-parse HEAD)
-          echo "Post-bump SHA: $SHA"
-          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-
-  publish:
-    needs: bump_version
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.bump_version.outputs.sha }}
-          submodules: true
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.14'
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Get local version
-        id: local_version
-        run: |
-          VERSION=$(node -p 'require("./package.json").version')
-          echo "Local version: $VERSION"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
       - name: Get NPM version
         id: npm_version
         # Returns 0.0.0 if the package is not yet on NPM (first publish) or if
@@ -121,8 +80,8 @@ jobs:
 
       - name: Publish to npm
         if: >-
-          steps.local_version.outputs.version != steps.npm_version.outputs.version
-          && steps.local_version.outputs.version != '0.0.0'
+          steps.get_version.outputs.version != steps.npm_version.outputs.version
+          && steps.get_version.outputs.version != '0.0.0'
         run: npm publish --access public $DRY_RUN
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
