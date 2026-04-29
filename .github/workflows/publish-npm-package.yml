@@ -55,6 +55,10 @@ jobs:
           echo "Current version: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Check packing is successful at this commit
+        if: steps.get_version.outputs.version != steps.current_version.outputs.version
+        run: npm run prepack
+
       - name: Bump version if changed
         if: steps.get_version.outputs.version != steps.current_version.outputs.version
         run: |
