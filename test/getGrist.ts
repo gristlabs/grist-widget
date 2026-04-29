@@ -65,6 +65,7 @@ export class GristTestServer {
     const cmd = `docker run -d --rm --name ${gristContainerName}` +
       ' --add-host=host.docker.internal:host-gateway' +
       ` -e PORT=${gristPort} -p ${gristPort}:${gristPort}` +
+      ` -e GRIST_IN_SERVICE=1` +
       ` -e GRIST_SINGLE_ORG=${serverSettings.site}` +
       ` -e GRIST_WIDGET_LIST_URL=http://host.docker.internal:${contentPort}/manifest.json` +
       ` ${gristImage}`;
@@ -144,7 +145,7 @@ export class GristUtils extends GristWebDriverUtils {
       }
       try {
         const url = this.url;
-        const resp = await fetch(url + '/status');
+        const resp = await fetch(url + '/status?ready=1');
         if (resp.status === 200) {
           break;
         }
