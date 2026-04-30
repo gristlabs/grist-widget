@@ -10,7 +10,7 @@ on:
       skip_tag:
         description: 'Skips adding a git tag for the version'
         type: boolean
-        default: true
+        default: false
 
 concurrency:
   group: publish-npm
