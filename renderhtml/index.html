@@ -29,7 +29,7 @@
   </head>
   <body>
     <div id="error"></div>
-    <iframe id="rendered" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation"></iframe>
+    <iframe id="rendered" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
     <script>
       var params = new URLSearchParams(window.location.search)
       var ADD_TAGS = params.get('tags')?.split(",");
@@ -37,45 +37,11 @@
 
       var renderedFrame = document.getElementById('rendered');
 
-      // ancestorOrigins is readable cross-origin, so it works
-      // whether the widgetand Grist share an origin or not.
-      // document.referrer is used as a fallback for browsers 
-      // that don't support ancestorOrigins.
-      function getGristOrigin() {
-        try {
-          if (window.location.ancestorOrigins?.length > 0) {
-            return new URL(window.location.ancestorOrigins[0]).origin;
-          }
-          if (document.referrer) {
-            return new URL(document.referrer).origin;
-          }
-        } catch (_) {}
-        return null;
-      }
-
-      function isGristLink(href) {
-        try {
-          const gristOrigin = getGristOrigin();
-          return gristOrigin !== null && new URL(href).origin === gristOrigin;
-        } catch (_) {
-          return false;
-        }
-      }
-
-      // Add target="_top" to internal Grist links so they navigate the main window.
-      // External links are left as-is: they open in the iframe, and when the cell
-      // changes the srcdoc is updated, resetting the iframe automatically.
-      // If the grist origin can't be detected, all links get target="_blank" as a
-      // safe fallback to avoid opening a nested grist inside the iframe.
+      // Force all links to open in a new browser tab preventing them from being opened in the iframe.
       function processLinks(el) {
-        const gristOrigin = getGristOrigin();
         el.querySelectorAll('a[href]').forEach(a => {
-          if (gristOrigin === null) {
-            a.setAttribute('target', '_blank');
-            a.setAttribute('rel', 'noopener noreferrer');
-          } else if (isGristLink(a.href)) {
-            a.setAttribute('target', '_top');
-          }
+          a.setAttribute('target', '_blank');
+          a.setAttribute('rel', 'noopener noreferrer');
         });
       }
 
