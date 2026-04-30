@@ -99,7 +99,8 @@ class Bundler {
   // unexpected.
   async wait() {
     let foundServer = false;
-    while (this.localServer.pid && !this.localServer.exitCode) {
+    // Prevents an infinite hang if the server fails to start or exits for any reason
+    while (this.localServer.pid && !this.localServer.signalCode && !this.localServer.exitCode) {
       console.log("Waiting for asset server...", this.assetUrl);
       try {
         const resp = await fetch(this.assetUrl);
