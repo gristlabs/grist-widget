@@ -1,6 +1,6 @@
 {
   "name": "@gristlabs/grist-widget",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A repository of grist custom widgets that have no back-end requirements.",
   "scripts": {
     "build": "yarn install --frozen-lockfile && git submodule update --init --recursive && tsc --build && node ./buildtools/publish.js manifest.json",
