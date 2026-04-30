@@ -87,6 +87,7 @@ class Bundler {
       '-m', 'http.server', this.port,
     ], {
       cwd: process.cwd(),
+      stdio: 'inherit',
     });
   }
 
@@ -97,20 +98,24 @@ class Bundler {
   // subdirectories can be crawled correctly) but might be a little
   // unexpected.
   async wait() {
-    let ct = 0;
-    while (true) {
+    let foundServer = false;
+    // Prevents an infinite hang if the server fails to start or exits for any reason
+    while (this.localServer.pid && !this.localServer.signalCode && !this.localServer.exitCode) {
       console.log("Waiting for asset server...", this.assetUrl);
       try {
         const resp = await fetch(this.assetUrl);
         if (resp.status === 200) {
           console.log("Found asset server", this.assetUrl);
+          foundServer = true;
           break;
         }
       } catch (e) {
         // we expect fetch failures initially.
       }
       await new Promise(resolve => setTimeout(resolve, 250));
-      ct++;
+    }
+    if (!foundServer) {
+      throw new Error("Failed to find asset server - server may have terminated");
     }
   }
 

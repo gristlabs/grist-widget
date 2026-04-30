@@ -1,0 +1,92 @@
+name: Bump Version and Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Perform a dry run (skip actual publish)'
+        type: boolean
+        default: true
+      skip_tag:
+        description: 'Skips adding a git tag for the version'
+        type: boolean
+        default: false
+
+concurrency:
+  group: publish-npm
+  cancel-in-progress: false
+
+jobs:
+  bump_and_publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Get desired version
+        id: get_version
+        run: |
+          VERSION=$(node buildtools/get_version.js --update-cache)
+          echo "Desired version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Get current version
+        id: current_version
+        run: |
+          VERSION=$(node -p 'require("./package.json").version')
+          echo "Current version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check packing is successful at this commit
+        if: steps.get_version.outputs.version != steps.current_version.outputs.version
+        run: npm run prepack
+
+      - name: Bump version if changed
+        if: steps.get_version.outputs.version != steps.current_version.outputs.version
+        run: |
+          npm version "$VERSION" --no-git-tag-version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json buildtools/version-cache.json
+          git commit -m "Bump version to $VERSION"
+          [ ${{ inputs.skip_tag }} = "false" ] && echo "Tagging $VERSION" && git tag -a "v$VERSION" -m "Grist widget bundle $VERSION"
+          git push --follow-tags
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+
+      - name: Get NPM version
+        id: npm_version
+        # Returns 0.0.0 if the package is not yet on NPM (first publish) or if
+        # the registry is unreachable. In the latter case a publish attempt will
+        # also fail, so this is harmless.
+        run: |
+          VERSION=$(npm view @gristlabs/grist-widget version 2>/dev/null || echo '0.0.0')
+          echo "NPM version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to npm
+        if: >-
+          steps.get_version.outputs.version != steps.npm_version.outputs.version
+          && steps.get_version.outputs.version != '0.0.0'
+        run: npm publish --access public $DRY_RUN
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
