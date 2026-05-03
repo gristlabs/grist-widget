@@ -324,6 +324,7 @@ class CalendarHandler {
 
         // Only scroll into view if the event is not fully on-screen.
         const container = event.closest('.toastui-calendar-time');
+        if (!container) { return; }
         const containerTop = container.scrollTop;
         const containerBottom = containerTop + container.clientHeight;
         const eventTop = event.offsetTop;
@@ -773,6 +774,10 @@ async function updateCalendar(records, mappings) {
   // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
     const colTypes = await colTypesFetcher.getColTypes();
+    const [startType, endType] = colTypes;
+    const isPureDate = startType === 'Date' && (!endType || endType === 'Date');
+    document.getElementById('calendar').classList.toggle('pure-date-mode', isPureDate);
+    setupAlldayAutoExpand(isPureDate);
     const colOptions = await colTypesFetcher.getColOptions();
     const events = mappedRecords
       .filter(isRecordValid)
@@ -781,6 +786,32 @@ async function updateCalendar(records, mappings) {
     updateUIAfterNavigation();
   }
   window.gristCalendar.dataVersion = Date.now();
+}
+
+// In pure-date mode, TUI caps the allday panel at 3 visible rows by default.
+// A MutationObserver watches for "+N more" exceed buttons and auto-clicks them
+// immediately whenever TUI re-renders them into the DOM.
+let _alldayExpandObserver = null;
+
+function setupAlldayAutoExpand(isPureDate) {
+  if (_alldayExpandObserver) {
+    _alldayExpandObserver.disconnect();
+    _alldayExpandObserver = null;
+  }
+  if (!isPureDate) { return; }
+  _alldayExpandObserver = new MutationObserver(() => {
+    // Use rAF so TUI finishes its render before we click
+    requestAnimationFrame(() => {
+      document.querySelectorAll('#calendar .toastui-calendar-weekday-exceed-in-week').forEach(btn => {
+        if (btn.textContent.trim().startsWith('+')) {
+          btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }
+      });
+    });
+  });
+  _alldayExpandObserver.observe(document.getElementById('calendar'), {
+    childList: true, subtree: true
+  });
 }
 
 function focusWidget() {
