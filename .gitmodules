@@ -13,3 +13,6 @@
 	path = vibe-view
 	url = https://github.com/gristlabs/vibe-view-widget
   branch = main
+[submodule "widget-studio-pro"]
+	path = widget-studio-pro
+	url = https://github.com/isaytoo/grist-widget-studio-pro.git
