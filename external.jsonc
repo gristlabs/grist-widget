@@ -11,5 +11,11 @@
     // Flag is enforced to false to indicate that this is not a Grist Labs maintained widget.
     "isGristLabsMaintained": false
   },
-  "vibe-view": {}
+  "vibe-view": {},
+  "widget-studio-pro": {
+    "url": "https://gristlabs.github.io/grist-widget/widget-studio-pro/index.html",
+    "widgetId": "@isaytoo/grist-widget-studio-pro",
+    "isGristLabsMaintained": false,
+    "published": true
+  }
 }
