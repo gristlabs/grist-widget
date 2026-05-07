@@ -21,23 +21,18 @@
       }
       #rendered {
           display: none;
-          width: 100%;
-          height: 100%;
-          border: none;
       }
     </style>
   </head>
   <body>
     <div id="error"></div>
-    <iframe id="rendered" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+    <div id="rendered"></div>
     <script>
       var params = new URLSearchParams(window.location.search)
       var ADD_TAGS = params.get('tags')?.split(",");
       var ADD_ATTR = params.get('attr')?.split(",");
 
-      var renderedFrame = document.getElementById('rendered');
-
-      // Force all links to open in a new browser tab preventing them from being opened in the iframe.
+      // Force all links to open in a new browser tab.
       function processLinks(el) {
         el.querySelectorAll('a[href]').forEach(a => {
           a.setAttribute('target', '_blank');
@@ -51,15 +46,8 @@
           el.style.display = 'none';
         } else {
           el.style.display = 'block';
-          if (elemId === 'rendered') {
-            const sanitized = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR, FORCE_BODY: true});
-            const tmp = document.createElement('div');
-            tmp.innerHTML = sanitized;
-            processLinks(tmp);
-            renderedFrame.srcdoc = tmp.innerHTML;
-          } else {
-            el.innerHTML = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR, FORCE_BODY: true});
-          }
+          el.innerHTML = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR, FORCE_BODY: true});
+          processLinks(el);
         }
       }
 
