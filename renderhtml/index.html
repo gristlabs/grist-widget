@@ -6,7 +6,7 @@
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@2.2.9/dist/purify.min.js"></script>
     <style>
-      html, body {
+      html, body, textarea {
           width: 100%;
           height: 100vh;
           padding: 0;
@@ -19,9 +19,6 @@
           padding: 20px;
           text-align: center;
       }
-      #rendered {
-          display: none;
-      }
     </style>
   </head>
   <body>
@@ -31,26 +28,26 @@
       var params = new URLSearchParams(window.location.search)
       var ADD_TAGS = params.get('tags')?.split(",");
       var ADD_ATTR = params.get('attr')?.split(",");
-
-      // Force all links to open in a new browser tab.
-      function processLinks(el) {
-        el.querySelectorAll('a[href]').forEach(a => {
-          a.setAttribute('target', '_blank');
-          a.setAttribute('rel', 'noopener noreferrer');
-        });
-      }
-
       function render(elemId, content) {
         var el = document.getElementById(elemId);
         if (!content) {
           el.style.display = 'none';
         } else {
-          el.style.display = 'block';
           el.innerHTML = DOMPurify.sanitize(content, {ADD_TAGS, ADD_ATTR, FORCE_BODY: true});
-          processLinks(el);
+          // If we are allowing scripts, let them execute, which doesn't
+          // normally happen when adding script elements using innerHTML.
+          if (ADD_TAGS?.includes("script")) {
+            Array.from(el.querySelectorAll("script")).forEach(oldScript => {
+              const newScript = document.createElement("script");
+              Array.from(oldScript.attributes)
+                .forEach(attr => newScript.setAttribute(attr.name, attr.value));
+              newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+              oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+          }
+          el.style.display = 'block';
         }
       }
-
       grist.ready({
         columns:["Html"],
         requiredAccess: 'read table'
