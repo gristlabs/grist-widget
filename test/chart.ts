@@ -4,7 +4,7 @@ import {getGrist} from 'test/getGrist';
 describe('chart', function () {
   this.timeout(10000);
   const grist = getGrist();
-  grist.bigScreen();
+  grist.bigScreen('big');
 
   it('can create a basic chart', async function () {
     // Open fixture doc

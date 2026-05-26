@@ -48,6 +48,7 @@ const serverSettings = {
   gristImage: 'gristlabs/grist',
   gristPort: 9999,
   contentPort: 9998,
+  untrustedPort: 9997,
   site: 'grist-widget',
 };
 
@@ -61,13 +62,18 @@ export class GristTestServer {
 
   public async start() {
     await this.stop();
-    const {gristContainerName, gristImage, gristPort, contentPort} = serverSettings;
+    const {gristContainerName, gristImage, gristPort, contentPort, untrustedPort} = serverSettings;
     const cmd = `docker run -d --rm --name ${gristContainerName}` +
       ' --add-host=host.docker.internal:host-gateway' +
       ` -e PORT=${gristPort} -p ${gristPort}:${gristPort}` +
       ` -e GRIST_IN_SERVICE=1` +
       ` -e GRIST_SINGLE_ORG=${serverSettings.site}` +
       ` -e GRIST_WIDGET_LIST_URL=http://host.docker.internal:${contentPort}/manifest.json` +
+      // Pin the untrusted-port server (used for bundled custom widgets) to a
+      // known port and expose it, so the host browser can load bundled widget
+      // iframes. Grist's default is to pick a random port that's only
+      // reachable inside the container.
+      ` -e GRIST_UNTRUSTED_PORT=${untrustedPort} -p ${untrustedPort}:${untrustedPort}` +
       ` ${gristImage}`;
     try {
       execSync(cmd, {

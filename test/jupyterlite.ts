@@ -4,7 +4,7 @@ import {getGrist} from 'test/getGrist';
 describe('jupyterlite', function () {
   this.timeout(30000);
   const grist = getGrist();
-  grist.bigScreen();
+  grist.bigScreen('big');
 
   it('can create a basic notebook', async function () {
     // Open fixture doc
