@@ -237,17 +237,17 @@ function getActiveLayer() {
 // Show selected marker: zoom/pan to it and open popup
 // ---------------------------------------------------------------------------
 function showMarker(marker) {
-  if (!marker || !showPopup) {
-    // Even without popup, still zoom/pan to the marker
-    if (marker && !marker._icon) { markers.zoomToShowLayer(marker); }
-    return;
-  }
-  if (marker._icon) {
-    // Marker already rendered on screen — open popup directly
-    marker.openPopup();
-  } else {
-    // Marker hidden in a cluster — zoom first, then open popup in callback
-    markers.zoomToShowLayer(marker, () => marker.openPopup());
+  if (!marker) { return; }
+  // Always zoom/pan to make the marker visible
+  if (!marker._icon) { markers.zoomToShowLayer(marker); }
+  // Open popup via the map object directly — works even when the marker
+  // is inside a cluster and not directly attached to the Leaflet map
+  if (showPopup && amap) {
+    const popup = marker.getPopup();
+    if (popup) {
+      popup.setLatLng(marker.getLatLng());
+      amap.openPopup(popup);
+    }
   }
 }
 
