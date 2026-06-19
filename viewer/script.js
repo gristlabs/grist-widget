@@ -104,7 +104,7 @@ function showError(msg) {
   if (!msg) {
     el.style.display = 'none';
   } else {
-    el.innerHTML = msg;
+    el.textContent = msg;
     el.style.display = 'block';
   }
 }
