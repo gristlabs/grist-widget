@@ -7,6 +7,7 @@ var txt = null;  // EasyMDE instance
 var editable = null;
 var isEditMode = Observable.create(null, false);
 let isNewRecord = Observable.create(null, true);
+let accessToken = null;
 
 window.addEventListener('keypress', (ev) => {
   // If user pressed Enter or Space
@@ -150,7 +151,7 @@ var toolbar = [
   },
 ];
 
-ready(() => {
+ready(async () => {
   grist.ready({
     columns: [{ name: "Content", type: 'Text'}],
     requiredAccess: 'full'
@@ -174,6 +175,21 @@ ready(() => {
           sanitizerFunction: function(renderedHTML) {
             return DOMPurify.sanitize(renderedHTML, {FORCE_BODY: true});
           },
+          markedOptions: {
+            renderer: {
+              image(href, ...args) {
+                const originalMethod = Object.getPrototypeOf(this).image;
+                const matchAttachmentHandler = href.match(/__ATTACHMENTS\[(\d+)\]__/);
+                if (matchAttachmentHandler) {
+                  const attachmentId = matchAttachmentHandler[1];
+                  const url = new URL(`attachments/${attachmentId}/download`, accessToken.baseUrl + '/');
+                  url.searchParams.append("auth", accessToken.token);
+                  href = url.toString();
+                }
+                return originalMethod.call(this, href, ...args);
+              }
+            }
+          }
         },
       });
       if (editable) {
@@ -185,7 +201,7 @@ ready(() => {
     }
   });
 
-  grist.onRecord(function(record, mappings) {
+  grist.onRecord(async function(record, mappings) {
     isNewRecord.set(false);
     save();
     var nextRowId = record.id;
@@ -212,6 +228,7 @@ ready(() => {
     }
     showError(null);
     data = record[colId] || '';
+    accessToken = await grist.getAccessToken({readOnly: true});
     if (nextRowId !== rowId || cachedData !== data) {
       txt.value("" + data);
       if (data) {
