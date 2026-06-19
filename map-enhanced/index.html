@@ -13,78 +13,76 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.3/dist/purify.min.js"></script>
     <script src="page.js"></script>
     <style>
-      /* ---- Settings panel ---- */
+      /* ================================================================
+         Settings panel
+      ================================================================ */
       #settings {
         font-family: sans-serif;
         font-size: 13px;
       }
       #settings h3 {
-        margin: 10px 0 4px;
-        font-size: 12px;
+        margin: 10px 0 5px;
+        font-size: 11px;
         text-transform: uppercase;
-        color: #666;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.07em;
+        color: #888;
       }
-      #settings table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      #settings td {
-        padding: 3px 4px;
-        vertical-align: middle;
-      }
-      #settings td:first-child {
-        white-space: nowrap;
-        color: #444;
-        min-width: 130px;
-      }
+      #settings table { width: 100%; border-collapse: collapse; }
+      #settings td    { padding: 3px 4px; vertical-align: middle; }
+      #settings td:first-child { white-space: nowrap; color: #444; min-width: 140px; }
       #settings input[type="text"],
       #settings select {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 3px 5px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
+        width: 100%; box-sizing: border-box;
+        padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px;
       }
-      #settings input[type="range"] {
-        width: 110px;
-        vertical-align: middle;
-      }
+      #settings input[type="range"] { width: 100px; vertical-align: middle; }
       #defaultZoomLabel,
       #popupDurationLabel {
-        display: inline-block;
-        width: 64px;
-        font-weight: bold;
-        font-size: 12px;
+        display: inline-block; width: 72px;
+        font-size: 12px; font-weight: bold; color: #333;
       }
       #btnResetZoom {
-        display: inline-block;
-        margin-left: 4px;
-        padding: 2px 8px;
-        background: #eee;
-        border: 1px solid #bbb;
-        border-radius: 3px;
-        cursor: pointer;
-        font-size: 12px;
+        display: inline-block; margin-left: 4px; padding: 2px 8px;
+        background: #eee; border: 1px solid #bbb; border-radius: 3px;
+        cursor: pointer; font-size: 12px;
       }
       #btnResetZoom:hover { background: #ddd; }
-      .section-sep {
-        border: none;
-        border-top: 1px solid #e0e0e0;
-        margin: 8px 0;
-      }
+      .section-sep { border: none; border-top: 1px solid #e8e8e8; margin: 8px 0; }
 
-      /* ---- Popup content ---- */
-      .map-popup .popup-title {
+      /* ================================================================
+         Colour swatches
+      ================================================================ */
+      #colorSwatches { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; }
+      .swatch {
+        width: 28px; height: 28px; border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer; outline: none;
+        transition: transform 0.1s;
+      }
+      .swatch:hover       { transform: scale(1.15); }
+      .swatch-selected    { border-color: #333 !important; transform: scale(1.2); box-shadow: 0 0 0 2px #fff, 0 0 0 4px #333; }
+
+      /* ================================================================
+         Popup content
+      ================================================================ */
+      .map-popup .leaflet-popup-content-wrapper {
+        border-left: 4px solid #1565C0;   /* updated dynamically by JS */
+        border-radius: 6px;
+        padding: 0;
+      }
+      .map-popup .leaflet-popup-content { margin: 10px 14px; }
+      .popup-title {
         font-weight: bold;
         font-size: 13px;
-        margin-bottom: 3px;
+        line-height: 1.3;
+        color: #111;
       }
-      .map-popup .popup-desc {
+      .popup-desc {
         font-size: 11px;
         color: #555;
         font-weight: normal;
-        line-height: 1.4;
+        line-height: 1.5;
+        margin-top: 3px;
       }
     </style>
   </head>
@@ -95,9 +93,9 @@
 
       <!-- Mode -->
       <h3>Mode d'affichage</h3>
-      <label id="lblToggle" for="cbxMode">
+      <label for="cbxMode">
         <input type="checkbox" id="cbxMode">
-        <span id="lblText">Toutes les localisations</span>
+        Toutes les localisations
       </label>
 
       <hr class="section-sep"/>
@@ -116,14 +114,12 @@
           <td><label for="cbxLockZoom">Verrouiller le zoom</label></td>
           <td>
             <input type="checkbox" id="cbxLockZoom">
-            <span style="color:#666;font-size:11px;"> zoom fixe entre les changements de point</span>
+            <span style="color:#888;font-size:11px;"> fixe entre les changements de point</span>
           </td>
         </tr>
         <tr>
           <td></td>
-          <td>
-            <span id="btnResetZoom" title="Revenir au zoom automatique">↺ Réinitialiser le zoom</span>
-          </td>
+          <td><span id="btnResetZoom">↺ Réinitialiser le zoom</span></td>
         </tr>
       </table>
 
@@ -136,7 +132,7 @@
           <td><label for="cbxShowPopup">Afficher l'étiquette</label></td>
           <td>
             <input type="checkbox" id="cbxShowPopup">
-            <span style="color:#666;font-size:11px;"> au clic / sélection</span>
+            <span style="color:#888;font-size:11px;"> à la sélection / au clic</span>
           </td>
         </tr>
         <tr id="durationRow">
@@ -147,9 +143,15 @@
           </td>
         </tr>
       </table>
-      <p style="margin:4px 0 0;font-size:11px;color:#888;">
-        L'étiquette affiche la colonne <b>Name</b> (titre gras) et la colonne <b>Description</b> (texte fin, si mappée).
+      <p style="margin:4px 0 0;font-size:11px;color:#999;">
+        Colonne <b>Name</b> → titre gras &nbsp;|&nbsp; Colonne <b>Description</b> → texte fin (optionnel)
       </p>
+
+      <hr class="section-sep"/>
+
+      <!-- Couleur du pin -->
+      <h3>Couleur du pin et de l'étiquette</h3>
+      <div id="colorSwatches"></div>
 
       <hr class="section-sep"/>
 
@@ -162,11 +164,11 @@
         </tr>
         <tr class="custom-row" style="display:none">
           <td><label for="mapSource">URL source</label></td>
-          <td><input type="text" id="mapSource" placeholder="https://tile.openstreetmap.org/{z}/{x}/{y}.png"></td>
+          <td><input type="text" id="mapSource" placeholder="https://…/{z}/{x}/{y}.png"></td>
         </tr>
         <tr class="custom-row" style="display:none">
           <td><label for="mapCopyright">Copyright</label></td>
-          <td><input type="text" id="mapCopyright" placeholder="&copy; OpenStreetMap contributors"></td>
+          <td><input type="text" id="mapCopyright" placeholder="&copy; contributeurs"></td>
         </tr>
       </table>
     </div>
