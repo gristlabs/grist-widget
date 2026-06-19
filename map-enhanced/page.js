@@ -237,9 +237,18 @@ function getActiveLayer() {
 // Show selected marker: zoom/pan to it and open popup
 // ---------------------------------------------------------------------------
 function showMarker(marker) {
-  if (!marker) { return; }
-  if (!marker._icon) { markers.zoomToShowLayer(marker); }
-  if (showPopup) { marker.openPopup(); }
+  if (!marker || !showPopup) {
+    // Even without popup, still zoom/pan to the marker
+    if (marker && !marker._icon) { markers.zoomToShowLayer(marker); }
+    return;
+  }
+  if (marker._icon) {
+    // Marker already rendered on screen — open popup directly
+    marker.openPopup();
+  } else {
+    // Marker hidden in a cluster — zoom first, then open popup in callback
+    markers.zoomToShowLayer(marker, () => marker.openPopup());
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -318,7 +327,8 @@ function updateMap(data) {
 
   if (selectedRowId && popups[selectedRowId]) {
     applyPopupAccent(markerColors[selectedRowId] || DEFAULT_HEX);
-    showMarker(popups[selectedRowId]);
+    // Defer until Leaflet has rendered the markers on screen
+    setTimeout(() => showMarker(popups[selectedRowId]), 50);
   }
 }
 
@@ -360,7 +370,8 @@ grist.onRecord((record) => {
   // Row selected in Grist: highlight marker, recenter and open popup
   const marker = selectMaker(record.id);
   if (!marker) { return; }
-  showMarker(marker);
+  // Small defer so Leaflet has time to render before we open the popup
+  setTimeout(() => showMarker(marker), 0);
 });
 
 grist.onRecords((data) => {
