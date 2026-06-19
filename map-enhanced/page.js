@@ -68,47 +68,25 @@ const TILE_PRESETS = [
 // Colour resolution — HEX or French/English name
 // ---------------------------------------------------------------------------
 const COLOR_NAMES = {
-  // French
-  'jaune':       '#F5C300',
-  'orange':      '#FF7A00',
-  'rouge':       '#D32F2F',
-  'vert':        '#43A047',
-  'vert clair':  '#43A047',
-  'vert foncé':  '#1B5E20',
-  'bleu':        '#039BE5',
-  'bleu ciel':   '#039BE5',
-  'bleu marine': '#1565C0',
-  'violet':      '#7B1FA2',
-  'rose':        '#E91E63',
-  'gris':        '#757575',
-  'blanc':       '#FFFFFF',
-  'noir':        '#111111',
-  'marron':      '#795548',
-  'beige':       '#D7CCC8',
-  'turquoise':   '#00BCD4',
-  // English
-  'yellow':      '#F5C300',
-  'red':         '#D32F2F',
-  'green':       '#43A047',
-  'dark green':  '#1B5E20',
-  'blue':        '#039BE5',
-  'sky blue':    '#039BE5',
-  'navy':        '#1565C0',
-  'navy blue':   '#1565C0',
-  'purple':      '#7B1FA2',
-  'pink':        '#E91E63',
-  'grey':        '#757575',
-  'gray':        '#757575',
-  'white':       '#FFFFFF',
-  'black':       '#111111',
-  'brown':       '#795548',
-  'teal':        '#00BCD4',
+  'jaune': '#F5C300', 'yellow': '#F5C300',
+  'orange': '#FF7A00',
+  'rouge': '#D32F2F', 'red': '#D32F2F',
+  'vert': '#43A047', 'green': '#43A047', 'vert clair': '#43A047',
+  'vert foncé': '#1B5E20', 'dark green': '#1B5E20',
+  'bleu': '#039BE5', 'blue': '#039BE5', 'bleu ciel': '#039BE5', 'sky blue': '#039BE5',
+  'bleu marine': '#1565C0', 'navy': '#1565C0', 'navy blue': '#1565C0',
+  'violet': '#7B1FA2', 'purple': '#7B1FA2',
+  'rose': '#E91E63', 'pink': '#E91E63',
+  'gris': '#757575', 'grey': '#757575', 'gray': '#757575',
+  'blanc': '#FFFFFF', 'white': '#FFFFFF',
+  'noir': '#111111', 'black': '#111111',
+  'marron': '#795548', 'brown': '#795548',
+  'turquoise': '#00BCD4', 'teal': '#00BCD4',
 };
 
-const DEFAULT_HEX  = '#43A047'; // vert par défaut
+const DEFAULT_HEX  = '#43A047';
 const DEFAULT_DARK = '#2e6b30';
 
-// Darken a hex colour by 40 % for the pin border
 function darkenHex(hex) {
   let h = hex.replace('#', '');
   if (h.length === 3) { h = h.split('').map(c => c + c).join(''); }
@@ -121,7 +99,6 @@ function darkenHex(hex) {
 function resolveColor(value) {
   if (!value) { return { hex: DEFAULT_HEX, dark: DEFAULT_DARK }; }
   const raw = String(value).trim();
-  // HEX  (#RGB or #RRGGBB)
   if (/^#[0-9a-fA-F]{3}$/.test(raw)) {
     const hex = '#' + raw.slice(1).split('').map(c => c + c).join('');
     return { hex, dark: darkenHex(hex) };
@@ -129,15 +106,13 @@ function resolveColor(value) {
   if (/^#[0-9a-fA-F]{6}$/.test(raw)) {
     return { hex: raw, dark: darkenHex(raw) };
   }
-  // Named colour (case-insensitive)
   const named = COLOR_NAMES[raw.toLowerCase()];
   if (named) { return { hex: named, dark: darkenHex(named) }; }
-  // Fallback
   return { hex: DEFAULT_HEX, dark: DEFAULT_DARK };
 }
 
 // ---------------------------------------------------------------------------
-// SVG pin icon builder
+// SVG pin icon
 // ---------------------------------------------------------------------------
 function makeIcon(hex, dark, isSelected) {
   const scale  = isSelected ? 1.25 : 1;
@@ -146,16 +121,13 @@ function makeIcon(hex, dark, isSelected) {
   const h = Math.round(41 * scale);
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 25 41">` +
-    `<path d="M12.5 0C5.596 0 0 5.596 0 12.5c0 8.344 12.5 28.5 12.5 28.5S25 20.844 25 12.5C25 5.596 19.404 0 12.5 0z"` +
-    ` fill="${hex}" stroke="${border}" stroke-width="1.5"/>` +
+    `<path d="M12.5 0C5.596 0 0 5.596 0 12.5c0 8.344 12.5 28.5 12.5 28.5S25 20.844 25 12.5` +
+    `C25 5.596 19.404 0 12.5 0z" fill="${hex}" stroke="${border}" stroke-width="1.5"/>` +
     `<circle cx="12.5" cy="12.5" r="4.5" fill="white" opacity="0.9"/>` +
     `</svg>`;
   return L.divIcon({
-    html:        svg,
-    className:   '',
-    iconSize:    [w, h],
-    iconAnchor:  [w / 2, h],
-    popupAnchor: [0, -h + 4],
+    html: svg, className: '',
+    iconSize: [w, h], iconAnchor: [w / 2, h], popupAnchor: [0, -h + 4],
   });
 }
 
@@ -183,11 +155,11 @@ const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
 // State
 // ---------------------------------------------------------------------------
 let amap;
-let popups        = {};
-let markerColors  = {}; // rowId → hex (for popup accent)
-let selectedTableId  = null;
-let selectedRowId    = null;
-let selectedRecords  = null;
+let popups       = {};
+let markerColors = {};
+let selectedTableId = null;
+let selectedRowId   = null;
+let selectedRecords = null;
 let mode = 'multi';
 
 let activePresetId     = "esri-street";
@@ -199,16 +171,11 @@ let lockedCenter = null;
 let defaultZoom  = 13;
 let lockZoom     = false;
 
-let showPopup     = true;
-let popupDuration = 0;
-let popupTimer    = null;
-
-// Column names
 const Name            = "Name";
 const Longitude       = "Longitude";
 const Latitude        = "Latitude";
 const Description     = "Description";
-const Color           = "Color";       // optional — HEX or colour name
+const Color           = "Color";
 const Geocode         = 'Geocode';
 const Address         = 'Address';
 const GeocodedAddress = 'GeocodedAddress';
@@ -297,8 +264,6 @@ function buildPopupContent(name, description) {
     ? `<div class="popup-title">${safeName}</div><div class="popup-desc">${safeDesc}</div>`
     : `<div class="popup-title">${safeName}</div>`;
 }
-
-// Update the popup left-border & tip to match the selected marker's colour
 function applyPopupAccent(hex) {
   let el = document.getElementById('popup-accent-style');
   if (!el) { el = document.createElement('style'); el.id = 'popup-accent-style'; document.head.appendChild(el); }
@@ -306,7 +271,6 @@ function applyPopupAccent(hex) {
     `.map-popup .leaflet-popup-content-wrapper { border-left: 4px solid ${hex}; }` +
     `.map-popup .leaflet-popup-tip { background: ${hex}; }`;
 }
-
 function getActiveLayer() {
   const preset = TILE_PRESETS.find(p => p.id === activePresetId) || TILE_PRESETS[0];
   if (preset.id === 'custom') {
@@ -320,17 +284,17 @@ function getActiveLayer() {
 }
 
 // ---------------------------------------------------------------------------
-// Popup timer
+// Show marker: pan to it (keeping zoom if locked) then open popup
 // ---------------------------------------------------------------------------
-function clearPopupTimer() {
-  if (popupTimer !== null) { clearTimeout(popupTimer); popupTimer = null; }
-}
-function openPopupWithTimer(marker) {
-  if (!showPopup || !marker) { return; }
-  clearPopupTimer();
-  marker.openPopup();
-  if (popupDuration > 0) {
-    popupTimer = setTimeout(() => { marker.closePopup(); popupTimer = null; }, popupDuration * 1000);
+function showMarker(marker) {
+  if (!marker) { return; }
+  if (lockZoom) {
+    // Keep zoom level, just pan to center the marker
+    amap.panTo(marker.getLatLng());
+    marker.openPopup();
+  } else {
+    // Original behaviour: zoom + pan to show the marker, then open popup
+    markers.zoomToShowLayer(marker, () => marker.openPopup());
   }
 }
 
@@ -348,7 +312,6 @@ function updateMap(data) {
     showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude."); return;
   }
 
-  clearPopupTimer();
   if (amap && lockZoom) { lockedZoom = amap.getZoom(); lockedCenter = amap.getCenter(); }
 
   const layer = getActiveLayer();
@@ -374,14 +337,10 @@ function updateMap(data) {
     iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
   });
 
-  // User click: change icon + arm timer (popup auto-opened by Leaflet bindPopup click)
   markers.on('click', (e) => {
     const id = e.layer.options.id;
     selectMaker(id);
-    if (showPopup && popupDuration > 0 && popups[id]) {
-      clearPopupTimer();
-      popupTimer = setTimeout(() => { popups[id]?.closePopup(); popupTimer = null; }, popupDuration * 1000);
-    }
+    // Popup auto-opens via Leaflet's bindPopup on click — nothing extra needed
   });
 
   for (const rec of data) {
@@ -389,16 +348,14 @@ function updateMap(data) {
     if (String(lng) === '...') { continue; }
     if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) { continue; }
 
-    const col    = resolveColor(colorRaw);
+    const col = resolveColor(colorRaw);
     markerColors[id] = col.hex;
-
-    const pt     = new L.LatLng(lat, lng);
-    const isSel  = id == selectedRowId;
+    const pt    = new L.LatLng(lat, lng);
+    const isSel = id == selectedRowId;
     points.push(pt);
 
     const marker = L.marker(pt, {
-      title: name,
-      id:    id,
+      title: name, id,
       icon:  makeIcon(col.hex, col.dark, isSel),
       pane:  isSel ? 'selectedMarker' : 'otherMarkers',
     });
@@ -416,16 +373,16 @@ function updateMap(data) {
     try { map.fitBounds(new L.LatLngBounds(points), { maxZoom: defaultZoom, padding: [0, 0] }); }
     catch (e) { console.warn('cannot fit bounds'); }
   }
-  map.on('zoomend moveend', () => { if (lockZoom) { lockedZoom = map.getZoom(); lockedCenter = map.getCenter(); } });
+  map.on('zoomend moveend', () => {
+    if (lockZoom) { lockedZoom = map.getZoom(); lockedCenter = map.getCenter(); }
+  });
 
   amap = map;
 
-  // Open popup for already-selected row
+  // Re-show selected marker after map rebuild
   if (selectedRowId && popups[selectedRowId]) {
     applyPopupAccent(markerColors[selectedRowId] || DEFAULT_HEX);
-    const selMarker = popups[selectedRowId];
-    if (!selMarker._icon) { markers.zoomToShowLayer(selMarker, () => openPopupWithTimer(selMarker)); }
-    else { openPopupWithTimer(selMarker); }
+    showMarker(popups[selectedRowId]);
   }
 }
 
@@ -433,7 +390,6 @@ function updateMap(data) {
 // Selection
 // ---------------------------------------------------------------------------
 function clearPopupMarker() {
-  clearPopupTimer();
   const marker = popups[selectedRowId];
   if (marker) {
     marker.closePopup();
@@ -443,7 +399,6 @@ function clearPopupMarker() {
 }
 
 function selectMaker(id) {
-  // Restore previous marker icon
   const prev = popups[selectedRowId];
   if (prev) {
     const pc = resolveColor(markerColors[selectedRowId]);
@@ -451,7 +406,6 @@ function selectMaker(id) {
   }
   const marker = popups[id];
   if (!marker) { return null; }
-
   selectedRowId = id;
   const col = resolveColor(markerColors[id]);
   marker.setIcon(makeIcon(col.hex, col.dark, true));
@@ -495,13 +449,10 @@ grist.onRecord((record, mappings) => {
     selectOnMap(lastRecord);
     scanOnNeed(defaultMapping(record, mappings));
   } else {
+    // Multi mode: change icon then pan/zoom to the marker and open popup
     const marker = selectMaker(record.id);
     if (!marker) { return; }
-    if (!lockZoom || !marker._icon) {
-      markers.zoomToShowLayer(marker, () => openPopupWithTimer(marker));
-    } else {
-      openPopupWithTimer(marker);
-    }
+    showMarker(marker);
   }
 });
 
@@ -542,18 +493,10 @@ function buildPresetOptions() {
 function toggleCustomFields(show) {
   document.querySelectorAll('.custom-row').forEach(r => r.style.display = show ? '' : 'none');
 }
-function updateDurationRow() {
-  document.getElementById('durationRow').style.display = showPopup ? '' : 'none';
-}
-function formatDuration(sec) {
-  if (sec === 0) { return 'Permanente'; }
-  return sec + ' s';
-}
 
 function onEditOptions() {
   const panel = document.getElementById("settings");
   panel.style.display = 'block';
-
   document.getElementById("btnClose").onclick = () => panel.style.display = 'none';
 
   // Mode
@@ -574,7 +517,7 @@ function onEditOptions() {
   };
   document.getElementById('btnResetZoom').onclick = () => { lockedZoom = null; lockedCenter = null; updateMode(); };
 
-  // Default zoom — save on every move
+  // Default zoom
   const zoomSlider = document.getElementById('defaultZoom');
   const zoomLabel  = document.getElementById('defaultZoomLabel');
   zoomSlider.value = defaultZoom; zoomLabel.textContent = defaultZoom;
@@ -584,31 +527,9 @@ function onEditOptions() {
     await grist.setOption('defaultZoom', defaultZoom);
   };
 
-  // Show popup
-  const cbxShowPopup = document.getElementById('cbxShowPopup');
-  cbxShowPopup.checked = showPopup;
-  updateDurationRow();
-  cbxShowPopup.onchange = async (e) => {
-    showPopup = e.target.checked;
-    updateDurationRow();
-    await grist.setOption('showPopup', showPopup);
-    if (!showPopup && amap) { amap.closePopup(); clearPopupTimer(); }
-  };
-
-  // Popup duration — save on every move (fix: was only saving on onchange)
-  const durSlider = document.getElementById('popupDuration');
-  const durLabel  = document.getElementById('popupDurationLabel');
-  durSlider.value = popupDuration; durLabel.textContent = formatDuration(popupDuration);
-  durSlider.oninput = async (e) => {
-    popupDuration = +e.target.value;
-    durLabel.textContent = formatDuration(popupDuration);
-    await grist.setOption('popupDuration', popupDuration);
-  };
-
   // Tile preset
   buildPresetOptions();
-  const presetSel = document.getElementById('mapPreset');
-  presetSel.onchange = async (e) => {
+  document.getElementById('mapPreset').onchange = async (e) => {
     activePresetId = e.target.value;
     toggleCustomFields(activePresetId === 'custom');
     await grist.setOption('activePresetId', activePresetId);
@@ -635,11 +556,11 @@ grist.ready({
     "Name",
     { name: "Longitude",       type: 'Numeric' },
     { name: "Latitude",        type: 'Numeric' },
-    { name: "Description",     type: 'Text',  title: 'Description (étiquette)', optional },
-    { name: "Color",           type: 'Text',  title: 'Couleur du pin (HEX ou nom)', optional },
-    { name: "Geocode",         type: 'Bool',  title: 'Geocode',                 optional },
-    { name: "Address",         type: 'Text',                                    optional },
-    { name: "GeocodedAddress", type: 'Text',  title: 'Geocoded Address',        optional },
+    { name: "Description",     type: 'Text', title: 'Description (étiquette)', optional },
+    { name: "Color",           type: 'Text', title: 'Couleur du pin (HEX ou nom)', optional },
+    { name: "Geocode",         type: 'Bool', title: 'Geocode', optional },
+    { name: "Address",         type: 'Text', optional },
+    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional },
   ],
   allowSelectBy: true,
   onEditOptions,
@@ -653,7 +574,5 @@ grist.onOptions((options, interaction) => {
   customMapCopyright = options?.mapCopyright   ?? '';
   lockZoom           = options?.lockZoom       ?? false;
   defaultZoom        = options?.defaultZoom    ?? 13;
-  showPopup          = options?.showPopup      ?? true;
-  popupDuration      = options?.popupDuration  ?? 0;
   if (lastRecords) { updateMode(); }
 });
