@@ -87,9 +87,16 @@ let lockedCenter = null;
 let defaultZoom = DEFAULT_ZOOM;
 let lockZoom = false;
 
+// Popup/label options
+let showPopup = true;       // show popup on selection
+let popupDuration = 0;      // 0 = permanent; >0 = seconds before auto-close
+let popupTimer = null;      // active setTimeout handle
+
+// Column names
 const Name = "Name";
 const Longitude = "Longitude";
 const Latitude = "Latitude";
+const Description = "Description"; // optional second field
 const Geocode = 'Geocode';
 const Address = 'Address';
 const GeocodedAddress = 'GeocodedAddress';
@@ -216,8 +223,20 @@ function getInfo(rec) {
     id: rec.id,
     name: parseValue(rec[Name]),
     lng: parseValue(rec[Longitude]),
-    lat: parseValue(rec[Latitude])
+    lat: parseValue(rec[Latitude]),
+    description: parseValue(rec[Description]) || '',
   };
+}
+
+// Build the HTML content shown inside a popup
+function buildPopupContent(name, description) {
+  const safeName = DOMPurify.sanitize(String(name || ''), { FORCE_BODY: true });
+  const safeDesc = DOMPurify.sanitize(String(description || ''), { FORCE_BODY: true });
+  if (safeDesc) {
+    return '<div class="popup-title">' + safeName + '</div>'
+         + '<div class="popup-desc">' + safeDesc + '</div>';
+  }
+  return '<div class="popup-title">' + safeName + '</div>';
 }
 
 function getActiveLayer() {
@@ -237,6 +256,28 @@ function getActiveLayer() {
 }
 
 // ---------------------------------------------------------------------------
+// Popup timer
+// ---------------------------------------------------------------------------
+function clearPopupTimer() {
+  if (popupTimer !== null) {
+    clearTimeout(popupTimer);
+    popupTimer = null;
+  }
+}
+
+function openPopupWithTimer(marker) {
+  if (!showPopup) { return; }
+  clearPopupTimer();
+  marker.openPopup();
+  if (popupDuration > 0) {
+    popupTimer = setTimeout(() => {
+      marker.closePopup();
+      popupTimer = null;
+    }, popupDuration * 1000);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Map rendering
 // ---------------------------------------------------------------------------
 let clearMarkers = () => {};
@@ -253,6 +294,8 @@ function updateMap(data) {
     showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns in the Creator Panel.");
     return;
   }
+
+  clearPopupTimer();
 
   // Save current view before destroying the map
   if (amap && lockZoom) {
@@ -296,7 +339,7 @@ function updateMap(data) {
   });
 
   for (const rec of data) {
-    const { id, name, lng, lat } = getInfo(rec);
+    const { id, name, lng, lat, description } = getInfo(rec);
     if (String(lng) === '...') { continue; }
     if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) { continue; }
     const pt = new L.LatLng(lat, lng);
@@ -307,7 +350,7 @@ function updateMap(data) {
       icon: (id == selectedRowId) ? selectedIcon : defaultIcon,
       pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
     });
-    marker.bindPopup(name);
+    marker.bindPopup(buildPopupContent(name, description), { className: 'map-popup' });
     markers.addLayer(marker);
     popups[id] = marker;
   }
@@ -325,7 +368,7 @@ function updateMap(data) {
     }
   }
 
-  // Track user zoom/pan so we can restore it on next updateMap
+  // Track user zoom/pan
   map.on('zoomend moveend', () => {
     if (lockZoom) {
       lockedZoom = map.getZoom();
@@ -338,7 +381,7 @@ function updateMap(data) {
     if (rowId && popups[rowId]) {
       const marker = popups[rowId];
       if (!marker._icon) { markers.zoomToShowLayer(marker); }
-      marker.openPopup();
+      if (showPopup) { openPopupWithTimer(marker); }
     }
   }
 
@@ -350,6 +393,7 @@ function updateMap(data) {
 // Selection
 // ---------------------------------------------------------------------------
 function clearPopupMarker() {
+  clearPopupTimer();
   const marker = popups[selectedRowId];
   if (marker) {
     marker.closePopup();
@@ -359,6 +403,7 @@ function clearPopupMarker() {
 }
 
 function selectMaker(id) {
+  clearPopupTimer();
   const previouslyClicked = popups[selectedRowId];
   if (previouslyClicked) {
     previouslyClicked.setIcon(defaultIcon);
@@ -371,6 +416,7 @@ function selectMaker(id) {
   marker.pane = 'selectedMarker';
   markers.refreshClusters();
   grist.setCursorPos?.({ rowId: id }).catch(() => {});
+  if (showPopup) { openPopupWithTimer(marker); }
   return marker;
 }
 
@@ -422,7 +468,7 @@ grist.onRecord((record, mappings) => {
     } else if (!marker._icon) {
       markers.zoomToShowLayer(marker);
     }
-    marker.openPopup();
+    if (showPopup) { openPopupWithTimer(marker); }
   }
 });
 
@@ -476,12 +522,24 @@ function toggleCustomFields(show) {
   document.querySelectorAll('.custom-row').forEach(r => r.style.display = show ? '' : 'none');
 }
 
+function updateDurationRow() {
+  const row = document.getElementById('durationRow');
+  row.style.display = showPopup ? '' : 'none';
+}
+
+function formatDuration(sec) {
+  if (sec === 0) { return 'Permanente'; }
+  if (sec < 60) { return sec + ' s'; }
+  return Math.round(sec / 60) + ' min'; // only reached if we extend range
+}
+
 function onEditOptions() {
   const popup = document.getElementById("settings");
   popup.style.display = 'block';
 
   document.getElementById("btnClose").onclick = () => popup.style.display = 'none';
 
+  // Mode
   const checkbox = document.getElementById('cbxMode');
   checkbox.checked = mode === 'multi';
   checkbox.onchange = async (e) => {
@@ -493,6 +551,7 @@ function onEditOptions() {
     }
   };
 
+  // Lock zoom
   const cbxLockZoom = document.getElementById('cbxLockZoom');
   cbxLockZoom.checked = lockZoom;
   cbxLockZoom.onchange = async (e) => {
@@ -507,6 +566,7 @@ function onEditOptions() {
     updateMode();
   };
 
+  // Default zoom slider
   const zoomSlider = document.getElementById('defaultZoom');
   const zoomLabel = document.getElementById('defaultZoomLabel');
   zoomSlider.value = defaultZoom;
@@ -520,6 +580,37 @@ function onEditOptions() {
     await grist.setOption('defaultZoom', defaultZoom);
   };
 
+  // Show popup
+  const cbxShowPopup = document.getElementById('cbxShowPopup');
+  cbxShowPopup.checked = showPopup;
+  updateDurationRow();
+  cbxShowPopup.onchange = async (e) => {
+    showPopup = e.target.checked;
+    updateDurationRow();
+    await grist.setOption('showPopup', showPopup);
+    if (!showPopup && amap) {
+      // Close any open popup
+      amap.closePopup();
+      clearPopupTimer();
+    }
+  };
+
+  // Popup duration slider
+  const durSlider = document.getElementById('popupDuration');
+  const durLabel = document.getElementById('popupDurationLabel');
+  // Slider: 0 = permanent, 1–59 = seconds
+  durSlider.value = popupDuration;
+  durLabel.textContent = formatDuration(popupDuration);
+  durSlider.oninput = (e) => {
+    popupDuration = parseInt(e.target.value, 10);
+    durLabel.textContent = formatDuration(popupDuration);
+  };
+  durSlider.onchange = async (e) => {
+    popupDuration = parseInt(e.target.value, 10);
+    await grist.setOption('popupDuration', popupDuration);
+  };
+
+  // Tile preset
   buildPresetOptions();
   const presetSel = document.getElementById('mapPreset');
   presetSel.onchange = async (e) => {
@@ -529,9 +620,9 @@ function onEditOptions() {
     updateMode();
   };
 
+  // Custom URL/copyright
   document.getElementById('mapSource').value = customMapSource;
   document.getElementById('mapCopyright').value = customMapCopyright;
-
   ['mapSource', 'mapCopyright'].forEach((opt) => {
     const ipt = document.getElementById(opt);
     ipt.onchange = async (e) => {
@@ -552,6 +643,7 @@ grist.ready({
     "Name",
     { name: "Longitude", type: 'Numeric' },
     { name: "Latitude", type: 'Numeric' },
+    { name: "Description", type: 'Text', title: 'Description (étiquette)', optional },
     { name: "Geocode", type: 'Bool', title: 'Geocode', optional },
     { name: "Address", type: 'Text', optional },
     { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional },
@@ -568,5 +660,7 @@ grist.onOptions((options, interaction) => {
   customMapCopyright = options?.mapCopyright ?? '';
   lockZoom = options?.lockZoom ?? false;
   defaultZoom = options?.defaultZoom ?? DEFAULT_ZOOM;
+  showPopup = options?.showPopup ?? true;
+  popupDuration = options?.popupDuration ?? 0;
   if (lastRecords) { updateMode(); }
 });

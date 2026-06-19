@@ -13,15 +13,16 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.3/dist/purify.min.js"></script>
     <script src="page.js"></script>
     <style>
+      /* ---- Settings panel ---- */
       #settings {
         font-family: sans-serif;
         font-size: 13px;
       }
       #settings h3 {
         margin: 10px 0 4px;
-        font-size: 13px;
+        font-size: 12px;
         text-transform: uppercase;
-        color: #555;
+        color: #666;
         letter-spacing: 0.05em;
       }
       #settings table {
@@ -35,6 +36,7 @@
       #settings td:first-child {
         white-space: nowrap;
         color: #444;
+        min-width: 130px;
       }
       #settings input[type="text"],
       #settings select {
@@ -45,17 +47,19 @@
         border-radius: 3px;
       }
       #settings input[type="range"] {
-        width: 120px;
+        width: 110px;
         vertical-align: middle;
       }
-      #defaultZoomLabel {
+      #defaultZoomLabel,
+      #popupDurationLabel {
         display: inline-block;
-        width: 24px;
+        width: 64px;
         font-weight: bold;
+        font-size: 12px;
       }
       #btnResetZoom {
         display: inline-block;
-        margin-left: 6px;
+        margin-left: 4px;
         padding: 2px 8px;
         background: #eee;
         border: 1px solid #bbb;
@@ -68,6 +72,19 @@
         border: none;
         border-top: 1px solid #e0e0e0;
         margin: 8px 0;
+      }
+
+      /* ---- Popup content ---- */
+      .map-popup .popup-title {
+        font-weight: bold;
+        font-size: 13px;
+        margin-bottom: 3px;
+      }
+      .map-popup .popup-desc {
+        font-size: 11px;
+        color: #555;
+        font-weight: normal;
+        line-height: 1.4;
       }
     </style>
   </head>
@@ -99,7 +116,7 @@
           <td><label for="cbxLockZoom">Verrouiller le zoom</label></td>
           <td>
             <input type="checkbox" id="cbxLockZoom">
-            &nbsp;<span style="color:#555;font-size:12px;">Le zoom reste fixe lors des changements de point</span>
+            <span style="color:#666;font-size:11px;"> zoom fixe entre les changements de point</span>
           </td>
         </tr>
         <tr>
@@ -109,6 +126,30 @@
           </td>
         </tr>
       </table>
+
+      <hr class="section-sep"/>
+
+      <!-- Étiquette -->
+      <h3>Étiquette (popup)</h3>
+      <table>
+        <tr>
+          <td><label for="cbxShowPopup">Afficher l'étiquette</label></td>
+          <td>
+            <input type="checkbox" id="cbxShowPopup">
+            <span style="color:#666;font-size:11px;"> au clic / sélection</span>
+          </td>
+        </tr>
+        <tr id="durationRow">
+          <td><label for="popupDuration">Durée d'affichage</label></td>
+          <td>
+            <input type="range" id="popupDuration" min="0" max="59" value="0">
+            <span id="popupDurationLabel">Permanente</span>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:4px 0 0;font-size:11px;color:#888;">
+        L'étiquette affiche la colonne <b>Name</b> (titre gras) et la colonne <b>Description</b> (texte fin, si mappée).
+      </p>
 
       <hr class="section-sep"/>
 
