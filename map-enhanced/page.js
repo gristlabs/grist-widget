@@ -160,79 +160,19 @@ let markerColors = {};
 let selectedTableId = null;
 let selectedRowId   = null;
 let selectedRecords = null;
-let mode = 'multi';
 
 let activePresetId     = "esri-street";
 let customMapSource    = '';
 let customMapCopyright = '';
+let defaultZoom        = 13;
 
-let lockedZoom   = null;
-let lockedCenter = null;
-let defaultZoom  = 13;
-let lockZoom     = false;
+const Name        = "Name";
+const Longitude   = "Longitude";
+const Latitude    = "Latitude";
+const Description = "Description";
+const Color       = "Color";
 
-const Name            = "Name";
-const Longitude       = "Longitude";
-const Latitude        = "Latitude";
-const Description     = "Description";
-const Color           = "Color";
-const Geocode         = 'Geocode';
-const Address         = 'Address';
-const GeocodedAddress = 'GeocodedAddress';
-
-let lastRecord;
 let lastRecords;
-
-// ---------------------------------------------------------------------------
-// Geocoding
-// ---------------------------------------------------------------------------
-let geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
-if (URLSearchParams && location.search && geocoder) {
-  const c = new URLSearchParams(location.search).get('geocoder');
-  if (c && L.Control.Geocoder[c]) { geocoder = L.Control.Geocoder[c](); }
-  else if (c) { console.warn('Unsupported geocoder', c); }
-  const m = new URLSearchParams(location.search).get('mode');
-  if (m) { mode = m; }
-}
-async function geocode(address) {
-  const results = await geocoder.geocode(address);
-  let v = results[0];
-  if (v) { v = v.center; }
-  return v;
-}
-async function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-let writeAccess = true;
-let scanning    = null;
-
-async function scan(tableId, records, mappings) {
-  if (!writeAccess) { return; }
-  for (const record of records) {
-    if (!(Geocode in record)) { break; }
-    if (!record[Geocode]) { continue; }
-    const address = record.Address;
-    if (record[GeocodedAddress]) {
-      if (record[GeocodedAddress] === record.Address) { continue; }
-      record[Longitude] = null; record[Latitude] = null;
-    }
-    if (address && !record[Longitude]) {
-      const result = await geocode(address);
-      await grist.docApi.applyUserActions([['UpdateRecord', tableId, record.id, {
-        [mappings[Longitude]]: result?.lng ?? null,
-        [mappings[Latitude]]:  result?.lat ?? null,
-        ...(GeocodedAddress in mappings && mappings[GeocodedAddress])
-          ? { [mappings[GeocodedAddress]]: address } : undefined,
-      }]]);
-      await delay(1000);
-    }
-  }
-}
-function scanOnNeed(mappings) {
-  if (!scanning && selectedTableId && selectedRecords) {
-    scanning = scan(selectedTableId, selectedRecords, mappings)
-      .then(() => scanning = null).catch(() => scanning = null);
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -240,6 +180,7 @@ function scanOnNeed(mappings) {
 function showProblem(txt) {
   document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
 }
+
 function parseValue(v) {
   if (typeof v === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
     const p = JSON.parse(v.value.slice(2, v.value.length - 1));
@@ -247,6 +188,7 @@ function parseValue(v) {
   }
   return v;
 }
+
 function getInfo(rec) {
   return {
     id:          rec.id,
@@ -257,6 +199,7 @@ function getInfo(rec) {
     colorRaw:    parseValue(rec[Color])        || '',
   };
 }
+
 function buildPopupContent(name, description) {
   const safeName = DOMPurify.sanitize(String(name || ''), { FORCE_BODY: true });
   const safeDesc = DOMPurify.sanitize(String(description || ''), { FORCE_BODY: true });
@@ -264,6 +207,7 @@ function buildPopupContent(name, description) {
     ? `<div class="popup-title">${safeName}</div><div class="popup-desc">${safeDesc}</div>`
     : `<div class="popup-title">${safeName}</div>`;
 }
+
 function applyPopupAccent(hex) {
   let el = document.getElementById('popup-accent-style');
   if (!el) { el = document.createElement('style'); el.id = 'popup-accent-style'; document.head.appendChild(el); }
@@ -271,6 +215,7 @@ function applyPopupAccent(hex) {
     `.map-popup .leaflet-popup-content-wrapper { border-left: 4px solid ${hex}; }` +
     `.map-popup .leaflet-popup-tip { background: ${hex}; }`;
 }
+
 function getActiveLayer() {
   const preset = TILE_PRESETS.find(p => p.id === activePresetId) || TILE_PRESETS[0];
   if (preset.id === 'custom') {
@@ -280,21 +225,19 @@ function getActiveLayer() {
       maxZoom: 19,
     };
   }
-  return { url: preset.url, attribution: DOMPurify.sanitize(preset.attribution, { FORCE_BODY: true }), maxZoom: preset.maxZoom };
+  return {
+    url: preset.url,
+    attribution: DOMPurify.sanitize(preset.attribution, { FORCE_BODY: true }),
+    maxZoom: preset.maxZoom,
+  };
 }
 
 // ---------------------------------------------------------------------------
-// Show marker: pan to it (keeping zoom if locked) then open popup
+// Show selected marker: zoom/pan to it and open popup
 // ---------------------------------------------------------------------------
 function showMarker(marker) {
   if (!marker) { return; }
-  if (lockZoom) {
-    // Keep zoom, recenter on the marker
-    amap.panTo(marker.getLatLng());
-  } else {
-    // Zoom+pan to uncollapse cluster if needed (original widget pattern)
-    if (!marker._icon) { markers.zoomToShowLayer(marker); }
-  }
+  if (!marker._icon) { markers.zoomToShowLayer(marker); }
   marker.openPopup();
 }
 
@@ -307,12 +250,11 @@ let markers = [];
 function updateMap(data) {
   data = data || selectedRecords;
   selectedRecords = data;
-  if (!data || data.length === 0) { showProblem("No data found yet"); return; }
+  if (!data || data.length === 0) { showProblem("Aucune donnée trouvée."); return; }
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude."); return;
+    showProblem("Colonnes manquantes : Name, Longitude, Latitude. Mappez-les dans le Panneau Créateur.");
+    return;
   }
-
-  if (amap && lockZoom) { lockedZoom = amap.getZoom(); lockedCenter = amap.getCenter(); }
 
   const layer = getActiveLayer();
   const tiles = L.tileLayer(layer.url, { attribution: layer.attribution, maxZoom: layer.maxZoom });
@@ -340,7 +282,7 @@ function updateMap(data) {
   markers.on('click', (e) => {
     const id = e.layer.options.id;
     selectMaker(id);
-    // Popup auto-opens via Leaflet's bindPopup on click — nothing extra needed
+    // Popup opens automatically via Leaflet's bindPopup on click
   });
 
   for (const rec of data) {
@@ -367,19 +309,12 @@ function updateMap(data) {
   map.addLayer(markers);
   clearMarkers = () => map.removeLayer(markers);
 
-  if (lockZoom && lockedZoom !== null && lockedCenter !== null) {
-    map.setView(lockedCenter, lockedZoom);
-  } else {
-    try { map.fitBounds(new L.LatLngBounds(points), { maxZoom: defaultZoom, padding: [0, 0] }); }
-    catch (e) { console.warn('cannot fit bounds'); }
-  }
-  map.on('zoomend moveend', () => {
-    if (lockZoom) { lockedZoom = map.getZoom(); lockedCenter = map.getCenter(); }
-  });
+  try {
+    map.fitBounds(new L.LatLngBounds(points), { maxZoom: defaultZoom, padding: [0, 0] });
+  } catch (e) { console.warn('cannot fit bounds'); }
 
   amap = map;
 
-  // Re-show selected marker after map rebuild
   if (selectedRowId && popups[selectedRowId]) {
     applyPopupAccent(markerColors[selectedRowId] || DEFAULT_HEX);
     showMarker(popups[selectedRowId]);
@@ -420,62 +355,22 @@ function selectMaker(id) {
 // ---------------------------------------------------------------------------
 grist.on('message', (e) => { if (e.tableId) { selectedTableId = e.tableId; } });
 
-function hasCol(col, obj) { return obj && typeof obj === 'object' && col in obj; }
-
-function defaultMapping(record, mappings) {
-  if (!mappings) {
-    return {
-      [Longitude]:       Longitude,
-      [Name]:            Name,
-      [Latitude]:        Latitude,
-      [Address]:         hasCol(Address, record)         ? Address         : null,
-      [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
-      [Geocode]:         hasCol(Geocode, record)         ? Geocode         : null,
-    };
-  }
-  return mappings;
-}
-
-function selectOnMap(rec) {
-  if (selectedRowId === rec.id) { return; }
-  selectedRowId = rec.id;
-  if (mode === 'single') { updateMap([rec]); }
-  else { updateMap(); }
-}
-
-grist.onRecord((record, mappings) => {
-  if (mode === 'single') {
-    lastRecord = grist.mapColumnNames(record) || record;
-    selectOnMap(lastRecord);
-    scanOnNeed(defaultMapping(record, mappings));
-  } else {
-    // Multi mode: change icon then pan/zoom to the marker and open popup
-    const marker = selectMaker(record.id);
-    if (!marker) { return; }
-    showMarker(marker);
-  }
+grist.onRecord((record) => {
+  // Row selected in Grist: highlight marker, recenter and open popup
+  const marker = selectMaker(record.id);
+  if (!marker) { return; }
+  showMarker(marker);
 });
 
-grist.onRecords((data, mappings) => {
+grist.onRecords((data) => {
   lastRecords = grist.mapColumnNames(data) || data;
-  if (mode !== 'single') {
-    updateMap(lastRecords);
-    if (lastRecord) { selectOnMap(lastRecord); }
-    scanOnNeed(defaultMapping(data[0], mappings));
-  }
+  updateMap(lastRecords);
 });
 
 grist.onNewRecord(() => {
-  if (mode === 'single') { clearMarkers(); clearMarkers = () => {}; }
-  else { clearPopupMarker(); }
+  clearPopupMarker();
   selectedRowId = null;
 });
-
-function updateMode() {
-  if (mode === 'single') {
-    if (lastRecord) { selectedRowId = lastRecord.id; updateMap([lastRecord]); }
-  } else { updateMap(lastRecords); }
-}
 
 // ---------------------------------------------------------------------------
 // Settings panel
@@ -490,6 +385,7 @@ function buildPresetOptions() {
   sel.value = activePresetId;
   toggleCustomFields(activePresetId === 'custom');
 }
+
 function toggleCustomFields(show) {
   document.querySelectorAll('.custom-row').forEach(r => r.style.display = show ? '' : 'none');
 }
@@ -498,24 +394,6 @@ function onEditOptions() {
   const panel = document.getElementById("settings");
   panel.style.display = 'block';
   document.getElementById("btnClose").onclick = () => panel.style.display = 'none';
-
-  // Mode
-  const cbxMode = document.getElementById('cbxMode');
-  cbxMode.checked = mode === 'multi';
-  cbxMode.onchange = async (e) => {
-    const nm = e.target.checked ? 'multi' : 'single';
-    if (nm !== mode) { mode = nm; await grist.setOption('mode', mode); updateMode(); }
-  };
-
-  // Lock zoom
-  const cbxLockZoom = document.getElementById('cbxLockZoom');
-  cbxLockZoom.checked = lockZoom;
-  cbxLockZoom.onchange = async (e) => {
-    lockZoom = e.target.checked;
-    if (!lockZoom) { lockedZoom = null; lockedCenter = null; }
-    await grist.setOption('lockZoom', lockZoom);
-  };
-  document.getElementById('btnResetZoom').onclick = () => { lockedZoom = null; lockedCenter = null; updateMode(); };
 
   // Default zoom
   const zoomSlider = document.getElementById('defaultZoom');
@@ -533,7 +411,7 @@ function onEditOptions() {
     activePresetId = e.target.value;
     toggleCustomFields(activePresetId === 'custom');
     await grist.setOption('activePresetId', activePresetId);
-    updateMode();
+    updateMap();
   };
   document.getElementById('mapSource').value    = customMapSource;
   document.getElementById('mapCopyright').value = customMapCopyright;
@@ -542,7 +420,7 @@ function onEditOptions() {
       if (opt === 'mapSource') { customMapSource = e.target.value; }
       else { customMapCopyright = e.target.value; }
       await grist.setOption(opt, e.target.value);
-      if (activePresetId === 'custom') { updateMode(); }
+      if (activePresetId === 'custom') { updateMap(); }
     };
   });
 }
@@ -554,25 +432,19 @@ const optional = true;
 grist.ready({
   columns: [
     "Name",
-    { name: "Longitude",       type: 'Numeric' },
-    { name: "Latitude",        type: 'Numeric' },
-    { name: "Description",     type: 'Text', title: 'Description (étiquette)', optional },
-    { name: "Color",           type: 'Text', title: 'Couleur du pin (HEX ou nom)', optional },
-    { name: "Geocode",         type: 'Bool', title: 'Geocode', optional },
-    { name: "Address",         type: 'Text', optional },
-    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional },
+    { name: "Longitude",   type: 'Numeric' },
+    { name: "Latitude",    type: 'Numeric' },
+    { name: "Description", type: 'Text', title: 'Description (étiquette)', optional },
+    { name: "Color",       type: 'Text', title: 'Couleur du pin (HEX ou nom)', optional },
   ],
   allowSelectBy: true,
   onEditOptions,
 });
 
 grist.onOptions((options, interaction) => {
-  writeAccess        = interaction.accessLevel === 'full';
-  mode               = options?.mode           ?? mode;
   activePresetId     = options?.activePresetId ?? "esri-street";
   customMapSource    = options?.mapSource      ?? '';
   customMapCopyright = options?.mapCopyright   ?? '';
-  lockZoom           = options?.lockZoom       ?? false;
   defaultZoom        = options?.defaultZoom    ?? 13;
-  if (lastRecords) { updateMode(); }
+  if (lastRecords) { updateMap(); }
 });

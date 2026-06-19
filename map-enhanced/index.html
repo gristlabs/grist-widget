@@ -23,23 +23,17 @@
       }
       #settings table { width: 100%; border-collapse: collapse; }
       #settings td    { padding: 3px 4px; vertical-align: middle; }
-      #settings td:first-child { white-space: nowrap; color: #444; min-width: 145px; }
+      #settings td:first-child { white-space: nowrap; color: #444; min-width: 140px; }
       #settings input[type="text"],
       #settings select {
         width: 100%; box-sizing: border-box;
         padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px;
       }
-      #settings input[type="range"] { width: 100px; vertical-align: middle; }
+      #settings input[type="range"] { width: 110px; vertical-align: middle; }
       #defaultZoomLabel {
         display: inline-block; width: 24px;
         font-size: 12px; font-weight: bold; color: #333;
       }
-      #btnResetZoom {
-        display: inline-block; margin-left: 4px; padding: 2px 8px;
-        background: #eee; border: 1px solid #bbb; border-radius: 3px;
-        cursor: pointer; font-size: 12px;
-      }
-      #btnResetZoom:hover { background: #ddd; }
       .section-sep { border: none; border-top: 1px solid #e8e8e8; margin: 8px 0; }
       .hint {
         margin: 4px 0 0; font-size: 11px; color: #999; line-height: 1.5;
@@ -71,35 +65,15 @@
     <div id="settings">
       <div id="btnClose">Fermer / Close</div>
 
-      <!-- Mode -->
-      <h3>Mode d'affichage</h3>
-      <label for="cbxMode">
-        <input type="checkbox" id="cbxMode">
-        Toutes les localisations
-      </label>
-
-      <hr class="section-sep"/>
-
       <!-- Zoom -->
-      <h3>Zoom</h3>
+      <h3>Zoom initial</h3>
       <table>
         <tr>
-          <td><label for="defaultZoom">Zoom initial max.</label></td>
+          <td><label for="defaultZoom">Niveau de zoom max.</label></td>
           <td>
             <input type="range" id="defaultZoom" min="1" max="20" value="13">
             <span id="defaultZoomLabel">13</span>
           </td>
-        </tr>
-        <tr>
-          <td><label for="cbxLockZoom">Verrouiller le zoom</label></td>
-          <td>
-            <input type="checkbox" id="cbxLockZoom">
-            <span style="color:#aaa;font-size:11px;"> garde le zoom, recentre sur le point sélectionné</span>
-          </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td><span id="btnResetZoom">↺ Réinitialiser le zoom</span></td>
         </tr>
       </table>
 
@@ -113,7 +87,7 @@
         — HEX : <code>#FF0000</code> <code>#43A047</code> <code>#1565C0</code>…<br>
         — Nom : <code>rouge</code> <code>vert</code> <code>bleu marine</code> <code>jaune</code>
         <code>orange</code> <code>violet</code> <code>rose</code> <code>gris</code>
-        <code>vert foncé</code> <code>bleu ciel</code> <code>marron</code> <code>turquoise</code>…<br>
+        <code>vert foncé</code> <code>bleu ciel</code> <code>marron</code> <code>turquoise</code><br>
         Si vide → vert par défaut.
       </p>
 
