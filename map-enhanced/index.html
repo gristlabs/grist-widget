@@ -30,8 +30,8 @@
         padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px;
       }
       #settings input[type="range"] { width: 100px; vertical-align: middle; }
-      #defaultZoomLabel, #popupDurationLabel {
-        display: inline-block; width: 72px;
+      #defaultZoomLabel {
+        display: inline-block; width: 24px;
         font-size: 12px; font-weight: bold; color: #333;
       }
       #btnResetZoom {
@@ -53,7 +53,7 @@
          Popup content
       ================================================================ */
       .map-popup .leaflet-popup-content-wrapper {
-        border-left: 4px solid #43A047;  /* updated dynamically */
+        border-left: 4px solid #43A047;
         border-radius: 6px; padding: 0;
       }
       .map-popup .leaflet-popup-content { margin: 10px 14px; }
@@ -94,7 +94,7 @@
           <td><label for="cbxLockZoom">Verrouiller le zoom</label></td>
           <td>
             <input type="checkbox" id="cbxLockZoom">
-            <span style="color:#aaa;font-size:11px;"> fixe entre les changements de point</span>
+            <span style="color:#aaa;font-size:11px;"> garde le zoom, recentre sur le point sélectionné</span>
           </td>
         </tr>
         <tr>
@@ -105,38 +105,15 @@
 
       <hr class="section-sep"/>
 
-      <!-- Étiquette -->
-      <h3>Étiquette (popup)</h3>
-      <table>
-        <tr>
-          <td><label for="cbxShowPopup">Afficher l'étiquette</label></td>
-          <td>
-            <input type="checkbox" id="cbxShowPopup">
-            <span style="color:#aaa;font-size:11px;"> à la sélection / au clic</span>
-          </td>
-        </tr>
-        <tr id="durationRow">
-          <td><label for="popupDuration">Durée d'affichage</label></td>
-          <td>
-            <input type="range" id="popupDuration" min="0" max="59" value="0">
-            <span id="popupDurationLabel">Permanente</span>
-          </td>
-        </tr>
-      </table>
-      <p class="hint">
-        <b>Name</b> → titre gras &nbsp;|&nbsp; <b>Description</b> → texte fin (optionnel, à mapper)
-      </p>
-
-      <hr class="section-sep"/>
-
       <!-- Couleur du pin -->
       <h3>Couleur du pin</h3>
       <p class="hint">
         Mappez la colonne <b>Couleur du pin</b> dans le Panneau Créateur.<br>
         Valeurs acceptées par ligne :<br>
-        — Code HEX : <code>#FF0000</code> <code>#43A047</code> <code>#1565C0</code>…<br>
-        — Nom français : <code>rouge</code> <code>vert</code> <code>bleu marine</code> <code>jaune</code> <code>orange</code> <code>violet</code> <code>rose</code> <code>gris</code> <code>vert foncé</code> <code>bleu ciel</code>…<br>
-        — Nom anglais : <code>red</code> <code>green</code> <code>blue</code> <code>yellow</code>…<br>
+        — HEX : <code>#FF0000</code> <code>#43A047</code> <code>#1565C0</code>…<br>
+        — Nom : <code>rouge</code> <code>vert</code> <code>bleu marine</code> <code>jaune</code>
+        <code>orange</code> <code>violet</code> <code>rose</code> <code>gris</code>
+        <code>vert foncé</code> <code>bleu ciel</code> <code>marron</code> <code>turquoise</code>…<br>
         Si vide → vert par défaut.
       </p>
 
