@@ -29,9 +29,37 @@ const TILE_PRESETS = [
   },
   {
     id: "osm-hot",
-    label: "OpenStreetMap Humanitaire (HOT)",
+    label: "Humanitaire HOT",
     url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
     attribution: "&copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>, tiles by <a href=\"https://hot.openstreetmap.org\">HOT</a>",
+    maxZoom: 19,
+  },
+  {
+    id: "cyclosm",
+    label: "CyclOSM (cyclable)",
+    url: "https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+    attribution: "<a href=\"https://github.com/cyclosm/cyclosm-cartocss-style/releases\">CyclOSM</a> &mdash; Map data: &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 20,
+  },
+  {
+    id: "waymarked-cycling",
+    label: "Itinéraires cyclables (Waymarked)",
+    url: "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
+    attribution: "&copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a> &amp; <a href=\"https://cycling.waymarkedtrails.org\">Waymarked Trails</a>",
+    maxZoom: 19,
+  },
+  {
+    id: "transport",
+    label: "Transports publics (Thunderforest)",
+    url: "https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey=a5dd6a2f1c934394bce6b0fb077203af",
+    attribution: "&copy; <a href=\"https://www.thunderforest.com\">Thunderforest</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 19,
+  },
+  {
+    id: "tracestrack-topo",
+    label: "Tracestrack Topo",
+    url: "https://tile.tracestrack.com/topo__fr/{z}/{x}/{y}.png?key=",
+    attribution: "&copy; <a href=\"https://www.tracestrack.com\">Tracestrack</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
     maxZoom: 19,
   },
   {
@@ -40,6 +68,20 @@ const TILE_PRESETS = [
     url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
     attribution: "Map data: &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a> | Map style: &copy; <a href=\"https://opentopomap.org\">OpenTopoMap</a> (CC-BY-SA)",
     maxZoom: 17,
+  },
+  {
+    id: "stamen-watercolor",
+    label: "Aquarelle (Stadia/Stamen)",
+    url: "https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg",
+    attribution: "&copy; <a href=\"https://stamen.com\">Stamen Design</a>, &copy; <a href=\"https://stadiamaps.com\">Stadia Maps</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 16,
+  },
+  {
+    id: "stadia-alidade-smooth-dark",
+    label: "Fond sombre (Stadia Dark)",
+    url: "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
+    attribution: "&copy; <a href=\"https://stadiamaps.com\">Stadia Maps</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 20,
   },
   {
     id: "esri-satellite",
@@ -54,6 +96,13 @@ const TILE_PRESETS = [
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
     attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community",
     maxZoom: 18,
+  },
+  {
+    id: "cartodb-voyager",
+    label: "CartoDB Voyager (clair)",
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    attribution: "&copy; <a href=\"https://carto.com/attributions\">CARTO</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 19,
   },
   {
     id: "custom",
@@ -239,13 +288,15 @@ function getActiveLayer() {
 function showMarker(marker) {
   if (!marker || !amap) { return; }
   const open = () => {
+    amap.panTo(marker.getLatLng());
     if (showPopup) {
+      // openPopup on map object works even for markers inside a MarkerClusterGroup
       const popup = marker.getPopup();
       if (popup) { amap.openPopup(popup, marker.getLatLng()); }
     }
-    amap.panTo(marker.getLatLng());
   };
   if (!marker._icon) {
+    // Marker hidden inside a cluster — zoom until it's visible, then open
     markers.zoomToShowLayer(marker, open);
   } else {
     open();
@@ -368,11 +419,11 @@ function selectMaker(id) {
 grist.on('message', (e) => { if (e.tableId) { selectedTableId = e.tableId; } });
 
 grist.onRecord((record) => {
-  // Row selected in Grist: highlight marker, recenter and open popup
+  // Always track the selected row — even before the map is built
+  selectedRowId = record.id;
   const marker = selectMaker(record.id);
   if (!marker) { return; }
-  // Small defer so Leaflet has time to render before we open the popup
-  setTimeout(() => showMarker(marker), 0);
+  setTimeout(() => showMarker(marker), 50);
 });
 
 grist.onRecords((data) => {
