@@ -50,17 +50,21 @@ const TILE_PRESETS = [
   },
   {
     id: "transport",
-    label: "Transports publics (Thunderforest)",
-    url: "https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey=a5dd6a2f1c934394bce6b0fb077203af",
+    label: "Transports publics (Thunderforest) *",
+    url: "https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey={apikey}",
     attribution: "&copy; <a href=\"https://www.thunderforest.com\">Thunderforest</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
     maxZoom: 19,
+    needsApiKey: true,
+    apiKeyParam: "apikey",
   },
   {
     id: "tracestrack-topo",
-    label: "Tracestrack Topo",
-    url: "https://tile.tracestrack.com/topo__fr/{z}/{x}/{y}.png?key=",
+    label: "Tracestrack Topo *",
+    url: "https://tile.tracestrack.com/topo__fr/{z}/{x}/{y}.png?key={apikey}",
     attribution: "&copy; <a href=\"https://www.tracestrack.com\">Tracestrack</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
     maxZoom: 19,
+    needsApiKey: true,
+    apiKeyParam: "key",
   },
   {
     id: "opentopomap",
@@ -213,6 +217,7 @@ let selectedRecords = null;
 let activePresetId     = "esri-street";
 let customMapSource    = '';
 let customMapCopyright = '';
+let tileApiKey         = '';
 let defaultZoom        = 13;
 let showPopup          = true;
 
@@ -275,8 +280,10 @@ function getActiveLayer() {
       maxZoom: 19,
     };
   }
+  let url = preset.url;
+  if (preset.needsApiKey) { url = url.replace('{apikey}', encodeURIComponent(tileApiKey)); }
   return {
-    url: preset.url,
+    url,
     attribution: DOMPurify.sanitize(preset.attribution, { FORCE_BODY: true }),
     maxZoom: preset.maxZoom,
   };
@@ -447,11 +454,13 @@ function buildPresetOptions() {
     opt.value = p.id; opt.textContent = p.label; sel.appendChild(opt);
   }
   sel.value = activePresetId;
-  toggleCustomFields(activePresetId === 'custom');
+  refreshDynamicRows(activePresetId);
 }
 
-function toggleCustomFields(show) {
-  document.querySelectorAll('.custom-row').forEach(r => r.style.display = show ? '' : 'none');
+function refreshDynamicRows(presetId) {
+  const preset = TILE_PRESETS.find(p => p.id === presetId) || {};
+  document.querySelectorAll('.custom-row').forEach(r => r.style.display = presetId === 'custom' ? '' : 'none');
+  document.querySelectorAll('.apikey-row').forEach(r => r.style.display = preset.needsApiKey  ? '' : 'none');
 }
 
 function onEditOptions() {
@@ -482,10 +491,12 @@ function onEditOptions() {
   buildPresetOptions();
   document.getElementById('mapPreset').onchange = async (e) => {
     activePresetId = e.target.value;
-    toggleCustomFields(activePresetId === 'custom');
+    refreshDynamicRows(activePresetId);
     await grist.setOption('activePresetId', activePresetId);
     updateMap();
   };
+
+  // Custom URL fields
   document.getElementById('mapSource').value    = customMapSource;
   document.getElementById('mapCopyright').value = customMapCopyright;
   ['mapSource', 'mapCopyright'].forEach(opt => {
@@ -496,6 +507,14 @@ function onEditOptions() {
       if (activePresetId === 'custom') { updateMap(); }
     };
   });
+
+  // API key field
+  document.getElementById('tileApiKey').value = tileApiKey;
+  document.getElementById('tileApiKey').onchange = async (e) => {
+    tileApiKey = e.target.value.trim();
+    await grist.setOption('tileApiKey', tileApiKey);
+    updateMap();
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -518,6 +537,7 @@ grist.onOptions((options, interaction) => {
   activePresetId     = options?.activePresetId ?? "esri-street";
   customMapSource    = options?.mapSource      ?? '';
   customMapCopyright = options?.mapCopyright   ?? '';
+  tileApiKey         = options?.tileApiKey     ?? '';
   defaultZoom        = options?.defaultZoom    ?? 13;
   showPopup          = options?.showPopup      ?? true;
   if (lastRecords) { updateMap(); }

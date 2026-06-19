@@ -109,6 +109,17 @@
           <td><label for="mapPreset">Carte</label></td>
           <td><select id="mapPreset"></select></td>
         </tr>
+        <tr class="apikey-row" style="display:none">
+          <td style="vertical-align:top;padding-top:6px"><label for="tileApiKey">Clé API *</label></td>
+          <td>
+            <input type="text" id="tileApiKey" placeholder="Votre clé gratuite…">
+            <p class="hint" style="margin-top:4px">
+              * Clé gratuite requise :<br>
+              Thunderforest → <a href="https://www.thunderforest.com/docs/apikeys/" target="_blank">thunderforest.com</a><br>
+              Tracestrack → <a href="https://www.tracestrack.com/" target="_blank">tracestrack.com</a>
+            </p>
+          </td>
+        </tr>
         <tr class="custom-row" style="display:none">
           <td><label for="mapSource">URL source</label></td>
           <td><input type="text" id="mapSource" placeholder="https://…/{z}/{x}/{y}.png"></td>
