@@ -16,28 +16,21 @@
       /* ================================================================
          Settings panel
       ================================================================ */
-      #settings {
-        font-family: sans-serif;
-        font-size: 13px;
-      }
+      #settings { font-family: sans-serif; font-size: 13px; }
       #settings h3 {
-        margin: 10px 0 5px;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: #888;
+        margin: 10px 0 5px; font-size: 11px;
+        text-transform: uppercase; letter-spacing: 0.07em; color: #888;
       }
       #settings table { width: 100%; border-collapse: collapse; }
       #settings td    { padding: 3px 4px; vertical-align: middle; }
-      #settings td:first-child { white-space: nowrap; color: #444; min-width: 140px; }
+      #settings td:first-child { white-space: nowrap; color: #444; min-width: 145px; }
       #settings input[type="text"],
       #settings select {
         width: 100%; box-sizing: border-box;
         padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px;
       }
       #settings input[type="range"] { width: 100px; vertical-align: middle; }
-      #defaultZoomLabel,
-      #popupDurationLabel {
+      #defaultZoomLabel, #popupDurationLabel {
         display: inline-block; width: 72px;
         font-size: 12px; font-weight: bold; color: #333;
       }
@@ -48,41 +41,28 @@
       }
       #btnResetZoom:hover { background: #ddd; }
       .section-sep { border: none; border-top: 1px solid #e8e8e8; margin: 8px 0; }
-
-      /* ================================================================
-         Colour swatches
-      ================================================================ */
-      #colorSwatches { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; }
-      .swatch {
-        width: 28px; height: 28px; border-radius: 50%;
-        border: 2px solid transparent;
-        cursor: pointer; outline: none;
-        transition: transform 0.1s;
+      .hint {
+        margin: 4px 0 0; font-size: 11px; color: #999; line-height: 1.5;
       }
-      .swatch:hover       { transform: scale(1.15); }
-      .swatch-selected    { border-color: #333 !important; transform: scale(1.2); box-shadow: 0 0 0 2px #fff, 0 0 0 4px #333; }
+      .hint code {
+        background: #f0f0f0; padding: 1px 4px; border-radius: 3px;
+        font-size: 10px; color: #444;
+      }
 
       /* ================================================================
          Popup content
       ================================================================ */
       .map-popup .leaflet-popup-content-wrapper {
-        border-left: 4px solid #1565C0;   /* updated dynamically by JS */
-        border-radius: 6px;
-        padding: 0;
+        border-left: 4px solid #43A047;  /* updated dynamically */
+        border-radius: 6px; padding: 0;
       }
       .map-popup .leaflet-popup-content { margin: 10px 14px; }
       .popup-title {
-        font-weight: bold;
-        font-size: 13px;
-        line-height: 1.3;
-        color: #111;
+        font-weight: bold; font-size: 13px; line-height: 1.3; color: #111;
       }
       .popup-desc {
-        font-size: 11px;
-        color: #555;
-        font-weight: normal;
-        line-height: 1.5;
-        margin-top: 3px;
+        font-size: 11px; color: #555; font-weight: normal;
+        line-height: 1.5; margin-top: 3px;
       }
     </style>
   </head>
@@ -114,7 +94,7 @@
           <td><label for="cbxLockZoom">Verrouiller le zoom</label></td>
           <td>
             <input type="checkbox" id="cbxLockZoom">
-            <span style="color:#888;font-size:11px;"> fixe entre les changements de point</span>
+            <span style="color:#aaa;font-size:11px;"> fixe entre les changements de point</span>
           </td>
         </tr>
         <tr>
@@ -132,7 +112,7 @@
           <td><label for="cbxShowPopup">Afficher l'étiquette</label></td>
           <td>
             <input type="checkbox" id="cbxShowPopup">
-            <span style="color:#888;font-size:11px;"> à la sélection / au clic</span>
+            <span style="color:#aaa;font-size:11px;"> à la sélection / au clic</span>
           </td>
         </tr>
         <tr id="durationRow">
@@ -143,15 +123,22 @@
           </td>
         </tr>
       </table>
-      <p style="margin:4px 0 0;font-size:11px;color:#999;">
-        Colonne <b>Name</b> → titre gras &nbsp;|&nbsp; Colonne <b>Description</b> → texte fin (optionnel)
+      <p class="hint">
+        <b>Name</b> → titre gras &nbsp;|&nbsp; <b>Description</b> → texte fin (optionnel, à mapper)
       </p>
 
       <hr class="section-sep"/>
 
       <!-- Couleur du pin -->
-      <h3>Couleur du pin et de l'étiquette</h3>
-      <div id="colorSwatches"></div>
+      <h3>Couleur du pin</h3>
+      <p class="hint">
+        Mappez la colonne <b>Couleur du pin</b> dans le Panneau Créateur.<br>
+        Valeurs acceptées par ligne :<br>
+        — Code HEX : <code>#FF0000</code> <code>#43A047</code> <code>#1565C0</code>…<br>
+        — Nom français : <code>rouge</code> <code>vert</code> <code>bleu marine</code> <code>jaune</code> <code>orange</code> <code>violet</code> <code>rose</code> <code>gris</code> <code>vert foncé</code> <code>bleu ciel</code>…<br>
+        — Nom anglais : <code>red</code> <code>green</code> <code>blue</code> <code>yellow</code>…<br>
+        Si vide → vert par défaut.
+      </p>
 
       <hr class="section-sep"/>
 
