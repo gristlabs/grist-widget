@@ -24,17 +24,30 @@ const ui = {
   progressText: null,
 };
 
-function getAnswerHTML(answer) {
+// A cell value as plain text (null/undefined become an empty string).
+function asText(value) {
+  return value == null ? '' : String(value);
+}
+
+// Show the answer as plain text via textContent. A list value
+// (e.g. a choice or reference list) becomes a simple bullet list.
+function renderAnswer(el, answer) {
+  el.textContent = '';
   if (!Array.isArray(answer)) {
-    return answer;
+    el.textContent = asText(answer);
+    return;
   }
-  return "<ul>\n" +
-    answer.map(v => `<li>${v}</li>`).join('\n') +
-    "</ul>";
+  const ul = document.createElement('ul');
+  for (const v of answer) {
+    const li = document.createElement('li');
+    li.textContent = asText(v);
+    ul.appendChild(li);
+  }
+  el.appendChild(ul);
 }
 
 function goNext(step) {
-  if (question.length === 0) { return; }
+  if (questions.length === 0) { return; }
   if (step === 'start') {
     at = 0;
   } else {
@@ -47,8 +60,8 @@ function goNext(step) {
   const qa = questions[at];
   // Store rowId, so we come back to the same card if possible, and restart if not.
   store.set('flashcards-rowid', qa.id);
-  ui.questionCard.innerHTML = qa.Question;
-  ui.answerCard.innerHTML = getAnswerHTML(qa.Answer);
+  ui.questionCard.textContent = asText(qa.Question);
+  renderAnswer(ui.answerCard, qa.Answer);
   setState('Q');
 }
 

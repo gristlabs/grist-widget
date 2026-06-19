@@ -53242,6 +53242,18 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     showAlert("danger", message);
     document.body.classList.remove("loading");
   };
+  function appendDrawerLine(drawerInfo, label, value) {
+    const line = document.createElement("div");
+    line.className = "line";
+    const labelEl = document.createElement("div");
+    labelEl.className = "label";
+    labelEl.textContent = String(label ?? "");
+    const valueEl = document.createElement("div");
+    valueEl.className = "value";
+    valueEl.textContent = valueToString(value);
+    line.append(labelEl, valueEl);
+    drawerInfo.append(line);
+  }
   eventGroupInfo.subscribe(openGroupDrawer);
   function openGroupDrawer(groupId) {
     if (!groupId) {
@@ -53260,10 +53272,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     const values3 = [...item.data.GroupInfo ?? [], ...item.data.Columns ?? []];
     const obj = zip(labels, values3);
     for (const [label, value] of obj) {
-      drawerInfo.innerHTML += `<div class="line">
-    <div class="label">${label}</div>
-    <div class="value">${valueToString(value)}<div>
-    </div>`;
+      appendDrawerLine(drawerInfo, label, value);
     }
     drawer.show();
   }
@@ -53281,10 +53290,7 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
     }
     const obj = zip(itemInfo, item.data.ItemInfo ?? []);
     for (const [label, value] of obj) {
-      drawerInfo.innerHTML += `<div class="line">
-    <div class="label">${label}</div>
-    <div class="value">${valueToString(value)}<div>
-    </div>`;
+      appendDrawerLine(drawerInfo, label, value);
     }
     drawer.show();
   }
