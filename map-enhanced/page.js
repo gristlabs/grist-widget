@@ -289,13 +289,13 @@ function getActiveLayer() {
 function showMarker(marker) {
   if (!marker) { return; }
   if (lockZoom) {
-    // Keep zoom level, just pan to center the marker
+    // Keep zoom, recenter on the marker
     amap.panTo(marker.getLatLng());
-    marker.openPopup();
   } else {
-    // Original behaviour: zoom + pan to show the marker, then open popup
-    markers.zoomToShowLayer(marker, () => marker.openPopup());
+    // Zoom+pan to uncollapse cluster if needed (original widget pattern)
+    if (!marker._icon) { markers.zoomToShowLayer(marker); }
   }
+  marker.openPopup();
 }
 
 // ---------------------------------------------------------------------------
