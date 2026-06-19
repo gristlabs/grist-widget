@@ -111,7 +111,7 @@ function buildOutput(form, jsModel) {
         }
       } catch (err) {
         purge(jsonView);
-        jsonView.innerHTML = err.message;
+        jsonView.textContent = err.message;
       }
     }
     void run();

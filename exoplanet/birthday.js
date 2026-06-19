@@ -24,7 +24,7 @@ function greeting(data) {
 
 function showTable(data) {
   var msg = greeting(data);
-  $$('greeting').innerHTML = msg;
+  $$('greeting').textContent = msg;
   if (msg) {
     $$('cake').style.display = 'block';
   } else {
