@@ -29,10 +29,42 @@ const TILE_PRESETS = [
   },
   {
     id: "osm-hot",
-    label: "OpenStreetMap Humanitaire (HOT)",
+    label: "Humanitaire HOT",
     url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
     attribution: "&copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>, tiles by <a href=\"https://hot.openstreetmap.org\">HOT</a>",
     maxZoom: 19,
+  },
+  {
+    id: "cyclosm",
+    label: "CyclOSM (cyclable)",
+    url: "https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+    attribution: "<a href=\"https://github.com/cyclosm/cyclosm-cartocss-style/releases\">CyclOSM</a> &mdash; Map data: &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 20,
+  },
+  {
+    id: "waymarked-cycling",
+    label: "Itinéraires cyclables (Waymarked)",
+    url: "https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
+    attribution: "&copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a> &amp; <a href=\"https://cycling.waymarkedtrails.org\">Waymarked Trails</a>",
+    maxZoom: 19,
+  },
+  {
+    id: "transport",
+    label: "Transports publics (Thunderforest) *",
+    url: "https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey={apikey}",
+    attribution: "&copy; <a href=\"https://www.thunderforest.com\">Thunderforest</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 19,
+    needsApiKey: true,
+    apiKeyParam: "apikey",
+  },
+  {
+    id: "tracestrack-topo",
+    label: "Tracestrack Topo *",
+    url: "https://tile.tracestrack.com/topo__fr/{z}/{x}/{y}.png?key={apikey}",
+    attribution: "&copy; <a href=\"https://www.tracestrack.com\">Tracestrack</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 19,
+    needsApiKey: true,
+    apiKeyParam: "key",
   },
   {
     id: "opentopomap",
@@ -40,6 +72,20 @@ const TILE_PRESETS = [
     url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
     attribution: "Map data: &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a> | Map style: &copy; <a href=\"https://opentopomap.org\">OpenTopoMap</a> (CC-BY-SA)",
     maxZoom: 17,
+  },
+  {
+    id: "stamen-watercolor",
+    label: "Aquarelle (Stadia/Stamen)",
+    url: "https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg",
+    attribution: "&copy; <a href=\"https://stamen.com\">Stamen Design</a>, &copy; <a href=\"https://stadiamaps.com\">Stadia Maps</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 16,
+  },
+  {
+    id: "stadia-alidade-smooth-dark",
+    label: "Fond sombre (Stadia Dark)",
+    url: "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
+    attribution: "&copy; <a href=\"https://stadiamaps.com\">Stadia Maps</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 20,
   },
   {
     id: "esri-satellite",
@@ -54,6 +100,13 @@ const TILE_PRESETS = [
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
     attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community",
     maxZoom: 18,
+  },
+  {
+    id: "cartodb-voyager",
+    label: "CartoDB Voyager (clair)",
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    attribution: "&copy; <a href=\"https://carto.com/attributions\">CARTO</a>, &copy; <a href=\"https://openstreetmap.org/copyright\">OpenStreetMap contributors</a>",
+    maxZoom: 19,
   },
   {
     id: "custom",
@@ -164,6 +217,7 @@ let selectedRecords = null;
 let activePresetId     = "esri-street";
 let customMapSource    = '';
 let customMapCopyright = '';
+let tileApiKey         = '';
 let defaultZoom        = 13;
 let showPopup          = true;
 
@@ -226,8 +280,10 @@ function getActiveLayer() {
       maxZoom: 19,
     };
   }
+  let url = preset.url;
+  if (preset.needsApiKey) { url = url.replace('{apikey}', encodeURIComponent(tileApiKey)); }
   return {
-    url: preset.url,
+    url,
     attribution: DOMPurify.sanitize(preset.attribution, { FORCE_BODY: true }),
     maxZoom: preset.maxZoom,
   };
@@ -239,13 +295,15 @@ function getActiveLayer() {
 function showMarker(marker) {
   if (!marker || !amap) { return; }
   const open = () => {
+    amap.panTo(marker.getLatLng());
     if (showPopup) {
+      // openPopup on map object works even for markers inside a MarkerClusterGroup
       const popup = marker.getPopup();
       if (popup) { amap.openPopup(popup, marker.getLatLng()); }
     }
-    amap.panTo(marker.getLatLng());
   };
   if (!marker._icon) {
+    // Marker hidden inside a cluster — zoom until it's visible, then open
     markers.zoomToShowLayer(marker, open);
   } else {
     open();
@@ -368,11 +426,11 @@ function selectMaker(id) {
 grist.on('message', (e) => { if (e.tableId) { selectedTableId = e.tableId; } });
 
 grist.onRecord((record) => {
-  // Row selected in Grist: highlight marker, recenter and open popup
+  // Always track the selected row — even before the map is built
+  selectedRowId = record.id;
   const marker = selectMaker(record.id);
   if (!marker) { return; }
-  // Small defer so Leaflet has time to render before we open the popup
-  setTimeout(() => showMarker(marker), 0);
+  setTimeout(() => showMarker(marker), 50);
 });
 
 grist.onRecords((data) => {
@@ -396,11 +454,13 @@ function buildPresetOptions() {
     opt.value = p.id; opt.textContent = p.label; sel.appendChild(opt);
   }
   sel.value = activePresetId;
-  toggleCustomFields(activePresetId === 'custom');
+  refreshDynamicRows(activePresetId);
 }
 
-function toggleCustomFields(show) {
-  document.querySelectorAll('.custom-row').forEach(r => r.style.display = show ? '' : 'none');
+function refreshDynamicRows(presetId) {
+  const preset = TILE_PRESETS.find(p => p.id === presetId) || {};
+  document.querySelectorAll('.custom-row').forEach(r => r.style.display = presetId === 'custom' ? '' : 'none');
+  document.querySelectorAll('.apikey-row').forEach(r => r.style.display = preset.needsApiKey  ? '' : 'none');
 }
 
 function onEditOptions() {
@@ -431,10 +491,12 @@ function onEditOptions() {
   buildPresetOptions();
   document.getElementById('mapPreset').onchange = async (e) => {
     activePresetId = e.target.value;
-    toggleCustomFields(activePresetId === 'custom');
+    refreshDynamicRows(activePresetId);
     await grist.setOption('activePresetId', activePresetId);
     updateMap();
   };
+
+  // Custom URL fields
   document.getElementById('mapSource').value    = customMapSource;
   document.getElementById('mapCopyright').value = customMapCopyright;
   ['mapSource', 'mapCopyright'].forEach(opt => {
@@ -445,6 +507,14 @@ function onEditOptions() {
       if (activePresetId === 'custom') { updateMap(); }
     };
   });
+
+  // API key field
+  document.getElementById('tileApiKey').value = tileApiKey;
+  document.getElementById('tileApiKey').onchange = async (e) => {
+    tileApiKey = e.target.value.trim();
+    await grist.setOption('tileApiKey', tileApiKey);
+    updateMap();
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -467,6 +537,7 @@ grist.onOptions((options, interaction) => {
   activePresetId     = options?.activePresetId ?? "esri-street";
   customMapSource    = options?.mapSource      ?? '';
   customMapCopyright = options?.mapCopyright   ?? '';
+  tileApiKey         = options?.tileApiKey     ?? '';
   defaultZoom        = options?.defaultZoom    ?? 13;
   showPopup          = options?.showPopup      ?? true;
   if (lastRecords) { updateMap(); }
