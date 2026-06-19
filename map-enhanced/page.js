@@ -165,6 +165,7 @@ let activePresetId     = "esri-street";
 let customMapSource    = '';
 let customMapCopyright = '';
 let defaultZoom        = 13;
+let showPopup          = true;
 
 const Name        = "Name";
 const Longitude   = "Longitude";
@@ -238,7 +239,7 @@ function getActiveLayer() {
 function showMarker(marker) {
   if (!marker) { return; }
   if (!marker._icon) { markers.zoomToShowLayer(marker); }
-  marker.openPopup();
+  if (showPopup) { marker.openPopup(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -395,6 +396,15 @@ function onEditOptions() {
   panel.style.display = 'block';
   document.getElementById("btnClose").onclick = () => panel.style.display = 'none';
 
+  // Show popup
+  const cbxShowPopup = document.getElementById('cbxShowPopup');
+  cbxShowPopup.checked = showPopup;
+  cbxShowPopup.onchange = async (e) => {
+    showPopup = e.target.checked;
+    await grist.setOption('showPopup', showPopup);
+    if (!showPopup && amap) { amap.closePopup(); }
+  };
+
   // Default zoom
   const zoomSlider = document.getElementById('defaultZoom');
   const zoomLabel  = document.getElementById('defaultZoomLabel');
@@ -446,5 +456,6 @@ grist.onOptions((options, interaction) => {
   customMapSource    = options?.mapSource      ?? '';
   customMapCopyright = options?.mapCopyright   ?? '';
   defaultZoom        = options?.defaultZoom    ?? 13;
+  showPopup          = options?.showPopup      ?? true;
   if (lastRecords) { updateMap(); }
 });
