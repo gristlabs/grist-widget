@@ -65,82 +65,93 @@ const TILE_PRESETS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Pin colour palette (8 colours)
+// Colour resolution — HEX or French/English name
 // ---------------------------------------------------------------------------
-const PIN_COLORS = [
-  { id: 'yellow',      label: 'Jaune',        hex: '#F5C300', dark: '#a38500' },
-  { id: 'orange',      label: 'Orange',       hex: '#FF7A00', dark: '#b35500' },
-  { id: 'red',         label: 'Rouge',        hex: '#D32F2F', dark: '#8b0000' },
-  { id: 'green-light', label: 'Vert clair',   hex: '#43A047', dark: '#2e6b30' },
-  { id: 'green-dark',  label: 'Vert foncé',   hex: '#1B5E20', dark: '#0a2e0b' },
-  { id: 'blue-sky',    label: 'Bleu ciel',    hex: '#039BE5', dark: '#01579b' },
-  { id: 'blue-navy',   label: 'Bleu marine',  hex: '#1565C0', dark: '#0d3b7a' },
-  { id: 'purple',      label: 'Violet',       hex: '#7B1FA2', dark: '#4a0072' },
-];
+const COLOR_NAMES = {
+  // French
+  'jaune':       '#F5C300',
+  'orange':      '#FF7A00',
+  'rouge':       '#D32F2F',
+  'vert':        '#43A047',
+  'vert clair':  '#43A047',
+  'vert foncé':  '#1B5E20',
+  'bleu':        '#039BE5',
+  'bleu ciel':   '#039BE5',
+  'bleu marine': '#1565C0',
+  'violet':      '#7B1FA2',
+  'rose':        '#E91E63',
+  'gris':        '#757575',
+  'blanc':       '#FFFFFF',
+  'noir':        '#111111',
+  'marron':      '#795548',
+  'beige':       '#D7CCC8',
+  'turquoise':   '#00BCD4',
+  // English
+  'yellow':      '#F5C300',
+  'red':         '#D32F2F',
+  'green':       '#43A047',
+  'dark green':  '#1B5E20',
+  'blue':        '#039BE5',
+  'sky blue':    '#039BE5',
+  'navy':        '#1565C0',
+  'navy blue':   '#1565C0',
+  'purple':      '#7B1FA2',
+  'pink':        '#E91E63',
+  'grey':        '#757575',
+  'gray':        '#757575',
+  'white':       '#FFFFFF',
+  'black':       '#111111',
+  'brown':       '#795548',
+  'teal':        '#00BCD4',
+};
 
-const DEFAULT_PRESET_ID  = "esri-street";
-const DEFAULT_ZOOM       = 13;
-const DEFAULT_COLOR_ID   = 'blue-navy';
+const DEFAULT_HEX  = '#43A047'; // vert par défaut
+const DEFAULT_DARK = '#2e6b30';
 
-// ---------------------------------------------------------------------------
-// State
-// ---------------------------------------------------------------------------
-let amap;
-let popups = {};
-let selectedTableId  = null;
-let selectedRowId    = null;
-let selectedRecords  = null;
-let mode = 'multi';
-
-let activePresetId   = DEFAULT_PRESET_ID;
-let customMapSource  = '';
-let customMapCopyright = '';
-
-let lockedZoom   = null;
-let lockedCenter = null;
-let defaultZoom  = DEFAULT_ZOOM;
-let lockZoom     = false;
-
-let showPopup      = true;
-let popupDuration  = 0;
-let popupTimer     = null;
-
-let pinColorId = DEFAULT_COLOR_ID;
-
-const Name            = "Name";
-const Longitude       = "Longitude";
-const Latitude        = "Latitude";
-const Description     = "Description";
-const Geocode         = 'Geocode';
-const Address         = 'Address';
-const GeocodedAddress = 'GeocodedAddress';
-
-let lastRecord;
-let lastRecords;
-
-// ---------------------------------------------------------------------------
-// SVG pin icons (no external image files needed)
-// ---------------------------------------------------------------------------
-function makePinSvg(fillColor, borderColor, scale) {
-  const w = Math.round(25 * scale);
-  const h = Math.round(41 * scale);
-  return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 25 41">` +
-    `<path d="M12.5 0C5.596 0 0 5.596 0 12.5c0 8.344 12.5 28.5 12.5 28.5S25 20.844 25 12.5C25 5.596 19.404 0 12.5 0z"` +
-    ` fill="${fillColor}" stroke="${borderColor}" stroke-width="1.5"/>` +
-    `<circle cx="12.5" cy="12.5" r="4.5" fill="white" opacity="0.9"/>` +
-    `</svg>`
-  );
+// Darken a hex colour by 40 % for the pin border
+function darkenHex(hex) {
+  let h = hex.replace('#', '');
+  if (h.length === 3) { h = h.split('').map(c => c + c).join(''); }
+  const r = Math.round(parseInt(h.slice(0, 2), 16) * 0.6);
+  const g = Math.round(parseInt(h.slice(2, 4), 16) * 0.6);
+  const b = Math.round(parseInt(h.slice(4, 6), 16) * 0.6);
+  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
-function makeIcon(hexColor, darkColor, isSelected) {
+function resolveColor(value) {
+  if (!value) { return { hex: DEFAULT_HEX, dark: DEFAULT_DARK }; }
+  const raw = String(value).trim();
+  // HEX  (#RGB or #RRGGBB)
+  if (/^#[0-9a-fA-F]{3}$/.test(raw)) {
+    const hex = '#' + raw.slice(1).split('').map(c => c + c).join('');
+    return { hex, dark: darkenHex(hex) };
+  }
+  if (/^#[0-9a-fA-F]{6}$/.test(raw)) {
+    return { hex: raw, dark: darkenHex(raw) };
+  }
+  // Named colour (case-insensitive)
+  const named = COLOR_NAMES[raw.toLowerCase()];
+  if (named) { return { hex: named, dark: darkenHex(named) }; }
+  // Fallback
+  return { hex: DEFAULT_HEX, dark: DEFAULT_DARK };
+}
+
+// ---------------------------------------------------------------------------
+// SVG pin icon builder
+// ---------------------------------------------------------------------------
+function makeIcon(hex, dark, isSelected) {
   const scale  = isSelected ? 1.25 : 1;
-  const fill   = isSelected ? hexColor : hexColor;
-  const border = isSelected ? '#ffffff' : darkColor;
+  const border = isSelected ? '#ffffff' : dark;
   const w = Math.round(25 * scale);
   const h = Math.round(41 * scale);
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 25 41">` +
+    `<path d="M12.5 0C5.596 0 0 5.596 0 12.5c0 8.344 12.5 28.5 12.5 28.5S25 20.844 25 12.5C25 5.596 19.404 0 12.5 0z"` +
+    ` fill="${hex}" stroke="${border}" stroke-width="1.5"/>` +
+    `<circle cx="12.5" cy="12.5" r="4.5" fill="white" opacity="0.9"/>` +
+    `</svg>`;
   return L.divIcon({
-    html:        makePinSvg(fill, border, scale),
+    html:        svg,
     className:   '',
     iconSize:    [w, h],
     iconAnchor:  [w / 2, h],
@@ -148,37 +159,62 @@ function makeIcon(hexColor, darkColor, isSelected) {
   });
 }
 
-function getColorDef(colorId) {
-  return PIN_COLORS.find(c => c.id === colorId) || PIN_COLORS.find(c => c.id === DEFAULT_COLOR_ID);
-}
-
-function buildIcons() {
-  const col = getColorDef(pinColorId);
-  return {
-    normal:   makeIcon(col.hex, col.dark, false),
-    selected: makeIcon(col.hex, col.dark, true),
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Cluster icon factory
 // ---------------------------------------------------------------------------
 const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
   return function (cluster) {
-    var childCount = cluster.getChildCount();
+    const childCount = cluster.getChildCount();
     let isSelected = false;
     try {
       const sm = selectedMarkerGetter();
       isSelected = cluster.getAllChildMarkers().some(m => m === sm);
     } catch (e) { console.error(e); }
-    var c = childCount < 10 ? 'small' : childCount < 100 ? 'medium' : 'large';
+    const c = childCount < 10 ? 'small' : childCount < 100 ? 'medium' : 'large';
     return new L.DivIcon({
-      html: '<div><span>' + childCount + ' <span aria-label="markers"></span></span></div>',
-      className: 'marker-cluster marker-cluster-' + c + (isSelected ? ' marker-cluster-selected' : ''),
+      html: `<div><span>${childCount} <span aria-label="markers"></span></span></div>`,
+      className: `marker-cluster marker-cluster-${c}${isSelected ? ' marker-cluster-selected' : ''}`,
       iconSize: new L.Point(40, 40),
     });
   };
 };
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+let amap;
+let popups        = {};
+let markerColors  = {}; // rowId → hex (for popup accent)
+let selectedTableId  = null;
+let selectedRowId    = null;
+let selectedRecords  = null;
+let mode = 'multi';
+
+let activePresetId     = "esri-street";
+let customMapSource    = '';
+let customMapCopyright = '';
+
+let lockedZoom   = null;
+let lockedCenter = null;
+let defaultZoom  = 13;
+let lockZoom     = false;
+
+let showPopup     = true;
+let popupDuration = 0;
+let popupTimer    = null;
+
+// Column names
+const Name            = "Name";
+const Longitude       = "Longitude";
+const Latitude        = "Latitude";
+const Description     = "Description";
+const Color           = "Color";       // optional — HEX or colour name
+const Geocode         = 'Geocode';
+const Address         = 'Address';
+const GeocodedAddress = 'GeocodedAddress';
+
+let lastRecord;
+let lastRecords;
 
 // ---------------------------------------------------------------------------
 // Geocoding
@@ -191,14 +227,12 @@ if (URLSearchParams && location.search && geocoder) {
   const m = new URLSearchParams(location.search).get('mode');
   if (m) { mode = m; }
 }
-
 async function geocode(address) {
   const results = await geocoder.geocode(address);
   let v = results[0];
   if (v) { v = v.center; }
   return v;
 }
-
 async function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 let writeAccess = true;
@@ -212,8 +246,7 @@ async function scan(tableId, records, mappings) {
     const address = record.Address;
     if (record[GeocodedAddress]) {
       if (record[GeocodedAddress] === record.Address) { continue; }
-      record[Longitude] = null;
-      record[Latitude]  = null;
+      record[Longitude] = null; record[Latitude] = null;
     }
     if (address && !record[Longitude]) {
       const result = await geocode(address);
@@ -227,7 +260,6 @@ async function scan(tableId, records, mappings) {
     }
   }
 }
-
 function scanOnNeed(mappings) {
   if (!scanning && selectedTableId && selectedRecords) {
     scanning = scan(selectedTableId, selectedRecords, mappings)
@@ -241,7 +273,6 @@ function scanOnNeed(mappings) {
 function showProblem(txt) {
   document.getElementById('map').innerHTML = '<div class="error">' + txt + '</div>';
 }
-
 function parseValue(v) {
   if (typeof v === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
     const p = JSON.parse(v.value.slice(2, v.value.length - 1));
@@ -249,7 +280,6 @@ function parseValue(v) {
   }
   return v;
 }
-
 function getInfo(rec) {
   return {
     id:          rec.id,
@@ -257,9 +287,9 @@ function getInfo(rec) {
     lng:         parseValue(rec[Longitude]),
     lat:         parseValue(rec[Latitude]),
     description: parseValue(rec[Description]) || '',
+    colorRaw:    parseValue(rec[Color])        || '',
   };
 }
-
 function buildPopupContent(name, description) {
   const safeName = DOMPurify.sanitize(String(name || ''), { FORCE_BODY: true });
   const safeDesc = DOMPurify.sanitize(String(description || ''), { FORCE_BODY: true });
@@ -268,33 +298,25 @@ function buildPopupContent(name, description) {
     : `<div class="popup-title">${safeName}</div>`;
 }
 
-// Inject a <style> for the popup accent colour that matches the pin
-function applyPopupColorStyle(hexColor) {
-  let el = document.getElementById('popup-color-style');
-  if (!el) {
-    el = document.createElement('style');
-    el.id = 'popup-color-style';
-    document.head.appendChild(el);
-  }
+// Update the popup left-border & tip to match the selected marker's colour
+function applyPopupAccent(hex) {
+  let el = document.getElementById('popup-accent-style');
+  if (!el) { el = document.createElement('style'); el.id = 'popup-accent-style'; document.head.appendChild(el); }
   el.textContent =
-    `.map-popup .leaflet-popup-content-wrapper { border-left: 4px solid ${hexColor}; }` +
-    `.map-popup .leaflet-popup-tip { background: ${hexColor}; }`;
+    `.map-popup .leaflet-popup-content-wrapper { border-left: 4px solid ${hex}; }` +
+    `.map-popup .leaflet-popup-tip { background: ${hex}; }`;
 }
 
 function getActiveLayer() {
   const preset = TILE_PRESETS.find(p => p.id === activePresetId) || TILE_PRESETS[0];
   if (preset.id === 'custom') {
     return {
-      url:         customMapSource || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      url: customMapSource || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       attribution: DOMPurify.sanitize(customMapCopyright, { FORCE_BODY: true }),
-      maxZoom:     19,
+      maxZoom: 19,
     };
   }
-  return {
-    url:         preset.url,
-    attribution: DOMPurify.sanitize(preset.attribution, { FORCE_BODY: true }),
-    maxZoom:     preset.maxZoom,
-  };
+  return { url: preset.url, attribution: DOMPurify.sanitize(preset.attribution, { FORCE_BODY: true }), maxZoom: preset.maxZoom };
 }
 
 // ---------------------------------------------------------------------------
@@ -303,16 +325,12 @@ function getActiveLayer() {
 function clearPopupTimer() {
   if (popupTimer !== null) { clearTimeout(popupTimer); popupTimer = null; }
 }
-
 function openPopupWithTimer(marker) {
   if (!showPopup || !marker) { return; }
   clearPopupTimer();
   marker.openPopup();
   if (popupDuration > 0) {
-    popupTimer = setTimeout(() => {
-      marker.closePopup();
-      popupTimer = null;
-    }, popupDuration * 1000);
+    popupTimer = setTimeout(() => { marker.closePopup(); popupTimer = null; }, popupDuration * 1000);
   }
 }
 
@@ -327,16 +345,11 @@ function updateMap(data) {
   selectedRecords = data;
   if (!data || data.length === 0) { showProblem("No data found yet"); return; }
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude.");
-    return;
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude."); return;
   }
 
   clearPopupTimer();
-
-  if (amap && lockZoom) {
-    lockedZoom   = amap.getZoom();
-    lockedCenter = amap.getCenter();
-  }
+  if (amap && lockZoom) { lockedZoom = amap.getZoom(); lockedCenter = amap.getCenter(); }
 
   const layer = getActiveLayer();
   const tiles = L.tileLayer(layer.url, { attribution: layer.attribution, maxZoom: layer.maxZoom });
@@ -349,46 +362,45 @@ function updateMap(data) {
   map.createPane('clusters'      ).style.zIndex = 610;
   map.createPane('otherMarkers'  ).style.zIndex = 600;
 
-  const icons  = buildIcons();
   const points = [];
-  popups = {};
-
-  // Apply popup accent colour
-  applyPopupColorStyle(getColorDef(pinColorId).hex);
+  popups       = {};
+  markerColors = {};
 
   markers = L.markerClusterGroup({
     disableClusteringAtZoom: 18,
-    maxClusterRadius:        30,
-    showCoverageOnHover:     true,
-    clusterPane:             'clusters',
-    iconCreateFunction:      selectedRowClusterIconFactory(() => popups[selectedRowId]),
+    maxClusterRadius: 30,
+    showCoverageOnHover: true,
+    clusterPane: 'clusters',
+    iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
   });
 
-  // User click on a marker — selectMaker handles icon; open popup with timer
+  // User click: change icon + arm timer (popup auto-opened by Leaflet bindPopup click)
   markers.on('click', (e) => {
     const id = e.layer.options.id;
-    selectMaker(id, icons);
-    // Leaflet already opens the bound popup on click; just (re-)arm the timer
+    selectMaker(id);
     if (showPopup && popupDuration > 0 && popups[id]) {
       clearPopupTimer();
-      popupTimer = setTimeout(() => {
-        popups[id]?.closePopup();
-        popupTimer = null;
-      }, popupDuration * 1000);
+      popupTimer = setTimeout(() => { popups[id]?.closePopup(); popupTimer = null; }, popupDuration * 1000);
     }
   });
 
   for (const rec of data) {
-    const { id, name, lng, lat, description } = getInfo(rec);
+    const { id, name, lng, lat, description, colorRaw } = getInfo(rec);
     if (String(lng) === '...') { continue; }
     if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) { continue; }
-    const pt = new L.LatLng(lat, lng);
+
+    const col    = resolveColor(colorRaw);
+    markerColors[id] = col.hex;
+
+    const pt     = new L.LatLng(lat, lng);
+    const isSel  = id == selectedRowId;
     points.push(pt);
+
     const marker = L.marker(pt, {
       title: name,
       id:    id,
-      icon:  id == selectedRowId ? icons.selected : icons.normal,
-      pane:  id == selectedRowId ? 'selectedMarker' : 'otherMarkers',
+      icon:  makeIcon(col.hex, col.dark, isSel),
+      pane:  isSel ? 'selectedMarker' : 'otherMarkers',
     });
     marker.bindPopup(buildPopupContent(name, description), { className: 'map-popup' });
     markers.addLayer(marker);
@@ -401,46 +413,49 @@ function updateMap(data) {
   if (lockZoom && lockedZoom !== null && lockedCenter !== null) {
     map.setView(lockedCenter, lockedZoom);
   } else {
-    try {
-      map.fitBounds(new L.LatLngBounds(points), { maxZoom: defaultZoom, padding: [0, 0] });
-    } catch (e) { console.warn('cannot fit bounds'); }
+    try { map.fitBounds(new L.LatLngBounds(points), { maxZoom: defaultZoom, padding: [0, 0] }); }
+    catch (e) { console.warn('cannot fit bounds'); }
   }
-
-  map.on('zoomend moveend', () => {
-    if (lockZoom) { lockedZoom = map.getZoom(); lockedCenter = map.getCenter(); }
-  });
+  map.on('zoomend moveend', () => { if (lockZoom) { lockedZoom = map.getZoom(); lockedCenter = map.getCenter(); } });
 
   amap = map;
 
-  // Show popup for the currently selected row after the map is ready
+  // Open popup for already-selected row
   if (selectedRowId && popups[selectedRowId]) {
+    applyPopupAccent(markerColors[selectedRowId] || DEFAULT_HEX);
     const selMarker = popups[selectedRowId];
-    if (!selMarker._icon) {
-      markers.zoomToShowLayer(selMarker, () => openPopupWithTimer(selMarker));
-    } else {
-      openPopupWithTimer(selMarker);
-    }
+    if (!selMarker._icon) { markers.zoomToShowLayer(selMarker, () => openPopupWithTimer(selMarker)); }
+    else { openPopupWithTimer(selMarker); }
   }
 }
 
 // ---------------------------------------------------------------------------
-// Selection helpers
+// Selection
 // ---------------------------------------------------------------------------
 function clearPopupMarker() {
   clearPopupTimer();
   const marker = popups[selectedRowId];
-  if (marker) { marker.closePopup(); marker.setIcon(buildIcons().normal); }
+  if (marker) {
+    marker.closePopup();
+    const col = resolveColor(markerColors[selectedRowId]);
+    marker.setIcon(makeIcon(col.hex, col.dark, false));
+  }
 }
 
-// Only changes the icon; does NOT open a popup (caller decides)
-function selectMaker(id, icons) {
-  icons = icons || buildIcons();
+function selectMaker(id) {
+  // Restore previous marker icon
   const prev = popups[selectedRowId];
-  if (prev) { prev.setIcon(icons.normal); }
+  if (prev) {
+    const pc = resolveColor(markerColors[selectedRowId]);
+    prev.setIcon(makeIcon(pc.hex, pc.dark, false));
+  }
   const marker = popups[id];
   if (!marker) { return null; }
+
   selectedRowId = id;
-  marker.setIcon(icons.selected);
+  const col = resolveColor(markerColors[id]);
+  marker.setIcon(makeIcon(col.hex, col.dark, true));
+  applyPopupAccent(col.hex);
   markers.refreshClusters();
   grist.setCursorPos?.({ rowId: id }).catch(() => {});
   return marker;
@@ -471,7 +486,7 @@ function selectOnMap(rec) {
   if (selectedRowId === rec.id) { return; }
   selectedRowId = rec.id;
   if (mode === 'single') { updateMap([rec]); }
-  else                   { updateMap(); }
+  else { updateMap(); }
 }
 
 grist.onRecord((record, mappings) => {
@@ -480,7 +495,6 @@ grist.onRecord((record, mappings) => {
     selectOnMap(lastRecord);
     scanOnNeed(defaultMapping(record, mappings));
   } else {
-    // Multi mode: change icon, then zoom to show, THEN open popup
     const marker = selectMaker(record.id);
     if (!marker) { return; }
     if (!lockZoom || !marker._icon) {
@@ -502,16 +516,14 @@ grist.onRecords((data, mappings) => {
 
 grist.onNewRecord(() => {
   if (mode === 'single') { clearMarkers(); clearMarkers = () => {}; }
-  else                   { clearPopupMarker(); }
+  else { clearPopupMarker(); }
   selectedRowId = null;
 });
 
 function updateMode() {
   if (mode === 'single') {
     if (lastRecord) { selectedRowId = lastRecord.id; updateMap([lastRecord]); }
-  } else {
-    updateMap(lastRecords);
-  }
+  } else { updateMap(lastRecords); }
 }
 
 // ---------------------------------------------------------------------------
@@ -522,41 +534,17 @@ function buildPresetOptions() {
   sel.innerHTML = '';
   for (const p of TILE_PRESETS) {
     const opt = document.createElement('option');
-    opt.value = p.id; opt.textContent = p.label;
-    sel.appendChild(opt);
+    opt.value = p.id; opt.textContent = p.label; sel.appendChild(opt);
   }
   sel.value = activePresetId;
   toggleCustomFields(activePresetId === 'custom');
 }
-
 function toggleCustomFields(show) {
   document.querySelectorAll('.custom-row').forEach(r => r.style.display = show ? '' : 'none');
 }
-
-function buildColorSwatches() {
-  const container = document.getElementById('colorSwatches');
-  container.innerHTML = '';
-  for (const col of PIN_COLORS) {
-    const btn = document.createElement('button');
-    btn.className = 'swatch' + (col.id === pinColorId ? ' swatch-selected' : '');
-    btn.title = col.label;
-    btn.style.background = col.hex;
-    btn.style.borderColor = col.dark;
-    btn.onclick = async () => {
-      pinColorId = col.id;
-      container.querySelectorAll('.swatch').forEach(b => b.classList.remove('swatch-selected'));
-      btn.classList.add('swatch-selected');
-      await grist.setOption('pinColorId', pinColorId);
-      updateMode();
-    };
-    container.appendChild(btn);
-  }
-}
-
 function updateDurationRow() {
   document.getElementById('durationRow').style.display = showPopup ? '' : 'none';
 }
-
 function formatDuration(sec) {
   if (sec === 0) { return 'Permanente'; }
   return sec + ' s';
@@ -586,12 +574,15 @@ function onEditOptions() {
   };
   document.getElementById('btnResetZoom').onclick = () => { lockedZoom = null; lockedCenter = null; updateMode(); };
 
-  // Default zoom
+  // Default zoom — save on every move
   const zoomSlider = document.getElementById('defaultZoom');
   const zoomLabel  = document.getElementById('defaultZoomLabel');
   zoomSlider.value = defaultZoom; zoomLabel.textContent = defaultZoom;
-  zoomSlider.oninput  = (e) => { defaultZoom = +e.target.value; zoomLabel.textContent = defaultZoom; };
-  zoomSlider.onchange = async (e) => { defaultZoom = +e.target.value; await grist.setOption('defaultZoom', defaultZoom); };
+  zoomSlider.oninput = async (e) => {
+    defaultZoom = +e.target.value;
+    zoomLabel.textContent = defaultZoom;
+    await grist.setOption('defaultZoom', defaultZoom);
+  };
 
   // Show popup
   const cbxShowPopup = document.getElementById('cbxShowPopup');
@@ -604,15 +595,15 @@ function onEditOptions() {
     if (!showPopup && amap) { amap.closePopup(); clearPopupTimer(); }
   };
 
-  // Duration slider
+  // Popup duration — save on every move (fix: was only saving on onchange)
   const durSlider = document.getElementById('popupDuration');
   const durLabel  = document.getElementById('popupDurationLabel');
   durSlider.value = popupDuration; durLabel.textContent = formatDuration(popupDuration);
-  durSlider.oninput  = (e) => { popupDuration = +e.target.value; durLabel.textContent = formatDuration(popupDuration); };
-  durSlider.onchange = async (e) => { popupDuration = +e.target.value; await grist.setOption('popupDuration', popupDuration); };
-
-  // Pin colours
-  buildColorSwatches();
+  durSlider.oninput = async (e) => {
+    popupDuration = +e.target.value;
+    durLabel.textContent = formatDuration(popupDuration);
+    await grist.setOption('popupDuration', popupDuration);
+  };
 
   // Tile preset
   buildPresetOptions();
@@ -623,7 +614,6 @@ function onEditOptions() {
     await grist.setOption('activePresetId', activePresetId);
     updateMode();
   };
-
   document.getElementById('mapSource').value    = customMapSource;
   document.getElementById('mapCopyright').value = customMapCopyright;
   ['mapSource', 'mapCopyright'].forEach(opt => {
@@ -646,6 +636,7 @@ grist.ready({
     { name: "Longitude",       type: 'Numeric' },
     { name: "Latitude",        type: 'Numeric' },
     { name: "Description",     type: 'Text',  title: 'Description (étiquette)', optional },
+    { name: "Color",           type: 'Text',  title: 'Couleur du pin (HEX ou nom)', optional },
     { name: "Geocode",         type: 'Bool',  title: 'Geocode',                 optional },
     { name: "Address",         type: 'Text',                                    optional },
     { name: "GeocodedAddress", type: 'Text',  title: 'Geocoded Address',        optional },
@@ -655,15 +646,14 @@ grist.ready({
 });
 
 grist.onOptions((options, interaction) => {
-  writeAccess    = interaction.accessLevel === 'full';
-  mode           = options?.mode          ?? mode;
-  activePresetId = options?.activePresetId ?? DEFAULT_PRESET_ID;
-  customMapSource    = options?.mapSource    ?? '';
-  customMapCopyright = options?.mapCopyright ?? '';
-  lockZoom       = options?.lockZoom      ?? false;
-  defaultZoom    = options?.defaultZoom   ?? DEFAULT_ZOOM;
-  showPopup      = options?.showPopup     ?? true;
-  popupDuration  = options?.popupDuration ?? 0;
-  pinColorId     = options?.pinColorId    ?? DEFAULT_COLOR_ID;
+  writeAccess        = interaction.accessLevel === 'full';
+  mode               = options?.mode           ?? mode;
+  activePresetId     = options?.activePresetId ?? "esri-street";
+  customMapSource    = options?.mapSource      ?? '';
+  customMapCopyright = options?.mapCopyright   ?? '';
+  lockZoom           = options?.lockZoom       ?? false;
+  defaultZoom        = options?.defaultZoom    ?? 13;
+  showPopup          = options?.showPopup      ?? true;
+  popupDuration      = options?.popupDuration  ?? 0;
   if (lastRecords) { updateMode(); }
 });
