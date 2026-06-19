@@ -64,59 +64,101 @@ const TILE_PRESETS = [
   },
 ];
 
-const DEFAULT_PRESET_ID = "esri-street";
-const DEFAULT_ZOOM = 13;
+// ---------------------------------------------------------------------------
+// Pin colour palette (8 colours)
+// ---------------------------------------------------------------------------
+const PIN_COLORS = [
+  { id: 'yellow',      label: 'Jaune',        hex: '#F5C300', dark: '#a38500' },
+  { id: 'orange',      label: 'Orange',       hex: '#FF7A00', dark: '#b35500' },
+  { id: 'red',         label: 'Rouge',        hex: '#D32F2F', dark: '#8b0000' },
+  { id: 'green-light', label: 'Vert clair',   hex: '#43A047', dark: '#2e6b30' },
+  { id: 'green-dark',  label: 'Vert foncé',   hex: '#1B5E20', dark: '#0a2e0b' },
+  { id: 'blue-sky',    label: 'Bleu ciel',    hex: '#039BE5', dark: '#01579b' },
+  { id: 'blue-navy',   label: 'Bleu marine',  hex: '#1565C0', dark: '#0d3b7a' },
+  { id: 'purple',      label: 'Violet',       hex: '#7B1FA2', dark: '#4a0072' },
+];
+
+const DEFAULT_PRESET_ID  = "esri-street";
+const DEFAULT_ZOOM       = 13;
+const DEFAULT_COLOR_ID   = 'blue-navy';
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 let amap;
 let popups = {};
-let selectedTableId = null;
-let selectedRowId = null;
-let selectedRecords = null;
+let selectedTableId  = null;
+let selectedRowId    = null;
+let selectedRecords  = null;
 let mode = 'multi';
 
-let activePresetId = DEFAULT_PRESET_ID;
-let customMapSource = '';
+let activePresetId   = DEFAULT_PRESET_ID;
+let customMapSource  = '';
 let customMapCopyright = '';
 
-// Zoom persistence
-let lockedZoom = null;
+let lockedZoom   = null;
 let lockedCenter = null;
-let defaultZoom = DEFAULT_ZOOM;
-let lockZoom = false;
+let defaultZoom  = DEFAULT_ZOOM;
+let lockZoom     = false;
 
-// Popup/label options
-let showPopup = true;       // show popup on selection
-let popupDuration = 0;      // 0 = permanent; >0 = seconds before auto-close
-let popupTimer = null;      // active setTimeout handle
+let showPopup      = true;
+let popupDuration  = 0;
+let popupTimer     = null;
 
-// Column names
-const Name = "Name";
-const Longitude = "Longitude";
-const Latitude = "Latitude";
-const Description = "Description"; // optional second field
-const Geocode = 'Geocode';
-const Address = 'Address';
+let pinColorId = DEFAULT_COLOR_ID;
+
+const Name            = "Name";
+const Longitude       = "Longitude";
+const Latitude        = "Latitude";
+const Description     = "Description";
+const Geocode         = 'Geocode';
+const Address         = 'Address';
 const GeocodedAddress = 'GeocodedAddress';
 
 let lastRecord;
 let lastRecords;
 
 // ---------------------------------------------------------------------------
-// Icons
+// SVG pin icons (no external image files needed)
 // ---------------------------------------------------------------------------
-const selectedIcon = new L.Icon({
-  iconUrl: 'marker-icon-green.png',
-  iconRetinaUrl: 'marker-icon-green-2x.png',
-  shadowUrl: 'marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-const defaultIcon = new L.Icon.Default();
+function makePinSvg(fillColor, borderColor, scale) {
+  const w = Math.round(25 * scale);
+  const h = Math.round(41 * scale);
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 25 41">` +
+    `<path d="M12.5 0C5.596 0 0 5.596 0 12.5c0 8.344 12.5 28.5 12.5 28.5S25 20.844 25 12.5C25 5.596 19.404 0 12.5 0z"` +
+    ` fill="${fillColor}" stroke="${borderColor}" stroke-width="1.5"/>` +
+    `<circle cx="12.5" cy="12.5" r="4.5" fill="white" opacity="0.9"/>` +
+    `</svg>`
+  );
+}
+
+function makeIcon(hexColor, darkColor, isSelected) {
+  const scale  = isSelected ? 1.25 : 1;
+  const fill   = isSelected ? hexColor : hexColor;
+  const border = isSelected ? '#ffffff' : darkColor;
+  const w = Math.round(25 * scale);
+  const h = Math.round(41 * scale);
+  return L.divIcon({
+    html:        makePinSvg(fill, border, scale),
+    className:   '',
+    iconSize:    [w, h],
+    iconAnchor:  [w / 2, h],
+    popupAnchor: [0, -h + 4],
+  });
+}
+
+function getColorDef(colorId) {
+  return PIN_COLORS.find(c => c.id === colorId) || PIN_COLORS.find(c => c.id === DEFAULT_COLOR_ID);
+}
+
+function buildIcons() {
+  const col = getColorDef(pinColorId);
+  return {
+    normal:   makeIcon(col.hex, col.dark, false),
+    selected: makeIcon(col.hex, col.dark, true),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Cluster icon factory
@@ -126,19 +168,14 @@ const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
     var childCount = cluster.getChildCount();
     let isSelected = false;
     try {
-      const selectedMarker = selectedMarkerGetter();
-      isSelected = cluster.getAllChildMarkers().filter((m) => m == selectedMarker).length > 0;
-    } catch (e) {
-      console.error(e);
-    }
-    var c = ' marker-cluster-';
-    if (childCount < 10) { c += 'small'; }
-    else if (childCount < 100) { c += 'medium'; }
-    else { c += 'large'; }
+      const sm = selectedMarkerGetter();
+      isSelected = cluster.getAllChildMarkers().some(m => m === sm);
+    } catch (e) { console.error(e); }
+    var c = childCount < 10 ? 'small' : childCount < 100 ? 'medium' : 'large';
     return new L.DivIcon({
       html: '<div><span>' + childCount + ' <span aria-label="markers"></span></span></div>',
-      className: 'marker-cluster' + c + (isSelected ? ' marker-cluster-selected' : ''),
-      iconSize: new L.Point(40, 40)
+      className: 'marker-cluster marker-cluster-' + c + (isSelected ? ' marker-cluster-selected' : ''),
+      iconSize: new L.Point(40, 40),
     });
   };
 };
@@ -149,11 +186,8 @@ const selectedRowClusterIconFactory = function (selectedMarkerGetter) {
 let geocoder = L.Control.Geocoder && L.Control.Geocoder.nominatim();
 if (URLSearchParams && location.search && geocoder) {
   const c = new URLSearchParams(location.search).get('geocoder');
-  if (c && L.Control.Geocoder[c]) {
-    geocoder = L.Control.Geocoder[c]();
-  } else if (c) {
-    console.warn('Unsupported geocoder', c);
-  }
+  if (c && L.Control.Geocoder[c]) { geocoder = L.Control.Geocoder[c](); }
+  else if (c) { console.warn('Unsupported geocoder', c); }
   const m = new URLSearchParams(location.search).get('mode');
   if (m) { mode = m; }
 }
@@ -165,12 +199,10 @@ async function geocode(address) {
   return v;
 }
 
-async function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+async function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 let writeAccess = true;
-let scanning = null;
+let scanning    = null;
 
 async function scan(tableId, records, mappings) {
   if (!writeAccess) { return; }
@@ -179,18 +211,17 @@ async function scan(tableId, records, mappings) {
     if (!record[Geocode]) { continue; }
     const address = record.Address;
     if (record[GeocodedAddress]) {
-      if (record[GeocodedAddress] == record.Address) { continue; }
-      else {
-        record[Longitude] = null;
-        record[Latitude] = null;
-      }
+      if (record[GeocodedAddress] === record.Address) { continue; }
+      record[Longitude] = null;
+      record[Latitude]  = null;
     }
     if (address && !record[Longitude]) {
       const result = await geocode(address);
       await grist.docApi.applyUserActions([['UpdateRecord', tableId, record.id, {
         [mappings[Longitude]]: result?.lng ?? null,
-        [mappings[Latitude]]: result?.lat ?? null,
-        ...(GeocodedAddress in mappings && mappings[GeocodedAddress]) ? { [mappings[GeocodedAddress]]: address } : undefined
+        [mappings[Latitude]]:  result?.lat ?? null,
+        ...(GeocodedAddress in mappings && mappings[GeocodedAddress])
+          ? { [mappings[GeocodedAddress]]: address } : undefined,
       }]]);
       await delay(1000);
     }
@@ -199,7 +230,8 @@ async function scan(tableId, records, mappings) {
 
 function scanOnNeed(mappings) {
   if (!scanning && selectedTableId && selectedRecords) {
-    scanning = scan(selectedTableId, selectedRecords, mappings).then(() => scanning = null).catch(() => scanning = null);
+    scanning = scan(selectedTableId, selectedRecords, mappings)
+      .then(() => scanning = null).catch(() => scanning = null);
   }
 }
 
@@ -211,47 +243,57 @@ function showProblem(txt) {
 }
 
 function parseValue(v) {
-  if (typeof (v) === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
-    const payload = JSON.parse(v.value.slice(2, v.value.length - 1));
-    return payload.remote || payload.local || payload.parent || payload;
+  if (typeof v === 'object' && v !== null && v.value && v.value.startsWith('V(')) {
+    const p = JSON.parse(v.value.slice(2, v.value.length - 1));
+    return p.remote || p.local || p.parent || p;
   }
   return v;
 }
 
 function getInfo(rec) {
   return {
-    id: rec.id,
-    name: parseValue(rec[Name]),
-    lng: parseValue(rec[Longitude]),
-    lat: parseValue(rec[Latitude]),
+    id:          rec.id,
+    name:        parseValue(rec[Name]),
+    lng:         parseValue(rec[Longitude]),
+    lat:         parseValue(rec[Latitude]),
     description: parseValue(rec[Description]) || '',
   };
 }
 
-// Build the HTML content shown inside a popup
 function buildPopupContent(name, description) {
   const safeName = DOMPurify.sanitize(String(name || ''), { FORCE_BODY: true });
   const safeDesc = DOMPurify.sanitize(String(description || ''), { FORCE_BODY: true });
-  if (safeDesc) {
-    return '<div class="popup-title">' + safeName + '</div>'
-         + '<div class="popup-desc">' + safeDesc + '</div>';
+  return safeDesc
+    ? `<div class="popup-title">${safeName}</div><div class="popup-desc">${safeDesc}</div>`
+    : `<div class="popup-title">${safeName}</div>`;
+}
+
+// Inject a <style> for the popup accent colour that matches the pin
+function applyPopupColorStyle(hexColor) {
+  let el = document.getElementById('popup-color-style');
+  if (!el) {
+    el = document.createElement('style');
+    el.id = 'popup-color-style';
+    document.head.appendChild(el);
   }
-  return '<div class="popup-title">' + safeName + '</div>';
+  el.textContent =
+    `.map-popup .leaflet-popup-content-wrapper { border-left: 4px solid ${hexColor}; }` +
+    `.map-popup .leaflet-popup-tip { background: ${hexColor}; }`;
 }
 
 function getActiveLayer() {
   const preset = TILE_PRESETS.find(p => p.id === activePresetId) || TILE_PRESETS[0];
   if (preset.id === 'custom') {
     return {
-      url: customMapSource || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      url:         customMapSource || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       attribution: DOMPurify.sanitize(customMapCopyright, { FORCE_BODY: true }),
-      maxZoom: 19,
+      maxZoom:     19,
     };
   }
   return {
-    url: preset.url,
+    url:         preset.url,
     attribution: DOMPurify.sanitize(preset.attribution, { FORCE_BODY: true }),
-    maxZoom: preset.maxZoom,
+    maxZoom:     preset.maxZoom,
   };
 }
 
@@ -259,14 +301,11 @@ function getActiveLayer() {
 // Popup timer
 // ---------------------------------------------------------------------------
 function clearPopupTimer() {
-  if (popupTimer !== null) {
-    clearTimeout(popupTimer);
-    popupTimer = null;
-  }
+  if (popupTimer !== null) { clearTimeout(popupTimer); popupTimer = null; }
 }
 
 function openPopupWithTimer(marker) {
-  if (!showPopup) { return; }
+  if (!showPopup || !marker) { return; }
   clearPopupTimer();
   marker.openPopup();
   if (popupDuration > 0) {
@@ -286,56 +325,57 @@ let markers = [];
 function updateMap(data) {
   data = data || selectedRecords;
   selectedRecords = data;
-  if (!data || data.length === 0) {
-    showProblem("No data found yet");
-    return;
-  }
+  if (!data || data.length === 0) { showProblem("No data found yet"); return; }
   if (!(Longitude in data[0] && Latitude in data[0] && Name in data[0])) {
-    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude. You can map custom columns in the Creator Panel.");
+    showProblem("Table does not yet have all expected columns: Name, Longitude, Latitude.");
     return;
   }
 
   clearPopupTimer();
 
-  // Save current view before destroying the map
   if (amap && lockZoom) {
-    lockedZoom = amap.getZoom();
+    lockedZoom   = amap.getZoom();
     lockedCenter = amap.getCenter();
   }
 
   const layer = getActiveLayer();
   const tiles = L.tileLayer(layer.url, { attribution: layer.attribution, maxZoom: layer.maxZoom });
 
-  const error = document.querySelector('.error');
-  if (error) { error.remove(); }
-  if (amap) {
-    try { amap.off(); amap.remove(); } catch (e) { console.warn(e); }
-  }
+  document.querySelector('.error')?.remove();
+  if (amap) { try { amap.off(); amap.remove(); } catch (e) { console.warn(e); } }
 
-  const map = L.map('map', {
-    layers: [tiles],
-    wheelPxPerZoomLevel: 90,
-    zoomControl: true,
-  });
-
+  const map = L.map('map', { layers: [tiles], wheelPxPerZoomLevel: 90 });
   map.createPane('selectedMarker').style.zIndex = 620;
-  map.createPane('clusters').style.zIndex = 610;
-  map.createPane('otherMarkers').style.zIndex = 600;
+  map.createPane('clusters'      ).style.zIndex = 610;
+  map.createPane('otherMarkers'  ).style.zIndex = 600;
 
+  const icons  = buildIcons();
   const points = [];
   popups = {};
 
+  // Apply popup accent colour
+  applyPopupColorStyle(getColorDef(pinColorId).hex);
+
   markers = L.markerClusterGroup({
     disableClusteringAtZoom: 18,
-    maxClusterRadius: 30,
-    showCoverageOnHover: true,
-    clusterPane: 'clusters',
-    iconCreateFunction: selectedRowClusterIconFactory(() => popups[selectedRowId]),
+    maxClusterRadius:        30,
+    showCoverageOnHover:     true,
+    clusterPane:             'clusters',
+    iconCreateFunction:      selectedRowClusterIconFactory(() => popups[selectedRowId]),
   });
 
+  // User click on a marker — selectMaker handles icon; open popup with timer
   markers.on('click', (e) => {
     const id = e.layer.options.id;
-    selectMaker(id);
+    selectMaker(id, icons);
+    // Leaflet already opens the bound popup on click; just (re-)arm the timer
+    if (showPopup && popupDuration > 0 && popups[id]) {
+      clearPopupTimer();
+      popupTimer = setTimeout(() => {
+        popups[id]?.closePopup();
+        popupTimer = null;
+      }, popupDuration * 1000);
+    }
   });
 
   for (const rec of data) {
@@ -346,100 +386,82 @@ function updateMap(data) {
     points.push(pt);
     const marker = L.marker(pt, {
       title: name,
-      id: id,
-      icon: (id == selectedRowId) ? selectedIcon : defaultIcon,
-      pane: (id == selectedRowId) ? "selectedMarker" : "otherMarkers",
+      id:    id,
+      icon:  id == selectedRowId ? icons.selected : icons.normal,
+      pane:  id == selectedRowId ? 'selectedMarker' : 'otherMarkers',
     });
     marker.bindPopup(buildPopupContent(name, description), { className: 'map-popup' });
     markers.addLayer(marker);
     popups[id] = marker;
   }
+
   map.addLayer(markers);
   clearMarkers = () => map.removeLayer(markers);
 
-  // Restore locked zoom, or fit to bounds
   if (lockZoom && lockedZoom !== null && lockedCenter !== null) {
     map.setView(lockedCenter, lockedZoom);
   } else {
     try {
       map.fitBounds(new L.LatLngBounds(points), { maxZoom: defaultZoom, padding: [0, 0] });
-    } catch (err) {
-      console.warn('cannot fit bounds');
-    }
+    } catch (e) { console.warn('cannot fit bounds'); }
   }
 
-  // Track user zoom/pan
   map.on('zoomend moveend', () => {
-    if (lockZoom) {
-      lockedZoom = map.getZoom();
-      lockedCenter = map.getCenter();
-    }
+    if (lockZoom) { lockedZoom = map.getZoom(); lockedCenter = map.getCenter(); }
   });
 
-  function makeSureSelectedMarkerIsShown() {
-    const rowId = selectedRowId;
-    if (rowId && popups[rowId]) {
-      const marker = popups[rowId];
-      if (!marker._icon) { markers.zoomToShowLayer(marker); }
-      if (showPopup) { openPopupWithTimer(marker); }
+  amap = map;
+
+  // Show popup for the currently selected row after the map is ready
+  if (selectedRowId && popups[selectedRowId]) {
+    const selMarker = popups[selectedRowId];
+    if (!selMarker._icon) {
+      markers.zoomToShowLayer(selMarker, () => openPopupWithTimer(selMarker));
+    } else {
+      openPopupWithTimer(selMarker);
     }
   }
-
-  amap = map;
-  makeSureSelectedMarkerIsShown();
 }
 
 // ---------------------------------------------------------------------------
-// Selection
+// Selection helpers
 // ---------------------------------------------------------------------------
 function clearPopupMarker() {
   clearPopupTimer();
   const marker = popups[selectedRowId];
-  if (marker) {
-    marker.closePopup();
-    marker.setIcon(defaultIcon);
-    marker.pane = 'otherMarkers';
-  }
+  if (marker) { marker.closePopup(); marker.setIcon(buildIcons().normal); }
 }
 
-function selectMaker(id) {
-  clearPopupTimer();
-  const previouslyClicked = popups[selectedRowId];
-  if (previouslyClicked) {
-    previouslyClicked.setIcon(defaultIcon);
-    previouslyClicked.pane = 'otherMarkers';
-  }
+// Only changes the icon; does NOT open a popup (caller decides)
+function selectMaker(id, icons) {
+  icons = icons || buildIcons();
+  const prev = popups[selectedRowId];
+  if (prev) { prev.setIcon(icons.normal); }
   const marker = popups[id];
   if (!marker) { return null; }
   selectedRowId = id;
-  marker.setIcon(selectedIcon);
-  marker.pane = 'selectedMarker';
+  marker.setIcon(icons.selected);
   markers.refreshClusters();
   grist.setCursorPos?.({ rowId: id }).catch(() => {});
-  if (showPopup) { openPopupWithTimer(marker); }
   return marker;
 }
 
 // ---------------------------------------------------------------------------
 // Grist events
 // ---------------------------------------------------------------------------
-grist.on('message', (e) => {
-  if (e.tableId) { selectedTableId = e.tableId; }
-});
+grist.on('message', (e) => { if (e.tableId) { selectedTableId = e.tableId; } });
 
-function hasCol(col, anything) {
-  return anything && typeof anything === 'object' && col in anything;
-}
+function hasCol(col, obj) { return obj && typeof obj === 'object' && col in obj; }
 
 function defaultMapping(record, mappings) {
   if (!mappings) {
     return {
-      [Longitude]: Longitude,
-      [Name]: Name,
-      [Latitude]: Latitude,
-      [Address]: hasCol(Address, record) ? Address : null,
+      [Longitude]:       Longitude,
+      [Name]:            Name,
+      [Latitude]:        Latitude,
+      [Address]:         hasCol(Address, record)         ? Address         : null,
       [GeocodedAddress]: hasCol(GeocodedAddress, record) ? GeocodedAddress : null,
-      [Geocode]: hasCol(Geocode, record) ? Geocode : null,
+      [Geocode]:         hasCol(Geocode, record)         ? Geocode         : null,
     };
   }
   return mappings;
@@ -448,11 +470,8 @@ function defaultMapping(record, mappings) {
 function selectOnMap(rec) {
   if (selectedRowId === rec.id) { return; }
   selectedRowId = rec.id;
-  if (mode === 'single') {
-    updateMap([rec]);
-  } else {
-    updateMap();
-  }
+  if (mode === 'single') { updateMap([rec]); }
+  else                   { updateMap(); }
 }
 
 grist.onRecord((record, mappings) => {
@@ -461,14 +480,14 @@ grist.onRecord((record, mappings) => {
     selectOnMap(lastRecord);
     scanOnNeed(defaultMapping(record, mappings));
   } else {
+    // Multi mode: change icon, then zoom to show, THEN open popup
     const marker = selectMaker(record.id);
     if (!marker) { return; }
-    if (!lockZoom) {
-      markers.zoomToShowLayer(marker);
-    } else if (!marker._icon) {
-      markers.zoomToShowLayer(marker);
+    if (!lockZoom || !marker._icon) {
+      markers.zoomToShowLayer(marker, () => openPopupWithTimer(marker));
+    } else {
+      openPopupWithTimer(marker);
     }
-    if (showPopup) { openPopupWithTimer(marker); }
   }
 });
 
@@ -482,21 +501,14 @@ grist.onRecords((data, mappings) => {
 });
 
 grist.onNewRecord(() => {
-  if (mode === 'single') {
-    clearMarkers();
-    clearMarkers = () => {};
-  } else {
-    clearPopupMarker();
-  }
+  if (mode === 'single') { clearMarkers(); clearMarkers = () => {}; }
+  else                   { clearPopupMarker(); }
   selectedRowId = null;
 });
 
 function updateMode() {
   if (mode === 'single') {
-    if (lastRecord) {
-      selectedRowId = lastRecord.id;
-      updateMap([lastRecord]);
-    }
+    if (lastRecord) { selectedRowId = lastRecord.id; updateMap([lastRecord]); }
   } else {
     updateMap(lastRecords);
   }
@@ -510,8 +522,7 @@ function buildPresetOptions() {
   sel.innerHTML = '';
   for (const p of TILE_PRESETS) {
     const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = p.label;
+    opt.value = p.id; opt.textContent = p.label;
     sel.appendChild(opt);
   }
   sel.value = activePresetId;
@@ -522,33 +533,47 @@ function toggleCustomFields(show) {
   document.querySelectorAll('.custom-row').forEach(r => r.style.display = show ? '' : 'none');
 }
 
+function buildColorSwatches() {
+  const container = document.getElementById('colorSwatches');
+  container.innerHTML = '';
+  for (const col of PIN_COLORS) {
+    const btn = document.createElement('button');
+    btn.className = 'swatch' + (col.id === pinColorId ? ' swatch-selected' : '');
+    btn.title = col.label;
+    btn.style.background = col.hex;
+    btn.style.borderColor = col.dark;
+    btn.onclick = async () => {
+      pinColorId = col.id;
+      container.querySelectorAll('.swatch').forEach(b => b.classList.remove('swatch-selected'));
+      btn.classList.add('swatch-selected');
+      await grist.setOption('pinColorId', pinColorId);
+      updateMode();
+    };
+    container.appendChild(btn);
+  }
+}
+
 function updateDurationRow() {
-  const row = document.getElementById('durationRow');
-  row.style.display = showPopup ? '' : 'none';
+  document.getElementById('durationRow').style.display = showPopup ? '' : 'none';
 }
 
 function formatDuration(sec) {
   if (sec === 0) { return 'Permanente'; }
-  if (sec < 60) { return sec + ' s'; }
-  return Math.round(sec / 60) + ' min'; // only reached if we extend range
+  return sec + ' s';
 }
 
 function onEditOptions() {
-  const popup = document.getElementById("settings");
-  popup.style.display = 'block';
+  const panel = document.getElementById("settings");
+  panel.style.display = 'block';
 
-  document.getElementById("btnClose").onclick = () => popup.style.display = 'none';
+  document.getElementById("btnClose").onclick = () => panel.style.display = 'none';
 
   // Mode
-  const checkbox = document.getElementById('cbxMode');
-  checkbox.checked = mode === 'multi';
-  checkbox.onchange = async (e) => {
-    const newMode = e.target.checked ? 'multi' : 'single';
-    if (newMode !== mode) {
-      mode = newMode;
-      await grist.setOption('mode', mode);
-      updateMode();
-    }
+  const cbxMode = document.getElementById('cbxMode');
+  cbxMode.checked = mode === 'multi';
+  cbxMode.onchange = async (e) => {
+    const nm = e.target.checked ? 'multi' : 'single';
+    if (nm !== mode) { mode = nm; await grist.setOption('mode', mode); updateMode(); }
   };
 
   // Lock zoom
@@ -559,26 +584,14 @@ function onEditOptions() {
     if (!lockZoom) { lockedZoom = null; lockedCenter = null; }
     await grist.setOption('lockZoom', lockZoom);
   };
+  document.getElementById('btnResetZoom').onclick = () => { lockedZoom = null; lockedCenter = null; updateMode(); };
 
-  document.getElementById('btnResetZoom').onclick = () => {
-    lockedZoom = null;
-    lockedCenter = null;
-    updateMode();
-  };
-
-  // Default zoom slider
+  // Default zoom
   const zoomSlider = document.getElementById('defaultZoom');
-  const zoomLabel = document.getElementById('defaultZoomLabel');
-  zoomSlider.value = defaultZoom;
-  zoomLabel.textContent = defaultZoom;
-  zoomSlider.oninput = (e) => {
-    defaultZoom = parseInt(e.target.value, 10);
-    zoomLabel.textContent = defaultZoom;
-  };
-  zoomSlider.onchange = async (e) => {
-    defaultZoom = parseInt(e.target.value, 10);
-    await grist.setOption('defaultZoom', defaultZoom);
-  };
+  const zoomLabel  = document.getElementById('defaultZoomLabel');
+  zoomSlider.value = defaultZoom; zoomLabel.textContent = defaultZoom;
+  zoomSlider.oninput  = (e) => { defaultZoom = +e.target.value; zoomLabel.textContent = defaultZoom; };
+  zoomSlider.onchange = async (e) => { defaultZoom = +e.target.value; await grist.setOption('defaultZoom', defaultZoom); };
 
   // Show popup
   const cbxShowPopup = document.getElementById('cbxShowPopup');
@@ -588,27 +601,18 @@ function onEditOptions() {
     showPopup = e.target.checked;
     updateDurationRow();
     await grist.setOption('showPopup', showPopup);
-    if (!showPopup && amap) {
-      // Close any open popup
-      amap.closePopup();
-      clearPopupTimer();
-    }
+    if (!showPopup && amap) { amap.closePopup(); clearPopupTimer(); }
   };
 
-  // Popup duration slider
+  // Duration slider
   const durSlider = document.getElementById('popupDuration');
-  const durLabel = document.getElementById('popupDurationLabel');
-  // Slider: 0 = permanent, 1–59 = seconds
-  durSlider.value = popupDuration;
-  durLabel.textContent = formatDuration(popupDuration);
-  durSlider.oninput = (e) => {
-    popupDuration = parseInt(e.target.value, 10);
-    durLabel.textContent = formatDuration(popupDuration);
-  };
-  durSlider.onchange = async (e) => {
-    popupDuration = parseInt(e.target.value, 10);
-    await grist.setOption('popupDuration', popupDuration);
-  };
+  const durLabel  = document.getElementById('popupDurationLabel');
+  durSlider.value = popupDuration; durLabel.textContent = formatDuration(popupDuration);
+  durSlider.oninput  = (e) => { popupDuration = +e.target.value; durLabel.textContent = formatDuration(popupDuration); };
+  durSlider.onchange = async (e) => { popupDuration = +e.target.value; await grist.setOption('popupDuration', popupDuration); };
+
+  // Pin colours
+  buildColorSwatches();
 
   // Tile preset
   buildPresetOptions();
@@ -620,12 +624,10 @@ function onEditOptions() {
     updateMode();
   };
 
-  // Custom URL/copyright
-  document.getElementById('mapSource').value = customMapSource;
+  document.getElementById('mapSource').value    = customMapSource;
   document.getElementById('mapCopyright').value = customMapCopyright;
-  ['mapSource', 'mapCopyright'].forEach((opt) => {
-    const ipt = document.getElementById(opt);
-    ipt.onchange = async (e) => {
+  ['mapSource', 'mapCopyright'].forEach(opt => {
+    document.getElementById(opt).onchange = async (e) => {
       if (opt === 'mapSource') { customMapSource = e.target.value; }
       else { customMapCopyright = e.target.value; }
       await grist.setOption(opt, e.target.value);
@@ -641,26 +643,27 @@ const optional = true;
 grist.ready({
   columns: [
     "Name",
-    { name: "Longitude", type: 'Numeric' },
-    { name: "Latitude", type: 'Numeric' },
-    { name: "Description", type: 'Text', title: 'Description (étiquette)', optional },
-    { name: "Geocode", type: 'Bool', title: 'Geocode', optional },
-    { name: "Address", type: 'Text', optional },
-    { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional },
+    { name: "Longitude",       type: 'Numeric' },
+    { name: "Latitude",        type: 'Numeric' },
+    { name: "Description",     type: 'Text',  title: 'Description (étiquette)', optional },
+    { name: "Geocode",         type: 'Bool',  title: 'Geocode',                 optional },
+    { name: "Address",         type: 'Text',                                    optional },
+    { name: "GeocodedAddress", type: 'Text',  title: 'Geocoded Address',        optional },
   ],
   allowSelectBy: true,
-  onEditOptions
+  onEditOptions,
 });
 
 grist.onOptions((options, interaction) => {
-  writeAccess = interaction.accessLevel === 'full';
-  mode = options?.mode ?? mode;
+  writeAccess    = interaction.accessLevel === 'full';
+  mode           = options?.mode          ?? mode;
   activePresetId = options?.activePresetId ?? DEFAULT_PRESET_ID;
-  customMapSource = options?.mapSource ?? '';
+  customMapSource    = options?.mapSource    ?? '';
   customMapCopyright = options?.mapCopyright ?? '';
-  lockZoom = options?.lockZoom ?? false;
-  defaultZoom = options?.defaultZoom ?? DEFAULT_ZOOM;
-  showPopup = options?.showPopup ?? true;
-  popupDuration = options?.popupDuration ?? 0;
+  lockZoom       = options?.lockZoom      ?? false;
+  defaultZoom    = options?.defaultZoom   ?? DEFAULT_ZOOM;
+  showPopup      = options?.showPopup     ?? true;
+  popupDuration  = options?.popupDuration ?? 0;
+  pinColorId     = options?.pinColorId    ?? DEFAULT_COLOR_ID;
   if (lastRecords) { updateMode(); }
 });
