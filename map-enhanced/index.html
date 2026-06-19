@@ -1,0 +1,133 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.6.0/dist/leaflet-src.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="screen.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder@3.1.0/dist/Control.Geocoder.js"></script>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.3/dist/purify.min.js"></script>
+    <script src="page.js"></script>
+    <style>
+      #settings {
+        font-family: sans-serif;
+        font-size: 13px;
+      }
+      #settings h3 {
+        margin: 10px 0 4px;
+        font-size: 13px;
+        text-transform: uppercase;
+        color: #555;
+        letter-spacing: 0.05em;
+      }
+      #settings table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      #settings td {
+        padding: 3px 4px;
+        vertical-align: middle;
+      }
+      #settings td:first-child {
+        white-space: nowrap;
+        color: #444;
+      }
+      #settings input[type="text"],
+      #settings select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 3px 5px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+      #settings input[type="range"] {
+        width: 120px;
+        vertical-align: middle;
+      }
+      #defaultZoomLabel {
+        display: inline-block;
+        width: 24px;
+        font-weight: bold;
+      }
+      #btnResetZoom {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 8px;
+        background: #eee;
+        border: 1px solid #bbb;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      #btnResetZoom:hover { background: #ddd; }
+      .section-sep {
+        border: none;
+        border-top: 1px solid #e0e0e0;
+        margin: 8px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="settings">
+      <div id="btnClose">Fermer / Close</div>
+
+      <!-- Mode -->
+      <h3>Mode d'affichage</h3>
+      <label id="lblToggle" for="cbxMode">
+        <input type="checkbox" id="cbxMode">
+        <span id="lblText">Toutes les localisations</span>
+      </label>
+
+      <hr class="section-sep"/>
+
+      <!-- Zoom -->
+      <h3>Zoom</h3>
+      <table>
+        <tr>
+          <td><label for="defaultZoom">Zoom initial max.</label></td>
+          <td>
+            <input type="range" id="defaultZoom" min="1" max="20" value="13">
+            <span id="defaultZoomLabel">13</span>
+          </td>
+        </tr>
+        <tr>
+          <td><label for="cbxLockZoom">Verrouiller le zoom</label></td>
+          <td>
+            <input type="checkbox" id="cbxLockZoom">
+            &nbsp;<span style="color:#555;font-size:12px;">Le zoom reste fixe lors des changements de point</span>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>
+            <span id="btnResetZoom" title="Revenir au zoom automatique">↺ Réinitialiser le zoom</span>
+          </td>
+        </tr>
+      </table>
+
+      <hr class="section-sep"/>
+
+      <!-- Fond de carte -->
+      <h3>Fond de carte</h3>
+      <table>
+        <tr>
+          <td><label for="mapPreset">Carte</label></td>
+          <td><select id="mapPreset"></select></td>
+        </tr>
+        <tr class="custom-row" style="display:none">
+          <td><label for="mapSource">URL source</label></td>
+          <td><input type="text" id="mapSource" placeholder="https://tile.openstreetmap.org/{z}/{x}/{y}.png"></td>
+        </tr>
+        <tr class="custom-row" style="display:none">
+          <td><label for="mapCopyright">Copyright</label></td>
+          <td><input type="text" id="mapCopyright" placeholder="&copy; OpenStreetMap contributors"></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
