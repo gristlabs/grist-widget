@@ -257,7 +257,8 @@ function getInfo(rec) {
 
 function buildPopupContent(name, description) {
   const safeName = DOMPurify.sanitize(String(name || ''), { FORCE_BODY: true });
-  const safeDesc = DOMPurify.sanitize(String(description || ''), { FORCE_BODY: true });
+  const safeDesc = DOMPurify.sanitize(String(description || ''), { FORCE_BODY: true })
+    .replace(/\n/g, '<br>');
   return safeDesc
     ? `<div class="popup-title">${safeName}</div><div class="popup-desc">${safeDesc}</div>`
     : `<div class="popup-title">${safeName}</div>`;
