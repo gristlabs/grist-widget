@@ -893,6 +893,21 @@ window.onerror = function(event) {
   document.body.classList.remove('loading');
 };
 
+// Add one label/value row to the drawer, setting each piece via
+// textContent so the column label and cell value show up as plain text.
+function appendDrawerLine(drawerInfo: any, label: any, value: any) {
+  const line = document.createElement('div');
+  line.className = 'line';
+  const labelEl = document.createElement('div');
+  labelEl.className = 'label';
+  labelEl.textContent = String(label ?? '');
+  const valueEl = document.createElement('div');
+  valueEl.className = 'value';
+  valueEl.textContent = valueToString(value);
+  line.append(labelEl, valueEl);
+  drawerInfo.append(line);
+}
+
 eventGroupInfo.subscribe(openGroupDrawer);
 function openGroupDrawer(groupId: number) {
   if (!groupId) {
@@ -915,10 +930,7 @@ function openGroupDrawer(groupId: number) {
   const obj = zip(labels, values);
 
   for (const [label, value] of obj) {
-    drawerInfo.innerHTML += `<div class="line">
-    <div class="label">${label}</div>
-    <div class="value">${valueToString(value)}<div>
-    </div>`;
+    appendDrawerLine(drawerInfo, label, value);
   }
   drawer.show();
 }
@@ -939,10 +951,7 @@ function openItemDrawer(itemId: number) {
   }
   const obj = zip(itemInfo, item.data.ItemInfo ?? []);
   for (const [label, value] of obj) {
-    drawerInfo.innerHTML += `<div class="line">
-    <div class="label">${label}</div>
-    <div class="value">${valueToString(value)}<div>
-    </div>`;
+    appendDrawerLine(drawerInfo, label, value);
   }
   drawer.show();
 }
