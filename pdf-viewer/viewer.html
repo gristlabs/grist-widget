@@ -433,18 +433,9 @@ async function loadPDF(url, name) {
     buildOutline();
     buildLayers();
   } catch (err) {
-    // Détecte un blocage CORS / réseau / authentification
-    const isCors = err.message?.toLowerCase().includes('fetch')
-                || err.message?.toLowerCase().includes('cors')
-                || err.name === 'UnknownErrorException'
-                || err.status === 0
-                || !err.status;
-
-    if (isCors) {
-      showCorsError(url, name);
-    } else {
-      showErr('Impossible de charger le PDF : ' + err.message);
-    }
+    // Échec PDF.js (souvent CORS) → essaie l'iframe (navigation = pas de CORS)
+    console.warn('PDF.js failed, trying iframe fallback:', err.message);
+    showIframeFallback(url, name);
   } finally {
     showLoading(false);
   }
@@ -460,51 +451,83 @@ function convertDriveUrl(url) {
   return url;
 }
 
-// Fallback CORS : le drive bloque les requêtes cross-origin
-// → on ouvre l'URL directement dans le navigateur natif (onglet ou appli)
-// → on affiche un écran d'explication dans le viewer
-function showCorsError(url, name) {
+// Fallback iframe : navigation directe = pas soumise au CORS
+// Le navigateur (Chrome/Edge/Firefox) affiche le PDF avec son lecteur natif intégré
+function showIframeFallback(url, name) {
   clearPages();
   splash.style.display = 'none';
   pageTotal.textContent = '/ ?';
+  pageInput.value = '';
+
+  // Désactive les contrôles PDF.js (non disponibles en mode iframe)
+  ['btn-first','btn-prev','btn-next','btn-last','btn-zout','btn-zin',
+   'btn-rccw','btn-rcw','btn-sprev','btn-snext','btn-print']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+  document.getElementById('zoom-select').disabled = true;
+  document.getElementById('search-input').disabled = true;
+  document.getElementById('search-input').placeholder = 'Recherche non dispo (mode iframe)';
 
   const area = document.getElementById('canvas-area');
   area.innerHTML = '';
-  area.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#f8f9fa';
+  area.style.cssText = 'flex:1;display:flex;flex-direction:column;padding:0;gap:0';
 
+  // Bandeau info
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:#fff8e1;color:#795548;padding:6px 14px;font-size:11px;'
+    + 'display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid #f0d080';
+  banner.innerHTML = `<span>⚠ Mode compatibilité (CORS) — lecture seule, navigation intégrée du navigateur</span>
+    <a href="${url}" target="_blank"
+      style="color:#1565c0;font-weight:600;text-decoration:none;white-space:nowrap;margin-left:12px">
+      ↗ Ouvrir dans un onglet
+    </a>`;
+
+  // Iframe : le navigateur charge et affiche le PDF directement
+  const iframe = document.createElement('iframe');
+  iframe.src   = url;
+  iframe.title = name || 'PDF';
+  iframe.style.cssText = 'flex:1;width:100%;border:none;background:#525659';
+
+  // Si l'iframe est aussi bloquée (X-Frame-Options), on détecte et on redirige
+  iframe.addEventListener('load', () => {
+    try {
+      // Si on peut accéder au contenu = pas bloqué
+      const _ = iframe.contentDocument;
+    } catch {
+      // Bloqué par X-Frame-Options → ouvre dans un onglet
+      showFrameBlockedError(url, area, banner);
+    }
+  });
+
+  area.appendChild(banner);
+  area.appendChild(iframe);
+}
+
+function showFrameBlockedError(url, area, banner) {
+  area.innerHTML = '';
+  area.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;'
+    + 'justify-content:center;gap:14px;padding:24px;background:#f8f9fa;text-align:center';
   area.innerHTML = `
-    <svg width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="#c0392b" stroke-width="2">
-      <circle cx="32" cy="32" r="28"/>
-      <line x1="32" y1="18" x2="32" y2="36"/>
-      <circle cx="32" cy="44" r="2" fill="#c0392b" stroke="none"/>
-    </svg>
-    <p style="font-size:15px;font-weight:600;color:#2c3e50;text-align:center">
-      Ce PDF est sur un serveur protégé
+    <p style="font-size:14px;font-weight:600;color:#2c3e50">Le serveur interdit l'intégration dans un cadre</p>
+    <p style="font-size:12px;color:#555;max-width:360px;line-height:1.6">
+      Le PDF va s'ouvrir dans votre navigateur natif où vous êtes authentifié.
     </p>
-    <p style="font-size:12px;color:#555;text-align:center;max-width:380px;line-height:1.6">
-      Le drive de l'université (<strong>${new URL(url).hostname}</strong>) bloque
-      les requêtes provenant d'un autre site (politique CORS).<br>
-      Le PDF va s'ouvrir dans un <strong>nouvel onglet</strong> avec votre navigateur.
-    </p>
-    <a id="btn-open-native" href="${url}" target="_blank"
-      style="display:inline-block;padding:10px 22px;background:#4a90d9;color:white;
-             border-radius:6px;font-size:13px;font-weight:600;text-decoration:none">
-      ↗ Ouvrir le PDF
-    </a>
-    <p style="font-size:11px;color:#aaa;text-align:center">
-      Si votre navigateur a bloqué l'ouverture automatique,<br>
-      cliquez sur le bouton ci-dessus.
-    </p>`;
-
-  // Ouvre automatiquement + prévient le widget lanceur
+    <a href="${url}" target="_blank"
+      style="padding:10px 24px;background:#4a90d9;color:white;border-radius:6px;
+             font-size:13px;font-weight:600;text-decoration:none">↗ Ouvrir le PDF</a>`;
   window.open(url, '_blank');
-  window.opener?.postMessage({ type: 'PDF_CORS_ERROR', url }, '*');
 }
 
 function hideIframe() {
   const area = document.getElementById('canvas-area');
   area.innerHTML = '';
   area.style.cssText = 'flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:12px;gap:12px';
+  // Réactive les contrôles
+  ['btn-first','btn-prev','btn-next','btn-last','btn-zout','btn-zin',
+   'btn-rccw','btn-rcw','btn-sprev','btn-snext','btn-print']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = false; });
+  document.getElementById('zoom-select').disabled = false;
+  document.getElementById('search-input').disabled = false;
+  document.getElementById('search-input').placeholder = 'Rechercher… (Ctrl+F)';
 }
 
 // ── Scale ──────────────────────────────────────────────────────────────────────
