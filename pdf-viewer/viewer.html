@@ -383,21 +383,26 @@ canvasArea.addEventListener('scroll', () => {
 
 // ── PDF loading ────────────────────────────────────────────────────────────────
 async function loadPDF(url, name) {
-  if (!url || url === S.currentUrl) return;
+  if (!url) return;
   S.currentUrl = url;
   showLoading(true);
   hideErr();
   clearPages();
+  hideIframe();
   splash.style.display = 'none';
-  docTitle.textContent = name || url.split('/').pop() || 'PDF';
+  docTitle.textContent = name || decodeURIComponent(url.split('/').pop().split('?')[0]) || 'PDF';
   document.title = docTitle.textContent;
+
+  // Convertit les liens de partage Google Drive en lien de téléchargement direct
+  const fetchUrl = convertDriveUrl(url);
 
   try {
     S.pdf = await pdfjsLib.getDocument({
-      url,
+      url: fetchUrl,
       cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/cmaps/',
       cMapPacked: true,
       enableXfa: false,
+      withCredentials: true,   // nécessaire pour les drives authentifiés
     }).promise;
 
     S.total    = S.pdf.numPages;
@@ -415,10 +420,71 @@ async function loadPDF(url, name) {
     buildOutline();
     buildLayers();
   } catch (err) {
-    showErr('Impossible de charger le PDF : ' + err.message);
+    // Fallback : si PDF.js ne peut pas fetch (CORS, auth), on essaie l'iframe
+    const blocked = err.message?.includes('fetch') || err.message?.includes('CORS')
+                 || err.name === 'UnknownErrorException' || err.status === 0;
+    if (blocked || true) {
+      showIframeFallback(url, name, err.message);
+    } else {
+      showErr('Impossible de charger le PDF : ' + err.message);
+    }
   } finally {
     showLoading(false);
   }
+}
+
+// Convertit un lien Google Drive /view en lien de téléchargement direct
+function convertDriveUrl(url) {
+  // https://drive.google.com/file/d/FILE_ID/view  →  export=download
+  const gdriveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (gdriveMatch) return `https://drive.google.com/uc?export=download&id=${gdriveMatch[1]}`;
+  // https://docs.google.com/...  →  export=pdf
+  if (url.includes('docs.google.com')) return url.replace(/\/edit.*$/, '/export?format=pdf');
+  return url;
+}
+
+// Fallback iframe : affiche le PDF directement dans un <iframe>
+// Fonctionne quand le serveur bloque les requêtes cross-origin mais autorise l'embed
+function showIframeFallback(url, name, originalError) {
+  clearPages();
+  splash.style.display = 'none';
+
+  // Désactive les contrôles PDF.js qui ne fonctionnent pas sans le document
+  pageTotal.textContent = '/ ?';
+  pageInput.value = 1;
+
+  const area = document.getElementById('canvas-area');
+
+  // Bandeau d'info
+  const banner = document.createElement('div');
+  banner.id = 'fallback-banner';
+  banner.style.cssText = 'width:100%;background:#fff3cd;color:#856404;padding:8px 14px;font-size:12px;text-align:center;flex-shrink:0';
+  banner.innerHTML = `⚠ Mode intégration directe (CORS) — navigation, zoom et recherche désactivés.
+    <a href="${url}" target="_blank" style="color:#0d6efd;margin-left:8px">↗ Ouvrir dans un nouvel onglet</a>`;
+
+  const iframe = document.createElement('iframe');
+  iframe.id  = 'pdf-iframe';
+  iframe.src = url;
+  iframe.style.cssText = 'flex:1;width:100%;border:none;background:white';
+  iframe.title = name || 'PDF';
+
+  // On cache la zone canvas et on injecte le fallback
+  area.style.padding = '0';
+  area.style.gap = '0';
+  area.style.flexDirection = 'column';
+  area.innerHTML = '';
+  area.appendChild(banner);
+  area.appendChild(iframe);
+}
+
+function hideIframe() {
+  const area = document.getElementById('canvas-area');
+  const iframe = document.getElementById('pdf-iframe');
+  const banner = document.getElementById('fallback-banner');
+  if (iframe) iframe.remove();
+  if (banner) banner.remove();
+  area.style.padding  = '12px';
+  area.style.gap      = '12px';
 }
 
 // ── Scale ──────────────────────────────────────────────────────────────────────
