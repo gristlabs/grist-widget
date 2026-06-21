@@ -3,1033 +3,340 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PDF Viewer — Grist Widget</title>
-
-  <!-- Grist Plugin API -->
+  <title>PDF Viewer — Lanceur Grist</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-
-  <!-- PDF.js from Mozilla CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
-
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --toolbar-bg: #323639;
-      --toolbar-text: #f2f2f2;
-      --toolbar-btn-hover: #4a4f54;
-      --toolbar-border: #555;
       --accent: #4a90d9;
-      --panel-bg: #f5f5f5;
-      --panel-border: #ddd;
-      --canvas-bg: #888;
-      --sidebar-w: 200px;
+      --accent-hover: #357abd;
+      --bg: #f7f8fa;
+      --text: #333;
+      --muted: #888;
+      --border: #ddd;
+      --success: #27ae60;
+      --error: #c0392b;
     }
 
     html, body {
       height: 100%;
-      width: 100%;
-      overflow: hidden;
+      background: var(--bg);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 13px;
-      background: var(--canvas-bg);
+      color: var(--text);
     }
 
-    /* ── Layout ─────────────────────────────────────────── */
     #app {
       display: flex;
       flex-direction: column;
-      height: 100%;
-    }
-
-    #toolbar {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      background: var(--toolbar-bg);
-      color: var(--toolbar-text);
-      flex-shrink: 0;
-      flex-wrap: wrap;
-      min-height: 40px;
-      z-index: 10;
-    }
-
-    #main {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
-
-    /* ── Sidebar (thumbnails + layers + bookmarks) ───────── */
-    #sidebar {
-      width: var(--sidebar-w);
-      background: var(--panel-bg);
-      border-right: 1px solid var(--panel-border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      flex-shrink: 0;
-      transition: width 0.2s;
-    }
-    #sidebar.collapsed { width: 0; }
-
-    #sidebar-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--panel-border);
-      background: #e8e8e8;
-      flex-shrink: 0;
-    }
-    .sidebar-tab {
-      flex: 1;
-      padding: 6px 4px;
-      text-align: center;
-      cursor: pointer;
-      font-size: 11px;
-      color: #555;
-      white-space: nowrap;
-      overflow: hidden;
-      border-bottom: 2px solid transparent;
-    }
-    .sidebar-tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-      font-weight: 600;
-    }
-
-    #sidebar-content {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-
-    .sidebar-panel { display: none; }
-    .sidebar-panel.active { display: block; }
-
-    /* Thumbnails */
-    #thumbnails-panel {
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      align-items: center;
-    }
-    .thumb-item {
-      cursor: pointer;
-      border: 2px solid transparent;
-      border-radius: 3px;
-      padding: 2px;
-      text-align: center;
-    }
-    .thumb-item.active { border-color: var(--accent); }
-    .thumb-item canvas { display: block; max-width: 100%; }
-    .thumb-label { font-size: 10px; color: #666; margin-top: 2px; }
-
-    /* Bookmarks (outline) */
-    #bookmarks-panel { padding: 6px; }
-    .outline-item {
-      cursor: pointer;
-      padding: 3px 6px;
-      border-radius: 3px;
-      font-size: 12px;
-      color: #333;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .outline-item:hover { background: #e0e0e0; }
-    .outline-children { padding-left: 12px; }
-
-    /* Layers (OCG) */
-    #layers-panel { padding: 8px; }
-    .layer-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 0;
-      font-size: 12px;
-    }
-    .layer-item input { cursor: pointer; }
-
-    /* ── Canvas area ────────────────────────────────────── */
-    #canvas-area {
-      flex: 1;
-      overflow: auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 12px;
-      gap: 12px;
-      position: relative;
-    }
-
-    .page-wrapper {
-      position: relative;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      background: white;
-      line-height: 0;
-    }
-    .page-wrapper canvas { display: block; }
-
-    /* Annotation layer */
-    .page-wrapper .annotationLayer {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: auto;
-    }
-    .page-wrapper .annotationLayer a {
-      position: absolute;
-      display: block;
-    }
-
-    /* Text layer for search */
-    .page-wrapper .textLayer {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      overflow: hidden;
-      opacity: 0.25;
-      line-height: 1;
-      pointer-events: none;
-    }
-    .page-wrapper .textLayer span {
-      color: transparent;
-      position: absolute;
-      white-space: pre;
-      cursor: text;
-      transform-origin: 0% 0%;
-    }
-    .page-wrapper .textLayer .highlight {
-      background: rgba(255, 220, 0, 0.8);
-      border-radius: 2px;
-    }
-    .page-wrapper .textLayer .highlight.selected {
-      background: rgba(0, 100, 255, 0.5);
-    }
-
-    /* ── Toolbar elements ──────────────────────────────── */
-    .tb-sep {
-      width: 1px;
-      height: 22px;
-      background: var(--toolbar-border);
-      margin: 0 2px;
-    }
-    .tb-btn {
-      display: flex;
       align-items: center;
       justify-content: center;
-      padding: 4px 8px;
+      height: 100%;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    /* PDF icon */
+    .pdf-icon {
+      width: 48px;
+      height: 48px;
+      opacity: 0.7;
+    }
+
+    /* Main open button */
+    #btn-open {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: white;
       border: none;
-      border-radius: 3px;
-      background: transparent;
-      color: var(--toolbar-text);
-      cursor: pointer;
-      font-size: 12px;
-      white-space: nowrap;
-      min-height: 28px;
-    }
-    .tb-btn:hover { background: var(--toolbar-btn-hover); }
-    .tb-btn:disabled { opacity: 0.4; cursor: default; }
-    .tb-btn svg { width: 16px; height: 16px; fill: currentColor; }
-
-    .tb-input {
-      background: #444;
-      border: 1px solid #666;
-      border-radius: 3px;
-      color: var(--toolbar-text);
-      padding: 2px 6px;
-      font-size: 12px;
-      height: 26px;
-    }
-    .tb-input:focus { outline: none; border-color: var(--accent); }
-
-    #page-input { width: 40px; text-align: center; }
-    #zoom-select { width: 90px; }
-    #search-input { width: 130px; }
-
-    #page-info { color: #aaa; font-size: 12px; white-space: nowrap; }
-
-    /* Search bar */
-    #search-bar {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    #search-count { color: #aaa; font-size: 11px; min-width: 50px; }
-
-    /* ── States ──────────────────────────────────────────── */
-    #placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: #ccc;
-      gap: 12px;
-      text-align: center;
-    }
-    #placeholder svg { width: 64px; height: 64px; opacity: 0.4; }
-
-    #error-msg {
-      display: none;
-      background: #c0392b;
-      color: white;
-      padding: 10px 16px;
-      text-align: center;
-      font-size: 13px;
-    }
-
-    #loading-indicator {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.7);
-      color: white;
-      padding: 16px 24px;
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 14px;
-      z-index: 100;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
     }
+    #btn-open:hover  { background: var(--accent-hover); }
+    #btn-open:disabled { background: #aaa; cursor: default; }
+
+    /* Status badge */
+    #status {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 220px;
+      line-height: 1.5;
+    }
+    #status.connected { color: var(--success); }
+    #status.error     { color: var(--error); }
+
+    /* Connected indicator dot */
+    .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .dot.on  { background: var(--success); }
+    .dot.off { background: var(--error); }
 
     /* Config panel */
-    #config-panel {
+    #config {
       display: none;
-      position: fixed;
-      top: 48px;
-      right: 8px;
-      width: 260px;
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      z-index: 50;
-      padding: 12px;
-      font-size: 13px;
-    }
-    #config-panel.open { display: block; }
-    #config-panel h3 { margin-bottom: 10px; font-size: 13px; color: #333; }
-    .config-row { margin-bottom: 8px; }
-    .config-row label { display: block; margin-bottom: 3px; color: #555; }
-    .config-row input, .config-row select {
       width: 100%;
-      padding: 4px 8px;
-      border: 1px solid #ccc;
+      max-width: 260px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      margin-top: 4px;
+    }
+    #config.open { display: block; }
+    #config label { display: block; margin-bottom: 3px; font-size: 11px; color: var(--muted); }
+    #config select, #config input {
+      width: 100%;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
       border-radius: 4px;
       font-size: 12px;
+      margin-bottom: 8px;
+    }
+    #btn-save {
+      width: 100%;
+      padding: 6px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #btn-save:hover { background: var(--accent-hover); }
+
+    #btn-settings {
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    #btn-settings:hover { color: var(--text); }
+
+    /* Filename display */
+    #filename {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- Toolbar -->
-  <div id="toolbar">
-    <!-- Sidebar toggle -->
-    <button class="tb-btn" id="btn-sidebar" title="Panneaux latéraux">
-      <svg viewBox="0 0 16 16"><rect x="1" y="2" width="4" height="12" rx="1"/><rect x="7" y="2" width="8" height="2" rx="1"/><rect x="7" y="7" width="8" height="2" rx="1"/><rect x="7" y="12" width="8" height="2" rx="1"/></svg>
-    </button>
+  <svg class="pdf-icon" viewBox="0 0 48 48" fill="none">
+    <rect x="6" y="2" width="28" height="36" rx="3" fill="#e74c3c" opacity="0.15" stroke="#e74c3c" stroke-width="1.5"/>
+    <rect x="6" y="2" width="28" height="36" rx="3" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
+    <path d="M28 2 L34 8" stroke="#e74c3c" stroke-width="1.5"/>
+    <rect x="28" y="2" width="6" height="6" rx="1" fill="#e74c3c" opacity="0.3"/>
+    <text x="20" y="25" text-anchor="middle" font-size="8" font-weight="bold" fill="#e74c3c">PDF</text>
+    <circle cx="38" cy="38" r="9" fill="#4a90d9"/>
+    <path d="M34 38 h8 M38 34 v8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  </svg>
 
-    <div class="tb-sep"></div>
+  <button id="btn-open" disabled>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M1 3h14v10H1V3zm2 2v6h10V5H3zm2 1h6v1H5V6zm0 2h4v1H5V8z" opacity="0.6"/>
+      <path d="M10 1 L15 1 L15 6" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M9 7 L15 1" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    Ouvrir le PDF
+  </button>
 
-    <!-- Navigation -->
-    <button class="tb-btn" id="btn-first" title="Première page">⏮</button>
-    <button class="tb-btn" id="btn-prev" title="Page précédente">◀</button>
-    <input type="number" id="page-input" class="tb-input" min="1" value="1" title="Numéro de page">
-    <span id="page-info">/ –</span>
-    <button class="tb-btn" id="btn-next" title="Page suivante">▶</button>
-    <button class="tb-btn" id="btn-last" title="Dernière page">⏭</button>
+  <div id="filename"></div>
 
-    <div class="tb-sep"></div>
+  <div id="status">
+    <span class="dot" id="dot"></span>
+    En attente d'un enregistrement…
+  </div>
 
-    <!-- Zoom -->
-    <button class="tb-btn" id="btn-zoom-out" title="Zoom arrière">🔍−</button>
-    <select id="zoom-select" class="tb-input" title="Niveau de zoom">
-      <option value="auto">Automatique</option>
-      <option value="page-fit">Page entière</option>
-      <option value="page-width">Largeur</option>
-      <option value="0.5">50%</option>
-      <option value="0.75">75%</option>
-      <option value="1">100%</option>
-      <option value="1.25">125%</option>
-      <option value="1.5">150%</option>
-      <option value="2">200%</option>
-      <option value="3">300%</option>
+  <button id="btn-settings">⚙ Paramètres</button>
+
+  <div id="config">
+    <label>Colonne contenant l'URL ou la pièce jointe</label>
+    <select id="col-select"><option value="">— sélectionner —</option></select>
+
+    <label>Type de colonne</label>
+    <select id="col-type">
+      <option value="url">URL (texte)</option>
+      <option value="attachment">Pièce jointe Grist</option>
     </select>
-    <button class="tb-btn" id="btn-zoom-in" title="Zoom avant">🔍+</button>
 
-    <div class="tb-sep"></div>
-
-    <!-- Rotation -->
-    <button class="tb-btn" id="btn-rotate-ccw" title="Rotation gauche">↺</button>
-    <button class="tb-btn" id="btn-rotate-cw" title="Rotation droite">↻</button>
-
-    <div class="tb-sep"></div>
-
-    <!-- Search -->
-    <div id="search-bar">
-      <input type="text" id="search-input" class="tb-input" placeholder="Rechercher…" title="Recherche plein texte">
-      <button class="tb-btn" id="btn-search-prev" title="Précédent">↑</button>
-      <button class="tb-btn" id="btn-search-next" title="Suivant">↓</button>
-      <span id="search-count"></span>
-    </div>
-
-    <div class="tb-sep"></div>
-
-    <!-- Download & Print -->
-    <button class="tb-btn" id="btn-download" title="Télécharger">⬇</button>
-    <button class="tb-btn" id="btn-print" title="Imprimer">🖨</button>
-
-    <!-- Config -->
-    <button class="tb-btn" id="btn-config" title="Paramètres">⚙</button>
-  </div>
-
-  <!-- Error -->
-  <div id="error-msg"></div>
-
-  <!-- Main area -->
-  <div id="main">
-    <!-- Sidebar -->
-    <div id="sidebar">
-      <div id="sidebar-tabs">
-        <div class="sidebar-tab active" data-panel="thumbnails">Vignettes</div>
-        <div class="sidebar-tab" data-panel="bookmarks">Signets</div>
-        <div class="sidebar-tab" data-panel="layers">Calques</div>
-      </div>
-      <div id="sidebar-content">
-        <div id="thumbnails" class="sidebar-panel active">
-          <div id="thumbnails-panel"></div>
-        </div>
-        <div id="bookmarks" class="sidebar-panel">
-          <div id="bookmarks-panel"><p style="padding:8px;color:#999;font-size:12px">Aucun signet</p></div>
-        </div>
-        <div id="layers" class="sidebar-panel">
-          <div id="layers-panel"><p style="padding:8px;color:#999;font-size:12px">Aucun calque</p></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Canvas area -->
-    <div id="canvas-area">
-      <div id="placeholder">
-        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="8" y="4" width="40" height="52" rx="3"/>
-          <line x1="16" y1="16" x2="40" y2="16"/>
-          <line x1="16" y1="24" x2="40" y2="24"/>
-          <line x1="16" y1="32" x2="32" y2="32"/>
-          <path d="M40 40 l8 8 M48 40 l-8 8" stroke-linecap="round"/>
-        </svg>
-        <p>Configurez le widget pour pointer vers<br>une colonne URL ou une pièce jointe PDF.</p>
-        <p style="font-size:11px;color:#aaa">Cliquez sur ⚙ pour les paramètres</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Loading -->
-  <div id="loading-indicator">Chargement du PDF…</div>
-
-  <!-- Config panel -->
-  <div id="config-panel">
-    <h3>⚙ Paramètres du widget</h3>
-    <div class="config-row">
-      <label>Colonne source</label>
-      <select id="col-select"><option value="">— sélectionner —</option></select>
-    </div>
-    <div class="config-row">
-      <label>Type de colonne</label>
-      <select id="col-type">
-        <option value="url">URL (texte)</option>
-        <option value="attachment">Pièce jointe</option>
-      </select>
-    </div>
-    <button class="tb-btn" id="btn-config-save" style="background:var(--accent);width:100%;justify-content:center;margin-top:4px">Enregistrer</button>
+    <button id="btn-save">Enregistrer</button>
   </div>
 
 </div>
 
-<script type="module">
-// ─── PDF.js setup ─────────────────────────────────────────────────────────────
-import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+<script>
+  const VIEWER_URL = (function() {
+    const base = location.href.replace(/\/index\.html.*$/, '');
+    return base + '/viewer.html';
+  })();
 
-// ─── State ────────────────────────────────────────────────────────────────────
-const state = {
-  pdfDoc: null,
-  currentPage: 1,
-  totalPages: 0,
-  scale: 1,
-  rotation: 0,
-  renderTasks: {},
-  searchMatches: [],
-  searchIndex: 0,
-  columnName: null,
-  columnType: 'url',
-  gristReady: false,
-  currentUrl: null,
-  optionalContentConfig: null,
-};
-
-// ─── DOM refs ─────────────────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const canvasArea   = $('canvas-area');
-const placeholder  = $('placeholder');
-const errorMsg     = $('error-msg');
-const loadingEl    = $('loading-indicator');
-const pageInput    = $('page-input');
-const pageInfo     = $('page-info');
-const zoomSelect   = $('zoom-select');
-const searchInput  = $('search-input');
-const searchCount  = $('search-count');
-const sidebar      = $('sidebar');
-const thumbsPanel  = $('thumbnails-panel');
-const bookmarksPanel = $('bookmarks-panel');
-const layersPanel  = $('layers-panel');
-const configPanel  = $('config-panel');
-const colSelect    = $('col-select');
-const colType      = $('col-type');
-
-// ─── Toolbar wiring ───────────────────────────────────────────────────────────
-$('btn-sidebar').addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-
-$('btn-first').addEventListener('click', () => goToPage(1));
-$('btn-prev').addEventListener('click',  () => goToPage(state.currentPage - 1));
-$('btn-next').addEventListener('click',  () => goToPage(state.currentPage + 1));
-$('btn-last').addEventListener('click',  () => goToPage(state.totalPages));
-
-pageInput.addEventListener('change', () => goToPage(parseInt(pageInput.value, 10)));
-
-$('btn-zoom-out').addEventListener('click', () => adjustZoom(-0.25));
-$('btn-zoom-in').addEventListener('click',  () => adjustZoom(+0.25));
-zoomSelect.addEventListener('change', () => applyZoom(zoomSelect.value));
-
-$('btn-rotate-ccw').addEventListener('click', () => { state.rotation = (state.rotation - 90 + 360) % 360; renderAllPages(); });
-$('btn-rotate-cw').addEventListener('click',  () => { state.rotation = (state.rotation + 90) % 360; renderAllPages(); });
-
-$('btn-download').addEventListener('click', downloadPDF);
-$('btn-print').addEventListener('click',   printPDF);
-
-searchInput.addEventListener('input', () => performSearch(searchInput.value));
-searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') e.shiftKey ? navigateSearch(-1) : navigateSearch(1);
-});
-$('btn-search-prev').addEventListener('click', () => navigateSearch(-1));
-$('btn-search-next').addEventListener('click', () => navigateSearch(1));
-
-$('btn-config').addEventListener('click', () => configPanel.classList.toggle('open'));
-$('btn-config-save').addEventListener('click', saveConfig);
-
-// Sidebar tabs
-document.querySelectorAll('.sidebar-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.sidebar-panel').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    $( tab.dataset.panel ).classList.add('active');
-  });
-});
-
-// Close config panel on outside click
-document.addEventListener('click', e => {
-  if (!configPanel.contains(e.target) && e.target !== $('btn-config')) {
-    configPanel.classList.remove('open');
-  }
-});
-
-// ─── Grist integration ────────────────────────────────────────────────────────
-grist.ready({ requiredAccess: 'read table' });
-
-grist.onOptions((options, interaction) => {
-  if (options?.columnName) state.columnName = options.columnName;
-  if (options?.columnType) state.columnType = options.columnType;
-  // Populate column selector
-  populateColumnSelector(interaction?.columns || []);
-});
-
-grist.onRecord(record => {
-  if (!state.columnName || !record) return;
-  const value = record[state.columnName];
-  if (!value) { showPlaceholder('Aucune valeur dans la colonne sélectionnée.'); return; }
-
-  if (state.columnType === 'attachment') {
-    // Attachments: value is an array of attachment IDs
-    const ids = Array.isArray(value) ? value : [value];
-    if (ids.length === 0) { showPlaceholder('Aucune pièce jointe.'); return; }
-    // Use the first attachment (PDF)
-    const pdfId = ids[0];
-    grist.docApi.getAttachmentToken?.().then(token => {
-      const url = `${grist.api?.docUrl || ''}/attachments/${pdfId}/download?auth=${token}`;
-      loadPDF(url);
-    }).catch(() => {
-      // Fallback: try direct attachment URL
-      loadPDF(String(pdfId));
-    });
-  } else {
-    // URL column
-    const url = String(value).trim();
-    if (url && url !== state.currentUrl) loadPDF(url);
-  }
-});
-
-// Column selector population
-function populateColumnSelector(columns) {
-  colSelect.innerHTML = '<option value="">— sélectionner —</option>';
-  columns.forEach(col => {
-    const opt = document.createElement('option');
-    opt.value = col.name;
-    opt.textContent = col.title || col.name;
-    if (col.name === state.columnName) opt.selected = true;
-    colSelect.appendChild(opt);
-  });
-  colType.value = state.columnType || 'url';
-}
-
-function saveConfig() {
-  state.columnName = colSelect.value;
-  state.columnType = colType.value;
-  grist.setOptions({ columnName: state.columnName, columnType: state.columnType });
-  configPanel.classList.remove('open');
-}
-
-// ─── PDF loading ──────────────────────────────────────────────────────────────
-async function loadPDF(url) {
-  if (!url) return;
-  state.currentUrl = url;
-  showLoading(true);
-  hideError();
-  clearPages();
-
-  try {
-    const loadingTask = pdfjsLib.getDocument({
-      url,
-      cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/cmaps/',
-      cMapPacked: true,
-      enableXfa: false,
-    });
-
-    state.pdfDoc = await loadingTask.promise;
-    state.totalPages = state.pdfDoc.numPages;
-    state.currentPage = 1;
-    state.rotation = 0;
-
-    // Optional Content (layers)
-    state.optionalContentConfig = await state.pdfDoc.getOptionalContentConfig();
-
-    pageInfo.textContent = `/ ${state.totalPages}`;
-    pageInput.max = state.totalPages;
-    pageInput.value = 1;
-
-    await computeAutoScale();
-    await renderAllPages();
-    await buildThumbnails();
-    await buildOutline();
-    buildLayersPanel();
-
-    placeholder.style.display = 'none';
-  } catch (err) {
-    showError(`Impossible de charger le PDF : ${err.message}`);
-  } finally {
-    showLoading(false);
-  }
-}
-
-// ─── Scale / zoom ─────────────────────────────────────────────────────────────
-async function computeAutoScale() {
-  const page = await state.pdfDoc.getPage(1);
-  const viewport = page.getViewport({ scale: 1, rotation: state.rotation });
-  const availW = canvasArea.clientWidth - 40;
-  state.scale = Math.min(availW / viewport.width, 2);
-}
-
-function adjustZoom(delta) {
-  state.scale = Math.max(0.25, Math.min(5, state.scale + delta));
-  zoomSelect.value = '';
-  renderAllPages();
-}
-
-async function applyZoom(value) {
-  if (!state.pdfDoc) return;
-  if (value === 'auto' || value === '') {
-    await computeAutoScale();
-  } else if (value === 'page-fit') {
-    const page = await state.pdfDoc.getPage(1);
-    const vp = page.getViewport({ scale: 1, rotation: state.rotation });
-    const availH = canvasArea.clientHeight - 40;
-    const availW = canvasArea.clientWidth - 40;
-    state.scale = Math.min(availW / vp.width, availH / vp.height);
-  } else if (value === 'page-width') {
-    const page = await state.pdfDoc.getPage(1);
-    const vp = page.getViewport({ scale: 1, rotation: state.rotation });
-    state.scale = (canvasArea.clientWidth - 40) / vp.width;
-  } else {
-    state.scale = parseFloat(value);
-  }
-  renderAllPages();
-}
-
-// ─── Rendering ────────────────────────────────────────────────────────────────
-async function renderAllPages() {
-  if (!state.pdfDoc) return;
-  clearPages();
-
-  for (let i = 1; i <= state.totalPages; i++) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'page-wrapper';
-    wrapper.dataset.page = i;
-    canvasArea.appendChild(wrapper);
-    renderPage(i, wrapper);
-  }
-}
-
-async function renderPage(pageNum, wrapper) {
-  const page = await state.pdfDoc.getPage(pageNum);
-  const viewport = page.getViewport({
-    scale: state.scale,
-    rotation: state.rotation,
-    optionalContentConfigPromise: Promise.resolve(state.optionalContentConfig),
-  });
-
-  // Canvas
-  const canvas = document.createElement('canvas');
-  canvas.width  = viewport.width;
-  canvas.height = viewport.height;
-  wrapper.style.width  = canvas.width  + 'px';
-  wrapper.style.height = canvas.height + 'px';
-  wrapper.appendChild(canvas);
-
-  const ctx = canvas.getContext('2d');
-
-  // Cancel previous render task for this page if any
-  if (state.renderTasks[pageNum]) {
-    state.renderTasks[pageNum].cancel();
-  }
-
-  const renderTask = page.render({
-    canvasContext: ctx,
-    viewport,
-    optionalContentConfigPromise: Promise.resolve(state.optionalContentConfig),
-  });
-  state.renderTasks[pageNum] = renderTask;
-
-  await renderTask.promise.catch(err => {
-    if (err?.name !== 'RenderingCancelledException') console.warn('Render error', err);
-  });
-
-  // Text layer (for search)
-  const textLayerDiv = document.createElement('div');
-  textLayerDiv.className = 'textLayer';
-  textLayerDiv.style.width  = canvas.width  + 'px';
-  textLayerDiv.style.height = canvas.height + 'px';
-  wrapper.appendChild(textLayerDiv);
-
-  const textContent = await page.getTextContent();
-  await pdfjsLib.renderTextLayer({
-    textContentSource: textContent,
-    container: textLayerDiv,
-    viewport,
-  });
-
-  // Annotation layer
-  const annotDiv = document.createElement('div');
-  annotDiv.className = 'annotationLayer';
-  wrapper.appendChild(annotDiv);
-
-  const annotations = await page.getAnnotations();
-  await pdfjsLib.AnnotationLayer.render({
-    viewport: viewport.clone({ dontFlip: true }),
-    div: annotDiv,
-    annotations,
-    page,
-    linkService: buildLinkService(),
-    downloadManager: null,
-  });
-}
-
-function clearPages() {
-  // Cancel all ongoing render tasks
-  Object.values(state.renderTasks).forEach(t => t?.cancel?.());
-  state.renderTasks = {};
-  // Remove all page wrappers
-  Array.from(canvasArea.querySelectorAll('.page-wrapper')).forEach(el => el.remove());
-}
-
-// ─── Page navigation ──────────────────────────────────────────────────────────
-function goToPage(num) {
-  if (!state.pdfDoc) return;
-  num = Math.max(1, Math.min(state.totalPages, num));
-  state.currentPage = num;
-  pageInput.value = num;
-
-  const target = canvasArea.querySelector(`[data-page="${num}"]`);
-  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  // Highlight active thumbnail
-  document.querySelectorAll('.thumb-item').forEach((t, i) => {
-    t.classList.toggle('active', i + 1 === num);
-  });
-}
-
-// Track current page based on scroll
-canvasArea.addEventListener('scroll', () => {
-  const wrappers = canvasArea.querySelectorAll('.page-wrapper');
-  for (const w of wrappers) {
-    const rect = w.getBoundingClientRect();
-    const areaRect = canvasArea.getBoundingClientRect();
-    if (rect.top >= areaRect.top - rect.height / 2) {
-      const p = parseInt(w.dataset.page, 10);
-      if (p !== state.currentPage) {
-        state.currentPage = p;
-        pageInput.value = p;
-        document.querySelectorAll('.thumb-item').forEach((t, i) => {
-          t.classList.toggle('active', i + 1 === p);
-        });
-      }
-      break;
-    }
-  }
-});
-
-// ─── Thumbnails ───────────────────────────────────────────────────────────────
-async function buildThumbnails() {
-  thumbsPanel.innerHTML = '';
-  for (let i = 1; i <= state.totalPages; i++) {
-    const page = await state.pdfDoc.getPage(i);
-    const vp = page.getViewport({ scale: 0.2, rotation: state.rotation });
-
-    const canvas = document.createElement('canvas');
-    canvas.width  = vp.width;
-    canvas.height = vp.height;
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-
-    const item = document.createElement('div');
-    item.className = 'thumb-item' + (i === 1 ? ' active' : '');
-    item.appendChild(canvas);
-    const label = document.createElement('div');
-    label.className = 'thumb-label';
-    label.textContent = i;
-    item.appendChild(label);
-    item.addEventListener('click', () => goToPage(i));
-    thumbsPanel.appendChild(item);
-  }
-}
-
-// ─── Outline (bookmarks) ─────────────────────────────────────────────────────
-async function buildOutline() {
-  bookmarksPanel.innerHTML = '';
-  const outline = await state.pdfDoc.getOutline();
-  if (!outline || outline.length === 0) {
-    bookmarksPanel.innerHTML = '<p style="padding:8px;color:#999;font-size:12px">Aucun signet</p>';
-    return;
-  }
-  renderOutlineItems(outline, bookmarksPanel);
-}
-
-function renderOutlineItems(items, container) {
-  items.forEach(item => {
-    const el = document.createElement('div');
-    el.className = 'outline-item';
-    el.textContent = item.title;
-    el.title = item.title;
-    el.addEventListener('click', async () => {
-      if (item.dest) {
-        const dest = typeof item.dest === 'string'
-          ? await state.pdfDoc.getDestination(item.dest)
-          : item.dest;
-        if (dest) {
-          const ref = dest[0];
-          const pageIndex = await state.pdfDoc.getPageIndex(ref);
-          goToPage(pageIndex + 1);
-        }
-      }
-    });
-    container.appendChild(el);
-    if (item.items && item.items.length > 0) {
-      const children = document.createElement('div');
-      children.className = 'outline-children';
-      renderOutlineItems(item.items, children);
-      container.appendChild(children);
-    }
-  });
-}
-
-// ─── Layers (OCG) ─────────────────────────────────────────────────────────────
-function buildLayersPanel() {
-  layersPanel.innerHTML = '';
-  if (!state.optionalContentConfig) {
-    layersPanel.innerHTML = '<p style="padding:8px;color:#999;font-size:12px">Aucun calque</p>';
-    return;
-  }
-  const groups = state.optionalContentConfig.getGroups();
-  if (!groups || Object.keys(groups).length === 0) {
-    layersPanel.innerHTML = '<p style="padding:8px;color:#999;font-size:12px">Aucun calque</p>';
-    return;
-  }
-  Object.entries(groups).forEach(([id, group]) => {
-    const item = document.createElement('div');
-    item.className = 'layer-item';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = state.optionalContentConfig.isVisible(group);
-    cb.addEventListener('change', () => {
-      state.optionalContentConfig.setVisibility(id, cb.checked);
-      renderAllPages();
-    });
-    const lbl = document.createElement('label');
-    lbl.textContent = group.name || id;
-    item.appendChild(cb);
-    item.appendChild(lbl);
-    layersPanel.appendChild(item);
-  });
-}
-
-// ─── Search ───────────────────────────────────────────────────────────────────
-let searchDebounce = null;
-async function performSearch(query) {
-  // Clear previous highlights
-  document.querySelectorAll('.textLayer .highlight').forEach(el => {
-    el.classList.remove('highlight', 'selected');
-  });
-  state.searchMatches = [];
-  state.searchIndex = 0;
-  searchCount.textContent = '';
-
-  if (!state.pdfDoc || !query || query.length < 2) return;
-
-  const q = query.toLowerCase();
-  const spans = document.querySelectorAll('.textLayer span');
-  const matches = [];
-
-  spans.forEach(span => {
-    if (span.textContent.toLowerCase().includes(q)) {
-      span.classList.add('highlight');
-      matches.push(span);
-    }
-  });
-
-  state.searchMatches = matches;
-  if (matches.length > 0) {
-    state.searchIndex = 0;
-    matches[0].classList.add('selected');
-    matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    searchCount.textContent = `1 / ${matches.length}`;
-  } else {
-    searchCount.textContent = 'Aucun résultat';
-  }
-}
-
-function navigateSearch(dir) {
-  const matches = state.searchMatches;
-  if (matches.length === 0) return;
-  matches[state.searchIndex].classList.remove('selected');
-  state.searchIndex = (state.searchIndex + dir + matches.length) % matches.length;
-  matches[state.searchIndex].classList.add('selected');
-  matches[state.searchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-  searchCount.textContent = `${state.searchIndex + 1} / ${matches.length}`;
-}
-
-// ─── Download ─────────────────────────────────────────────────────────────────
-async function downloadPDF() {
-  if (!state.currentUrl) return;
-  const a = document.createElement('a');
-  a.href = state.currentUrl;
-  a.download = 'document.pdf';
-  a.click();
-}
-
-// ─── Print ───────────────────────────────────────────────────────────────────
-async function printPDF() {
-  if (!state.pdfDoc) return;
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write('<html><head><title>Impression PDF</title><style>@page{margin:0}body{margin:0}img{display:block;width:100%;page-break-after:always}</style></head><body>');
-
-  for (let i = 1; i <= state.totalPages; i++) {
-    const page = await state.pdfDoc.getPage(i);
-    const vp = page.getViewport({ scale: 2, rotation: state.rotation });
-    const canvas = document.createElement('canvas');
-    canvas.width = vp.width;
-    canvas.height = vp.height;
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-    printWindow.document.write(`<img src="${canvas.toDataURL()}">`);
-  }
-
-  printWindow.document.write('</body></html>');
-  printWindow.document.close();
-  printWindow.onload = () => {
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+  const state = {
+    columnName: null,
+    columnType: 'url',
+    currentUrl: null,
+    currentName: null,
+    popupWin: null,
   };
-}
 
-// ─── Link service (for internal PDF links) ────────────────────────────────────
-function buildLinkService() {
-  return {
-    getDestinationHash: dest => '#',
-    getAnchorUrl: hash => hash,
-    setDocument: () => {},
-    setViewer: () => {},
-    navigateTo: async dest => {
-      const resolved = typeof dest === 'string'
-        ? await state.pdfDoc.getDestination(dest)
-        : dest;
-      if (resolved) {
-        const ref = resolved[0];
-        const pageIndex = await state.pdfDoc.getPageIndex(ref);
-        goToPage(pageIndex + 1);
-      }
-    },
-    goToDestination: async dest => {
-      const resolved = typeof dest === 'string'
-        ? await state.pdfDoc.getDestination(dest)
-        : dest;
-      if (resolved) {
-        const ref = resolved[0];
-        const pageIndex = await state.pdfDoc.getPageIndex(ref);
-        goToPage(pageIndex + 1);
-      }
-    },
-    externalLinkTarget: 2, // _blank
-    externalLinkRel: 'noopener noreferrer nofollow',
-    externalLinkEnabled: true,
-    isPageVisible: () => true,
-  };
-}
+  const btnOpen    = document.getElementById('btn-open');
+  const statusEl   = document.getElementById('status');
+  const dotEl      = document.getElementById('dot');
+  const filenameEl = document.getElementById('filename');
+  const colSelect  = document.getElementById('col-select');
+  const colType    = document.getElementById('col-type');
+  const config     = document.getElementById('config');
 
-// ─── UI helpers ───────────────────────────────────────────────────────────────
-function showLoading(show) { loadingEl.style.display = show ? 'block' : 'none'; }
-function showError(msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; }
-function hideError() { errorMsg.style.display = 'none'; }
-function showPlaceholder(msg) {
-  clearPages();
-  placeholder.style.display = 'flex';
-  placeholder.querySelector('p').textContent = msg;
-}
+  // ── Grist setup ────────────────────────────────────────────────────────────
+  grist.ready({ requiredAccess: 'read table' });
 
-// Keyboard shortcuts
-document.addEventListener('keydown', e => {
-  if (e.target === searchInput) return;
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goToPage(state.currentPage + 1);
-  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goToPage(state.currentPage - 1);
-  if (e.key === 'Home') goToPage(1);
-  if (e.key === 'End')  goToPage(state.totalPages);
-  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-    e.preventDefault();
-    searchInput.focus();
-  }
-});
+  grist.onOptions((options, interaction) => {
+    if (options?.columnName) state.columnName = options.columnName;
+    if (options?.columnType) state.columnType = options.columnType;
+    populateColumns(interaction?.columns || []);
+  });
 
-// Resize
-let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    if (zoomSelect.value === 'auto' || zoomSelect.value === 'page-fit' || zoomSelect.value === 'page-width') {
-      applyZoom(zoomSelect.value);
+  grist.onRecord(record => {
+    if (!state.columnName || !record) {
+      setStatus('Configurez le widget (⚙ Paramètres).', 'off', false);
+      return;
     }
-  }, 200);
-});
+
+    const value = record[state.columnName];
+    if (!value) {
+      setStatus('Aucune valeur dans la colonne sélectionnée.', 'off', false);
+      return;
+    }
+
+    if (state.columnType === 'attachment') {
+      resolveAttachment(value, record);
+    } else {
+      const url = String(value).trim();
+      if (!url) { setStatus('URL vide.', 'off', false); return; }
+      setReady(url, url.split('/').pop() || 'document.pdf');
+    }
+  });
+
+  async function resolveAttachment(value, record) {
+    try {
+      const ids = Array.isArray(value) ? value : [value];
+      if (ids.length === 0) { setStatus('Aucune pièce jointe.', 'off', false); return; }
+      // Build attachment download URL via Grist API
+      const docUrl = await grist.docApi.getDocURL?.() || '';
+      const url = `${docUrl}/attachments/${ids[0]}/download`;
+      setReady(url, `pièce jointe #${ids[0]}`);
+    } catch (e) {
+      setStatus('Erreur pièce jointe : ' + e.message, 'off', false);
+    }
+  }
+
+  function setReady(url, name) {
+    state.currentUrl  = url;
+    state.currentName = name;
+    btnOpen.disabled  = false;
+    filenameEl.textContent = name;
+    setStatus('PDF prêt · cliquez pour ouvrir', 'on', true);
+    // If popup is already open, update it live
+    relayToPopup({ type: 'PDF_LOAD', url, name });
+  }
+
+  // ── Popup management ───────────────────────────────────────────────────────
+  btnOpen.addEventListener('click', openViewer);
+
+  function openViewer() {
+    if (!state.currentUrl) return;
+
+    const w = 1100, h = 800;
+    const left = Math.max(0, (screen.width  - w) / 2);
+    const top  = Math.max(0, (screen.height - h) / 2);
+
+    if (state.popupWin && !state.popupWin.closed) {
+      state.popupWin.focus();
+      relayToPopup({ type: 'PDF_LOAD', url: state.currentUrl, name: state.currentName });
+      return;
+    }
+
+    state.popupWin = window.open(
+      VIEWER_URL,
+      'grist-pdf-viewer',
+      `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=no`
+    );
+
+    // Once the popup is ready, send the PDF URL
+    window.addEventListener('message', onPopupMessage);
+
+    // Fallback: send after a short delay in case ready event is missed
+    setTimeout(() => {
+      relayToPopup({ type: 'PDF_LOAD', url: state.currentUrl, name: state.currentName });
+    }, 1500);
+  }
+
+  function onPopupMessage(event) {
+    if (event.data?.type === 'VIEWER_READY') {
+      relayToPopup({ type: 'PDF_LOAD', url: state.currentUrl, name: state.currentName });
+    }
+  }
+
+  function relayToPopup(msg) {
+    if (state.popupWin && !state.popupWin.closed) {
+      state.popupWin.postMessage(msg, '*');
+    }
+  }
+
+  // ── Config ─────────────────────────────────────────────────────────────────
+  document.getElementById('btn-settings').addEventListener('click', () => {
+    config.classList.toggle('open');
+  });
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    state.columnName = colSelect.value;
+    state.columnType = colType.value;
+    grist.setOptions({ columnName: state.columnName, columnType: state.columnType });
+    config.classList.remove('open');
+  });
+
+  function populateColumns(columns) {
+    colSelect.innerHTML = '<option value="">— sélectionner —</option>';
+    columns.forEach(col => {
+      const opt = document.createElement('option');
+      opt.value = col.name;
+      opt.textContent = col.title || col.name;
+      if (col.name === state.columnName) opt.selected = true;
+      colSelect.appendChild(opt);
+    });
+    colType.value = state.columnType || 'url';
+  }
+
+  // ── UI helpers ─────────────────────────────────────────────────────────────
+  function setStatus(text, dot, enabled) {
+    statusEl.textContent = text;
+    dotEl.className = 'dot ' + (dot || 'off');
+    btnOpen.disabled = !enabled;
+    if (!enabled) filenameEl.textContent = '';
+  }
+
+  setStatus('En attente d\'un enregistrement…', 'off', false);
 </script>
 </body>
 </html>
