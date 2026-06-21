@@ -292,27 +292,36 @@ function setNoPDF(msg) {
 // ── Popup viewer ──────────────────────────────────────────────────────────────
 function openOrUpdate() {
   if (state.popup && !state.popup.closed) {
+    // Viewer déjà ouvert → mise à jour via postMessage
     state.popup.focus();
-    send({ type: 'PDF_LOAD', url: state.currentUrl, name: state.currentName });
-    return;
-  }
-  const w = 1150, h = 840;
-  state.popup = window.open(
-    VIEWER_URL, 'grist-pdf-viewer',
-    `width=${w},height=${h},left=${Math.max(0,(screen.width-w)/2)},top=${Math.max(0,(screen.height-h)/2)},resizable=yes`
-  );
-  setTimeout(() => {
     send({ type: 'PDF_LOAD', url: state.currentUrl, name: state.currentName });
     badgeLive.classList.add('on');
     lblAction.textContent = '↻ PDF mis à jour dans le viewer';
-  }, 1800);
+    return;
+  }
+  // Passe l'URL directement dans les paramètres → pas de page blanche
+  const params = new URLSearchParams({
+    url:  state.currentUrl,
+    name: state.currentName || '',
+  });
+  const viewerUrl = VIEWER_URL + '?' + params.toString();
+  const w = 1150, h = 840;
+  state.popup = window.open(
+    viewerUrl, 'grist-pdf-viewer',
+    `width=${w},height=${h},left=${Math.max(0,(screen.width-w)/2)},top=${Math.max(0,(screen.height-h)/2)},resizable=yes`
+  );
+  badgeLive.classList.add('on');
+  lblAction.textContent = '↻ PDF mis à jour dans le viewer';
 }
 
 window.addEventListener('message', e => {
+  // Le viewer signale qu'il est prêt (changements de page suivants)
   if (e.data?.type === 'VIEWER_READY') {
     send({ type: 'PDF_LOAD', url: state.currentUrl, name: state.currentName });
-    badgeLive.classList.add('on');
-    lblAction.textContent = '↻ PDF mis à jour dans le viewer';
+  }
+  // Le viewer signale un échec CORS → on ouvre l'URL dans un onglet natif
+  if (e.data?.type === 'PDF_CORS_ERROR') {
+    window.open(state.currentUrl, '_blank');
   }
 });
 

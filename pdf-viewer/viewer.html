@@ -304,11 +304,24 @@ const bookmarksInner= $('bookmarks-inner');
 const layersInner   = $('layers-inner');
 const docTitle      = $('doc-title');
 
-// ── postMessage bridge (receives from index.html widget) ──────────────────────
+// ── Chargement immédiat depuis les paramètres URL (élimine la page blanche) ───
+(function() {
+  const params = new URLSearchParams(location.search);
+  const url  = params.get('url');
+  const name = params.get('name') || '';
+  if (url) {
+    // Lance le chargement dès que le module est prêt (pas d'attente postMessage)
+    window.addEventListener('load', () => loadPDF(url, name), { once: true });
+    // Sécurité : si load déjà passé
+    if (document.readyState === 'complete') loadPDF(url, name);
+  }
+})();
+
+// ── postMessage bridge (mises à jour suivantes depuis le widget) ──────────────
 window.addEventListener('message', e => {
   if (e.data?.type === 'PDF_LOAD') loadPDF(e.data.url, e.data.name || '');
 });
-// Tell the launcher we are ready
+// Signale au widget lanceur que la fenêtre est prête
 window.opener?.postMessage({ type: 'VIEWER_READY' }, '*');
 
 // ── Toolbar wiring ─────────────────────────────────────────────────────────────
@@ -420,11 +433,15 @@ async function loadPDF(url, name) {
     buildOutline();
     buildLayers();
   } catch (err) {
-    // Fallback : si PDF.js ne peut pas fetch (CORS, auth), on essaie l'iframe
-    const blocked = err.message?.includes('fetch') || err.message?.includes('CORS')
-                 || err.name === 'UnknownErrorException' || err.status === 0;
-    if (blocked || true) {
-      showIframeFallback(url, name, err.message);
+    // Détecte un blocage CORS / réseau / authentification
+    const isCors = err.message?.toLowerCase().includes('fetch')
+                || err.message?.toLowerCase().includes('cors')
+                || err.name === 'UnknownErrorException'
+                || err.status === 0
+                || !err.status;
+
+    if (isCors) {
+      showCorsError(url, name);
     } else {
       showErr('Impossible de charger le PDF : ' + err.message);
     }
@@ -443,48 +460,51 @@ function convertDriveUrl(url) {
   return url;
 }
 
-// Fallback iframe : affiche le PDF directement dans un <iframe>
-// Fonctionne quand le serveur bloque les requêtes cross-origin mais autorise l'embed
-function showIframeFallback(url, name, originalError) {
+// Fallback CORS : le drive bloque les requêtes cross-origin
+// → on ouvre l'URL directement dans le navigateur natif (onglet ou appli)
+// → on affiche un écran d'explication dans le viewer
+function showCorsError(url, name) {
   clearPages();
   splash.style.display = 'none';
-
-  // Désactive les contrôles PDF.js qui ne fonctionnent pas sans le document
   pageTotal.textContent = '/ ?';
-  pageInput.value = 1;
 
   const area = document.getElementById('canvas-area');
-
-  // Bandeau d'info
-  const banner = document.createElement('div');
-  banner.id = 'fallback-banner';
-  banner.style.cssText = 'width:100%;background:#fff3cd;color:#856404;padding:8px 14px;font-size:12px;text-align:center;flex-shrink:0';
-  banner.innerHTML = `⚠ Mode intégration directe (CORS) — navigation, zoom et recherche désactivés.
-    <a href="${url}" target="_blank" style="color:#0d6efd;margin-left:8px">↗ Ouvrir dans un nouvel onglet</a>`;
-
-  const iframe = document.createElement('iframe');
-  iframe.id  = 'pdf-iframe';
-  iframe.src = url;
-  iframe.style.cssText = 'flex:1;width:100%;border:none;background:white';
-  iframe.title = name || 'PDF';
-
-  // On cache la zone canvas et on injecte le fallback
-  area.style.padding = '0';
-  area.style.gap = '0';
-  area.style.flexDirection = 'column';
   area.innerHTML = '';
-  area.appendChild(banner);
-  area.appendChild(iframe);
+  area.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#f8f9fa';
+
+  area.innerHTML = `
+    <svg width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="#c0392b" stroke-width="2">
+      <circle cx="32" cy="32" r="28"/>
+      <line x1="32" y1="18" x2="32" y2="36"/>
+      <circle cx="32" cy="44" r="2" fill="#c0392b" stroke="none"/>
+    </svg>
+    <p style="font-size:15px;font-weight:600;color:#2c3e50;text-align:center">
+      Ce PDF est sur un serveur protégé
+    </p>
+    <p style="font-size:12px;color:#555;text-align:center;max-width:380px;line-height:1.6">
+      Le drive de l'université (<strong>${new URL(url).hostname}</strong>) bloque
+      les requêtes provenant d'un autre site (politique CORS).<br>
+      Le PDF va s'ouvrir dans un <strong>nouvel onglet</strong> avec votre navigateur.
+    </p>
+    <a id="btn-open-native" href="${url}" target="_blank"
+      style="display:inline-block;padding:10px 22px;background:#4a90d9;color:white;
+             border-radius:6px;font-size:13px;font-weight:600;text-decoration:none">
+      ↗ Ouvrir le PDF
+    </a>
+    <p style="font-size:11px;color:#aaa;text-align:center">
+      Si votre navigateur a bloqué l'ouverture automatique,<br>
+      cliquez sur le bouton ci-dessus.
+    </p>`;
+
+  // Ouvre automatiquement + prévient le widget lanceur
+  window.open(url, '_blank');
+  window.opener?.postMessage({ type: 'PDF_CORS_ERROR', url }, '*');
 }
 
 function hideIframe() {
   const area = document.getElementById('canvas-area');
-  const iframe = document.getElementById('pdf-iframe');
-  const banner = document.getElementById('fallback-banner');
-  if (iframe) iframe.remove();
-  if (banner) banner.remove();
-  area.style.padding  = '12px';
-  area.style.gap      = '12px';
+  area.innerHTML = '';
+  area.style.cssText = 'flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:12px;gap:12px';
 }
 
 // ── Scale ──────────────────────────────────────────────────────────────────────
