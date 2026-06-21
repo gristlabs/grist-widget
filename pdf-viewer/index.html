@@ -142,7 +142,11 @@
     <h3>⚙ Paramètres du widget</h3>
 
     <label>Colonne contenant le PDF</label>
-    <select id="col-select"><option value="">— sélectionner —</option></select>
+    <div style="display:flex;gap:4px;margin-bottom:10px">
+      <select id="col-select" style="flex:1;margin-bottom:0"><option value="">— sélectionner —</option></select>
+      <button id="btn-refresh-cols" title="Recharger les colonnes"
+        style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:white;cursor:pointer;font-size:13px">↺</button>
+    </div>
 
     <label>Type de colonne</label>
     <select id="col-type">
@@ -151,7 +155,13 @@
     </select>
 
     <button id="btn-save">Enregistrer</button>
-    <div id="config-err"></div>
+    <div id="config-err" style="white-space:pre-line"></div>
+
+    <div style="margin-top:10px;padding:8px;background:#f0f4ff;border-radius:4px;font-size:10px;color:#555;line-height:1.5">
+      💡 Si la liste est vide : dans Grist, ouvrez le panneau de droite
+      du widget → section <strong>Données</strong> → sélectionnez votre table,
+      puis cliquez ↺
+    </div>
   </div>
 
 </div>
@@ -186,9 +196,16 @@
   });
 
   // ── Bouton paramètres ──────────────────────────────────────────────────────
-  document.getElementById('btn-settings').addEventListener('click', (e) => {
+  document.getElementById('btn-settings').addEventListener('click', async (e) => {
     e.stopPropagation();
+    const isOpening = !config.classList.contains('open');
     config.classList.toggle('open');
+    if (isOpening) await fetchColumns();   // charge les colonnes à l'ouverture
+  });
+
+  document.getElementById('btn-refresh-cols').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    await fetchColumns();
   });
 
   document.getElementById('btn-save').addEventListener('click', () => {
@@ -215,13 +232,37 @@
     refreshColSelector();
   });
 
-  // Écoute tous les enregistrements → extrait les noms de colonnes
+  // Écoute tous les enregistrements → extrait les noms de colonnes (si lié)
   grist.onRecords((records) => {
     if (!records || records.length === 0) return;
-    // Toutes les clés du 1er enregistrement = noms de colonnes (sauf 'id')
     state.allColumns = Object.keys(records[0]).filter(k => k !== 'id');
     refreshColSelector();
   });
+
+  // ── Récupération active des colonnes via l'API docApi ─────────────────────
+  async function fetchColumns() {
+    colSelect.disabled = true;
+    const prevOpt = colSelect.querySelector('option[value=""]');
+    if (prevOpt) prevOpt.textContent = '⏳ Chargement…';
+    hideConfigErr();
+    try {
+      const tableData = await grist.docApi.fetchSelectedTable();
+      const cols = Object.keys(tableData).filter(k => k !== 'id');
+      if (cols.length === 0) throw new Error('Aucune colonne trouvée.');
+      state.allColumns = cols;
+      refreshColSelector();
+    } catch (err) {
+      // fetchSelectedTable peut échouer si le widget n'est pas encore lié à une table
+      showConfigErr(
+        '⚠ Liez d\'abord ce widget à une table :\n' +
+        'dans Grist, panneau de droite → "Données" → sélectionnez votre table.'
+      );
+      const opt = colSelect.querySelector('option[value=""]');
+      if (opt) opt.textContent = '— sélectionner —';
+    } finally {
+      colSelect.disabled = false;
+    }
+  }
 
   // Écoute l'enregistrement sélectionné → charge le PDF
   grist.onRecord((record) => {
