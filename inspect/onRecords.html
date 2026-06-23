@@ -10,7 +10,7 @@
     <script>
       grist.ready();
       grist.onRecords(function(records) {
-        document.getElementById('readout').innerHTML = JSON.stringify(records, null, 2);
+        document.getElementById('readout').textContent = JSON.stringify(records, null, 2);
       });
     </script>
   </body>
