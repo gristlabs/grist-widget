@@ -53,9 +53,14 @@
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 <script src="https://uicdn.toast.com/tui.time-picker/latest/tui-time-picker.js"></script>
 <script>
-  // HACK: Override the default time picker format based on locale. There is no other way to do this,
-  // calendar doesn't offer a way to pass this down to the time picker.
-  // This also can't be done in the page.js as the next script will grab the reference immediately.
+  // HACK: Override the time picker format based on locale.
+  // This targets the TimePicker inside the event create/edit popup, which is a
+  // separate widget from the time-grid axis handled by timegridDisplayPrimaryTime
+  // in page.js: that template only formats the hour labels of the week/day grid,
+  // not the popup input. The TimePicker defaults to a 12-hour format, so without
+  // this override 24-hour locales would still get an AM/PM input. There is no API
+  // to pass the format down to it, and it can't be done in page.js as the next
+  // script grabs the tui.TimePicker reference immediately.
   (function() {
     var useHour12 = false;
     try {
