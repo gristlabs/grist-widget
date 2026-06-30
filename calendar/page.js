@@ -255,6 +255,9 @@ class CalendarHandler {
     // Deletion happens via the event-edit form.
     this.calendar.on('beforeDeleteEvent', (eventInfo) => deleteEvent(eventInfo));
 
+    // Keep the pure-date all-day panel expanded after every render (see method).
+    this.calendar.on('afterRenderEvent', () => this._expandPureDateAllDayPanel());
+
     container.addEventListener('mousedown', () => {
       focusWidget();
       // Clear existing selection; this follows the suggested workaround in
@@ -366,6 +369,44 @@ class CalendarHandler {
   changeView(calendarViewPerspective) {
     this.calendar.changeView(calendarViewPerspective);
     updateUIAfterNavigation();
+  }
+
+  // Toggle TUI's native all-day-only layout for the week and day views.
+  // In pure-date mode the start/end columns carry no time, so the time grid
+  // would only show empty hours; eventView:['allday'] hides it natively while
+  // keeping the events as all-day rows (they are already flagged isAllday in
+  // buildCalendarEventObject). The month view is unaffected, as it never shows
+  // a time grid. Guarded so setOptions only re-renders when the mode changes.
+  setPureDateMode(isPureDate) {
+    if (this._isPureDate === isPureDate) { return; }
+    this._isPureDate = isPureDate;
+    this.calendar.setOptions({week: {eventView: isPureDate ? ['allday'] : true}});
+  }
+
+  // In pure-date mode we hide the time grid with eventView:['allday'], but TUI
+  // still reserves layout height for rows that aren't shown, leaving the all-day
+  // panel too short — days with several events collapse behind a "+N more"
+  // button and a blank strip is left at the bottom of the view. Two rows are to
+  // blame: the hidden time grid, and the day-names row of the *other*
+  // perspective (TUI keeps both the week- and day-view rows in the layout).
+  // Zero both so the all-day panel — the layout's resizable ("last") panel —
+  // absorbs the freed height. Driven from 'afterRenderEvent' so it reapplies
+  // whenever TUI re-renders (view switch, navigation, data update), and guarded
+  // on the stored heights so it doesn't re-dispatch (and loop) once collapsed.
+  // Reads/writes the same internal store the rest of this file already uses.
+  _expandPureDateAllDayPanel() {
+    if (!this._isPureDate) { return; }
+    const view = this.calendar.getViewName();
+    if (view !== 'week' && view !== 'day') { return; }
+    const dispatchers = this.calendar.getStoreDispatchers('weekViewLayout');
+    const rows = this.calendar.getStoreState('weekViewLayout').dayGridRows;
+    const inactiveDayNames =
+      view === 'day' ? 'week-view-day-names' : 'day-view-day-names';
+    for (const rowName of ['time', inactiveDayNames]) {
+      if (rows?.[rowName] && rows[rowName].height !== 0) {
+        dispatchers.updateDayGridRowHeight({rowName, height: 0});
+      }
+    }
   }
 
   // navigate to the previous time period
@@ -773,6 +814,11 @@ async function updateCalendar(records, mappings) {
   // if any records were successfully mapped, create or update them in the calendar
   if (mappedRecords) {
     const colTypes = await colTypesFetcher.getColTypes();
+    const [startType, endType] = colTypes;
+    // When both start and end columns are pure Date (no time component), render
+    // the week/day views as an all-day list instead of an unusable time grid.
+    const isPureDate = startType === 'Date' && (!endType || endType === 'Date');
+    calendarHandler.setPureDateMode(isPureDate);
     const colOptions = await colTypesFetcher.getColOptions();
     const events = mappedRecords
       .filter(isRecordValid)
