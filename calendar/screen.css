@@ -93,6 +93,19 @@ body {
   height: 100%;
 }
 
+/* toastui wraps a *string* template return in a `.template-alldayTitle` span
+   instead of merging the class onto our node (as it does for its own default
+   vnode), so the library's built-in `.left-content` cell styling never reaches
+   our translated "All Day" label. Re-apply that styling to the wrapper so the
+   label keeps the default small size and stays vertically centered in the
+   all-day panel. */
+.toastui-calendar-panel-title .toastui-calendar-template-alldayTitle {
+  display: table-cell;
+  font-size: 11px;
+  text-align: right;
+  vertical-align: middle;
+}
+
 /*** BEGIN popup-related styling ***/
 
 /* On an event-view card, hide "detail" sections, since we have nothing to show there */
