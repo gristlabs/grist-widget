@@ -68,6 +68,16 @@ function getFirstDayOfWeek() {
   return 0; // fallback: Sunday
 }
 
+// Resolve the BCP 47 locale tag to use for all locale-aware formatting.
+// Grist passes the document language as the 'culture' URL param (e.g. "fr-FR");
+// we fall back to the browser language, then to the i18next-detected language.
+function getLocale() {
+  return urlParams.get('culture') ?? navigator.language ?? getLanguage();
+}
+
+// getHour12(locale) lives in hour-format.js, loaded before this script; it is
+// also used by the inline TimePicker patch in index.html.
+
 class CalendarHandler {
   //TODO: switch to new variables once they are published.
   _mainColor =  'var(--grist-theme-input-readonly-border)';
@@ -201,8 +211,21 @@ class CalendarHandler {
         },
         popupIsAllday() {
           return t('All Day')
-        }
-
+        },
+        // Renders the labels of the time-grid axis (the hours column on the
+        // left of the week/day views). By default toastui-calendar prints a
+        // fixed format; we override it so the hour labels follow the user's
+        // locale convention, showing "1 PM" for 12-hour locales and "13:00"
+        // for 24-hour ones. The locale tag comes from getLocale() (Grist's
+        // document language via the 'culture' param) and drives both the
+        // hour12 flag and toLocaleTimeString's own formatting.
+        timegridDisplayPrimaryTime({ time }) {
+          const locale = getLocale();
+          return time.toDate().toLocaleTimeString(locale, {
+            hour: 'numeric',
+            hour12: getHour12(locale),
+          });
+        },
       },
       calendars: [
         {
