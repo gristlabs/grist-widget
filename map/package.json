@@ -10,6 +10,29 @@
       "widgetId": "@gristlabs/widget-map#map",
       "published": true,
       "accessLevel": "read table",
+      "columns": [
+        {
+          "name": "Name"
+        },
+        {
+          "name": "Longitude"
+        },
+        {
+          "name": "Latitude"
+        },
+        {
+          "name": "Geocode",
+          "optional": true
+        },
+        {
+          "name": "Address",
+          "optional": true
+        },
+        {
+          "name": "GeocodedAddress",
+          "optional": true
+        }
+      ],
       "renderAfterReady": true,
       "description": "Display locations on a map using either addresses or latitude and longitude coordinates..",
       "authors": [

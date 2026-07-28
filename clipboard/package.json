@@ -9,6 +9,9 @@
     "widgetId": "@gristlabs/widget-clipboard",
     "published": true,
     "accessLevel": "read table",
+    "columns": [
+      "Column"
+    ],
     "renderAfterReady": true,
     "description": "Copy column values from records to your clipboard with a click of a button.",
     "authors": [

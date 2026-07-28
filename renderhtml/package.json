@@ -9,6 +9,9 @@
     "widgetId": "@gristlabs/widget-renderhtml",
     "published": true,
     "accessLevel": "read table",
+    "columns": [
+      "Html"
+    ],
     "renderAfterReady": true,
     "description": "View data from a selected record as rendered HTML.",
     "authors": [

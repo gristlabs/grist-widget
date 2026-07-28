@@ -56,7 +56,7 @@
       "url": "https://gristlabs.github.io/grist-widget/inspect/columns.html",
       "widgetId": "@gristlabs/widget-inspect#columns",
       "renderAfterReady": true
-    }, 
+    },
     {
       "name": "Inspect API",
       "url": "https://gristlabs.github.io/grist-widget/inspect/api.html",
@@ -70,7 +70,11 @@
           "url": "https://github.com/gristlabs"
         }
       ],
-      "isGristLabsMaintained": true
+      "isGristLabsMaintained": true,
+      "columns": [
+        "Link",
+        "Title"
+      ]
     }
   ]
 }
