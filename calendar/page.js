@@ -53,19 +53,49 @@ function getMonthName() {
   return calendarHandler.calendar.getDate().toDate().toLocaleString(getLanguage(), {month: 'long', year: 'numeric'})
 }
 
+// First day of week per CLDR region, for browsers that do NOT implement
+// Intl.Locale#getWeekInfo / #weekInfo (notably every version of Firefox).
+// Values are TUI day codes (0=Sun, 5=Fri, 6=Sat). Any region absent from this
+// table starts the week on Monday — the world default (CLDR firstDay "001").
+// Derived directly from CLDR supplemental weekData/firstDay
+// (unicode-org/cldr-json), not hand-authored from memory.
+const TUI_SUN = 0, TUI_FRI = 5, TUI_SAT = 6;
+const FIRST_DAY_BY_REGION = {};
+// CLDR firstDay "sun"
+for (const r of ('AG AS BD BR BS BT BW BZ CA CO DM DO ET GT GU HK HN ID IL IN ' +
+  'IS JM JP KE KH KR LA MH MM MO MT MX MZ NI NP PA PE PH PK PR PT PY SA SG SV ' +
+  'TH TT TW UM US VE VI WS YE ZA ZW').split(' ')) {
+  FIRST_DAY_BY_REGION[r] = TUI_SUN;
+}
+// CLDR firstDay "sat"
+for (const r of 'AF BH DJ DZ EG IQ IR JO KW LY OM QA SD SY'.split(' ')) {
+  FIRST_DAY_BY_REGION[r] = TUI_SAT;
+}
+// CLDR firstDay "fri"
+FIRST_DAY_BY_REGION.MV = TUI_FRI;
+
 function getFirstDayOfWeek() {
+  const localeTag = urlParams.get('culture') ?? navigator.language ?? getLanguage();
   try {
-    const locale = new Intl.Locale(urlParams.get('culture') ?? navigator.language ?? getLanguage());
-    // Chrome 99+ uses getWeekInfo(), Firefox 126+ and Safari 17+ use weekInfo property
+    const locale = new Intl.Locale(localeTag);
+    // Chrome 99+ and Safari 17+ expose the CLDR first day directly. Firefox does
+    // NOT implement getWeekInfo()/weekInfo (any version), so this stays undefined
+    // there and we fall through to the CLDR region table below.
     const weekInfo = locale.getWeekInfo?.() ?? locale.weekInfo;
     if (weekInfo?.firstDay !== undefined) {
       // Intl: 1=Mon, ..., 7=Sun  →  TUI: 0=Sun, 1=Mon, ..., 6=Sat
       return weekInfo.firstDay === 7 ? 0 : weekInfo.firstDay;
     }
+    // Fallback: infer the region (maximize() adds the likely region, e.g.
+    // "fr" → "fr-FR", and IS supported in Firefox) and look it up in the table.
+    const region = locale.maximize().region;
+    if (region && region in FIRST_DAY_BY_REGION) {
+      return FIRST_DAY_BY_REGION[region];
+    }
   } catch (e) {
-    // Intl.Locale week info not supported by this browser
+    // Malformed locale tag or Intl.Locale unsupported: fall through to default.
   }
-  return 0; // fallback: Sunday
+  return 1; // world default per CLDR (firstDay "001"): Monday
 }
 
 class CalendarHandler {
