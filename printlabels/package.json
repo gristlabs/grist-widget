@@ -9,6 +9,19 @@
     "widgetId": "@gristlabs/widget-printlabels",
     "published": true,
     "accessLevel": "read table",
+    "columns": [
+      {
+        "name": "LabelText",
+        "title": "Label text",
+        "type": "Text"
+      },
+      {
+        "name": "LabelCount",
+        "title": "Label count",
+        "type": "Numeric",
+        "optional": true
+      }
+    ],
     "renderAfterReady": true,
     "description": "Customize and print labels directly from a selected Grist table.",
     "authors": [

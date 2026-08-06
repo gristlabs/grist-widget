@@ -11,7 +11,9 @@
     "accessLevel": "read table",
     "columns": [
       {
-        "name": "ImageUrl"
+        "name": "ImageUrl",
+        "title": "Image URL",
+        "type": "Text"
       }
     ],
     "renderAfterReady": true,

@@ -11,7 +11,9 @@
     "accessLevel": "read table",
     "columns": [
       {
-        "name": "DropboxLink"
+        "name": "DropboxLink",
+        "title": "Dropbox Link",
+        "type": "Text"
       }
     ],
     "renderAfterReady": true,

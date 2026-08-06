@@ -11,7 +11,9 @@
     "accessLevel": "read table",
     "columns": [
       {
-        "name": "OptionsToSelect"
+        "name": "OptionsToSelect",
+        "title": "Options to select",
+        "type": "Any"
       }
     ],
     "renderAfterReady": true,

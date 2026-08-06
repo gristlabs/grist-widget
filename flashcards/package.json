@@ -11,10 +11,14 @@
     "accessLevel": "read table",
     "columns": [
       {
-        "name": "Question"
+        "name": "Question",
+        "type": "Text",
+        "title": "Question Column"
       },
       {
-        "name": "Answer"
+        "name": "Answer",
+        "type": "Text",
+        "title": "Answer Column"
       }
     ],
     "renderAfterReady": true,

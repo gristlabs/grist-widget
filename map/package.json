@@ -11,25 +11,30 @@
       "published": true,
       "accessLevel": "read table",
       "columns": [
+        "Name",
         {
-          "name": "Name"
+          "name": "Longitude",
+          "type": "Numeric"
         },
         {
-          "name": "Longitude"
-        },
-        {
-          "name": "Latitude"
+          "name": "Latitude",
+          "type": "Numeric"
         },
         {
           "name": "Geocode",
+          "type": "Bool",
+          "title": "Geocode",
           "optional": true
         },
         {
           "name": "Address",
+          "type": "Text",
           "optional": true
         },
         {
           "name": "GeocodedAddress",
+          "type": "Text",
+          "title": "Geocoded Address",
           "optional": true
         }
       ],
