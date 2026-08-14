@@ -468,7 +468,7 @@ grist.ready({
     { name: "Longitude", type: 'Numeric'} ,
     { name: "Latitude", type: 'Numeric'},
     { name: "Geocode", type: 'Bool', title: 'Geocode', optional},
-    { name: "Address", type: 'Text', optional, optional},
+    { name: "Address", type: 'Text', optional},
     { name: "GeocodedAddress", type: 'Text', title: 'Geocoded Address', optional},
   ],
   allowSelectBy: true,

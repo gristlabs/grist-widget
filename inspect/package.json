@@ -70,11 +70,7 @@
           "url": "https://github.com/gristlabs"
         }
       ],
-      "isGristLabsMaintained": true,
-      "columns": [
-        "Link",
-        "Title"
-      ]
+      "isGristLabsMaintained": true
     }
   ]
 }

@@ -110,7 +110,6 @@ ready(function() {
     ],
     requiredAccess: 'read table'
   });
-  grist.ready();
   grist.onRecords(function(records, mappings) {
     sourceRecords = grist.mapColumnNames(records, mappings);
     shuffleCards(isShuffled);
