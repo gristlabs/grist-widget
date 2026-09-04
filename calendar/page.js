@@ -2,6 +2,7 @@
 let calendarHandler;
 
 const CALENDAR_NAME = 'standardCalendar';
+const DEFAULT_COL_INFO = [null, null, null];
 
 const t = i18next.t;
 
@@ -575,7 +576,7 @@ async function calendarViewChanges(radiobutton) {
 function onGristSettingsChanged(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
-  colTypesFetcher.setAccessLevel(settings.accessLevel);
+  colTypesFetcher.setAccessLevel(settings?.accessLevel);
 };
 
 function changeCalendarView(view) {
@@ -713,6 +714,8 @@ function buildCalendarEventObject(record, colTypes, colOptions) {
   let {startDate: start, endDate: end, isAllDay: isAllday} = record;
   let [startType, endType] = colTypes;
   let [,,type] = colOptions;
+  const defaultBackgroundColor = calendarHandler?._mainColor ?? 'var(--grist-theme-input-readonly-border)';
+  const defaultTextColor = calendarHandler?._textColor ?? 'var(--grist-theme-text)';
   endType = endType || startType;
   start = getAdjustedDate(start, startType);
   end = end ? getAdjustedDate(end, endType) : start;
@@ -750,12 +753,12 @@ function buildCalendarEventObject(record, colTypes, colOptions) {
     isAllday,
     category: 'time',
     state: 'Free',
-    color: this._textColor,
-    backgroundColor: this._mainColor,
+    color: defaultTextColor,
+    backgroundColor: defaultBackgroundColor,
     dragBackgroundColor: 'var(--grist-theme-hover)',
     raw, // Store it as an custom property. It will be used to revert any highlighting that might be done.
     ...raw, // And now paint the event with the color.
-    borderColor: raw.backgroundColor, // We don't have a border color, so use the background color.
+    borderColor: raw.backgroundColor ?? defaultBackgroundColor, // We don't have a border color, so use the background color.
     customStyle: {
       fontStyle,
       fontWeight,
@@ -812,33 +815,26 @@ class ColTypesFetcher {
   constructor() {
     this._tableId = null;
     this._colIds = null;
-    this._colTypesPromise = Promise.resolve([null, null]);
-    this._accessLevel = 'full';
+    this._colTypesPromise = Promise.resolve(DEFAULT_COL_INFO);
+    this._accessLevel = null;
   }
   setAccessLevel(accessLevel) {
     this._accessLevel = accessLevel;
+    this._refreshColTypes();
   }
   gotMappings(mappings) {
-    // Can't fetch metadata when no full access.
-    if (this._accessLevel !== 'full') { return; }
     if (!this._colIds || !(
         mappings.startDate === this._colIds[0] &&
         mappings.endDate === this._colIds[1] &&
         mappings.type === this._colIds[2]
       )) {
       this._colIds = [mappings.startDate, mappings.endDate, mappings.type];
-      if (this._tableId) {
-        this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
-      }
+      this._refreshColTypes();
     }
   }
   gotNewMappings(tableId) {
-    // Can't fetch metadata when no full access.
-    if (this._accessLevel !== 'full') { return; }
     this._tableId = tableId;
-    if (this._colIds) {
-      this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds);
-    }
+    this._refreshColTypes();
   }
 
   async getColTypes() {
@@ -847,6 +843,20 @@ class ColTypesFetcher {
 
   async getColOptions() {
     return this._colTypesPromise.then(types => types.map(t => safeParse(t?.widgetOptions)));
+  }
+
+  _refreshColTypes() {
+    // Metadata tables require full access. If user access is limited or fails,
+    // we return default column info to avoid completely breaking the calendar.
+    if (this._accessLevel !== 'full' || !this._tableId || !this._colIds) {
+      this._colTypesPromise = Promise.resolve(DEFAULT_COL_INFO);
+      return;
+    }
+    this._colTypesPromise = ColTypesFetcher.getTypes(this._tableId, this._colIds)
+      .catch(err => {
+        console.warn('Unable to fetch Grist column metadata. Rendering calendar without choice colors.', err);
+        return DEFAULT_COL_INFO;
+      });
   }
 }
 
@@ -861,7 +871,7 @@ function safeParse(value) {
 }
 
 function clean(obj) {
-  return Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== undefined));
+  return Object.fromEntries(Object.entries(obj).filter(([k, v]) => v != null));
 }
 
 // HACK: show Record Card popup on dblclick.
