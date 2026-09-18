@@ -29,9 +29,12 @@ let TZDate = null;
 // Grist reports linking via `settings.linking` in onOptions (grist-core#2259,
 // available since Grist v1.7.13). Since onOptions and onRecord can fire in either
 // order, we defer the initial decision until both are known.
-let isInitialLoad = true;
+let isInitialLoad = true;      // true until applyInitialView has decided the first view
 let linkingResolved = false;   // true once onOptions has fired at least once
 let linkingInfo;               // settings.linking: {asTarget, asSource} | undefined on Grist < 1.7.13
+// First record received from onRecord while isInitialLoad is still true.
+// Held here because onRecord may fire before onOptions: applyInitialView
+// consumes it (and resets it to null) once linking info is also known.
 let pendingInitialRecord = null;
 
 // True when another section drives this calendar's view. On older Grist builds
