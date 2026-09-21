@@ -19,6 +19,31 @@ window.gristCalendar = {
 
 let TZDate = null;
 
+// Whether cursor changes should move the calendar's viewport depends on linking.
+// When another section drives this widget (linked cursor/filter), the selected
+// record is a meaningful choice and the view must follow it. When there is no
+// link, the "selection" is just the cursor (row 1 by default) and must NOT move
+// the view: the calendar opens on today and stays where the user navigates,
+// otherwise it would jump to the first record's date on load and on every
+// re-emitted cursor event (e.g. after saving the perspective option).
+// Grist reports linking via `settings.linking` in onOptions (grist-core#2259,
+// available since Grist v1.7.13). Since onOptions and onRecord can fire in either
+// order, we defer the initial decision until both are known.
+let isInitialLoad = true;      // true until applyInitialView has decided the first view
+let linkingResolved = false;   // true once onOptions has fired at least once
+let linkingInfo;               // settings.linking: {asTarget, asSource} | undefined on Grist < 1.7.13
+// First record received from onRecord while isInitialLoad is still true.
+// Held here because onRecord may fire before onOptions: applyInitialView
+// consumes it (and resets it to null) once linking info is also known.
+let pendingInitialRecord = null;
+
+// True when another section drives this calendar's view. On older Grist builds
+// without linking info we can't tell, so we preserve the historical behavior of
+// following the selected record.
+function isDrivenByLink() {
+  return !linkingInfo || linkingInfo.asTarget !== null;
+}
+
 function getLanguage() {
   if (this._lang) {
     return this._lang;
@@ -302,7 +327,7 @@ class CalendarHandler {
     return isItMonthView &&  !isEventMultiDay
   }
 
-  async selectRecord(record) {
+  async selectRecord(record, navigate = true) {
     if (!isRecordValid(record) || this._selectedRecordId === record.id) {
       return;
     }
@@ -310,10 +335,18 @@ class CalendarHandler {
     if (this._selectedRecordId) {
       this._clearHighlightEvent(this._selectedRecordId);
     }
+    this._selectedRecordId = record.id;
+
+    // When the calendar isn't driven by a link, keep the selection highlighted
+    // but never move the viewport to the record's date (see gristSelectedRecordChanged).
+    if (!navigate) {
+      this.refreshSelectedRecord();
+      return;
+    }
+
     const [startType] = await colTypesFetcher.getColTypes();
     const startDate = getAdjustedDate(record.startDate, startType);
     this.calendar.setDate(startDate);
-    this._selectedRecordId = record.id;
     updateUIAfterNavigation();
 
     // If the view has a vertical timeline, scroll to the start of the event.
@@ -556,8 +589,36 @@ async function translatePage() {
 function gristSelectedRecordChanged(record, mappings) {
   const mappedRecord = grist.mapColumnNames(record, mappings);
   if (mappedRecord && calendarHandler) {
-    calendarHandler.selectRecord(mappedRecord);
+    if (isInitialLoad) {
+      // Remember the first record and resolve the initial view once linking
+      // info is also available (see applyInitialView).
+      pendingInitialRecord = mappedRecord;
+      applyInitialView();
+      return;
+    }
+    // Move the view to the record only when a link drives this calendar;
+    // otherwise just keep the selection highlighted without jumping.
+    calendarHandler.selectRecord(mappedRecord, isDrivenByLink());
   }
+}
+
+// Decides what the calendar shows on its very first load. Runs only once both the
+// linking info (from onOptions) and the first record (from onRecord) are known,
+// regardless of which callback fired first.
+// - Driven by a link, or older Grist without linking info (< 1.7.13, can't tell)
+//   -> navigate to the selected record, preserving the previous behavior.
+// - No link -> open on today and only highlight the cursor record, without moving.
+function applyInitialView() {
+  if (!isInitialLoad || !calendarHandler) { return; }
+  if (!linkingResolved || !pendingInitialRecord) { return; }
+  isInitialLoad = false;
+  const record = pendingInitialRecord;
+  pendingInitialRecord = null;
+  const linked = isDrivenByLink();
+  if (!linked) {
+    calendarHandler.calendarToday();
+  }
+  calendarHandler.selectRecord(record, linked);
 }
 
 // when a user changes the perspective in the GUI, we want to save it as grist option
@@ -576,6 +637,10 @@ function onGristSettingsChanged(options, settings) {
   const view = options?.calendarViewPerspective ?? 'week';
   changeCalendarView(view);
   colTypesFetcher.setAccessLevel(settings.accessLevel);
+  // Capture linking info for the initial-view decision. Absent on Grist < 1.7.13.
+  linkingInfo = settings?.linking;
+  linkingResolved = true;
+  applyInitialView();
 };
 
 function changeCalendarView(view) {
