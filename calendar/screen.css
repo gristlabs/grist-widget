@@ -93,6 +93,21 @@ body {
   height: 100%;
 }
 
+/* toastui renders a string template inside a fresh `.template-alldayTitle` span
+   without its default `.left-content` styling, so re-apply it here. The cell is
+   pinned to the 72px hour-gutter width but laid out as `display: table`, where
+   that width is only a minimum: a nowrap label longer than "All day" (e.g.
+   "Toute la journée") widens it and shifts the all-day row right, so let the
+   label wrap to keep the columns aligned. */
+.toastui-calendar-panel-title .toastui-calendar-template-alldayTitle {
+  display: table-cell;
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: right;
+  vertical-align: middle;
+  white-space: normal;
+}
+
 /*** BEGIN popup-related styling ***/
 
 /* On an event-view card, hide "detail" sections, since we have nothing to show there */

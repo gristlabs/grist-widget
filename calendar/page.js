@@ -212,7 +212,7 @@ class CalendarHandler {
         popupDelete(){
           return t('Delete')
         },
-        poupSave(){
+        popupSave(){
           return t('Save')
         },
         popupEdit(){
@@ -221,7 +221,7 @@ class CalendarHandler {
         popupUpdate(){
           return t('Update')
         },
-        allDayTitle() {
+        alldayTitle() {
           return t('All Day')
         },
         popupIsAllday() {
