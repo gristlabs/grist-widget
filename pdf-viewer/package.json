@@ -1,0 +1,8 @@
+{
+  "name": "@bigorneau15652/grist-widget-pdf-viewer",
+  "version": "1.0.0",
+  "description": "Widget Grist — visionneuse PDF avancée (PDF.js) avec navigation, zoom, calques OCG, signets et recherche plein texte",
+  "author": "Bigorneau15652",
+  "license": "MIT",
+  "keywords": ["grist", "widget", "pdf", "pdf.js", "viewer", "ocg", "layers"]
+}

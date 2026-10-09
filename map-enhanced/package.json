@@ -1,0 +1,24 @@
+{
+  "name": "@bigorneau15652/widget-map-enhanced",
+  "description": "Widget carte amélioré : zoom verrouillable, choix de fonds de carte (OSM, relief, satellite, …).",
+  "homePage": "https://github.com/bigorneau15652/map",
+  "version": "1.0.0",
+  "grist": [
+    {
+      "name": "Map Enhanced",
+      "url": "https://bigorneau15652.github.io/map/map-enhanced/index.html",
+      "widgetId": "@bigorneau15652/widget-map-enhanced#map-enhanced",
+      "published": true,
+      "accessLevel": "read table",
+      "renderAfterReady": true,
+      "description": "Carte améliorée : zoom verrouillable, zoom initial configurable, choix parmi plusieurs fonds de carte (OSM standard, OSM France, relief, satellite Esri, …).",
+      "authors": [
+        {
+          "name": "bigorneau15652",
+          "url": "https://github.com/bigorneau15652"
+        }
+      ],
+      "isGristLabsMaintained": false
+    }
+  ]
+}
