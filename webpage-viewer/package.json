@@ -1,0 +1,28 @@
+{
+  "name": "@gristlabs/widget-webpage-viewer",
+  "description": "Show the web page from a URL column of the selected record.",
+  "homePage": "https://github.com/gristlabs/grist-widget/tree/master/webpage-viewer",
+  "version": "0.0.1",
+  "grist": {
+    "name": "Web page viewer",
+    "url": "https://gristlabs.github.io/grist-widget/webpage-viewer/index.html",
+    "widgetId": "@gristlabs/widget-webpage-viewer",
+    "published": true,
+    "accessLevel": "read table",
+    "columns": [
+      {
+        "name": "URL",
+        "title": "URL",
+        "type": "Text"
+      }
+    ],
+    "renderAfterReady": true,
+    "description": "Show the web page linked from the selected record.",
+    "authors": [
+      {
+        "name": "Community contributor"
+      }
+    ],
+    "isGristLabsMaintained": false
+  }
+}

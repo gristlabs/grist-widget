@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<!--
+  Web page viewer: a Grist custom widget that shows the web page whose URL is
+  in the selected record.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Web page viewer</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font: 13px/1.4 var(--grist-theme-font-family, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+      color: var(--grist-theme-text, #262633);
+      background: var(--grist-theme-page-panels-main-panel-bg, #fff);
+    }
+    body { display: flex; flex-direction: column; }
+    #bar {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 32px;
+      padding: 0 10px;
+      box-sizing: border-box;
+      border-bottom: 1px solid var(--grist-theme-table-body-border, #d9d9d9);
+      background: var(--grist-theme-page-bg, #f7f7f7);
+    }
+    #url {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--grist-theme-text-light, #555);
+    }
+    #open { flex: none; color: var(--grist-theme-link, #16b378); font-weight: 600; text-decoration: none; }
+    #open:hover { text-decoration: underline; }
+    #frame { flex: 1; display: block; border: 0; width: 100%; background: #fff; }
+    #msg {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+      text-align: center;
+      color: var(--grist-theme-text-light, #929299);
+    }
+    #hint {
+      position: fixed;
+      right: 8px;
+      bottom: 6px;
+      font-size: 11px;
+      color: #707078;
+      background: rgba(255, 255, 255, .85);
+      padding: 1px 6px;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="bar">
+    <span id="url">&mdash;</span>
+    <a id="open" href="#" target="_blank" rel="noopener noreferrer" hidden>Open in new tab &#8599;</a>
+  </div>
+  <div id="msg">Select a record with a URL.</div>
+  <!-- The framed site may run scripts, forms and popups, but it cannot navigate
+       the Grist page (no allow-top-navigation). -->
+  <iframe id="frame" title="Web page" hidden referrerpolicy="no-referrer"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
+  <div id="hint" hidden>Blank? Some sites refuse to be shown inside other pages. Use &ldquo;Open in new tab&rdquo;.</div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let current = null;
+
+    // Show a message instead of a page.
+    function show(message) {
+      current = null;
+      $('frame').hidden = true;
+      $('frame').removeAttribute('src');
+      $('hint').hidden = true;
+      $('open').hidden = true;
+      $('url').textContent = '\u2014';
+      $('url').removeAttribute('title');
+      $('msg').textContent = message;
+      $('msg').hidden = false;
+    }
+
+    // Turn a cell value into an http(s) URL, or null if it isn't one.
+    function normalize(raw) {
+      let s = String(raw == null ? '' : raw).trim();
+      if (!s) { return null; }
+      // Hyperlink cells may hold "label url"; use the trailing URL.
+      const m = s.match(/(https?:\/\/\S+)\s*$/i);
+      if (m) {
+        s = m[1];
+      } else if (/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(s)) {
+        // Bare domain such as "example.com/page".
+        s = 'https://' + s;
+      }
+      try {
+        const u = new URL(s);
+        // Only http(s): this refuses javascript:, data:, file:, etc.
+        return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function load(url) {
+      if (url === current) { return; }   // Don't reload when other cells change.
+      current = url;
+      $('url').textContent = url;
+      $('url').title = url;
+      $('open').href = url;
+      $('open').hidden = false;
+      $('msg').hidden = true;
+      $('frame').hidden = false;
+      $('frame').src = url;
+      $('hint').hidden = false;
+    }
+
+    grist.ready({
+      requiredAccess: 'read table',
+      columns: [{ name: 'URL', title: 'URL', type: 'Text' }],
+    });
+
+    grist.onRecord((record) => {
+      const mapped = grist.mapColumnNames(record);
+      if (!mapped) { show('Choose the URL column in the creator panel.'); return; }
+      const raw = mapped.URL;
+      if (raw == null || String(raw).trim() === '') { show('This record has no URL.'); return; }
+      const url = normalize(raw);
+      if (!url) { show('Not a valid web address: ' + String(raw)); return; }
+      load(url);
+    });
+
+    grist.onNewRecord(() => show('Select a record with a URL.'));
+  </script>
+</body>
+</html>
