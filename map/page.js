@@ -25,7 +25,27 @@ const Address = 'Address';
 //            to automatically update the geocoding if Address is changed
 const GeocodedAddress = 'GeocodedAddress';
 let lastRecord;
+// Optional default view, set in the widget options (all empty = fit all pins).
+let defaultLat = null, defaultLng = null, defaultZoom = null;
+let optionsLoaded = false;
+// True once the map has had its first view, so re-renders keep the user's pan/zoom.
+let viewInitialized = false;
+function hasDefaultView() {
+  return defaultLat !== null && defaultLng !== null && defaultZoom !== null;
+}
+function toNum(v) {
+  if (v === null || v === undefined || String(v).trim() === '') { return null; }
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 let lastRecords;
+// Last cursor row seen; we only zoom to a pin when the cursor moves to a different row.
+let lastCursorId = null;
+// Suppress auto-zoom until this time (ms); set on first load and when options change or are saved.
+let suppressZoomUntil = 0;
+// Records that arrived before the options; the first view waits for the options.
+let pendingRecords = null;
+function zoomAllowed() { return Date.now() >= suppressZoomUntil; }
 
 
 //Color markers downloaded from leaflet repo, color-shifted to green
@@ -224,6 +244,11 @@ function updateMap(data) {
 
   const error = document.querySelector('.error');
   if (error) { error.remove(); }
+  // Remember the current view before the map is rebuilt.
+  let prevView = null;
+  if (amap && viewInitialized) {
+    try { prevView = {center: amap.getCenter(), zoom: amap.getZoom()}; } catch (e) { /* ignore */ }
+  }
   if (amap) {
     try {
       amap.off();
@@ -296,22 +321,53 @@ function updateMap(data) {
 
   clearMarkers = () => map.removeLayer(markers);
 
-  try {
-    map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
-  } catch (err) {
-    console.warn('cannot fit bounds');
+  // Keep the user's view on re-renders; otherwise use the default view; otherwise fit all pins.
+  // Single mode keeps upstream behavior (fit to the one selected pin).
+  if (prevView && mode !== 'single') {
+    map.setView(prevView.center, prevView.zoom);
+  } else if (hasDefaultView() && mode !== 'single') {
+    map.setView([defaultLat, defaultLng], defaultZoom);
+  } else {
+    try {
+      map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]});
+    } catch (err) {
+      console.warn('cannot fit bounds');
+    }
   }
+  viewInitialized = true;
   function makeSureSelectedMarkerIsShown() {
     const rowId = selectedRowId;
 
     if (rowId && popups[rowId]) {
       var marker = popups[rowId];
-      if (!marker._icon) { markers.zoomToShowLayer(marker); }
+      if (!marker._icon) {
+        if (!zoomAllowed() && hasDefaultView() && mode !== 'single') { return; }
+        markers.zoomToShowLayer(marker);
+      }
       marker.openPopup();
     }
   }
 
   amap = map;
+  // Home button under the zoom buttons: back to the default view, or fit all pins.
+  const Home = L.Control.extend({
+    options: {position: 'topleft'},
+    onAdd: function () {
+      const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      const btn = L.DomUtil.create('a', 'map-home-button', div);
+      btn.href = '#'; btn.title = 'Default view'; btn.setAttribute('role', 'button');
+      btn.setAttribute('aria-label', 'Default view');
+      btn.innerHTML = '&#8962;'; btn.style.fontSize = '18px';
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.on(btn, 'click', (e) => {
+        L.DomEvent.preventDefault(e);
+        if (hasDefaultView() && mode !== 'single') { map.setView([defaultLat, defaultLng], defaultZoom); }
+        else { try { map.fitBounds(new L.LatLngBounds(points), {maxZoom: 15, padding: [0, 0]}); } catch (err) { /* no pins */ } }
+      });
+      return div;
+    }
+  });
+  map.addControl(new Home());
 
   makeSureSelectedMarkerIsShown();
 }
@@ -396,14 +452,22 @@ grist.onRecord((record, mappings) => {
     selectOnMap(lastRecord);
     scanOnNeed(defaultMapping(record, mappings));
   } else {
+    const isNewRow = record.id !== lastCursorId;
+    lastCursorId = record.id;
+    if (!popups[record.id]) { selectedRowId = record.id; return; }  // map not rendered yet
     const marker = selectMaker(record.id);
     if (!marker) { return; }
-    markers.zoomToShowLayer(marker);
-    marker.openPopup();
+    // Only move the map when the user actually picked a different row.
+    if (isNewRow && zoomAllowed()) {
+      markers.zoomToShowLayer(marker);
+      marker.openPopup();
+    }
   }
 });
 grist.onRecords((data, mappings) => {
   lastRecords = grist.mapColumnNames(data) || data;
+  // Decide the first view only after the options are known.
+  if (!optionsLoaded) { pendingRecords = {data, mappings}; return; }
   if (mode !== 'single') {
     // If mappings are not done, we will assume that table has correct columns.
     // This is done to support existing widgets which where configured by
@@ -458,7 +522,60 @@ function onEditOptions() {
     ipt.onchange = async (e) => {
       await grist.setOption(opt, e.target.value);
     }
-  })
+  });
+  // Default view fields, typed by hand.
+  ["defaultLat", "defaultLng", "defaultZoom"].forEach((id) => {
+    const el = document.getElementById(id);
+    el.onchange = () => saveDefaultView();
+    el.oninput = () => saveDefaultView();
+  });
+  // Fill the fields from the map as it is now.
+  document.getElementById('btnUseView').onclick = () => {
+    if (!amap) { return; }
+    const c = amap.getCenter();
+    document.getElementById('defaultLat').value = c.lat.toFixed(6);
+    document.getElementById('defaultLng').value = c.lng.toFixed(6);
+    document.getElementById('defaultZoom').value = Math.round(amap.getZoom());
+    saveDefaultView();
+  };
+  // Clear: back to fitting all pins.
+  document.getElementById('btnClearView').onclick = async () => {
+    ["defaultLat", "defaultLng", "defaultZoom"].forEach((id) => document.getElementById(id).value = '');
+    await saveDefaultView();
+    viewInitialized = false;
+    updateMap();
+  };
+}
+
+// Validate and save the default view fields.
+async function saveDefaultView() {
+  const msg = document.getElementById('viewMsg');
+  const lat = toNum(document.getElementById('defaultLat').value);
+  const lng = toNum(document.getElementById('defaultLng').value);
+  let zoom = toNum(document.getElementById('defaultZoom').value);
+  if (zoom !== null) {
+    zoom = Math.min(18, Math.max(1, Math.round(zoom)));
+    document.getElementById('defaultZoom').value = zoom;
+  }
+  if ((lat !== null && (lat < -90 || lat > 90)) || (lng !== null && (lng < -180 || lng > 180))) {
+    msg.textContent = 'Latitude must be -90..90 and longitude -180..180.';
+    return;
+  }
+  defaultLat = lat; defaultLng = lng; defaultZoom = zoom;
+  const allSet = hasDefaultView();
+  const noneSet = lat === null && lng === null && zoom === null;
+  msg.textContent = allSet ? 'Saved. Map opens at this view.' :
+    noneSet ? 'Cleared. Map fits all pins.' : 'Fill all three fields to use a default view.';
+  // Write all three keys in one call so they land together in the options Grist commits on Save.
+  if (grist.widgetApi && grist.widgetApi.setOptions && grist.widgetApi.getOptions) {
+    const cur = (await grist.widgetApi.getOptions()) || {};
+    await grist.widgetApi.setOptions({...cur, defaultLat: lat, defaultLng: lng, defaultZoom: zoom});
+  } else {
+    await grist.setOption('defaultLat', lat);
+    await grist.setOption('defaultLng', lng);
+    await grist.setOption('defaultZoom', zoom);
+  }
+  if (allSet) { msg.textContent += ' Now click Save at the top of the map.'; }
 }
 
 const optional = true;
@@ -488,4 +605,28 @@ grist.onOptions((options, interaction) => {
   const newCopyright = options?.mapCopyright ?? mapCopyright;
   mapCopyright = newCopyright
   document.getElementById("mapCopyright").value = mapCopyright;
+  // Read the default view.
+  defaultLat = toNum(options?.defaultLat);
+  defaultLng = toNum(options?.defaultLng);
+  defaultZoom = toNum(options?.defaultZoom);
+  document.getElementById("defaultLat").value = defaultLat ?? '';
+  document.getElementById("defaultLng").value = defaultLng ?? '';
+  document.getElementById("defaultZoom").value = defaultZoom ?? '';
+  // After first load, an options change or Save, keep the view and don't jump to the cursor row.
+  suppressZoomUntil = Date.now() + 2000;
+  const first = !optionsLoaded;
+  optionsLoaded = true;
+  if (first && pendingRecords) {
+    const {data, mappings} = pendingRecords; pendingRecords = null;
+    lastRecords = grist.mapColumnNames(data) || data;
+    if (mode !== 'single') {
+      viewInitialized = false;
+      updateMap(lastRecords);
+      scanOnNeed(defaultMapping(data[0], mappings));
+    } else if (lastRecord) {
+      updateMap([lastRecord]);
+    }
+  } else if (first && amap && hasDefaultView() && mode !== 'single') {
+    amap.setView([defaultLat, defaultLng], defaultZoom);
+  }
 });
